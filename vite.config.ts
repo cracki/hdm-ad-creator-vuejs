@@ -7,7 +7,12 @@ import { execSync } from 'node:child_process'
 
 const pkg = JSON.parse(readFileSync('package.json', 'utf-8'))
 const version = pkg.version
-const commitHash = execSync('git rev-parse --short HEAD').toString().trim()
+let commitHash = 'unknown'
+try {
+  commitHash = execSync('git rev-parse --short HEAD').toString().trim()
+} catch {
+  commitHash = process.env.VITE_GIT_COMMIT || 'unknown'
+}
 
 export default defineConfig({
   define: {
