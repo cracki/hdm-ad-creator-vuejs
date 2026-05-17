@@ -204,6 +204,7 @@ const isPrereqMet = computed(() => adsList.value.length > 0)
                   :href="v.image_url"
                   download
                   class="absolute top-2 end-2 h-7 w-7 rounded-md bg-black/50 grid place-items-center hover:bg-black/70 transition"
+                  data-loc="campaigns.visual.download-btn"
                 >
                   <Download class="h-3.5 w-3.5 text-white" />
                 </a>

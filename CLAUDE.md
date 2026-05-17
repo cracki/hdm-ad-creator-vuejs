@@ -175,6 +175,20 @@ npx openapi-typescript http://localhost:8000/api/v1/schema/ -o src/shared/api/sd
 - Zod schemas in each feature's `schemas.ts` validate API responses at query boundaries
 - `useNormalizeResponse` composable handles LLM response key aliasing (LLM providers return inconsistent JSON keys)
 
+### Element Locator System (`data-loc`)
+
+All interactive/prominent UI elements have `data-loc` attributes for easy identification via browser DevTools. When the user references a `data-loc` value, use `grep` to find the exact file and line.
+
+**Naming convention**: `data-loc="{feature}.{view}.{element}"` — all lowercase, hyphenated words.
+
+| Scope | Pattern | Examples |
+|-------|---------|---------|
+| Layout | `{component}.{element}` | `sidebar.nav-brands`, `topbar.search-input`, `bottom-nav.dashboard` |
+| Feature views | `{feature}.{view}.{element}` | `brands.list.search`, `campaigns.segmentation.run-btn`, `auth.login.signin-btn` |
+| Shared components | `{component}.{element}` | `ad-copy-editor.reset-btn`, `confirm-dialog.confirm-btn` |
+
+**How to use**: User inspects element in DevTools, finds `data-loc="brands.list.search"`, tells you: "at `brands.list.search`, change X". You grep for `data-loc="brands.list.search"` to locate the exact file and line.
+
 ### Build
 
 - Vite 8 with manual chunk splitting:

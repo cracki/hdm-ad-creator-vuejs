@@ -93,7 +93,7 @@ function adPlatformLabel(p: string) {
 
       <template v-else>
         <!-- Progress overview -->
-        <div class="surface-card p-5 mb-6">
+        <div class="surface-card p-5 mb-6" data-loc="campaigns.review.progress">
           <div class="flex items-center justify-between mb-3">
             <div class="text-sm font-semibold">{{ t('review.progress') }}</div>
             <div class="text-xs text-muted-foreground">{{ progress }}%</div>
@@ -167,6 +167,7 @@ function adPlatformLabel(p: string) {
           <button
             :disabled="!allDone || completing"
             class="h-10 px-6 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5 disabled:opacity-50"
+            data-loc="campaigns.review.complete-btn"
             @click="completeCampaign"
           >
             <Loader2 v-if="completing" class="h-3.5 w-3.5 animate-spin" />
