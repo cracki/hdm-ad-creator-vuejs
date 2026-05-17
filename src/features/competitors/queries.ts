@@ -63,7 +63,7 @@ export function useIdentifyCompetitors(brandUuid: Ref<string>) {
 
 export function useCompetitiveInsights(brandUuid: Ref<string>) {
   return useMutation({
-    mutationFn: () => competitorsApi.insights(brandUuid.value),
+    mutationFn: async () => (await competitorsApi.insights(brandUuid.value)).data,
   })
 }
 
@@ -79,6 +79,6 @@ export function useAnalyzeSocialMedia(brandUuid: Ref<string>) {
 
 export function useSocialAudit(brandUuid: Ref<string>) {
   return useMutation({
-    mutationFn: () => competitorsApi.socialAudit(brandUuid.value),
+    mutationFn: async () => (await competitorsApi.socialAudit(brandUuid.value)).data,
   })
 }

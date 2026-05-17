@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
-import AnalysisPayloadRenderer from '@/shared/components/AnalysisPayloadRenderer.vue'
+import SocialAuditRenderer from '@/shared/components/renderers/SocialAuditRenderer.vue'
 import { useSocialAudit } from '../queries'
 import { Shield, Loader2, ChevronLeft } from 'lucide-vue-next'
 
@@ -86,7 +86,7 @@ async function handleRunAudit() {
 
     <!-- Results -->
     <div v-else-if="auditMutation.data.value" class="space-y-4">
-      <AnalysisPayloadRenderer :data="(auditMutation.data.value as any)" />
+      <SocialAuditRenderer :data="(auditMutation.data.value as any)" />
 
       <div class="flex justify-center pt-2">
         <button

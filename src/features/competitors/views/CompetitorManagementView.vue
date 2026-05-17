@@ -6,6 +6,7 @@ import { useI18n } from '@/shared/utils/i18n'
 import { useToast } from '@/shared/composables/useToast'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import AnalysisPayloadRenderer from '@/shared/components/AnalysisPayloadRenderer.vue'
+import CompetitiveAnalysisRenderer from '@/shared/components/renderers/CompetitiveAnalysisRenderer.vue'
 import {
   useCompetitors,
   useCreateCompetitor,
@@ -16,7 +17,7 @@ import {
 } from '../queries'
 import {
   Plus, Trash2, Globe, Loader2, Sparkles, ChevronDown,
-  CheckCircle2, Crosshair, Lightbulb,
+  CheckCircle2, Crosshair, Lightbulb, Shield, Target, ArrowUpRight,
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -92,6 +93,13 @@ async function handleInsights() {
 function toggleExpand(uuid: string) {
   expandedUuid.value = expandedUuid.value === uuid ? null : uuid
 }
+
+const stats = computed(() => {
+  const list = competitors.value ?? []
+  const direct = list.filter((c: any) => c.is_direct).length
+  const analyzed = list.filter((c: any) => c.analysis_record?.last_analysis).length
+  return { total: list.length, direct, indirect: list.length - direct, analyzed }
+})
 
 const { setActions } = usePageActions()
 setActions([
@@ -227,69 +235,139 @@ setActions([
     </div>
 
     <!-- Competitor list -->
-    <div v-else class="space-y-3">
-      <div
-        v-for="comp in competitors"
-        :key="comp.competitor_uuid"
-        data-loc="competitors.manage.list-item"
-        class="surface-card overflow-hidden transition"
-        :class="{ 'border-primary/40': expandedUuid === comp.competitor_uuid }"
-      >
-        <div
-          class="p-5 flex items-center gap-4 cursor-pointer hover:bg-white/[0.01] transition"
-          @click="toggleExpand(comp.competitor_uuid)"
-        >
-          <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 grid place-items-center shrink-0">
-            <Globe class="h-4 w-4 text-violet-300" />
+    <div v-else>
+      <!-- Stats bar -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+        <div class="surface-card p-3 flex items-center gap-3">
+          <div class="h-8 w-8 rounded-lg bg-primary/10 grid place-items-center shrink-0">
+            <Globe class="h-4 w-4 text-primary" />
           </div>
-          <div class="flex-1 min-w-0">
-            <div class="font-medium text-sm truncate">{{ comp.name }}</div>
-            <div class="text-xs text-muted-foreground truncate flex items-center gap-1.5">
-              <Globe class="h-3 w-3 shrink-0" />
-              <a :href="comp.website_url" target="_blank" @click.stop class="hover:underline">{{ comp.website_url }}</a>
-            </div>
+          <div>
+            <div class="text-lg font-bold leading-none">{{ stats.total }}</div>
+            <div class="text-[10px] text-muted-foreground mt-0.5">Total</div>
           </div>
-          <div class="flex items-center gap-2 shrink-0">
-            <span :class="['text-[11px] px-2 py-0.5 rounded-full', comp.is_direct ? 'bg-orange-500/10 text-orange-300' : 'bg-blue-500/10 text-blue-300']">
-              {{ comp.is_direct ? t('competitors.direct') : t('competitors.indirect') }}
-            </span>
-            <span v-if="comp.analysis_record?.last_analysis" class="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-success/10 text-success">
-              <CheckCircle2 class="h-2.5 w-2.5" /> {{ t('competitors.analyzed') }}
-            </span>
-            <span v-else class="text-[11px] px-2 py-0.5 rounded-full bg-white/5 text-muted-foreground">
-              {{ t('competitors.pending') }}
-            </span>
-          </div>
-          <ChevronDown :class="['h-4 w-4 text-muted-foreground transition', expandedUuid === comp.competitor_uuid ? 'rotate-180' : '']" />
         </div>
+        <div class="surface-card p-3 flex items-center gap-3">
+          <div class="h-8 w-8 rounded-lg bg-orange-500/10 grid place-items-center shrink-0">
+            <Target class="h-4 w-4 text-orange-400" />
+          </div>
+          <div>
+            <div class="text-lg font-bold leading-none">{{ stats.direct }}</div>
+            <div class="text-[10px] text-muted-foreground mt-0.5">{{ t('competitors.direct') }}</div>
+          </div>
+        </div>
+        <div class="surface-card p-3 flex items-center gap-3">
+          <div class="h-8 w-8 rounded-lg bg-blue-500/10 grid place-items-center shrink-0">
+            <Shield class="h-4 w-4 text-blue-400" />
+          </div>
+          <div>
+            <div class="text-lg font-bold leading-none">{{ stats.indirect }}</div>
+            <div class="text-[10px] text-muted-foreground mt-0.5">{{ t('competitors.indirect') }}</div>
+          </div>
+        </div>
+        <div class="surface-card p-3 flex items-center gap-3">
+          <div class="h-8 w-8 rounded-lg bg-success/10 grid place-items-center shrink-0">
+            <CheckCircle2 class="h-4 w-4 text-success" />
+          </div>
+          <div>
+            <div class="text-lg font-bold leading-none">{{ stats.analyzed }}</div>
+            <div class="text-[10px] text-muted-foreground mt-0.5">{{ t('competitors.analyzed') }}</div>
+          </div>
+        </div>
+      </div>
 
-        <!-- Expanded analysis -->
-        <div v-if="expandedUuid === comp.competitor_uuid" class="border-t border-border/40 p-5 space-y-4">
-          <div v-if="lastAnalysis" class="space-y-3">
-            <AnalysisPayloadRenderer :data="lastAnalysis" />
+      <!-- Competitor cards -->
+      <div class="space-y-2">
+        <div
+          v-for="comp in competitors"
+          :key="comp.competitor_uuid"
+          data-loc="competitors.manage.list-item"
+          class="group surface-card overflow-hidden transition-all duration-200"
+          :class="[
+            expandedUuid === comp.competitor_uuid ? 'ring-1 ring-primary/30' : '',
+          ]"
+        >
+          <!-- Card header -->
+          <div
+            class="px-4 py-3.5 flex items-center gap-3 cursor-pointer transition-colors hover:bg-white/[0.015]"
+            @click="toggleExpand(comp.competitor_uuid)"
+          >
+            <!-- Color accent bar -->
+            <div :class="['w-1 h-10 rounded-full shrink-0 transition-colors', comp.is_direct ? 'bg-orange-400/60' : 'bg-blue-400/60']" />
+
+            <!-- Icon -->
+            <div :class="['h-9 w-9 rounded-lg grid place-items-center shrink-0 transition-colors', comp.is_direct ? 'bg-orange-500/10' : 'bg-blue-500/10']">
+              <Globe :class="['h-4 w-4', comp.is_direct ? 'text-orange-300' : 'text-blue-300']" />
+            </div>
+
+            <!-- Name + URL -->
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-sm truncate group-hover:text-foreground transition-colors">{{ comp.name }}</div>
+              <div class="text-[11px] text-muted-foreground truncate flex items-center gap-1 mt-0.5">
+                <a :href="comp.website_url" target="_blank" @click.stop class="hover:text-foreground hover:underline transition-colors inline-flex items-center gap-0.5">
+                  {{ comp.website_url.replace(/^https?:\/\//, '') }}
+                  <ArrowUpRight class="h-2.5 w-2.5 shrink-0 opacity-40" />
+                </a>
+              </div>
+            </div>
+
+            <!-- Status badges -->
+            <div class="hidden sm:flex items-center gap-1.5 shrink-0">
+              <span :class="['text-[10px] font-medium px-2 py-0.5 rounded-full', comp.is_direct ? 'bg-orange-500/10 text-orange-300 border border-orange-500/20' : 'bg-blue-500/10 text-blue-300 border border-blue-500/20']">
+                {{ comp.is_direct ? t('competitors.direct') : t('competitors.indirect') }}
+              </span>
+              <span v-if="comp.analysis_record?.last_analysis" class="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-success/10 text-success border border-success/20">
+                <CheckCircle2 class="h-2.5 w-2.5" /> {{ t('competitors.analyzed') }}
+              </span>
+              <span v-else class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/[0.04] text-muted-foreground border border-border/30">
+                {{ t('competitors.pending') }}
+              </span>
+            </div>
+
+            <!-- Expand chevron -->
+            <ChevronDown :class="['h-4 w-4 text-muted-foreground/50 transition-transform duration-200 shrink-0', expandedUuid === comp.competitor_uuid ? 'rotate-180 text-primary' : '']" />
           </div>
-          <div v-else class="text-sm text-muted-foreground text-center py-4">
-            {{ t('competitors.noAnalysis') }}
-          </div>
-          <div class="flex gap-2 pt-2">
-            <button
-              data-loc="competitors.manage.analyze-btn"
-              @click="handleAnalyze(comp.competitor_uuid)"
-              :disabled="analyzingUuid !== null"
-              class="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium hover:opacity-95 transition disabled:opacity-50"
-            >
-              <Loader2 v-if="analyzingUuid === comp.competitor_uuid" class="h-3 w-3 animate-spin" />
-              <Sparkles v-else class="h-3 w-3" />
-              {{ analyzingUuid === comp.competitor_uuid ? t('competitors.analyzing') : (lastAnalysis ? t('competitors.reAnalyze') : t('competitors.analyze')) }}
-            </button>
-            <button
-              data-loc="competitors.manage.delete-btn"
-              @click="handleDelete(comp.competitor_uuid)"
-              :disabled="deleteMutation.isPending.value"
-              class="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-destructive/40 text-destructive text-xs font-medium hover:bg-destructive/10 transition disabled:opacity-50"
-            >
-              <Trash2 class="h-3 w-3" /> {{ t('competitors.delete') }}
-            </button>
+
+          <!-- Expanded analysis -->
+          <div v-if="expandedUuid === comp.competitor_uuid" class="border-t border-border/30">
+            <!-- Mobile-only badges -->
+            <div class="sm:hidden flex items-center gap-1.5 px-4 pt-3">
+              <span :class="['text-[10px] font-medium px-2 py-0.5 rounded-full', comp.is_direct ? 'bg-orange-500/10 text-orange-300' : 'bg-blue-500/10 text-blue-300']">
+                {{ comp.is_direct ? t('competitors.direct') : t('competitors.indirect') }}
+              </span>
+              <span v-if="comp.analysis_record?.last_analysis" class="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-success/10 text-success">
+                <CheckCircle2 class="h-2.5 w-2.5" /> {{ t('competitors.analyzed') }}
+              </span>
+            </div>
+
+            <div class="p-4 space-y-4">
+              <div v-if="lastAnalysis" class="space-y-3">
+                <CompetitiveAnalysisRenderer :data="{ competitor_analyses: [lastAnalysis], analyze_results: [{ name: comp.name, status: 'success', website_url: comp.website_url }] }" />
+              </div>
+              <div v-else class="text-sm text-muted-foreground text-center py-6">
+                {{ t('competitors.noAnalysis') }}
+              </div>
+              <div class="flex gap-2 pt-1">
+                <button
+                  data-loc="competitors.manage.analyze-btn"
+                  @click="handleAnalyze(comp.competitor_uuid)"
+                  :disabled="analyzingUuid !== null"
+                  class="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] hover:opacity-95 transition disabled:opacity-50"
+                >
+                  <Loader2 v-if="analyzingUuid === comp.competitor_uuid" class="h-3 w-3 animate-spin" />
+                  <Sparkles v-else class="h-3 w-3" />
+                  {{ analyzingUuid === comp.competitor_uuid ? t('competitors.analyzing') : (lastAnalysis ? t('competitors.reAnalyze') : t('competitors.analyze')) }}
+                </button>
+                <button
+                  data-loc="competitors.manage.delete-btn"
+                  @click="handleDelete(comp.competitor_uuid)"
+                  :disabled="deleteMutation.isPending.value"
+                  class="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-lg border border-destructive/30 text-destructive text-xs font-medium hover:bg-destructive/10 transition disabled:opacity-50"
+                >
+                  <Trash2 class="h-3 w-3" /> {{ t('competitors.delete') }}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
