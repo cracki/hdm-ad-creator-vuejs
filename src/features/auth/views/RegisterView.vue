@@ -62,7 +62,7 @@ async function handleGoogleRegister() {
             <p class="text-sm text-muted-foreground">{{ t('auth.regSub') }}</p>
           </div>
 
-          <button class="w-full h-11 rounded-lg border border-border/70 bg-white/[0.03] hover:bg-white/[0.06] transition flex items-center justify-center gap-3 text-sm font-medium" :disabled="googleLoading" @click="handleGoogleRegister">
+          <button data-loc="auth.register.google-btn" class="w-full h-11 rounded-lg border border-border/70 bg-white/[0.03] hover:bg-white/[0.06] transition flex items-center justify-center gap-3 text-sm font-medium" :disabled="googleLoading" @click="handleGoogleRegister">
             <svg viewBox="0 0 24 24" class="h-4 w-4">
               <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.4-1.6 4.1-5.5 4.1-3.3 0-6-2.7-6-6.2s2.7-6.2 6-6.2c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.3 14.6 2.4 12 2.4 6.7 2.4 2.4 6.7 2.4 12S6.7 21.6 12 21.6c6.9 0 11.4-4.8 11.4-11.6 0-.8-.1-1.4-.2-1.9H12z"/>
             </svg>
@@ -81,6 +81,7 @@ async function handleGoogleRegister() {
                   <User class="absolute start-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                   <input
                     v-model="form.firstName"
+                    data-loc="auth.register.first-name-input"
                     placeholder="Ada"
                     class="w-full h-11 ps-9 pe-3 rounded-lg bg-white/[0.03] border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 transition"
                   />
@@ -92,6 +93,7 @@ async function handleGoogleRegister() {
                   <User class="absolute start-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                   <input
                     v-model="form.lastName"
+                    data-loc="auth.register.last-name-input"
                     placeholder="Khan"
                     class="w-full h-11 ps-9 pe-3 rounded-lg bg-white/[0.03] border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 transition"
                   />
@@ -106,6 +108,7 @@ async function handleGoogleRegister() {
                 <input
                   v-model="form.email"
                   type="email"
+                  data-loc="auth.register.email-input"
                   placeholder="you@company.com"
                   required
                   class="w-full h-11 ps-9 pe-3 rounded-lg bg-white/[0.03] border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 transition"
@@ -120,6 +123,7 @@ async function handleGoogleRegister() {
                 <input
                   v-model="form.password"
                   type="password"
+                  data-loc="auth.register.password-input"
                   :placeholder="t('auth.passHint')"
                   required
                   minlength="8"
@@ -131,12 +135,13 @@ async function handleGoogleRegister() {
             <div v-if="error" class="text-sm text-destructive">{{ error }}</div>
 
             <label class="flex items-start gap-2 text-xs text-muted-foreground">
-              <input type="checkbox" class="mt-0.5 h-3.5 w-3.5 rounded accent-[oklch(0.68_0.24_295)]" />
-              <span>{{ t('auth.agreePre') }} <a class="text-primary hover:underline">{{ t('auth.terms') }}</a> {{ t('auth.agreeMid') }} <a class="text-primary hover:underline">{{ t('auth.privacy') }}</a>.</span>
+              <input type="checkbox" data-loc="auth.register.agreement" class="mt-0.5 h-3.5 w-3.5 rounded accent-[oklch(0.68_0.24_295)]" />
+              <span>{{ t('auth.agreePre') }} <a data-loc="auth.register.terms-link" class="text-primary hover:underline">{{ t('auth.terms') }}</a> {{ t('auth.agreeMid') }} <a class="text-primary hover:underline">{{ t('auth.privacy') }}</a>.</span>
             </label>
 
             <button
               type="submit"
+              data-loc="auth.register.create-btn"
               :disabled="loading"
               class="group w-full h-11 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground font-medium text-sm shadow-[var(--shadow-glow)] flex items-center justify-center gap-2 disabled:opacity-60"
             >
@@ -147,7 +152,7 @@ async function handleGoogleRegister() {
 
           <p class="text-center text-xs text-muted-foreground">
             {{ t('auth.haveAccount') }}
-            <router-link to="/login" class="text-foreground font-medium hover:text-primary">{{ t('auth.signInLink') }}</router-link>
+            <router-link to="/login" data-loc="auth.register.signin-link" class="text-foreground font-medium hover:text-primary">{{ t('auth.signInLink') }}</router-link>
           </p>
         </div>
       </div>

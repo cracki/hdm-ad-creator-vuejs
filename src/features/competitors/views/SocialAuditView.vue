@@ -35,6 +35,7 @@ async function handleRunAudit() {
     <template #actions>
       <RouterLink
         :to="`/brands/${brandUuid}/social`"
+        data-loc="competitors.audit.back-btn"
         class="hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
       >
         <ChevronLeft class="h-3.5 w-3.5" /> {{ t('socialAudit.back') }}
@@ -53,6 +54,7 @@ async function handleRunAudit() {
         <div class="text-sm text-muted-foreground">{{ t('socialAudit.runDesc') }}</div>
       </div>
       <button
+        data-loc="competitors.audit.run-btn"
         @click="handleRunAudit"
         :disabled="auditMutation.isPending.value"
         class="inline-flex items-center gap-1.5 h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] hover:opacity-95 transition disabled:opacity-50"
@@ -74,6 +76,7 @@ async function handleRunAudit() {
       <div class="text-destructive font-medium text-sm">{{ t('socialAudit.error') }}</div>
       <div class="text-xs text-muted-foreground mt-1">{{ auditMutation.error.value }}</div>
       <button
+        data-loc="competitors.audit.retry-btn"
         @click="handleRunAudit"
         class="mt-3 inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
       >
@@ -87,6 +90,7 @@ async function handleRunAudit() {
 
       <div class="flex justify-center pt-2">
         <button
+          data-loc="competitors.audit.re-run-btn"
           @click="handleRunAudit"
           :disabled="auditMutation.isPending.value"
           class="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition disabled:opacity-50"

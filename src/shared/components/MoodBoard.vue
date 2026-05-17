@@ -59,18 +59,21 @@ function submitColor() {
         @change="handleFileUpload"
       />
       <button
+        data-loc="mood-board.add-image-btn"
         class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.04] transition flex items-center gap-1.5"
         @click="fileInput?.click()"
       >
         <ImagePlus class="h-3.5 w-3.5" /> {{ t('moodboard.addImage') }}
       </button>
       <button
+        data-loc="mood-board.add-color-btn"
         :class="['h-9 px-3 rounded-lg border border-border/60 text-xs font-medium transition flex items-center gap-1.5', showColorInput ? 'bg-white/[0.06]' : 'hover:bg-white/[0.04]']"
         @click="showColorInput = !showColorInput"
       >
         <Palette class="h-3.5 w-3.5" /> {{ t('moodboard.addColor') }}
       </button>
       <button
+        data-loc="mood-board.add-note-btn"
         :class="['h-9 px-3 rounded-lg border border-border/60 text-xs font-medium transition flex items-center gap-1.5', showNoteInput ? 'bg-white/[0.06]' : 'hover:bg-white/[0.04]']"
         @click="showNoteInput = !showNoteInput"
       >
@@ -78,6 +81,7 @@ function submitColor() {
       </button>
       <button
         v-if="items.length"
+        data-loc="mood-board.clear-btn"
         class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-destructive/10 text-destructive transition flex items-center gap-1.5"
         @click="clearAll"
       >
@@ -89,17 +93,18 @@ function submitColor() {
     <div v-if="showColorInput" class="flex items-center gap-2 p-3 surface-card max-w-xs">
       <input v-model="newColor" type="color" class="h-9 w-12 rounded cursor-pointer bg-transparent" />
       <span class="text-xs text-muted-foreground font-mono">{{ newColor }}</span>
-      <button class="ms-auto h-7 px-2.5 rounded-md bg-[image:var(--gradient-brand)] text-primary-foreground text-xs" @click="submitColor">Add</button>
+      <button data-loc="mood-board.color-submit-btn" class="ms-auto h-7 px-2.5 rounded-md bg-[image:var(--gradient-brand)] text-primary-foreground text-xs" @click="submitColor">Add</button>
     </div>
 
     <div v-if="showNoteInput" class="flex items-center gap-2 p-3 surface-card max-w-sm">
       <input
         v-model="newNote"
+        data-loc="mood-board.note-input"
         class="flex-1 h-9 px-3 rounded-lg bg-white/[0.03] border border-border/70 text-sm outline-none"
         placeholder="Type a note…"
         @keyup.enter="submitNote"
       />
-      <button class="h-7 px-2.5 rounded-md bg-[image:var(--gradient-brand)] text-primary-foreground text-xs" @click="submitNote">Add</button>
+      <button data-loc="mood-board.note-submit-btn" class="h-7 px-2.5 rounded-md bg-[image:var(--gradient-brand)] text-primary-foreground text-xs" @click="submitNote">Add</button>
     </div>
 
     <!-- Board -->
@@ -131,6 +136,7 @@ function submitColor() {
 
           <!-- Delete -->
           <button
+            data-loc="mood-board.delete-item-btn"
             class="absolute top-1.5 end-1.5 h-5 w-5 grid place-items-center rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition"
             @click="removeItem(item.id)"
           >

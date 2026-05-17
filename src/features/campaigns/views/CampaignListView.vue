@@ -69,10 +69,12 @@ async function confirmDelete() {
           v-model="searchQuery"
           :placeholder="t('camp.search')"
           class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
+          data-loc="campaigns.list.search"
         />
       </div>
       <button
         class="h-10 px-4 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5"
+        data-loc="campaigns.list.new-campaign-btn"
         @click="router.push('/campaigns/new')"
       >
         <Plus class="h-3.5 w-3.5" /> {{ t('camp.newCampaign') }}
@@ -107,6 +109,7 @@ async function confirmDelete() {
         v-for="campaign in filteredCampaigns"
         :key="campaign.campaign_uuid"
         class="surface-card group cursor-pointer hover:border-primary/40 transition"
+        data-loc="campaigns.list.campaign-card"
         @click="router.push(`/campaigns/${campaign.campaign_uuid}`)"
       >
         <!-- Header -->
@@ -122,6 +125,7 @@ async function confirmDelete() {
             </span>
             <button
               class="h-10 w-10 grid place-items-center rounded-md sm:opacity-0 sm:group-hover:opacity-60 hover:!opacity-100 hover:bg-white/[0.06] transition"
+              data-loc="campaigns.list.card-delete"
               @click.stop="handleDelete(campaign.campaign_uuid, campaign.name)"
             >
               <Trash2 class="h-3.5 w-3.5 text-muted-foreground" />

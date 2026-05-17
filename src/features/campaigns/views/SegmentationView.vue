@@ -106,14 +106,14 @@ function goNext() {
               <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('seg.businessType') }}</label>
               <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60">
                 <ShoppingBag class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                <input v-model="businessType" :placeholder="t('seg.businessTypeHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
+                <input v-model="businessType" :placeholder="t('seg.businessTypeHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" data-loc="campaigns.segmentation.business-type-input" />
               </div>
             </div>
             <div>
               <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('seg.location') }}</label>
               <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60">
                 <MapPin class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                <input v-model="location" :placeholder="t('seg.locationHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
+                <input v-model="location" :placeholder="t('seg.locationHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" data-loc="campaigns.segmentation.location-input" />
               </div>
             </div>
           </div>
@@ -124,11 +124,13 @@ function goNext() {
               :placeholder="t('seg.productDescHint')"
               rows="3"
               class="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60 resize-none"
+              data-loc="campaigns.segmentation.product-desc-input"
             />
           </div>
 
           <button
             class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5"
+            data-loc="campaigns.segmentation.run-btn"
             @click="runSegmentation"
           >
             <Brain class="h-3.5 w-3.5" /> {{ t('seg.runSegmentation') }}
@@ -247,6 +249,7 @@ function goNext() {
           <div class="flex items-center justify-end">
             <button
               class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5"
+              data-loc="campaigns.segmentation.next-btn"
               @click="goNext"
             >
               {{ t('smart.approveContinue') }} {{ t('smart.continue') }} <ArrowRight class="h-3.5 w-3.5" />

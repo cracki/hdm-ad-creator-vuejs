@@ -120,7 +120,7 @@ const isPrereqMet = computed(() => adsList.value.length > 0)
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
           <div>
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('visual.aspectRatio') }}</label>
-            <select v-model="aspectRatio" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none">
+            <select v-model="aspectRatio" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none" data-loc="campaigns.visual.setting-aspect-ratio">
               <option value="1:1">1:1</option>
               <option value="9:16">9:16</option>
               <option value="16:9">16:9</option>
@@ -129,14 +129,14 @@ const isPrereqMet = computed(() => adsList.value.length > 0)
           </div>
           <div>
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('visual.quality') }}</label>
-            <select v-model="quality" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none">
+            <select v-model="quality" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none" data-loc="campaigns.visual.setting-quality">
               <option value="standard">{{ t('visual.standard') }}</option>
               <option value="hd">HD</option>
             </select>
           </div>
           <div>
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('visual.style') }}</label>
-            <select v-model="style" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none">
+            <select v-model="style" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none" data-loc="campaigns.visual.setting-style">
               <option value="natural">{{ t('visual.natural') }}</option>
               <option value="vivid">{{ t('visual.vivid') }}</option>
             </select>
@@ -147,7 +147,7 @@ const isPrereqMet = computed(() => adsList.value.length > 0)
         <div class="surface-card p-4 mb-6">
           <div class="flex items-center justify-between mb-3">
             <label class="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" v-model="selectAll" class="rounded border-border/60" />
+              <input type="checkbox" v-model="selectAll" class="rounded border-border/60" data-loc="campaigns.visual.select-all" />
               <span class="text-xs font-medium">{{ t('visual.selectAll') }}</span>
             </label>
             <span class="text-[11px] text-muted-foreground">{{ selectedAdUuids.size }} / {{ adsList.length }}</span>
@@ -160,6 +160,7 @@ const isPrereqMet = computed(() => adsList.value.length > 0)
                 'p-3 rounded-lg border cursor-pointer transition text-xs',
                 selectedAdUuids.has(ad.campaign_ad_uuid) ? 'border-primary/60 bg-primary/5' : 'border-border/40 hover:border-primary/30',
               ]"
+              data-loc="campaigns.visual.ad-card"
               @click="toggleAd(ad.campaign_ad_uuid)"
             >
               <div class="flex items-center gap-2 mb-1">
@@ -175,6 +176,7 @@ const isPrereqMet = computed(() => adsList.value.length > 0)
           <button
             :disabled="selectedAdUuids.size === 0 || loading"
             class="h-10 px-6 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5 disabled:opacity-50"
+            data-loc="campaigns.visual.generate-btn"
             @click="generateVisuals"
           >
             <Loader2 v-if="loading" class="h-3.5 w-3.5 animate-spin" />

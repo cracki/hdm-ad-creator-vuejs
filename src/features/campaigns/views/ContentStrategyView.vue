@@ -268,12 +268,14 @@ async function runContentStrategy() {
           <div class="flex items-center justify-between">
             <button
               class="h-10 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition flex items-center gap-1.5"
+              data-loc="campaigns.content.prev-btn"
               @click="router.push(`/campaigns/${campaignUuid}`)"
             >
               <ArrowLeft class="h-3.5 w-3.5" /> {{ t('camp.backToCampaign') }}
             </button>
             <button
               class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5"
+              data-loc="campaigns.content.complete-btn"
               @click="router.push(`/campaigns/${campaignUuid}`)"
             >
               {{ t('content.complete') }} <ArrowRight class="h-3.5 w-3.5" />

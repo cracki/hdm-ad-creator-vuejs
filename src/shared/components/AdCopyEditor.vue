@@ -65,6 +65,7 @@ function reset() {
       <div class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Ad Copy</div>
       <div class="flex items-center gap-1">
         <button
+          data-loc="ad-copy-editor.reset-btn"
           class="h-7 w-7 grid place-items-center rounded-md hover:bg-white/[0.06] text-muted-foreground transition"
           @click="reset"
           title="Reset"
@@ -72,6 +73,7 @@ function reset() {
           <RotateCcw class="h-3.5 w-3.5" />
         </button>
         <button
+          data-loc="ad-copy-editor.toggle-edit-btn"
           :class="[
             'h-7 px-2.5 rounded-md text-xs font-medium flex items-center gap-1 transition',
             isEditing ? 'bg-success/15 text-success' : 'hover:bg-white/[0.06] text-muted-foreground',
@@ -102,6 +104,7 @@ function reset() {
       <input
         v-if="isEditing"
         v-model="localAd.headline"
+        data-loc="ad-copy-editor.headline-input"
         :maxlength="limits.headline"
         class="w-full h-9 px-3 rounded-lg bg-white/[0.03] border border-border/70 text-sm outline-none focus:border-primary/60 transition"
       />
@@ -125,6 +128,7 @@ function reset() {
       <textarea
         v-if="isEditing"
         v-model="localAd.primary_text"
+        data-loc="ad-copy-editor.primary-text-input"
         :maxlength="limits.primary_text"
         rows="3"
         class="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-border/70 text-sm outline-none focus:border-primary/60 transition resize-none"
@@ -149,6 +153,7 @@ function reset() {
       <input
         v-if="isEditing"
         v-model="localAd.description"
+        data-loc="ad-copy-editor.description-input"
         :maxlength="limits.description"
         class="w-full h-9 px-3 rounded-lg bg-white/[0.03] border border-border/70 text-sm outline-none focus:border-primary/60 transition"
       />
@@ -163,6 +168,7 @@ function reset() {
     <select
       v-if="isEditing"
       v-model="localAd.cta"
+      data-loc="ad-copy-editor.cta-select"
       class="w-full h-9 px-3 rounded-lg bg-white/[0.03] border border-border/70 text-sm outline-none focus:border-primary/60 transition"
     >
       <option>Shop Now</option>

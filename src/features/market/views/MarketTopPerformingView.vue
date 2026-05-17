@@ -27,7 +27,7 @@ async function runTopPerforming() {
       industry: industry.value,
       location: location.value,
     })
-    topResult.value = res.data
+    topResult.value = res.data as unknown as TopPerformingContentResponse
   } catch (e: any) {
     error.value = e?.response?.data?.detail ?? e?.message ?? t('market.error')
   } finally {
@@ -58,19 +58,20 @@ async function runTopPerforming() {
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.industry') }}</label>
             <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60">
               <ShoppingBag class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <input v-model="industry" :placeholder="t('market.industryHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
+              <input v-model="industry" data-loc="market.top.industry-input" :placeholder="t('market.industryHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
             </div>
           </div>
           <div>
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.location') }}</label>
             <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60">
               <MapPin class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <input v-model="location" :placeholder="t('market.locationHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
+              <input v-model="location" data-loc="market.top.location-input" :placeholder="t('market.locationHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
             </div>
           </div>
         </div>
 
         <button
+          data-loc="market.top.run-btn"
           class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5"
           :disabled="!industry || !location"
           @click="runTopPerforming"
@@ -90,7 +91,7 @@ async function runTopPerforming() {
       <div v-if="error" class="surface-card p-5 flex items-center gap-3 mb-6">
         <AlertCircle class="h-5 w-5 text-destructive shrink-0" />
         <div class="flex-1 text-sm font-medium text-destructive">{{ error }}</div>
-        <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5" @click="runTopPerforming">
+        <button data-loc="market.top.retry-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5" @click="runTopPerforming">
           <RefreshCw class="h-3 w-3" /> {{ t('market.retry') }}
         </button>
       </div>
@@ -99,13 +100,13 @@ async function runTopPerforming() {
       <div v-if="topResult && !loading">
         <div class="flex items-center justify-between mb-4">
           <div class="text-xs text-muted-foreground">{{ t('market.analysisComplete') }}</div>
-          <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="topResult = null">
+          <button data-loc="market.top.re-run-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="topResult = null">
             <RefreshCw class="h-3 w-3" /> {{ t('market.reRun') }}
           </button>
         </div>
 
         <div class="surface-card p-5">
-          <TopPerformingContentRenderer :data="topResult" />
+          <TopPerformingContentRenderer :data="(topResult as any)" />
         </div>
       </div>
     </div>

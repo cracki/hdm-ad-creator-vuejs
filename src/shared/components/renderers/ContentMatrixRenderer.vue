@@ -140,6 +140,6 @@ const stageLabels: Record<string, string> = {
   </div>
 
   <!-- Fallback for unexpected shapes -->
-  <AnalysisPayloadRenderer v-else-if="Object.keys(data).length" :data="data" />
+  <AnalysisPayloadRenderer v-else-if="Object.keys(data).length" :data="(data as any)" />
   <div v-else class="text-xs text-muted-foreground/50 py-2">{{ t('analysis.noData') }}</div>
 </template>

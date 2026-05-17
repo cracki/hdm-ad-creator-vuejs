@@ -87,6 +87,7 @@ interface NavItem {
   icon: any
   accent?: boolean
   tourId?: string
+  loc: string
 }
 interface NavGroup {
   labelKey: TKey
@@ -97,22 +98,22 @@ const nav: NavGroup[] = [
   {
     labelKey: 'nav.workspace',
     items: [
-      { to: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard },
-      { to: '/brands', labelKey: 'nav.brands', icon: Building2, tourId: 'sidebar-brands' },
-      { to: '/campaigns', labelKey: 'nav.campaigns', icon: Megaphone, tourId: 'sidebar-campaigns' },
-      { to: '/campaigns/full-funnel', labelKey: 'nav.fullFunnel', icon: Rocket },
-      { to: '/scenario-variants', labelKey: 'nav.scenarioVariants', icon: Grid3X3 },
+      { to: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, loc: 'sidebar.nav-dashboard' },
+      { to: '/brands', labelKey: 'nav.brands', icon: Building2, tourId: 'sidebar-brands', loc: 'sidebar.nav-brands' },
+      { to: '/campaigns', labelKey: 'nav.campaigns', icon: Megaphone, tourId: 'sidebar-campaigns', loc: 'sidebar.nav-campaigns' },
+      { to: '/campaigns/full-funnel', labelKey: 'nav.fullFunnel', icon: Rocket, loc: 'sidebar.nav-full-funnel' },
+      { to: '/scenario-variants', labelKey: 'nav.scenarioVariants', icon: Grid3X3, loc: 'sidebar.nav-scenario-variants' },
     ],
   },
   {
     labelKey: 'nav.intelligence',
     items: [
-      { to: '/market/intelligence', labelKey: 'nav.marketIntel', icon: TrendingUp, tourId: 'sidebar-intelligence' },
-      { to: '/market/hooks', labelKey: 'nav.aiHooks', icon: MessageSquare },
-      { to: '/market/gaps', labelKey: 'nav.contentGaps', icon: Search },
-      { to: '/market/matrix', labelKey: 'nav.contentMatrix', icon: Grid3X3 },
-      { to: '/market/top-performing', labelKey: 'nav.topContent', icon: TrendingUp },
-      { to: '/ad-library', labelKey: 'nav.adLibrary', icon: Library },
+      { to: '/market/intelligence', labelKey: 'nav.marketIntel', icon: TrendingUp, tourId: 'sidebar-intelligence', loc: 'sidebar.nav-market-intelligence' },
+      { to: '/market/hooks', labelKey: 'nav.aiHooks', icon: MessageSquare, loc: 'sidebar.nav-market-hooks' },
+      { to: '/market/gaps', labelKey: 'nav.contentGaps', icon: Search, loc: 'sidebar.nav-market-gaps' },
+      { to: '/market/matrix', labelKey: 'nav.contentMatrix', icon: Grid3X3, loc: 'sidebar.nav-market-matrix' },
+      { to: '/market/top-performing', labelKey: 'nav.topContent', icon: TrendingUp, loc: 'sidebar.nav-market-top-performing' },
+      { to: '/ad-library', labelKey: 'nav.adLibrary', icon: Library, loc: 'sidebar.nav-ad-library' },
     ],
   },
 ]
@@ -153,6 +154,7 @@ function isActive(item: NavItem): boolean {
             :key="item.to"
             :to="item.to"
             :data-tour="item.tourId"
+            :data-loc="item.loc"
             :class="[
               'group flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all relative',
               isActive(item)
@@ -185,7 +187,7 @@ function isActive(item: NavItem): boolean {
     </nav>
 
     <div class="p-3 border-t border-border/60 shrink-0 space-y-3">
-      <div class="surface-card p-3 relative overflow-hidden" data-tour="credits-bar">
+      <div class="surface-card p-3 relative overflow-hidden" data-tour="credits-bar" data-loc="sidebar.credits">
         <div class="absolute -top-8 -end-8 h-24 w-24 rounded-full bg-[image:var(--gradient-brand)] opacity-30 blur-2xl" />
         <div class="relative">
           <div class="text-xs font-semibold mb-1">{{ t('sidebar.aiCredits') }}</div>
@@ -197,6 +199,7 @@ function isActive(item: NavItem): boolean {
       </div>
       <button
         class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition"
+        data-loc="sidebar.logout"
         @click="handleLogout"
       >
         <LogOut class="h-4 w-4" />
@@ -213,7 +216,7 @@ function isActive(item: NavItem): boolean {
         <aside class="relative w-72 h-full flex flex-col border-e border-border/60 bg-background">
           <div class="h-16 flex items-center justify-between px-5 border-b border-border/60 shrink-0">
             <Logo />
-            <button class="h-8 w-8 grid place-items-center rounded-md hover:bg-white/[0.06] text-muted-foreground" aria-label="Close menu" @click="close">
+            <button class="h-8 w-8 grid place-items-center rounded-md hover:bg-white/[0.06] text-muted-foreground" aria-label="Close menu" data-loc="sidebar.mobile-close" @click="close">
               <X class="h-4 w-4" />
             </button>
           </div>
@@ -227,6 +230,7 @@ function isActive(item: NavItem): boolean {
                   v-for="item in group.items"
                   :key="item.to"
                   :to="item.to"
+                  :data-loc="item.loc"
                   :class="[
                     'group flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all relative',
                     isActive(item)
@@ -255,6 +259,7 @@ function isActive(item: NavItem): boolean {
             <LangSwitch />
             <button
               class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition"
+              data-loc="sidebar.mobile-profile"
               @click="close(); router.push({ name: 'profile' })"
             >
               <User class="h-4 w-4" />
@@ -262,6 +267,7 @@ function isActive(item: NavItem): boolean {
             </button>
             <button
               class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition"
+              data-loc="sidebar.mobile-logout"
               @click="handleLogout"
             >
               <LogOut class="h-4 w-4" />

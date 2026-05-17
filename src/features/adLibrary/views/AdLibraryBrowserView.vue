@@ -44,6 +44,7 @@ const isLoading = computed(() => anglesLoading.value || stagesLoading.value || p
   <Topbar :title="t('adlib.title')" :subtitle="t('adlib.subtitle')">
     <template #actions>
       <button
+        data-loc="adlib.browser.new-gen-btn"
         class="h-9 px-3.5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5"
         @click="router.push('/ad-library/generate')"
       >
@@ -61,7 +62,7 @@ const isLoading = computed(() => anglesLoading.value || stagesLoading.value || p
       <template v-else>
         <!-- Creative Angles -->
         <section class="mb-8">
-          <h3 class="text-sm font-semibold mb-3">{{ t('adlib.creativeAngles') }}</h3>
+          <h3 data-loc="adlib.browser.header-angles" class="text-sm font-semibold mb-3">{{ t('adlib.creativeAngles') }}</h3>
           <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <div
               v-for="angle in angles"
@@ -88,7 +89,7 @@ const isLoading = computed(() => anglesLoading.value || stagesLoading.value || p
 
         <!-- Funnel Stages -->
         <section class="mb-8">
-          <h3 class="text-sm font-semibold mb-3">{{ t('adlib.funnelStages') }}</h3>
+          <h3 data-loc="adlib.browser.header-stages" class="text-sm font-semibold mb-3">{{ t('adlib.funnelStages') }}</h3>
           <div class="grid grid-cols-3 gap-3">
             <div
               v-for="stage in stages"
@@ -109,7 +110,7 @@ const isLoading = computed(() => anglesLoading.value || stagesLoading.value || p
 
         <!-- Platforms -->
         <section class="mb-8">
-          <h3 class="text-sm font-semibold mb-3">{{ t('adlib.platforms') }}</h3>
+          <h3 data-loc="adlib.browser.header-platforms" class="text-sm font-semibold mb-3">{{ t('adlib.platforms') }}</h3>
           <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <div
               v-for="platform in platforms"
@@ -133,7 +134,7 @@ const isLoading = computed(() => anglesLoading.value || stagesLoading.value || p
 
         <!-- Past Runs -->
         <section>
-          <h3 class="text-sm font-semibold mb-3">{{ t('adlib.pastRuns') }}</h3>
+          <h3 data-loc="adlib.browser.header-runs" class="text-sm font-semibold mb-3">{{ t('adlib.pastRuns') }}</h3>
           <div v-if="runsLoading" class="flex justify-center py-6">
             <Loader2 class="h-5 w-5 animate-spin text-primary" />
           </div>
@@ -145,6 +146,7 @@ const isLoading = computed(() => anglesLoading.value || stagesLoading.value || p
             <div
               v-for="run in runs"
               :key="run.ad_library_run_uuid"
+              data-loc="adlib.browser.run-item"
               class="surface-card p-4 flex items-center gap-3 sm:gap-4 cursor-pointer hover:border-primary/40 transition"
               @click="router.push(`/ad-library/runs/${run.ad_library_run_uuid}`)"
             >

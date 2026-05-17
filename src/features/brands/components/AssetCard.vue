@@ -48,6 +48,7 @@ const hasAnalysis = computed(() => !!props.asset.analysis_data)
         <button
           v-if="!hasAnalysis"
           :disabled="analyzing"
+          data-loc="brands.assets.analyze-btn"
           class="flex-1 h-8 rounded-md bg-white/[0.04] border border-border/60 text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-white/[0.08] transition disabled:opacity-50"
           @click="emit('analyze', asset.asset_uuid)"
         >

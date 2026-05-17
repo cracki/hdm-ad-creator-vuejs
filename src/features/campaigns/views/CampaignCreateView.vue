@@ -49,6 +49,7 @@ async function handleCreate() {
               'surface-card p-4 text-start transition',
               selectedBrandUuid === brand.brand_uuid ? 'border-primary ring-1 ring-primary/40' : 'hover:border-primary/40',
             ]"
+            data-loc="campaigns.create.brand-select"
             @click="selectedBrandUuid = brand.brand_uuid"
           >
             <div class="flex items-center gap-3">
@@ -80,6 +81,7 @@ async function handleCreate() {
           v-model="campaignName"
           :placeholder="t('camp.namePlaceholder')"
           class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none focus:border-primary/60 transition"
+          data-loc="campaigns.create.name-input"
         />
       </div>
 
@@ -87,6 +89,7 @@ async function handleCreate() {
       <div class="flex items-center gap-3 pt-2">
         <button
           class="h-10 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition flex items-center gap-1.5"
+          data-loc="campaigns.create.cancel-btn"
           @click="router.back()"
         >
           <ArrowLeft class="h-3.5 w-3.5" /> {{ t('camp.cancel') }}
@@ -99,6 +102,7 @@ async function handleCreate() {
               ? 'bg-[image:var(--gradient-brand)] text-primary-foreground shadow-[var(--shadow-glow)]'
               : 'bg-white/5 text-muted-foreground cursor-not-allowed',
           ]"
+          data-loc="campaigns.create.create-btn"
           @click="handleCreate"
         >
           <span v-if="creating" class="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-primary-foreground" />

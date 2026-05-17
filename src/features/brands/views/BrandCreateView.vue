@@ -184,7 +184,7 @@ async function handleSubmit() {
   <main class="flex-1 p-4 sm:p-6 overflow-y-auto">
     <div class="max-w-3xl mx-auto space-y-8">
       <!-- Stepper -->
-      <div class="flex items-center justify-center gap-2">
+      <div data-loc="brands.create.stepper" class="flex items-center justify-center gap-2">
         <div v-for="(s, i) in steps" :key="s.n" class="flex items-center gap-2">
           <div class="flex items-center gap-3">
             <div
@@ -235,7 +235,7 @@ async function handleSubmit() {
           <div class="grid md:grid-cols-2 gap-4">
             <label class="block">
               <span class="text-xs font-medium text-muted-foreground mb-1.5 block">{{ t('newbrand.field.industry') }}</span>
-              <select v-model="form.selected_industry_id" class="w-full h-11 px-3 rounded-lg bg-white/[0.03] border border-border/70 text-sm outline-none focus:border-primary/60 transition">
+              <select v-model="form.selected_industry_id" data-loc="brands.create.industry-dropdown" class="w-full h-11 px-3 rounded-lg bg-white/[0.03] border border-border/70 text-sm outline-none focus:border-primary/60 transition">
                 <option :value="null" disabled>Select industry</option>
                 <option v-for="ind in industries" :key="ind.industry_uuid" :value="ind.industry_uuid" class="bg-card">
                   {{ ind.name }}
@@ -264,6 +264,7 @@ async function handleSubmit() {
             <input ref="logoInput" type="file" accept="image/*" class="hidden" @change="handleLogoSelect" />
             <div
               v-if="!logoPreview"
+              data-loc="brands.create.logo-upload"
               class="rounded-xl border-2 border-dashed border-border/60 p-8 text-center hover:border-primary/50 hover:bg-white/[0.02] transition cursor-pointer"
               @click="openLogoPicker"
             >
@@ -296,7 +297,7 @@ async function handleSubmit() {
                 </div>
               </div>
               <div class="flex flex-wrap gap-1.5">
-                <button v-for="c in ['#EC4899','#A855F7','#3B82F6','#10B981','#F59E0B','#EF4444']" :key="c" class="h-7 w-7 rounded-md border border-border/60 hover:scale-110 transition" :style="{ background: c }" @click="form.brand_color = c" />
+                <button v-for="c in ['#EC4899','#A855F7','#3B82F6','#10B981','#F59E0B','#EF4444']" :key="c" data-loc="brands.create.color-option" class="h-7 w-7 rounded-md border border-border/60 hover:scale-110 transition" :style="{ background: c }" @click="form.brand_color = c" />
               </div>
             </div>
           </div>
@@ -355,6 +356,7 @@ async function handleSubmit() {
         <button
           @click="step = Math.max(1, step - 1)"
           :disabled="step === 1"
+          data-loc="brands.create.back-btn"
           class="h-10 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <ArrowLeft class="h-3.5 w-3.5" /> {{ t('newbrand.previous') }}
@@ -362,6 +364,7 @@ async function handleSubmit() {
         <button
           v-if="step < 3"
           @click="step++"
+          data-loc="brands.create.continue-btn"
           class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5"
         >
           {{ t('newbrand.continue') }} <ArrowRight class="h-3.5 w-3.5" />
@@ -370,6 +373,7 @@ async function handleSubmit() {
           v-else
           @click="handleSubmit"
           :disabled="loading"
+          data-loc="brands.create.start-btn"
           class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5 disabled:opacity-60"
         >
           <Sparkles class="h-3.5 w-3.5" /> {{ loading ? '...' : t('newbrand.start') }}

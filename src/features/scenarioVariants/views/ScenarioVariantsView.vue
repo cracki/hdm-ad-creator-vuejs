@@ -211,6 +211,7 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
     <template #actions>
       <button
         v-if="variants.length > 0"
+        data-loc="variant.main.export-btn"
         class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium flex items-center gap-1.5 hover:bg-white/[0.03] transition"
         @click="exportCSV"
       >
@@ -227,6 +228,7 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
         <label class="text-xs font-medium text-muted-foreground block mb-2">{{ t('variant.selectBrand') }}</label>
         <select
           v-model="brandUuid"
+          data-loc="variant.main.brand-select"
           class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none focus:ring-1 focus:ring-primary/50"
         >
           <option value="" disabled>{{ t('variant.chooseBrand') }}</option>
@@ -248,6 +250,7 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
         <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           <button
             v-for="aud in audienceOptions" :key="aud.id"
+            data-loc="variant.main.audience-btn"
             @click="toggleAudience(aud.id)"
             :class="[
               'p-3 rounded-lg border text-start text-xs transition',
@@ -266,6 +269,7 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
         <div v-if="selectedAudiences.length > 0" class="mt-3 pt-3 border-t border-border/40">
           <textarea
             v-model="audienceNotes"
+            data-loc="variant.main.audience-notes"
             :placeholder="t('variant.audienceNotesPlaceholder')"
             class="w-full p-2 rounded-lg border border-border/60 bg-white/[0.02] text-xs outline-none resize-y min-h-[48px]"
             rows="2"
@@ -285,6 +289,7 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
         <div v-else class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
           <button
             v-for="style in styleOptions" :key="style.id"
+            data-loc="variant.main.style-btn"
             @click="toggleStyle(style.id)"
             :class="[
               'p-3 rounded-lg border text-start text-xs transition',
@@ -303,6 +308,7 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
         <div v-if="selectedStyles.length > 0" class="mt-3 pt-3 border-t border-border/40">
           <textarea
             v-model="styleNotes"
+            data-loc="variant.main.style-notes"
             :placeholder="t('variant.styleNotesPlaceholder')"
             class="w-full p-2 rounded-lg border border-border/60 bg-white/[0.02] text-xs outline-none resize-y min-h-[48px]"
             rows="2"
@@ -320,6 +326,7 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           <button
             v-for="fw in frameworkOptions" :key="fw.id"
+            data-loc="variant.main.meta-framework-btn"
             @click="toggleMetaFramework(fw.id)"
             :class="[
               'p-3 rounded-lg border text-start text-xs transition',
@@ -353,6 +360,7 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
         <div v-else class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
           <button
             v-for="fmt in formatOptions" :key="fmt.id"
+            data-loc="variant.main.format-btn"
             @click="toggleFormat(fmt.id)"
             :class="[
               'p-3 rounded-lg border text-center text-xs transition',
@@ -369,6 +377,7 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
         <div v-if="selectedFormats.length > 0" class="mt-3 pt-3 border-t border-border/40">
           <textarea
             v-model="formatNotes"
+            data-loc="variant.main.format-notes"
             :placeholder="t('variant.formatNotesPlaceholder')"
             class="w-full p-2 rounded-lg border border-border/60 bg-white/[0.02] text-xs outline-none resize-y min-h-[48px]"
             rows="2"
@@ -387,6 +396,7 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
           </div>
         </div>
         <button
+          data-loc="variant.main.generate-btn"
           :disabled="loading"
           class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5 disabled:opacity-50"
           @click="generate"
@@ -412,12 +422,14 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
           <h3 class="text-sm font-semibold">{{ variants.length }} {{ t('variant.totalVariants') }}</h3>
           <div class="flex gap-1 bg-white/[0.03] rounded-lg p-0.5">
             <button
+              data-loc="variant.main.view-cards"
               @click="viewMode = 'cards'"
               :class="['min-h-[44px] px-2.5 py-1 rounded text-xs font-medium transition', viewMode === 'cards' ? 'bg-white/[0.08] text-foreground' : 'text-muted-foreground']"
             >
               {{ t('variant.cards') }}
             </button>
             <button
+              data-loc="variant.main.view-table"
               @click="viewMode = 'table'"
               :class="['min-h-[44px] px-2.5 py-1 rounded text-xs font-medium transition', viewMode === 'table' ? 'bg-white/[0.08] text-foreground' : 'text-muted-foreground']"
             >
@@ -428,7 +440,7 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
 
         <!-- Cards View -->
         <div v-if="viewMode === 'cards'" class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          <div v-for="(v, idx) in variants" :key="idx" class="surface-card p-4">
+          <div v-for="(v, idx) in variants" :key="idx" data-loc="variant.main.variant-card" class="surface-card p-4">
             <div class="flex flex-wrap gap-1.5 mb-3">
               <span class="text-[11px] px-2 py-0.5 rounded-full bg-accent-cyan/15 text-accent-cyan">{{ v.audience }}</span>
               <span class="text-[11px] px-2 py-0.5 rounded-full bg-accent-magenta/15 text-accent-magenta">{{ v.style ?? v.creative_style }}</span>
@@ -492,7 +504,7 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
           <span class="text-[11px] px-1.5 py-0.5 rounded bg-accent-cyan/20 text-accent-cyan">Meta</span>
         </div>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          <div v-for="(mv, idx) in metaVariants" :key="`meta-${idx}`" class="surface-card p-4 border-s-2 border-s-accent-cyan">
+          <div v-for="(mv, idx) in metaVariants" :key="`meta-${idx}`" data-loc="variant.main.meta-variant-card" class="surface-card p-4 border-s-2 border-s-accent-cyan">
             <div class="flex flex-wrap gap-1.5 mb-3">
               <span class="text-[11px] px-2 py-0.5 rounded-full bg-accent-cyan/15 text-accent-cyan">{{ mv.framework_name ?? mv.framework ?? 'Framework' }}</span>
               <span v-if="mv.audience" class="text-[11px] px-2 py-0.5 rounded-full bg-accent-magenta/15 text-accent-magenta">{{ mv.audience }}</span>

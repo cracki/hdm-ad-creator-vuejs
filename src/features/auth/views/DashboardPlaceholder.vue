@@ -60,7 +60,7 @@ const recentBrands = computed(() => {
     <!-- Stats Cards -->
     <SkeletonLoader v-if="isLoading" variant="grid" :count="4" height="100px" />
     <div v-else class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
-      <div class="surface-card p-4 sm:p-5">
+      <div class="surface-card p-4 sm:p-5" data-loc="dashboard.stat-brands">
         <div class="flex items-center gap-2 mb-3">
           <div class="h-8 w-8 rounded-lg bg-primary/15 grid place-items-center">
             <Building2 class="h-4 w-4 text-primary" />
@@ -70,7 +70,7 @@ const recentBrands = computed(() => {
         <div class="text-2xl font-semibold">{{ stats.brands }}</div>
       </div>
 
-      <div class="surface-card p-4 sm:p-5">
+      <div class="surface-card p-4 sm:p-5" data-loc="dashboard.stat-campaigns">
         <div class="flex items-center gap-2 mb-3">
           <div class="h-8 w-8 rounded-lg bg-accent-cyan/15 grid place-items-center">
             <Megaphone class="h-4 w-4 text-accent-cyan" />
@@ -80,7 +80,7 @@ const recentBrands = computed(() => {
         <div class="text-2xl font-semibold">{{ stats.activeCampaigns }}</div>
       </div>
 
-      <div class="surface-card p-4 sm:p-5">
+      <div class="surface-card p-4 sm:p-5" data-loc="dashboard.stat-ads">
         <div class="flex items-center gap-2 mb-3">
           <div class="h-8 w-8 rounded-lg bg-accent-magenta/15 grid place-items-center">
             <Sparkles class="h-4 w-4 text-accent-magenta" />
@@ -90,7 +90,7 @@ const recentBrands = computed(() => {
         <div class="text-2xl font-semibold">{{ stats.completedCampaigns }}</div>
       </div>
 
-      <div class="surface-card p-4 sm:p-5">
+      <div class="surface-card p-4 sm:p-5" data-loc="dashboard.stat-analyses">
         <div class="flex items-center gap-2 mb-3">
           <div class="h-8 w-8 rounded-lg bg-success/15 grid place-items-center">
             <Brain class="h-4 w-4 text-success" />
@@ -107,6 +107,7 @@ const recentBrands = computed(() => {
       <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <RouterLink
           to="/brands/new"
+          data-loc="dashboard.quick-new-brand"
           class="surface-card p-4 flex items-center gap-3 hover:border-primary/40 transition group"
         >
           <div class="h-10 w-10 rounded-lg bg-[image:var(--gradient-brand)] grid place-items-center shrink-0 group-hover:scale-105 transition-transform">
@@ -121,6 +122,7 @@ const recentBrands = computed(() => {
 
         <RouterLink
           to="/campaigns/new"
+          data-loc="dashboard.quick-new-campaign"
           class="surface-card p-4 flex items-center gap-3 hover:border-primary/40 transition group"
         >
           <div class="h-10 w-10 rounded-lg bg-accent-cyan/20 grid place-items-center shrink-0 group-hover:scale-105 transition-transform">
@@ -135,6 +137,7 @@ const recentBrands = computed(() => {
 
         <RouterLink
           to="/campaigns/full-funnel"
+          data-loc="dashboard.quick-full-funnel"
           class="surface-card p-4 flex items-center gap-3 hover:border-primary/40 transition group"
         >
           <div class="h-10 w-10 rounded-lg bg-accent-magenta/20 grid place-items-center shrink-0 group-hover:scale-105 transition-transform">
@@ -166,6 +169,7 @@ const recentBrands = computed(() => {
             v-for="camp in recentCampaigns"
             :key="camp.campaign_uuid"
             :to="`/campaigns/${camp.campaign_uuid}`"
+            data-loc="dashboard.recent-campaign"
             class="surface-card p-3 flex items-center gap-3 hover:border-primary/40 transition"
           >
             <div class="h-9 w-9 rounded-lg bg-accent-cyan/15 grid place-items-center shrink-0">
@@ -207,6 +211,7 @@ const recentBrands = computed(() => {
             v-for="brand in recentBrands"
             :key="brand.brand_uuid"
             :to="`/brands/${brand.brand_uuid}`"
+            data-loc="dashboard.recent-brand"
             class="surface-card p-3 flex items-center gap-3 hover:border-primary/40 transition"
           >
             <div class="h-9 w-9 rounded-lg bg-primary/15 grid place-items-center shrink-0 text-xs font-semibold text-primary">

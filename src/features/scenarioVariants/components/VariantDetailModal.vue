@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { X, Copy, Check } from 'lucide-vue-next'
+import { X, Copy } from 'lucide-vue-next'
 import { useI18n } from '@/shared/utils/i18n'
 import { useToast } from '@/shared/composables/useToast'
 

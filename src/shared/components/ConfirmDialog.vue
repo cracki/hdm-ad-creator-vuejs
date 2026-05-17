@@ -87,6 +87,7 @@ function handleKeydown(e: KeyboardEvent) {
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="handleCancel" />
         <div ref="dialogRef" class="relative surface-card w-full max-w-sm p-5 space-y-4 animate-scale-in" @keydown="handleKeydown">
           <button
+            data-loc="confirm-dialog.close-btn"
             class="absolute top-3 end-3 h-10 w-10 grid place-items-center rounded-md hover:bg-white/[0.06] text-muted-foreground"
             aria-label="Close"
             @click="handleCancel"
@@ -111,12 +112,14 @@ function handleKeydown(e: KeyboardEvent) {
 
           <div class="flex items-center justify-end gap-2 pt-1">
             <button
+              data-loc="confirm-dialog.cancel-btn"
               class="h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
               @click="handleCancel"
             >
               {{ cancelLabel || t('common.cancel') }}
             </button>
             <button
+              data-loc="confirm-dialog.confirm-btn"
               :class="[
                 'h-9 px-3.5 rounded-lg text-xs font-medium transition',
                 destructive

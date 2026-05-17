@@ -48,7 +48,7 @@ async function runIntelligence() {
       content_goal: contentGoal.value,
     })
     result.value = res.data
-    resultPayload.value = res.data.result_payload ?? {}
+    resultPayload.value = (res.data.result_payload ?? {}) as unknown as Record<string, unknown>
   } catch (e: any) {
     error.value = e?.response?.data?.detail ?? e?.message ?? t('market.error')
   } finally {
@@ -81,6 +81,7 @@ async function runIntelligence() {
             <button
               v-for="brand in brands"
               :key="brand.brand_uuid"
+              data-loc="market.intel.brand-select"
               :class="[
                 'flex items-center gap-2 h-10 px-3 rounded-lg border transition text-start text-sm',
                 selectedBrandUuid === brand.brand_uuid
@@ -101,20 +102,20 @@ async function runIntelligence() {
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.industry') }}</label>
             <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60">
               <ShoppingBag class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <input v-model="industry" :placeholder="t('market.industryHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
+              <input v-model="industry" data-loc="market.intel.industry-input" :placeholder="t('market.industryHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
             </div>
           </div>
           <div>
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.location') }}</label>
             <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60">
               <MapPin class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <input v-model="location" :placeholder="t('market.locationHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
+              <input v-model="location" data-loc="market.intel.location-input" :placeholder="t('market.locationHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
             </div>
           </div>
         </div>
         <div>
           <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.brandServices') }}</label>
-          <input v-model="brandServices" :placeholder="t('market.brandServicesHint')" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60" />
+          <input v-model="brandServices" data-loc="market.intel.brand-services-input" :placeholder="t('market.brandServicesHint')" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60" />
         </div>
         <div>
           <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.contentGoal') }}</label>
@@ -122,6 +123,7 @@ async function runIntelligence() {
             <button
               v-for="goal in contentGoals"
               :key="goal.value"
+              data-loc="market.intel.goal-btn"
               :class="[
                 'h-8 px-3 rounded-lg text-xs font-medium border transition',
                 contentGoal === goal.value
@@ -136,6 +138,7 @@ async function runIntelligence() {
         </div>
 
         <button
+          data-loc="market.intel.run-btn"
           class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5"
           :disabled="!selectedBrandUuid || !industry || !location"
           @click="runIntelligence"
@@ -157,7 +160,7 @@ async function runIntelligence() {
         <div class="flex-1">
           <div class="text-sm font-medium text-destructive">{{ error }}</div>
         </div>
-        <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5" @click="runIntelligence">
+        <button data-loc="market.intel.retry-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5" @click="runIntelligence">
           <RefreshCw class="h-3 w-3" /> {{ t('market.retry') }}
         </button>
       </div>
@@ -169,14 +172,14 @@ async function runIntelligence() {
             <Check class="h-4 w-4 text-success" />
             <span class="text-xs text-muted-foreground">{{ t('market.completed') }}</span>
           </div>
-          <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="result = null">
+          <button data-loc="market.intel.re-run-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="result = null">
             <RefreshCw class="h-3 w-3" /> {{ t('market.reRun') }}
           </button>
         </div>
 
         <div class="surface-card p-5 mb-4">
           <div class="text-xs font-semibold mb-3">{{ t('market.summary') }}</div>
-          <IntelligenceSummaryRenderer :data="result.summary ?? {}" />
+          <IntelligenceSummaryRenderer :data="(result.summary ?? {}) as any" />
         </div>
 
         <div class="surface-card p-5">

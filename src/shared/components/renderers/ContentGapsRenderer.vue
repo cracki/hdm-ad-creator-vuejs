@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Search, AlertTriangle, Lightbulb, ExternalLink, HelpCircle } from 'lucide-vue-next'
-import type { ContentGapsResponse, ContentGapItem } from '@/features/market/types'
+import { AlertTriangle, Lightbulb, ExternalLink, HelpCircle } from 'lucide-vue-next'
+import type { ContentGapsResponse } from '@/features/market/types'
 import AnalysisPayloadRenderer from '@/shared/components/renderers/AnalysisPayloadRenderer.vue'
 import { useI18n } from '@/shared/utils/i18n'
 
@@ -124,6 +124,6 @@ function contentTypeName(type: string): string {
     </div>
   </div>
 
-  <AnalysisPayloadRenderer v-else-if="Object.keys(data).length" :data="data" />
+  <AnalysisPayloadRenderer v-else-if="Object.keys(data).length" :data="(data as any)" />
   <div v-else class="text-xs text-muted-foreground/50 py-2">{{ t('analysis.noData') }}</div>
 </template>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { BarChart3, TrendingUp, Lightbulb, Layers, Users } from 'lucide-vue-next'
+import { BarChart3, TrendingUp, Lightbulb, Layers } from 'lucide-vue-next'
 import type { ContentIntelligenceSummary } from '@/features/market/types'
 import { useI18n } from '@/shared/utils/i18n'
 

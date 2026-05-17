@@ -29,7 +29,7 @@ async function runMatrix() {
       location: location.value,
       target_personas: personas.value ? personas.value.split(',').map(s => s.trim()) : undefined,
     })
-    matrixResult.value = res.data
+    matrixResult.value = res.data as unknown as ContentMatrixResponse
   } catch (e: any) {
     error.value = e?.response?.data?.detail ?? e?.message ?? t('market.error')
   } finally {
@@ -60,14 +60,14 @@ async function runMatrix() {
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.industry') }}</label>
             <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60">
               <ShoppingBag class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <input v-model="industry" :placeholder="t('market.industryHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
+              <input v-model="industry" data-loc="market.matrix.industry-input" :placeholder="t('market.industryHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
             </div>
           </div>
           <div>
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.location') }}</label>
             <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60">
               <MapPin class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <input v-model="location" :placeholder="t('market.locationHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
+              <input v-model="location" data-loc="market.matrix.location-input" :placeholder="t('market.locationHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
             </div>
           </div>
         </div>
@@ -80,6 +80,7 @@ async function runMatrix() {
         </div>
 
         <button
+          data-loc="market.matrix.run-btn"
           class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5"
           :disabled="!industry || !location"
           @click="runMatrix"
@@ -99,7 +100,7 @@ async function runMatrix() {
       <div v-if="error" class="surface-card p-5 flex items-center gap-3 mb-6">
         <AlertCircle class="h-5 w-5 text-destructive shrink-0" />
         <div class="flex-1 text-sm font-medium text-destructive">{{ error }}</div>
-        <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5" @click="runMatrix">
+        <button data-loc="market.matrix.retry-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5" @click="runMatrix">
           <RefreshCw class="h-3 w-3" /> {{ t('market.retry') }}
         </button>
       </div>
@@ -108,13 +109,13 @@ async function runMatrix() {
       <div v-if="matrixResult && !loading">
         <div class="flex items-center justify-between mb-4">
           <div class="text-xs text-muted-foreground">{{ t('market.analysisComplete') }}</div>
-          <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="matrixResult = null">
+          <button data-loc="market.matrix.re-run-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="matrixResult = null">
             <RefreshCw class="h-3 w-3" /> {{ t('market.reRun') }}
           </button>
         </div>
 
         <div class="surface-card p-5">
-          <ContentMatrixRenderer :data="matrixResult" />
+          <ContentMatrixRenderer :data="(matrixResult as any)" />
         </div>
       </div>
     </div>

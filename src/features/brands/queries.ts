@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, type Ref } from 'vue'
 import { brandsApi } from './api'
-import type { BrandCreatePayload, AnalysisStartPayload, BrandSocialMedia } from './types'
+import type { BrandCreatePayload, AnalysisStartPayload } from './types'
 import { parseAnalysisRun, analysisRunListSchema } from './schemas'
 
 export function useBrands() {

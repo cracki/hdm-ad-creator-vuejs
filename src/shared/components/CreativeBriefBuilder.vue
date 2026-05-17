@@ -155,12 +155,14 @@ const progressPct = computed(() => Math.round((filledCount.value / 5) * 100))
       </div>
       <div class="flex gap-2">
         <button
+          data-loc="creative-brief.download-text-btn"
           class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.04] transition flex items-center gap-1.5"
           @click="downloadBrief"
         >
           <Download class="h-3.5 w-3.5" /> {{ t('brief.download') }}
         </button>
         <button
+          data-loc="creative-brief.export-json-btn"
           class="h-9 px-3 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium flex items-center gap-1.5"
           @click="downloadJson"
         >
@@ -184,6 +186,7 @@ const progressPct = computed(() => Math.round((filledCount.value / 5) * 100))
         <button
           v-for="p in PLATFORM_OPTIONS"
           :key="p"
+          data-loc="creative-brief.platform-btn"
           :class="[
             'px-3 py-1.5 rounded-lg text-xs font-medium border transition',
             brief.platforms.includes(p) ? 'bg-primary/15 border-primary/40 text-primary' : 'border-border/60 text-muted-foreground hover:bg-white/[0.04]',
@@ -203,11 +206,13 @@ const progressPct = computed(() => Math.round((filledCount.value / 5) * 100))
           <input
             v-if="field.type === 'input'"
             v-model="(brief as any)[field.key]"
+            data-loc="creative-brief.form-input"
             class="w-full h-9 px-3 rounded-lg bg-white/[0.03] border border-border/70 text-sm outline-none focus:border-primary/60 transition"
           />
           <textarea
             v-else
             v-model="(brief as any)[field.key]"
+            data-loc="creative-brief.form-textarea"
             :rows="field.rows ?? 2"
             class="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-border/70 text-sm outline-none focus:border-primary/60 transition resize-none"
           />

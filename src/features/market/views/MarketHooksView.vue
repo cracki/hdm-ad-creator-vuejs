@@ -78,7 +78,7 @@ async function generateHooks() {
           <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.titles') }}</label>
           <div class="space-y-2">
             <div v-for="(_, idx) in titles" :key="idx" class="flex items-center gap-2">
-              <input v-model="titles[idx]" :placeholder="t('market.titleHint')" class="flex-1 h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60" />
+              <input v-model="titles[idx]" data-loc="market.hooks.title-input" :placeholder="t('market.titleHint')" class="flex-1 h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60" />
               <button
                 v-if="titles.length > 1"
                 class="h-10 w-10 rounded-lg border border-border/60 grid place-items-center hover:bg-white/[0.03] transition shrink-0"
@@ -88,26 +88,27 @@ async function generateHooks() {
               </button>
             </div>
           </div>
-          <button class="mt-2 h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="addTitle">
+          <button data-loc="market.hooks.add-title-btn" class="mt-2 h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="addTitle">
             <Plus class="h-3 w-3" /> {{ t('market.addTitle') }}
           </button>
         </div>
         <div class="grid sm:grid-cols-3 gap-4">
           <div>
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.industry') }}</label>
-            <input v-model="industry" :placeholder="t('market.industryHint')" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60" />
+            <input v-model="industry" data-loc="market.hooks.industry-input" :placeholder="t('market.industryHint')" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60" />
           </div>
           <div>
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.brandName') }}</label>
-            <input v-model="brandName" :placeholder="t('market.brandNameHint')" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60" />
+            <input v-model="brandName" data-loc="market.hooks.brand-name-input" :placeholder="t('market.brandNameHint')" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60" />
           </div>
           <div>
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.hookCount') }}</label>
-            <input v-model.number="hookCount" type="number" min="1" max="50" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60" />
+            <input v-model.number="hookCount" data-loc="market.hooks.hook-count-input" type="number" min="1" max="50" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60" />
           </div>
         </div>
 
         <button
+          data-loc="market.hooks.generate-btn"
           class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5"
           :disabled="!titles.some(t => t.trim()) || !industry"
           @click="generateHooks"
@@ -129,7 +130,7 @@ async function generateHooks() {
         <div class="flex-1">
           <div class="text-sm font-medium text-destructive">{{ error }}</div>
         </div>
-        <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5" @click="generateHooks">
+        <button data-loc="market.hooks.retry-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5" @click="generateHooks">
           <RefreshCw class="h-3 w-3" /> {{ t('market.retry') }}
         </button>
       </div>
@@ -138,7 +139,7 @@ async function generateHooks() {
       <div v-if="hooksResult && !loading">
         <div class="flex items-center justify-between mb-4">
           <div class="text-xs text-muted-foreground">{{ t('market.hooksFound', { count: parsedHooks.length }) }}</div>
-          <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="hooksResult = null">
+          <button data-loc="market.hooks.re-run-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="hooksResult = null">
             <RefreshCw class="h-3 w-3" /> {{ t('market.reRun') }}
           </button>
         </div>

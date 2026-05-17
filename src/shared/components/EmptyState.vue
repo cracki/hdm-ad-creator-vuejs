@@ -28,6 +28,7 @@ defineEmits<{ action: [] }>()
     <p v-if="description" class="text-sm text-muted-foreground mb-5">{{ description }}</p>
     <button
       v-if="showAction && actionLabel"
+      data-loc="empty-state.action-btn"
       class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5 mx-auto"
       @click="$emit('action')"
     >

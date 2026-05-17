@@ -8,8 +8,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="/manifest.json" />
-    <link rel="preconnect" href="https://api.65.109.213.96.sslip.io" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://accounts.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://api.65.109.213.96.sslip.io http://localhost:* https://oauth2.googleapis.com;" />
+    <link rel="preconnect" href="%VITE_API_URL%" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://accounts.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' %VITE_API_URL% http://localhost:* https://oauth2.googleapis.com;" />
     <title>HDM Ad Creator</title>
   </head>
   <body>

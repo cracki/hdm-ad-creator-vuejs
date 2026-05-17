@@ -39,7 +39,7 @@ async function handleSave() {
   <Topbar :title="t('nav.profile')" />
   <main class="flex-1 p-4 sm:p-6 overflow-y-auto">
     <div class="max-w-lg mx-auto surface-card p-6 sm:p-8 animate-[fade-up_0.4s_ease-out]">
-      <form @submit.prevent="handleSave" class="space-y-5">
+      <form @submit.prevent="handleSave" data-loc="auth.profile.form" class="space-y-5">
         <label class="block">
           <span class="text-xs font-medium text-muted-foreground mb-1.5 block">{{ t('auth.firstName') }}</span>
           <div class="relative">
@@ -47,6 +47,7 @@ async function handleSave() {
             <input
               v-model="form.first_name"
               type="text"
+              data-loc="auth.profile.first-name-input"
               required
               class="w-full h-11 ps-9 pe-3 rounded-lg bg-white/[0.03] border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 focus:bg-white/[0.05] transition"
             />
@@ -60,6 +61,7 @@ async function handleSave() {
             <input
               v-model="form.last_name"
               type="text"
+              data-loc="auth.profile.last-name-input"
               required
               class="w-full h-11 ps-9 pe-3 rounded-lg bg-white/[0.03] border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 focus:bg-white/[0.05] transition"
             />
@@ -68,6 +70,7 @@ async function handleSave() {
 
         <button
           type="submit"
+          data-loc="auth.profile.save-btn"
           :disabled="updateMutation.isPending.value"
           class="group w-full h-11 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground font-medium text-sm shadow-[var(--shadow-glow)] hover:opacity-95 transition flex items-center justify-center gap-2 disabled:opacity-60"
         >

@@ -159,6 +159,7 @@ function goNext() {
               'surface-card p-4 flex items-center gap-4 cursor-pointer transition',
               isSelected(p.key) ? 'border-primary/60' : 'hover:border-primary/30',
             ]"
+            data-loc="campaigns.platform.select-card"
             @click="togglePlatform(p.key)"
           >
             <div
@@ -189,6 +190,7 @@ function goNext() {
           <button
             :disabled="selected.size === 0 || saving"
             class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5 disabled:opacity-50"
+            data-loc="campaigns.platform.save-btn"
             @click="savePlatforms"
           >
             <Loader2 v-if="saving" class="h-3.5 w-3.5 animate-spin" />

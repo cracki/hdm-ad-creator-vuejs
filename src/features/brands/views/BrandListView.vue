@@ -113,6 +113,7 @@ setActions([
     <template #actions>
       <RouterLink
         to="/brands/new"
+        data-loc="brands.list.new-brand-btn"
         class="hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] hover:opacity-95 transition"
       >
         <Plus class="h-3.5 w-3.5" /> {{ t('brands.new') }}
@@ -127,6 +128,7 @@ setActions([
         <input
           v-model="searchQuery"
           :placeholder="t('brands.searchPlaceholder')"
+          data-loc="brands.list.search"
           class="flex-1 min-w-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
         />
       </div>
@@ -135,6 +137,7 @@ setActions([
       <div class="relative">
         <button
           @click="toggleIndustryDropdown"
+          data-loc="brands.list.industry-filter"
           class="h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-xs font-medium hover:bg-white/[0.06] transition flex items-center gap-1.5"
         >
           <SlidersHorizontal class="h-3.5 w-3.5" />
@@ -175,6 +178,7 @@ setActions([
         v-for="(brand, index) in filteredBrands"
         :key="brand.brand_uuid"
         :to="`/brands/${brand.brand_uuid}`"
+        data-loc="brands.list.brand-card"
         class="group surface-card p-5 hover:border-primary/40 transition relative block"
       >
         <div class="absolute -top-12 -end-12 h-32 w-32 rounded-full bg-[image:var(--gradient-brand)] opacity-0 group-hover:opacity-10 blur-3xl transition" />
@@ -183,7 +187,7 @@ setActions([
             {{ getInitials(brand.company_name) }}
           </div>
           <div class="relative">
-            <button @click="toggleMenu(brand.brand_uuid, $event)" class="h-10 w-10 grid place-items-center rounded-md hover:bg-white/[0.06] text-muted-foreground">
+            <button @click="toggleMenu(brand.brand_uuid, $event)" data-loc="brands.list.card-menu-toggle" class="h-10 w-10 grid place-items-center rounded-md hover:bg-white/[0.06] text-muted-foreground">
               <MoreHorizontal class="h-4 w-4" />
             </button>
             <!-- Dropdown menu -->
@@ -194,6 +198,7 @@ setActions([
             >
               <RouterLink
                 :to="`/brands/${brand.brand_uuid}`"
+                data-loc="brands.list.card-view-details"
                 class="flex items-center gap-2 w-full text-start px-3 py-2 text-xs text-muted-foreground hover:bg-white/[0.04] hover:text-foreground transition"
                 @click="closeMenu"
               >
@@ -201,6 +206,7 @@ setActions([
               </RouterLink>
               <RouterLink
                 :to="`/brands/${brand.brand_uuid}/edit`"
+                data-loc="brands.list.card-edit"
                 class="flex items-center gap-2 w-full text-start px-3 py-2 text-xs text-muted-foreground hover:bg-white/[0.04] hover:text-foreground transition"
                 @click="closeMenu"
               >
@@ -208,6 +214,7 @@ setActions([
               </RouterLink>
               <RouterLink
                 :to="`/brands/${brand.brand_uuid}/analysis`"
+                data-loc="brands.list.card-analyze"
                 class="flex items-center gap-2 w-full text-start px-3 py-2 text-xs text-muted-foreground hover:bg-white/[0.04] hover:text-foreground transition"
                 @click="closeMenu"
               >
@@ -215,6 +222,7 @@ setActions([
               </RouterLink>
               <button
                 @click="handleDelete(brand.brand_uuid)"
+                data-loc="brands.list.card-delete"
                 class="flex items-center gap-2 w-full text-start px-3 py-2 text-xs text-destructive hover:bg-destructive/5 transition"
               >
                 <Trash2 class="h-3.5 w-3.5" /> {{ t('brands.delete') }}
@@ -241,6 +249,7 @@ setActions([
 
       <RouterLink
         to="/brands/new"
+        data-loc="brands.list.add-brand-card"
         class="rounded-xl border-2 border-dashed border-border/60 hover:border-primary/50 hover:bg-white/[0.02] transition flex flex-col items-center justify-center p-8 min-h-[180px] sm:min-h-[230px] text-center gap-3 group"
       >
         <div class="h-12 w-12 rounded-xl bg-[image:var(--gradient-brand)] grid place-items-center shadow-[var(--shadow-glow)] group-hover:scale-110 transition-transform">

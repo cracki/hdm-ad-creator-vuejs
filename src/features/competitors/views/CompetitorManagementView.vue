@@ -108,6 +108,7 @@ setActions([
   >
     <template #actions>
       <button
+        data-loc="competitors.manage.auto-discover-btn"
         @click="handleIdentify"
         :disabled="identifyMutation.isPending.value"
         class="hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition disabled:opacity-50"
@@ -117,6 +118,7 @@ setActions([
         {{ t('competitors.autoDiscover') }}
       </button>
       <button
+        data-loc="competitors.manage.insights-btn"
         @click="handleInsights"
         :disabled="insightsMutation.isPending.value"
         class="hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition disabled:opacity-50"
@@ -126,6 +128,7 @@ setActions([
         {{ t('competitors.insights') }}
       </button>
       <button
+        data-loc="competitors.manage.add-btn"
         @click="showAddForm = !showAddForm"
         class="hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] hover:opacity-95 transition"
       >
@@ -141,23 +144,26 @@ setActions([
       <div class="grid sm:grid-cols-2 gap-3">
         <input
           v-model="newName"
+          data-loc="competitors.manage.name-input"
           :placeholder="t('competitors.namePlaceholder')"
           class="h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none focus:border-primary/60 transition"
         />
         <input
           v-model="newUrl"
+          data-loc="competitors.manage.url-input"
           :placeholder="t('competitors.urlPlaceholder')"
           class="h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none focus:border-primary/60 transition"
         />
       </div>
       <div class="flex items-center gap-3">
         <label class="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-          <input v-model="newIsDirect" type="checkbox" class="rounded border-border/60" />
+          <input v-model="newIsDirect" data-loc="competitors.manage.direct-checkbox" type="checkbox" class="rounded border-border/60" />
           {{ t('competitors.directCompetitor') }}
         </label>
       </div>
       <div class="flex gap-2">
         <button
+          data-loc="competitors.manage.create-btn"
           @click="handleAdd"
           :disabled="createMutation.isPending.value || !newName.trim() || !newUrl.trim()"
           class="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] hover:opacity-95 transition disabled:opacity-50"
@@ -166,6 +172,7 @@ setActions([
           {{ t('competitors.create') }}
         </button>
         <button
+          data-loc="competitors.manage.cancel-btn"
           @click="showAddForm = false"
           class="inline-flex items-center h-9 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
         >
@@ -175,7 +182,7 @@ setActions([
     </div>
 
     <!-- Insights panel -->
-    <div v-if="showInsights && insightsMutation.data.value" class="surface-card p-5 space-y-3">
+    <div v-if="showInsights && insightsMutation.data.value" data-loc="competitors.manage.insights-panel" class="surface-card p-5 space-y-3">
       <div class="flex items-center justify-between">
         <div class="font-semibold text-sm flex items-center gap-2">
           <Lightbulb class="h-4 w-4 text-amber-400" />
@@ -224,6 +231,7 @@ setActions([
       <div
         v-for="comp in competitors"
         :key="comp.competitor_uuid"
+        data-loc="competitors.manage.list-item"
         class="surface-card overflow-hidden transition"
         :class="{ 'border-primary/40': expandedUuid === comp.competitor_uuid }"
       >
@@ -265,6 +273,7 @@ setActions([
           </div>
           <div class="flex gap-2 pt-2">
             <button
+              data-loc="competitors.manage.analyze-btn"
               @click="handleAnalyze(comp.competitor_uuid)"
               :disabled="analyzingUuid !== null"
               class="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium hover:opacity-95 transition disabled:opacity-50"
@@ -274,6 +283,7 @@ setActions([
               {{ analyzingUuid === comp.competitor_uuid ? t('competitors.analyzing') : (lastAnalysis ? t('competitors.reAnalyze') : t('competitors.analyze')) }}
             </button>
             <button
+              data-loc="competitors.manage.delete-btn"
               @click="handleDelete(comp.competitor_uuid)"
               :disabled="deleteMutation.isPending.value"
               class="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-destructive/40 text-destructive text-xs font-medium hover:bg-destructive/10 transition disabled:opacity-50"

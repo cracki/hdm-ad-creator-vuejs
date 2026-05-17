@@ -167,6 +167,7 @@ const normalizedPayload = computed(() => {
                 v-if="!results.get(p)?.completed"
                 :disabled="loading && currentPlatform === p"
                 class="h-8 px-3 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-[11px] font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5 disabled:opacity-50"
+                data-loc="campaigns.strategy.run-btn"
                 @click="runStrategy(p)"
               >
                 <Loader2 v-if="loading && currentPlatform === p" class="h-3 w-3 animate-spin" />
@@ -200,6 +201,7 @@ const normalizedPayload = computed(() => {
         <div class="flex items-center justify-between">
           <button
             class="h-10 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition flex items-center gap-1.5"
+            data-loc="campaigns.strategy.prev-btn"
             @click="router.push(`/campaigns/${campaignUuid}/platform`)"
           >
             <ArrowLeft class="h-3.5 w-3.5" /> {{ t('smart.previous') }}
@@ -207,6 +209,7 @@ const normalizedPayload = computed(() => {
           <button
             :disabled="!allDone"
             class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5 disabled:opacity-50"
+            data-loc="campaigns.strategy.continue-btn"
             @click="router.push(`/campaigns/${campaignUuid}/generate-ads`)"
           >
             {{ t('smart.approveContinue') }} {{ t('smart.continue') }} <ArrowRight class="h-3.5 w-3.5" />

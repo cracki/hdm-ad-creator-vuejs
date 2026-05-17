@@ -88,6 +88,7 @@ const platformIcon: Record<string, string> = {
       >
         <!-- Header row -->
         <div
+          data-loc="competitors.social.profile-header"
           class="p-5 flex items-center justify-between cursor-pointer hover:bg-white/[0.01] transition"
           @click="toggleExpand(profile.social_media_uuid)"
         >
@@ -98,7 +99,7 @@ const platformIcon: Record<string, string> = {
             <div>
               <div class="font-medium text-sm capitalize">{{ profile.platform }}</div>
               <div v-if="(profile as any).profile_url" class="text-xs text-muted-foreground flex items-center gap-1">
-                <a :href="(profile as any).profile_url" target="_blank" @click.stop class="hover:underline">{{ (profile as any).profile_url }}</a>
+                <a :href="(profile as any).profile_url" data-loc="competitors.social.profile-link" target="_blank" @click.stop class="hover:underline">{{ (profile as any).profile_url }}</a>
               </div>
             </div>
           </div>
@@ -109,6 +110,7 @@ const platformIcon: Record<string, string> = {
             <button
               @click.stop="handleAnalyze(profile.social_media_uuid)"
               :disabled="analyzingUuid === profile.social_media_uuid"
+              data-loc="competitors.social.analyze-btn"
               class="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium transition"
               :class="profile.analysis_data
                 ? 'border border-border/60 hover:bg-white/[0.03]'
@@ -137,6 +139,7 @@ const platformIcon: Record<string, string> = {
     <div v-if="socialProfiles?.length" class="flex justify-center pt-2">
       <RouterLink
         :to="`/brands/${brandUuid}/social/audit`"
+        data-loc="competitors.social.full-audit-link"
         class="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
       >
         <ExternalLink class="h-3.5 w-3.5" /> {{ t('social.fullAudit') }}

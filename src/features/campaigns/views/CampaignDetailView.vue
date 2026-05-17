@@ -85,7 +85,7 @@ watch(campaign, (c) => {
     :subtitle="campaign?.brand?.company_name"
   />
   <main class="flex-1 p-4 sm:p-6">
-    <Breadcrumb :items="breadcrumbs" :show-back="true" back-to="/campaigns" />
+    <Breadcrumb :items="breadcrumbs" :show-back="true" back-to="/campaigns" data-loc="campaigns.detail.back-btn" />
     <div v-if="isLoading" class="flex items-center justify-center py-20">
       <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
     </div>
@@ -98,6 +98,7 @@ watch(campaign, (c) => {
           'surface-card p-4 flex items-center gap-3 sm:gap-4 transition cursor-pointer',
           canNavigate(step) ? 'hover:border-primary/40' : 'opacity-50 cursor-not-allowed',
         ]"
+        data-loc="campaigns.detail.step-card"
         @click="navigateToStep(step)"
       >
         <!-- Icon -->

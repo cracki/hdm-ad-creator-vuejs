@@ -126,6 +126,7 @@ setActions([
     <template #actions>
       <button
         @click="router.push(`/brands/${brandUuid}`)"
+        data-loc="brands.analysis.back-btn"
         class="hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
       >
         <ChevronLeft class="h-3.5 w-3.5" /> {{ t('analysis.backToBrand') }}
@@ -171,6 +172,7 @@ setActions([
 
       <button
         @click="startAnalysis"
+        data-loc="brands.analysis.start-btn"
         class="inline-flex items-center gap-2 h-11 px-6 rounded-xl bg-[image:var(--gradient-brand)] text-primary-foreground text-sm font-semibold shadow-[var(--shadow-glow)] hover:opacity-95 transition"
       >
         <Play class="h-4 w-4" /> {{ t('analysis.startBtn') }}
@@ -203,6 +205,7 @@ setActions([
       </div>
       <button
         @click="retryAnalysis"
+        data-loc="brands.analysis.retry-btn"
         class="inline-flex items-center gap-2 h-10 px-5 rounded-xl border border-border/60 text-sm font-medium hover:bg-white/[0.03] transition"
       >
         <RefreshCw class="h-4 w-4" /> {{ t('analysis.retry') }}
@@ -227,6 +230,7 @@ setActions([
         </div>
         <button
           @click="retryAnalysis"
+          data-loc="brands.analysis.re-analyze-btn"
           class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
         >
           <RefreshCw class="h-3.5 w-3.5" /> {{ t('analysis.reAnalyze') }}
@@ -239,6 +243,7 @@ setActions([
           v-for="tab in (['overview', 'audience', 'insights'] as const)"
           :key="tab"
           @click="activeTab = tab"
+          :data-loc="`brands.analysis.tab-${tab}`"
           :class="[
             'h-8 px-3 rounded-md text-xs font-medium transition',
             activeTab === tab

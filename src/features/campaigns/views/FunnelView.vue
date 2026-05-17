@@ -144,6 +144,7 @@ function goNext() {
           <div class="text-xs text-muted-foreground mb-4">{{ t('funnel.readyDesc') }}</div>
           <button
             class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5 mx-auto"
+            data-loc="campaigns.funnel.run-btn"
             @click="runFunnel"
           >
             <Layers class="h-3.5 w-3.5" /> {{ t('funnel.runFunnel') }}
@@ -227,6 +228,7 @@ function goNext() {
           <div class="flex items-center justify-end">
             <button
               class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5"
+              data-loc="campaigns.funnel.continue-btn"
               @click="goNext"
             >
               {{ t('smart.approveContinue') }} {{ t('smart.continue') }} <ArrowRight class="h-3.5 w-3.5" />

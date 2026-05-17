@@ -127,6 +127,7 @@ function goNext() {
           <div class="text-xs text-muted-foreground mb-4">{{ t('ppc.readyDesc') }}</div>
           <button
             class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5 mx-auto"
+            data-loc="campaigns.ppc.run-btn"
             @click="runPPC"
           >
             <Target class="h-3.5 w-3.5" /> {{ t('ppc.runAnalysis') }}
@@ -202,6 +203,7 @@ function goNext() {
           <div class="flex items-center justify-end">
             <button
               class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5"
+              data-loc="campaigns.ppc.continue-btn"
               @click="goNext"
             >
               {{ t('smart.approveContinue') }} {{ t('smart.continue') }} <ArrowRight class="h-3.5 w-3.5" />

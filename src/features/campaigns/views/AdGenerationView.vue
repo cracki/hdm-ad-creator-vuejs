@@ -171,6 +171,7 @@ function getAdData(ad: any): { headline: string; body: string; cta: string; fram
         <button
           v-if="adsList.length > 0"
           class="h-10 px-4 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5 shrink-0"
+          data-loc="campaigns.adgen.generate-btn"
           @click="generateAds"
           :disabled="genLoading || !isPrereqMet"
         >
@@ -201,26 +202,26 @@ function getAdData(ad: any): { headline: string; body: string; cta: string; fram
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <div>
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('adgen.persona') }}</label>
-            <select v-model="selectedPersona" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none">
+            <select v-model="selectedPersona" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none" data-loc="campaigns.adgen.filter-persona">
               <option value="">{{ t('adgen.allPersonas') }}</option>
               <option v-for="p in personas" :key="p" :value="p">{{ p }}</option>
             </select>
           </div>
           <div>
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('adgen.funnelStage') }}</label>
-            <select v-model="selectedFunnel" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none">
+            <select v-model="selectedFunnel" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none" data-loc="campaigns.adgen.filter-funnel-stage">
               <option v-for="s in funnelStages" :key="s" :value="s">{{ s }}</option>
             </select>
           </div>
           <div>
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('adgen.platform') }}</label>
-            <select v-model="selectedPlatform" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none">
+            <select v-model="selectedPlatform" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none" data-loc="campaigns.adgen.filter-platform">
               <option v-for="p in selectedPlatforms" :key="p" :value="p">{{ adPlatformLabel(p) }}</option>
             </select>
           </div>
           <div>
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('adgen.quantity') }}</label>
-            <select v-model.number="quantity" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none">
+            <select v-model.number="quantity" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none" data-loc="campaigns.adgen.filter-quantity">
               <option :value="1">1</option>
               <option :value="3">3</option>
               <option :value="5">5</option>
@@ -236,6 +237,7 @@ function getAdData(ad: any): { headline: string; body: string; cta: string; fram
           <div class="text-xs text-muted-foreground mb-4">{{ t('adgen.readyDesc') }}</div>
           <button
             class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5 mx-auto"
+            data-loc="campaigns.adgen.generate-btn"
             @click="generateAds"
           >
             <Sparkles class="h-3.5 w-3.5" /> {{ t('adgen.generate') }}
@@ -263,12 +265,14 @@ function getAdData(ad: any): { headline: string; body: string; cta: string; fram
             <div class="flex items-center gap-2">
               <button
                 class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.04] transition"
+                data-loc="campaigns.adgen.export-csv-btn"
                 @click="exportAdsCsv"
               >
                 <Download class="h-3 w-3" /> {{ t('common.exportCsv') }}
               </button>
               <button
                 class="h-8 px-3 rounded-lg border border-destructive/40 text-xs text-destructive flex items-center gap-1.5 hover:bg-destructive/10 transition"
+                data-loc="campaigns.adgen.clear-all-btn"
                 @click="showClearConfirm = true"
               >
                 <Trash2 class="h-3 w-3" /> {{ t('adgen.clearAll') }}
@@ -300,7 +304,7 @@ function getAdData(ad: any): { headline: string; body: string; cta: string; fram
               </div>
 
               <div class="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition">
-                <button class="h-7 w-7 grid place-items-center rounded-md hover:bg-white/[0.06] transition" @click="copyAdData(ad)">
+                <button class="h-7 w-7 grid place-items-center rounded-md hover:bg-white/[0.06] transition" data-loc="campaigns.adgen.copy-btn" @click="copyAdData(ad)">
                   <Copy class="h-3.5 w-3.5 text-muted-foreground" />
                 </button>
               </div>

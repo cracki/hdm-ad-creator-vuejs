@@ -156,6 +156,7 @@ function exportCSV() {
           <label class="text-xs font-medium text-muted-foreground block mb-2">{{ t('funnelLauncher.selectBrand') }}</label>
           <select
             v-model="selectedBrandUuid"
+            data-loc="funnel.brand-select"
             class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none focus:ring-1 focus:ring-primary/50"
           >
             <option value="" disabled>{{ t('funnelLauncher.chooseBrand') }}</option>
@@ -171,6 +172,7 @@ function exportCSV() {
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <button
               v-for="p in platforms" :key="p.id"
+              data-loc="funnel.platform-btn"
               @click="togglePlatform(p.id)"
               :class="[
                 'p-3 rounded-lg border text-center text-xs transition',
@@ -191,6 +193,7 @@ function exportCSV() {
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <button
               v-for="s in stages" :key="s.id"
+              data-loc="funnel.stage-btn"
               @click="toggleStage(s.id)"
               :class="[
                 'p-3 rounded-lg border text-center text-xs transition',
@@ -210,6 +213,7 @@ function exportCSV() {
           <div class="flex items-center justify-between mb-2">
             <label class="text-xs font-medium text-muted-foreground">{{ t('funnelLauncher.personas') }}</label>
             <button
+              data-loc="funnel.add-persona-btn"
               class="h-7 px-2 rounded border border-border/60 text-[11px] text-muted-foreground flex items-center gap-1 hover:bg-white/[0.03] transition"
               @click="personas.push({ name: '', description: '' })"
             >
@@ -220,16 +224,19 @@ function exportCSV() {
             <div v-for="(persona, idx) in personas" :key="idx" class="flex flex-col sm:flex-row gap-2">
               <input
                 v-model="persona.name"
+                data-loc="funnel.persona-name-input"
                 :placeholder="t('funnelLauncher.personaName')"
                 class="flex-1 h-9 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60 min-w-0"
               />
               <input
                 v-model="persona.description"
+                data-loc="funnel.persona-desc-input"
                 :placeholder="t('funnelLauncher.personaDesc')"
                 class="flex-1 h-9 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60 min-w-0"
               />
               <button
                 v-if="personas.length > 1"
+                data-loc="funnel.remove-persona-btn"
                 class="h-9 w-9 rounded-lg border border-border/60 text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition shrink-0 grid place-items-center self-end"
                 @click="personas.splice(idx, 1)"
               >
@@ -243,11 +250,11 @@ function exportCSV() {
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div>
             <label class="text-xs font-medium text-muted-foreground block mb-1">{{ t('funnelLauncher.budget') }}</label>
-            <input v-model.number="budget" type="number" class="w-full h-9 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none" />
+            <input v-model.number="budget" data-loc="funnel.budget-input" type="number" class="w-full h-9 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none" />
           </div>
           <div>
             <label class="text-xs font-medium text-muted-foreground block mb-1">{{ t('funnelLauncher.currency') }}</label>
-            <select v-model="currency" class="w-full h-9 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none">
+            <select v-model="currency" data-loc="funnel.currency-select" class="w-full h-9 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none">
               <option value="USD">USD ($)</option>
               <option value="EUR">EUR</option>
               <option value="GBP">GBP</option>
@@ -256,11 +263,11 @@ function exportCSV() {
           </div>
           <div>
             <label class="text-xs font-medium text-muted-foreground block mb-1">{{ t('funnelLauncher.duration') }}</label>
-            <input v-model.number="duration" type="number" class="w-full h-9 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none" />
+            <input v-model.number="duration" data-loc="funnel.duration-input" type="number" class="w-full h-9 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none" />
           </div>
           <div>
             <label class="text-xs font-medium text-muted-foreground block mb-1">{{ t('funnelLauncher.adsPerStage') }}</label>
-            <select v-model.number="adsPerStage" class="w-full h-9 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none">
+            <select v-model.number="adsPerStage" data-loc="funnel.ads-per-stage-select" class="w-full h-9 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none">
               <option :value="2">2</option>
               <option :value="3">3</option>
               <option :value="5">5</option>
@@ -276,6 +283,7 @@ function exportCSV() {
 
         <!-- Generate -->
         <button
+          data-loc="funnel.generate-btn"
           :disabled="loading || !canGenerate"
           class="w-full h-11 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-sm font-medium shadow-[var(--shadow-glow)] flex items-center justify-center gap-2 disabled:opacity-50"
           @click="generate"
@@ -304,7 +312,7 @@ function exportCSV() {
               <button class="h-9 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="campaign = null; $forceUpdate()">
                 <RefreshCw class="h-3 w-3" /> {{ t('funnelLauncher.newCampaign') }}
               </button>
-              <button class="h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs flex items-center gap-1.5" @click="exportCSV">
+              <button data-loc="funnel.export-btn" class="h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs flex items-center gap-1.5" @click="exportCSV">
                 <Download class="h-3 w-3" /> {{ t('variant.exportCSV') }}
               </button>
             </div>
@@ -315,6 +323,7 @@ function exportCSV() {
         <div class="flex gap-1 bg-white/[0.03] p-1 rounded-lg">
           <button
             v-for="tab in ['overview', 'ads', 'targeting'] as const" :key="tab"
+            data-loc="funnel.tab-btn"
             @click="activeTab = tab"
             :class="['flex-1 h-9 rounded-md text-xs font-medium capitalize transition', activeTab === tab ? 'bg-white/[0.08] text-foreground' : 'text-muted-foreground']"
           >{{ tab }}</button>
@@ -346,6 +355,7 @@ function exportCSV() {
         <div v-if="activeTab === 'ads'" class="space-y-4">
           <div v-for="stage in selectedStages" :key="stage" class="border-b border-border/40 pb-4 last:border-0">
             <button
+              data-loc="funnel.stage-toggle"
               @click="toggleSection(stage)"
               class="w-full flex items-center justify-between py-2"
             >

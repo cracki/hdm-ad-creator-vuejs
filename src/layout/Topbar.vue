@@ -57,6 +57,7 @@ function getUserInitials(): string {
       <button
         class="lg:hidden h-9 w-9 grid place-items-center rounded-lg hover:bg-white/[0.04] text-muted-foreground transition"
         aria-label="Open menu"
+        data-loc="topbar.mobile-menu"
         @click="toggleDrawer"
       >
         <Menu class="h-5 w-5" />
@@ -69,12 +70,13 @@ function getUserInitials(): string {
       </div>
 
       <!-- Desktop search -->
-      <form class="hidden md:flex items-center gap-2 px-3 h-9 rounded-lg bg-white/[0.03] border border-border/60 w-72" @submit.prevent="handleSearch" data-tour="topbar-search">
+      <form class="hidden md:flex items-center gap-2 px-3 h-9 rounded-lg bg-white/[0.03] border border-border/60 w-72" @submit.prevent="handleSearch" data-tour="topbar-search" data-loc="topbar.search-form">
         <Search class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
         <input
           v-model="searchQuery"
           :placeholder="t('topbar.search')"
           class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
+          data-loc="topbar.search-input"
         />
       </form>
 
@@ -87,6 +89,7 @@ function getUserInitials(): string {
         <button
           aria-label="Page actions"
           class="h-9 w-9 grid place-items-center rounded-lg hover:bg-white/[0.04] transition"
+          data-loc="topbar.mobile-actions"
           @click="showMobileActions = !showMobileActions"
         >
           <MoreVertical class="h-4 w-4 text-muted-foreground" />
@@ -120,6 +123,7 @@ function getUserInitials(): string {
         <button
           class="h-9 w-9 rounded-full bg-[image:var(--gradient-brand)] grid place-items-center text-xs font-semibold text-primary-foreground shadow-[var(--shadow-glow)] shrink-0"
           aria-label="User menu"
+          data-loc="topbar.user-menu"
           @click="showUserMenu = !showUserMenu"
         >
           {{ getUserInitials() }}
@@ -134,6 +138,7 @@ function getUserInitials(): string {
           <hr class="border-border/40 my-1" />
           <button
             class="w-full flex items-center gap-2 px-3 py-2 text-xs text-foreground hover:bg-white/[0.04] rounded-md transition"
+            data-loc="topbar.profile"
             @click="showUserMenu = false; router.push({ name: 'profile' })"
           >
             <User class="h-3.5 w-3.5" />
@@ -142,6 +147,7 @@ function getUserInitials(): string {
           <hr class="border-border/40 my-1" />
           <button
             class="w-full flex items-center gap-2 px-3 py-2 text-xs text-destructive hover:bg-white/[0.04] rounded-md transition"
+            data-loc="topbar.logout"
             @click="handleLogout"
           >
             <LogOut class="h-3.5 w-3.5" />

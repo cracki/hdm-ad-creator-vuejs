@@ -24,6 +24,7 @@ const { dir } = useI18n()
     <router-link
       v-if="showBack && backTo"
       :to="backTo"
+      data-loc="breadcrumb.back-btn"
       class="h-9 w-9 grid place-items-center rounded-md hover:bg-white/[0.06] transition shrink-0"
     >
       <ChevronLeft class="h-4 w-4 rtl-flip" />
@@ -34,6 +35,7 @@ const { dir } = useI18n()
         <router-link
           v-if="item.to"
           :to="item.to"
+          data-loc="breadcrumb.link"
           class="hover:text-foreground transition truncate"
         >
           {{ item.label }}

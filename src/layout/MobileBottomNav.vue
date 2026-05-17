@@ -11,14 +11,15 @@ interface BottomNavItem {
   to: string
   labelKey: TKey
   icon: any
+  loc: string
 }
 
 const items: BottomNavItem[] = [
-  { to: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard },
-  { to: '/brands', labelKey: 'nav.brands', icon: Building2 },
-  { to: '/campaigns', labelKey: 'nav.campaigns', icon: Megaphone },
-  { to: '/market/intelligence', labelKey: 'nav.marketIntel', icon: TrendingUp },
-  { to: '/ad-library', labelKey: 'nav.adLibrary', icon: Library },
+  { to: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, loc: 'bottom-nav.dashboard' },
+  { to: '/brands', labelKey: 'nav.brands', icon: Building2, loc: 'bottom-nav.brands' },
+  { to: '/campaigns', labelKey: 'nav.campaigns', icon: Megaphone, loc: 'bottom-nav.campaigns' },
+  { to: '/market/intelligence', labelKey: 'nav.marketIntel', icon: TrendingUp, loc: 'bottom-nav.market-intelligence' },
+  { to: '/ad-library', labelKey: 'nav.adLibrary', icon: Library, loc: 'bottom-nav.ad-library' },
 ]
 
 function isActive(to: string): boolean {
@@ -34,6 +35,7 @@ function isActive(to: string): boolean {
         v-for="item in items"
         :key="item.to"
         :to="item.to"
+        :data-loc="item.loc"
         :class="[
           'flex flex-col items-center justify-center gap-0.5 h-full flex-1 transition',
           isActive(item.to) ? 'text-primary' : 'text-muted-foreground',

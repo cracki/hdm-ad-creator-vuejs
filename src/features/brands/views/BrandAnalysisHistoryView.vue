@@ -38,6 +38,7 @@ function statusIcon(status: string) {
     <template #actions>
       <button
         @click="router.push(`/brands/${brandUuid}/analysis`)"
+        data-loc="brands.history.back-btn"
         class="hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
       >
         <ChevronLeft class="h-3.5 w-3.5" /> {{ t('analysis.backToAnalysis') }}
@@ -54,6 +55,7 @@ function statusIcon(status: string) {
       <div
         v-for="run in runs"
         :key="run.analysis_run_uuid"
+        data-loc="brands.history.item"
         class="surface-card p-5 flex items-center gap-4 hover:border-primary/40 transition cursor-pointer"
         @click="router.push(`/brands/${brandUuid}/analysis/${run.analysis_run_uuid}`)"
       >

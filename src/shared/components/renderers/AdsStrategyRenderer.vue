@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Target, DollarSign, BarChart3, Users, Layers, Zap } from 'lucide-vue-next'
+import { Target, DollarSign, BarChart3, Layers, Zap } from 'lucide-vue-next'
 import { useI18n } from '@/shared/utils/i18n'
 
 const { t } = useI18n()
@@ -170,7 +170,7 @@ function renderValue(val: unknown): string {
             </div>
             <div v-if="(camp.creative?.headlines ?? camp.creative?.primary_text) ?? (camp.creative_strategy?.headline ?? camp.creative_strategy?.introductory_text)" class="flex flex-wrap gap-1">
               <span
-                v-for="(h, hIdx) in ((camp.creative?.headlines ?? [camp.creative?.primary_text]) ?? [camp.creative_strategy?.headline ?? camp.creative_strategy?.introductory_text]).filter(Boolean)"
+                v-for="(h, hIdx) in (camp.creative?.headlines ?? [camp.creative?.primary_text]).filter(Boolean)"
                 :key="hIdx"
                 class="text-[11px] px-1.5 py-0.5 rounded bg-white/[0.04]"
               >

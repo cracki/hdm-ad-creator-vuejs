@@ -82,6 +82,7 @@ const analyzingUuid = computed(() =>
         <div class="text-xs text-muted-foreground">{{ t('assets.emptyDesc') }}</div>
       </div>
       <button
+        data-loc="brands.assets.upload-btn"
         class="h-9 px-4 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5"
         @click="openFilePicker"
       >
@@ -97,6 +98,7 @@ const analyzingUuid = computed(() =>
         </div>
         <button
           :disabled="uploading"
+          data-loc="brands.assets.upload-btn"
           class="h-9 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.04] transition flex items-center gap-1.5"
           @click="openFilePicker"
         >
@@ -110,6 +112,7 @@ const analyzingUuid = computed(() =>
           v-for="asset in assets"
           :key="asset.asset_uuid"
           :asset="asset"
+          data-loc="brands.assets.asset-card"
           :analyzing="analyzingUuid === asset.asset_uuid"
           @analyze="handleAnalyze"
         />

@@ -34,6 +34,7 @@ const statusClass = computed(() => {
   <Topbar :title="t('adlib.runDetail')" :subtitle="run?.brand?.company_name ?? t('adlib.standalone')">
     <template #actions>
       <button
+        data-loc="adlib.detail.back-btn"
         class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition flex items-center gap-1.5"
         @click="router.push('/ad-library')"
       >
@@ -85,6 +86,7 @@ const statusClass = computed(() => {
             <div
               v-for="ad in ads"
               :key="ad.ad_library_ad_uuid"
+              data-loc="adlib.detail.ad-card"
               class="surface-card p-4 space-y-3"
             >
               <div class="flex items-center gap-2">

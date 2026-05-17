@@ -11,6 +11,7 @@ const { lang, setLang } = useI18n()
       :key="l.code"
       @click="setLang(l.code as Lang)"
       :aria-label="l.native"
+      :data-loc="`lang-switch.${l.code}`"
       :class="[
         'px-2 py-0.5 rounded text-xs transition min-h-[44px] min-w-[44px]',
         lang === l.code

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Globe, BarChart3, TrendingUp, Lightbulb, ExternalLink, CheckCircle2 } from 'lucide-vue-next'
+import { Globe, BarChart3, TrendingUp, Lightbulb, CheckCircle2 } from 'lucide-vue-next'
 import type { TopPerformingContentResponse } from '@/features/market/types'
 import AnalysisPayloadRenderer from '@/shared/components/renderers/AnalysisPayloadRenderer.vue'
 import { useI18n } from '@/shared/utils/i18n'
@@ -121,6 +121,6 @@ function getTypeClass(type: string): string {
     </div>
   </div>
 
-  <AnalysisPayloadRenderer v-else-if="Object.keys(data).length" :data="data" />
+  <AnalysisPayloadRenderer v-else-if="Object.keys(data).length" :data="(data as any)" />
   <div v-else class="text-xs text-muted-foreground/50 py-2">{{ t('analysis.noData') }}</div>
 </template>

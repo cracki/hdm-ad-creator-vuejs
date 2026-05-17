@@ -138,6 +138,7 @@ function getAdCopy(v: any) {
   <Topbar :title="campaign?.name ?? ''" :subtitle="t('variant.matrixTitle')">
     <template #actions>
       <button
+        data-loc="variant.matrix.back-btn"
         class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium flex items-center gap-1.5 hover:bg-white/[0.03] transition"
         @click="router.push(`/campaigns/${campaignUuid}`)"
       >
@@ -166,6 +167,7 @@ function getAdCopy(v: any) {
         <div class="text-sm font-medium mb-1">{{ t('variant.matrixReady') }}</div>
         <div class="text-xs text-muted-foreground mb-4">{{ t('variant.matrixReadyDesc') }}</div>
         <button
+          data-loc="variant.matrix.start-btn"
           class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5 mx-auto"
           @click="generate"
         >
@@ -184,7 +186,7 @@ function getAdCopy(v: any) {
       <div v-if="jobError || (jobStatus === 'idle' && runData?.status === 'failed')" class="surface-card p-5 flex items-center gap-3">
         <AlertCircle class="h-5 w-5 text-destructive shrink-0" />
         <div class="flex-1 text-sm text-destructive">{{ jobError ?? runData?.error_message ?? t('variant.matrixFailed') }}</div>
-        <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5" @click="generate">
+        <button data-loc="variant.matrix.retry-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5" @click="generate">
           <RefreshCw class="h-3 w-3" /> {{ t('seg.retry') }}
         </button>
       </div>
@@ -195,12 +197,14 @@ function getAdCopy(v: any) {
           <h3 class="text-sm font-semibold">{{ variants.length }} {{ t('variant.totalVariants') }}</h3>
           <div class="flex items-center gap-2">
             <button
+              data-loc="variant.matrix.export-btn"
               class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition"
               @click="exportCSV"
             >
               <Download class="h-3 w-3" /> {{ t('variant.exportCSV') }}
             </button>
             <button
+              data-loc="variant.matrix.re-run-btn"
               class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition"
               @click="generate"
             >
@@ -208,10 +212,12 @@ function getAdCopy(v: any) {
             </button>
             <div class="flex gap-1 bg-white/[0.03] rounded-lg p-0.5">
               <button
+                data-loc="variant.matrix.view-cards"
                 @click="viewMode = 'cards'"
                 :class="['min-h-[44px] px-2.5 py-1 rounded text-xs font-medium transition', viewMode === 'cards' ? 'bg-white/[0.08] text-foreground' : 'text-muted-foreground']"
               >{{ t('variant.cards') }}</button>
               <button
+                data-loc="variant.matrix.view-table"
                 @click="viewMode = 'table'"
                 :class="['min-h-[44px] px-2.5 py-1 rounded text-xs font-medium transition', viewMode === 'table' ? 'bg-white/[0.08] text-foreground' : 'text-muted-foreground']"
               >{{ t('variant.table') }}</button>
@@ -224,6 +230,7 @@ function getAdCopy(v: any) {
           <ScenarioVariantCard
             v-for="(v, idx) in variants"
             :key="idx"
+            data-loc="variant.matrix.variant-card"
             :variant="v"
             @view-details="openDetail"
           />
@@ -259,6 +266,7 @@ function getAdCopy(v: any) {
                       <span class="truncate">{{ getAdCopy(v).headline ?? '' }}</span>
                       <button
                         v-if="getAdCopy(v).headline"
+                        data-loc="variant.matrix.copy-headline-btn"
                         class="shrink-0 h-5 w-5 grid place-items-center rounded hover:bg-white/[0.08] opacity-0 group-hover:opacity-100 transition"
                         @click="copyTableField(getAdCopy(v).headline, `h-${idx}`)"
                       >
@@ -272,6 +280,7 @@ function getAdCopy(v: any) {
                       <span class="truncate text-muted-foreground">{{ getAdCopy(v).body ?? '' }}</span>
                       <button
                         v-if="getAdCopy(v).body"
+                        data-loc="variant.matrix.copy-body-btn"
                         class="shrink-0 h-5 w-5 grid place-items-center rounded hover:bg-white/[0.08] opacity-0 group-hover:opacity-100 transition"
                         @click="copyTableField(getAdCopy(v).body, `b-${idx}`)"
                       >
@@ -285,6 +294,7 @@ function getAdCopy(v: any) {
                   </td>
                   <td class="px-3 py-2 text-center">
                     <button
+                      data-loc="variant.matrix.view-details-btn"
                       class="h-6 px-2 rounded text-[11px] inline-flex items-center gap-1 hover:bg-white/[0.06] transition text-muted-foreground hover:text-primary"
                       @click="openDetail(v)"
                     >
@@ -303,6 +313,7 @@ function getAdCopy(v: any) {
   <!-- Detail Modal -->
   <VariantDetailModal
     v-if="showDetailModal && selectedVariant"
+    data-loc="variant.matrix.detail-modal"
     :variant="selectedVariant"
     @close="closeDetail"
   />

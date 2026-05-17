@@ -16,7 +16,7 @@ const { t } = useI18n()
 const toast = useToast()
 
 const brandUuid = computed(() => route.params.brandUuid as string)
-const { setActions, clearActions } = usePageActions()
+const { setActions } = usePageActions()
 
 const breadcrumbs = computed(() => [
   { label: t('breadcrumb.brands'), to: '/brands' },
@@ -74,12 +74,14 @@ setActions([
     <template #actions>
       <RouterLink
         :to="`/brands/${brandUuid}/edit`"
+        data-loc="brands.detail.edit-btn"
         class="hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
       >
         <Pencil class="h-3.5 w-3.5" /> Edit
       </RouterLink>
       <button
         @click="handleDelete"
+        data-loc="brands.detail.delete-btn"
         class="hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-destructive/40 text-destructive text-xs font-medium hover:bg-destructive/10 transition"
       >
         <Trash2 class="h-3.5 w-3.5" /> Delete
@@ -98,6 +100,7 @@ setActions([
           v-for="tab in (['overview', 'analysis'] as const)"
           :key="tab"
           @click="activeTab = tab"
+          :data-loc="`brands.detail.tab-${tab}`"
           :class="[
             'h-8 px-3 rounded-md text-xs font-medium transition',
             activeTab === tab
@@ -163,12 +166,14 @@ setActions([
           <div class="flex gap-2">
             <RouterLink
               :to="`/brands/${brandUuid}/analysis`"
+              data-loc="brands.detail.new-analysis-btn"
               class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] hover:opacity-95 transition"
             >
               <Sparkles class="h-3.5 w-3.5" /> {{ t('analysis.newAnalysis') }}
             </RouterLink>
             <RouterLink
               :to="`/brands/${brandUuid}/analysis/history`"
+              data-loc="brands.detail.view-history-btn"
               class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
             >
               <BarChart3 class="h-3.5 w-3.5" /> {{ t('analysis.viewHistory') }}
@@ -198,6 +203,7 @@ setActions([
       <div class="grid sm:grid-cols-2 gap-3 pt-2">
         <RouterLink
           :to="competitorLink"
+          data-loc="brands.detail.competitors-link"
           class="surface-card p-4 flex items-center gap-3 hover:border-primary/40 transition"
         >
           <BarChart3 class="h-5 w-5 text-muted-foreground shrink-0" />
@@ -208,6 +214,7 @@ setActions([
         </RouterLink>
         <RouterLink
           :to="socialLink"
+          data-loc="brands.detail.social-link"
           class="surface-card p-4 flex items-center gap-3 hover:border-primary/40 transition"
         >
           <Globe class="h-5 w-5 text-muted-foreground shrink-0" />

@@ -48,6 +48,7 @@ const ctaClass = computed(() => ctaColors[props.ad.cta] ?? ctaColors.default)
       <button
         v-for="p in platforms"
         :key="p.key"
+        data-loc="ad-preview.platform-tab"
         :class="[
           'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition',
           activePlatform === p.key ? 'bg-[image:var(--gradient-brand)] text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
