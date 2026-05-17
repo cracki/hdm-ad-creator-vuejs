@@ -11,11 +11,13 @@ import { campaignsApi } from '../api'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { useNormalizeResponse } from '@/shared/composables/useNormalizeResponse'
 import { operationManager } from '@/infrastructure/operations/operationManager'
+import { useQueryClient } from '@tanstack/vue-query'
 
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
 const { normalize } = useNormalizeResponse()
+const queryClient = useQueryClient()
 
 const campaignUuid = computed(() => route.params.campaignUuid as string)
 const { data: campaign, isLoading } = useCampaign(campaignUuid)
@@ -64,6 +66,8 @@ async function runStrategy(platform: string) {
       })
       return res.data
     })
+    await queryClient.invalidateQueries({ queryKey: ['campaigns', campaignUuid] })
+    await queryClient.invalidateQueries({ queryKey: ['campaigns', campaignUuid, 'steps'] })
   } finally {
     operationManager.finish(opKey.value)
   }
