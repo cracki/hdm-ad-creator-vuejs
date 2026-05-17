@@ -777,6 +777,16 @@ export const translations = {
   'socialAudit.days30': { en: '30 Days — Baseline', ar: '۳۰ يومًا — خط الأساس', fa: '۳۰ روز — خط پایه' },
   'socialAudit.days60': { en: '60 Days — Growth', ar: '۶۰ يومًا — النمو', fa: '۶۰ روز — رشد' },
   'socialAudit.days90': { en: '90 Days — Scale', ar: '۹۰ يومًا — التوسع', fa: '۹۰ روز — مقیاس‌پذیری' },
+  'socialAudit.export': { en: 'Export', ar: 'تصدير', fa: 'خروجی' },
+  'socialAudit.exportPDF': { en: 'Download PDF', ar: 'تحميل PDF', fa: 'دانلود PDF' },
+  'socialAudit.exportPPTX': { en: 'Download PowerPoint', ar: 'تحميل PowerPoint', fa: 'دانلود PowerPoint' },
+  'socialAudit.exportXLSX': { en: 'Download Excel', ar: 'تحميل Excel', fa: 'دانلود Excel' },
+  'socialAudit.exporting': { en: 'Generating…', ar: 'جارٍ الإنشاء…', fa: 'در حال تولید…' },
+  'market.export': { en: 'Export', ar: 'تصدير', fa: 'خروجی' },
+  'market.exportPDF': { en: 'Download PDF', ar: 'تحميل PDF', fa: 'دانلود PDF' },
+  'market.exportPPTX': { en: 'Download PowerPoint', ar: 'تحميل PowerPoint', fa: 'دانلود PowerPoint' },
+  'market.exportXLSX': { en: 'Download Excel', ar: 'تحميل Excel', fa: 'دانلود Excel' },
+  'market.exporting': { en: 'Generating…', ar: 'جارٍ الإنشاء…', fa: 'در حال تولید…' },
 
   // ---------- Phase 9: Shared Components ----------
   'common.loading': { en: 'Loading…', ar: 'جارٍ التحميل…', fa: 'در حال بارگذاری…' },
@@ -1003,6 +1013,25 @@ export const translations = {
   'cd.tofu': { en: 'Awareness (TOFU)', ar: 'الوعي (TOFU)', fa: 'آگاهی (TOFU)' },
   'cd.mofu': { en: 'Consideration (MOFU)', ar: 'الاعتبار (MOFU)', fa: 'بررسی (MOFU)' },
   'cd.bofu': { en: 'Conversion (BOFU)', ar: 'التحويل (BOFU)', fa: 'تبدیل (BOFU)' },
+  'cd.export': { en: 'Export', ar: 'تصدير', fa: 'خروجی' },
+  'cd.exportPDF': { en: 'Download PDF', ar: 'تحميل PDF', fa: 'دانلود PDF' },
+  'cd.exportPPTX': { en: 'Download PowerPoint', ar: 'تحميل PowerPoint', fa: 'دانلود PowerPoint' },
+  'cd.exporting': { en: 'Generating...', ar: 'جارٍ الإنشاء...', fa: 'در حال تولید...' },
+
+  // ---------- Terms & Privacy Popup ----------
+  'terms.title': { en: 'Terms of Service', ar: 'شروط الخدمة', fa: 'شرایط استفاده از خدمات' },
+  'terms.content': {
+    en: 'By using Ad Creator, you agree to use the platform responsibly and in compliance with applicable laws. You retain ownership of all content you create. We may update these terms periodically; continued use constitutes acceptance. Our AI-generated content is provided as-is and should be reviewed before publication. You are responsible for ensuring your ads comply with platform-specific advertising policies.',
+    ar: 'باستخدام Ad Creator، فإنك توافق على استخدام المنصة بمسؤولية ووفقًا للقوانين المعمول بها. تحتفظ بملكية جميع المحتويات التي تنشئها. قد نقوم بتحديث هذه الشروط بشكل دوري؛ الاستمرار في الاستخدام يعني القبول. المحتوى الذي ينشئه الذكاء الاصطناعي يُقدم كما هو ويجب مراجعته قبل النشر. أنت مسؤول عن التأكد من توافق إعلاناتك مع سياسات الإعلان الخاصة بكل منصة.',
+    fa: 'با استفاده از Ad Creator، موافقت می‌کنید که از پلتفرم به‌صورت مسئولانه و مطابق قوانین مربوطه استفاده کنید. مالکیت تمام محتوایی که ایجاد می‌کنید متعلق به شماست. ممکن است این شرایط را به‌صورت دوره‌ای به‌روزرسانی کنیم؛ ادامه استفاده به‌منزله پذیرش است. محتوای تولیدشده توسط هوش مصنوعی بدون تضمین ارائه می‌شود و باید پیش از انتشار بررسی شود. شما مسئول اطمینان از انطباق آگهی‌هایتان با سیاست‌های تبلیغاتی هر پلتفرم هستید.',
+  },
+  'privacy.title': { en: 'Privacy Policy', ar: 'سياسة الخصوصية', fa: 'سیاست حریم خصوصی' },
+  'privacy.content': {
+    en: 'We collect only the information necessary to provide and improve our services. Your brand data, campaign content, and account details are stored securely and never sold to third parties. We use analytics to improve platform performance. You may request deletion of your data at any time. For questions, contact our support team.',
+    ar: 'نجمع فقط المعلومات الضرورية لتقديم وتحسين خدماتنا. بيانات علامتك التجارية ومحتوى حملاتك وتفاصيل حسابك مخزنة بأمان ولا تُباع لأطراف ثالثة أبدًا. نستخدم التحليلات لتحسين أداء المنصة. يمكنك طلب حذف بياناتك في أي وقت. لأي أسئلة، تواصل مع فريق الدعم.',
+    fa: 'ما تنها اطلاعات لازم برای ارائه و بهبود خدمات خود را جمع‌آوری می‌کنیم. داده‌های برند، محتوای کمپین و جزئیات حساب شما به‌صورت امن ذخیره می‌شود و هرگز به اشخاص ثالث فروخته نمی‌شود. ما از تحلیل‌ها برای بهبود عملکرد پلتفرم استفاده می‌کنیم. در هر زمان می‌توانید درخواست حذف داده‌های خود را بدهید. برای سؤالات، با تیم پشتیبانی تماس بگیرید.',
+  },
+  'popup.close': { en: 'Close', ar: 'إغلاق', fa: 'بستن' },
 } as const
 
 export type TKey = keyof typeof translations

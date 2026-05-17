@@ -305,7 +305,7 @@ function exportCSV() {
               </div>
               <div>
                 <div class="text-sm font-semibold">{{ t('funnelLauncher.successTitle') }}</div>
-                <div class="text-xs text-muted-foreground">{{ Object.values(adsByStage).flat().length }} {{ t('funnelLauncher.ads') }} {{ t('funnelLauncher.successDesc') }}</div>
+                <div class="text-xs text-muted-foreground">{{ t('funnelLauncher.successDesc', { count: Object.values(adsByStage).flat().length }) }}</div>
               </div>
             </div>
             <div class="flex gap-2">
