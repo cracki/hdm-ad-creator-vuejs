@@ -158,6 +158,9 @@ export interface ContentOpportunities {
 
 // --- AI Hooks ---
 
+export type AIHookType = 'question' | 'bold_statement' | 'curiosity' | 'number' | 'pain_point' | 'transformation' | 'urgency' | 'contrarian'
+export type AIHookPlatform = 'facebook' | 'instagram' | 'linkedin' | 'tiktok'
+
 export interface AIHooksRequest {
   titles: string[]
   industry: string
@@ -165,13 +168,23 @@ export interface AIHooksRequest {
   hook_count?: number
 }
 
-export interface AIHooksResponse {
-  hooks: AIHook[]
-  [key: string]: unknown
+export interface AIHookAnalysis {
+  common_patterns: string[]
+  power_words_used: string[]
+  recommended_approach: string
 }
 
 export interface AIHook {
-  title: string
-  hooks: string[]
-  [key: string]: unknown
+  hook: string
+  type: AIHookType
+  inspired_by: string
+  platform_fit: AIHookPlatform[]
+}
+
+export interface AIHooksResponse {
+  hooks: AIHook[]
+  analysis: AIHookAnalysis
+  source_titles_count: number
+  industry: string
+  brand_name: string
 }
