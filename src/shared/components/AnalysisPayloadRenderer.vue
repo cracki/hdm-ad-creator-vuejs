@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { sanitizeHtml } from '@/shared/utils/sanitize'
+import { Check, X } from 'lucide-vue-next'
 import {
   FileText, BarChart3,
   Users, Heart, Lightbulb, Target, Globe, Brain,
@@ -64,6 +65,7 @@ interface RenderItem {
   type: 'text' | 'list' | 'tags' | 'score' | 'nested' | 'object_list'
   children?: RenderItem[]
   items?: any[]
+  scoreMax?: number
 }
 
 function classify(key: string, val: unknown): RenderItem {
@@ -72,13 +74,14 @@ function classify(key: string, val: unknown): RenderItem {
   }
 
   if (typeof val === 'boolean') {
-    return { key, label: formatLabel(key), value: val ? 'Yes' : 'No', type: 'text' }
+    return { key, label: formatLabel(key), value: val, type: 'text' }
   }
 
   if (typeof val === 'number') {
     const label = formatLabel(key).toLowerCase()
-    if (label.includes('score') || label.includes('rating') || label.includes('grade')) {
-      return { key, label: formatLabel(key), value: val, type: 'score' }
+    if (label.includes('score') || label.includes('rating') || label.includes('confidence')) {
+      const max = label.includes('confidence') ? 100 : undefined
+      return { key, label: formatLabel(key), value: val, type: 'score', scoreMax: max }
     }
     return { key, label: formatLabel(key), value: String(val), type: 'text' }
   }
@@ -112,17 +115,7 @@ function classify(key: string, val: unknown): RenderItem {
     const entries = Object.entries(val as Record<string, unknown>)
       .filter(([, v]) => v !== null && v !== undefined)
 
-    const keyLower = key.toLowerCase()
-    const isMetricsContext = keyLower.includes('breakdown') || keyLower.includes('metrics') || keyLower.includes('scores')
-
-    const children = isMetricsContext
-      ? entries.map(([k, v]) => {
-          if (typeof v === 'number' && v >= 0 && v <= 10) {
-            return { key: k, label: formatLabel(k), value: v, type: 'score' as const }
-          }
-          return classify(k, v)
-        })
-      : entries.map(([k, v]) => classify(k, v))
+    const children = entries.map(([k, v]) => classify(k, v))
 
     return { key, label: formatLabel(key), value: val, type: 'nested', children }
   }
@@ -157,14 +150,45 @@ const grouped = computed<RenderGroup[]>(() => {
   return result
 })
 
-function scoreColor(val: number): string {
-  if (val >= 8) return 'text-success'
-  if (val >= 5) return 'text-amber-400'
+function scoreColor(val: number, max?: number): string {
+  const pct = max ? val / max : val <= 10 ? val / 10 : val / 100
+  if (pct >= 0.7) return 'text-success'
+  if (pct >= 0.4) return 'text-amber-400'
   return 'text-destructive'
 }
 
-function scoreBarWidth(val: number): string {
+function scoreBarWidth(val: number, max?: number): string {
+  if (max) return `${Math.min(Math.max((val / max) * 100, 0), 100)}%`
   return `${Math.min(Math.max(val * 10, 0), 100)}%`
+}
+
+function scoreMaxLabel(item: RenderItem): string {
+  if (item.scoreMax) return `/${item.scoreMax}`
+  return '/10'
+}
+
+function getObjectTitle(obj: Record<string, unknown>): string | null {
+  for (const key of ['name', 'title', 'persona_name', 'action', 'heading', 'label']) {
+    if (typeof obj[key] === 'string' && (obj[key] as string).length > 0) return obj[key] as string
+  }
+  return null
+}
+
+function filterMetaFields(obj: Record<string, unknown>): Record<string, unknown> {
+  const titleKey = ['name', 'title', 'persona_name', 'action', 'heading', 'label'].find(k => typeof obj[k] === 'string')
+  const filtered: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(obj)) {
+    if (k === titleKey || k === 'priority') continue
+    filtered[k] = v
+  }
+  return filtered
+}
+
+function priorityColor(p: string): string {
+  const v = String(p).toLowerCase()
+  if (v === 'high' || v === 'critical') return 'bg-red-500/15 text-red-300 border-red-500/30'
+  if (v === 'medium') return 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+  return 'bg-blue-500/15 text-blue-300 border-blue-500/30'
 }
 </script>
 
@@ -177,14 +201,14 @@ function scoreBarWidth(val: number): string {
           <div v-for="item in group.items" :key="item.key" class="space-y-1">
             <div class="text-[11px] text-muted-foreground font-medium">{{ item.label }}</div>
             <div class="flex items-center gap-2">
-              <span :class="['text-base sm:text-lg font-bold leading-none', scoreColor(item.value as number)]">{{ item.value }}</span>
+              <span :class="['text-base sm:text-lg font-bold leading-none', scoreColor(item.value as number, item.scoreMax)]">{{ item.value }}</span>
               <div class="flex-1 h-1.5 rounded-full bg-white/5 overflow-hidden">
                 <div
                   class="h-full rounded-full bg-[image:var(--gradient-brand)]"
-                  :style="{ width: scoreBarWidth(item.value as number) }"
+                  :style="{ width: scoreBarWidth(item.value as number, item.scoreMax) }"
                 />
               </div>
-              <span class="hidden sm:inline text-[10px] text-muted-foreground/60">/10</span>
+              <span class="hidden sm:inline text-[10px] text-muted-foreground/60">{{ scoreMaxLabel(item) }}</span>
             </div>
           </div>
         </div>
@@ -218,11 +242,16 @@ function scoreBarWidth(val: number): string {
               :key="idx"
               class="rounded-lg border border-border/40 bg-white/[0.02] p-2.5 sm:p-3 space-y-2"
             >
-              <div v-if="obj.name || obj.title || obj.persona_name" class="text-sm font-medium text-foreground">
-                {{ obj.name || obj.title || obj.persona_name }}
+              <div v-if="getObjectTitle(obj as Record<string, unknown>)" class="text-sm font-medium text-foreground leading-relaxed">
+                {{ getObjectTitle(obj as Record<string, unknown>) }}
+              </div>
+              <div v-if="(obj as Record<string, unknown>).priority" class="flex items-center gap-2">
+                <span :class="['text-[10px] font-semibold px-1.5 py-0.5 rounded border', priorityColor(String((obj as Record<string, unknown>).priority))]">
+                  {{ (obj as Record<string, unknown>).priority }}
+                </span>
               </div>
               <AnalysisPayloadRenderer
-                :data="obj"
+                :data="filterMetaFields(obj as Record<string, unknown>)"
                 :depth="depth + 1"
               />
             </div>
@@ -232,7 +261,8 @@ function scoreBarWidth(val: number): string {
         <!-- TAGS -->
         <div v-else-if="group.item.type === 'tags'" class="mb-1">
           <div class="text-[11px] text-muted-foreground font-medium mb-1.5">{{ group.item.label }}</div>
-          <div class="flex flex-wrap gap-1.5">
+          <div v-if="(group.item.value as string[])?.length === 0" class="text-[11px] text-muted-foreground/40">None</div>
+          <div v-else class="flex flex-wrap gap-1.5">
             <span
               v-for="(tag, i) in (group.item.value as string[])"
               :key="i"
@@ -261,7 +291,13 @@ function scoreBarWidth(val: number): string {
         <!-- TEXT (default) -->
         <div v-else class="mb-1">
           <div class="text-[11px] text-muted-foreground font-medium mb-1">{{ group.item.label }}</div>
-          <div class="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{{ group.item.value != null ? group.item.value : '—' }}</div>
+          <div class="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+            <template v-if="typeof group.item.value === 'boolean'">
+              <component :is="group.item.value ? Check : X" class="h-3.5 w-3.5 inline" :class="group.item.value ? 'text-success' : 'text-destructive'" />
+              <span class="ms-1">{{ group.item.value ? 'Yes' : 'No' }}</span>
+            </template>
+            <template v-else>{{ group.item.value != null ? group.item.value : '—' }}</template>
+          </div>
         </div>
       </template>
     </template>
