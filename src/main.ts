@@ -21,6 +21,18 @@ import router from './infrastructure/router'
 import { registerServiceWorker } from './infrastructure/pwa'
 import './styles.css'
 
+declare const __APP_VERSION__: string
+declare const __APP_COMMIT__: string
+
+const appVersion = __APP_VERSION__
+const appCommit = __APP_COMMIT__
+
+console.log(
+  `%c HDM Ad Creator %c v${appVersion} (${appCommit}) `,
+  'background: #7c3aed; color: #fff; font-size: 14px; font-weight: bold; padding: 4px 8px; border-radius: 4px 0 0 4px;',
+  'background: #1e1b4b; color: #a78bfa; font-size: 12px; padding: 4px 8px; border-radius: 0 4px 4px 0;',
+)
+
 const app = createApp(App)
 
 app.use(createPinia())
