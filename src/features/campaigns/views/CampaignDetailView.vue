@@ -6,13 +6,12 @@ import {
   Sparkles, Image as ImageIcon, Download,
   Check, Lock, ChevronRight, ChevronDown, ChevronUp,
   Globe, Building2, Clock, MapPin, Package, FileText,
-  TrendingUp, Users, PieChart, LayoutGrid,
+  TrendingUp, Users, LayoutGrid,
 } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import Breadcrumb from '@/shared/components/Breadcrumb.vue'
 import { useCampaign } from '../queries'
-import type { Campaign } from '../types'
 
 const route = useRoute()
 const router = useRouter()
@@ -46,9 +45,6 @@ const STEPS: StepDef[] = [
   { labelKey: 'review.title', icon: Download, routeSuffix: 'review', flag: '_review' },
 ]
 
-function getStepDef(flag: string): StepDef | undefined {
-  return STEPS.find(s => s.flag === flag || s.flag === '_' + flag)
-}
 
 function isStepDone(step: StepDef): boolean {
   if (step.flag.startsWith('_')) {
@@ -113,15 +109,6 @@ const platformAdsStatus = computed(() => {
   ]
 })
 
-const stepLabelMap: Record<string, string> = {
-  segmentation: 'smart.s1',
-  ppc_viability: 'smart.s3',
-  funnel: 'smart.s4',
-  content_strategy: 'smart.s5',
-  meta_ads: 'strategy.title',
-  google_ads: 'strategy.title',
-  linkedin_ads: 'strategy.title',
-}
 
 // Expanded sections state
 const expandedSections = ref<Record<string, boolean>>({ segmentation: true, ppc: false, funnel: false, content: false })
@@ -385,7 +372,7 @@ function getStepStatusLabel(step: StepDef, idx: number): string {
                   :key="i"
                   class="text-xs text-foreground/80 flex items-start gap-2 py-1 px-2 rounded bg-muted/10"
                 >
-                  <span class="text-primary font-medium shrink-0">#{{ i + 1 }}</span>
+                  <span class="text-primary font-medium shrink-0">#{{ Number(i) + 1 }}</span>
                   <span>{{ svc }}</span>
                 </div>
               </div>
