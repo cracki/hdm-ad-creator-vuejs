@@ -2,7 +2,8 @@
 import { computed, ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Topbar from '@/layout/Topbar.vue'
-import AnalysisPayloadRenderer from '@/shared/components/AnalysisPayloadRenderer.vue'
+import AnalysisPayloadRenderer from '@/shared/components/renderers/AnalysisPayloadRenderer.vue'
+import CompetitiveAnalysisRenderer from '@/shared/components/renderers/CompetitiveAnalysisRenderer.vue'
 import { useBrand, useAnalysisRun, useStartAnalysis } from '@/features/brands/queries'
 import { useJobTracker } from '@/shared/composables/useJobTracker'
 import { brandsApi } from '@/features/brands/api'
@@ -111,7 +112,7 @@ const recommendations = computed(() => runData.value?.recommendations ?? null)
 const emotionProfile = computed(() => runData.value?.emotion_profile ?? null)
 const competitiveAnalysis = computed(() => runData.value?.competitive_analysis ?? null)
 
-const activeTab = ref<'overview' | 'audience' | 'insights'>('overview')
+const activeTab = ref<'overview' | 'audience' | 'competitors' | 'insights'>('overview')
 
 setActions([
   { label: t('analysis.backToBrand'), icon: ChevronLeft, to: `/brands/${brandUuid.value}` },
@@ -240,7 +241,7 @@ setActions([
       <!-- Tabs -->
       <div class="flex gap-1 p-1 rounded-lg bg-white/[0.03] border border-border/40 w-full sm:w-fit overflow-x-auto">
         <button
-          v-for="tab in (['overview', 'audience', 'insights'] as const)"
+          v-for="tab in (['overview', 'audience', 'competitors', 'insights'] as const)"
           :key="tab"
           @click="activeTab = tab"
           :data-loc="`brands.analysis.tab-${tab}`"
@@ -303,6 +304,19 @@ setActions([
         </div>
       </div>
 
+      <!-- Competitors Tab -->
+      <div v-if="activeTab === 'competitors'">
+        <div v-if="competitiveAnalysis" class="surface-card p-5 space-y-4">
+          <div class="flex items-center gap-2 text-sm font-semibold">
+            <BarChart3 class="h-4 w-4 text-primary" /> {{ t('analysis.section.competitive') }}
+          </div>
+          <CompetitiveAnalysisRenderer :data="competitiveAnalysis" />
+        </div>
+        <div v-else class="surface-card p-5 text-center text-muted-foreground text-sm py-8">
+          {{ t('analysis.noData') }}
+        </div>
+      </div>
+
       <!-- Insights Tab -->
       <div v-if="activeTab === 'insights'" class="grid md:grid-cols-2 gap-4">
         <div v-if="recommendations" class="surface-card p-5 space-y-4">
@@ -311,13 +325,7 @@ setActions([
           </div>
           <AnalysisPayloadRenderer :data="recommendations" />
         </div>
-        <div v-if="competitiveAnalysis" class="surface-card p-5 space-y-4">
-          <div class="flex items-center gap-2 text-sm font-semibold">
-            <BarChart3 class="h-4 w-4 text-primary" /> {{ t('analysis.section.competitive') }}
-          </div>
-          <AnalysisPayloadRenderer :data="competitiveAnalysis" />
-        </div>
-        <div v-if="!recommendations && !competitiveAnalysis" class="surface-card p-5 md:col-span-2 text-center text-muted-foreground text-sm py-8">
+        <div v-if="!recommendations" class="surface-card p-5 md:col-span-2 text-center text-muted-foreground text-sm py-8">
           {{ t('analysis.noData') }}
         </div>
       </div>
