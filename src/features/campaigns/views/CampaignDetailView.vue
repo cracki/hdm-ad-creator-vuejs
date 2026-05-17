@@ -6,12 +6,13 @@ import {
   Sparkles, Image as ImageIcon, Download,
   Check, Lock, ChevronRight, ChevronDown, ChevronUp,
   Globe, Building2, Clock, MapPin, Package, FileText,
-  TrendingUp, Users, LayoutGrid,
+  TrendingUp, Users, LayoutGrid, Loader2, Presentation,
 } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import Breadcrumb from '@/shared/components/Breadcrumb.vue'
-import { useCampaign } from '../queries'
+import { useCampaign, useCampaignSteps } from '../queries'
+import { exportCampaignPDF, exportCampaignPPTX } from '@/shared/utils/exportCampaign'
 
 const route = useRoute()
 const router = useRouter()
@@ -19,6 +20,23 @@ const { t } = useI18n()
 
 const campaignUuid = computed(() => route.params.campaignUuid as string)
 const { data: campaign, isLoading } = useCampaign(campaignUuid)
+const { data: stepsData } = useCampaignSteps(campaignUuid)
+
+const exporting = ref(false)
+const showExportMenu = ref(false)
+
+async function handleExport(format: 'pdf' | 'pptx') {
+  showExportMenu.value = false
+  if (!campaign.value) return
+  exporting.value = true
+  try {
+    const steps = stepsData.value ?? []
+    if (format === 'pdf') await exportCampaignPDF(campaign.value, steps)
+    else await exportCampaignPPTX(campaign.value, steps)
+  } finally {
+    exporting.value = false
+  }
+}
 
 const breadcrumbs = computed(() => [
   { label: t('breadcrumb.campaigns' as any), to: '/campaigns' },
@@ -179,6 +197,39 @@ function getStepStatusLabel(step: StepDef, idx: number): string {
               <span class="h-1.5 w-1.5 rounded-full" :class="campaign.status === 'in_progress' ? 'bg-accent-cyan animate-pulse' : campaign.status === 'completed' ? 'bg-success' : 'bg-muted-foreground'" />
               {{ campaign.status === 'in_progress' ? t('smart.inProgress' as any) : campaign.status === 'completed' ? t('status.completed' as any) : campaign.status }}
             </span>
+
+            <!-- Export Dropdown -->
+            <div class="relative shrink-0">
+              <button
+                :disabled="exporting"
+                class="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border/40 bg-white/[0.02] text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition disabled:opacity-50"
+                @click="showExportMenu = !showExportMenu"
+              >
+                <Loader2 v-if="exporting" class="h-3 w-3 animate-spin" />
+                <Download v-else class="h-3 w-3" />
+                {{ exporting ? t('cd.exporting' as any) : t('cd.export' as any) }}
+              </button>
+              <div
+                v-if="showExportMenu"
+                class="absolute end-0 top-full mt-1.5 z-50 min-w-[180px] rounded-lg border border-border/40 bg-[#1E1B2E] shadow-lg shadow-black/30 py-1"
+              >
+                <button
+                  class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition"
+                  @click="handleExport('pdf')"
+                >
+                  <FileText class="h-3.5 w-3.5 text-red-400" />
+                  {{ t('cd.exportPDF' as any) }}
+                </button>
+                <button
+                  class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition"
+                  @click="handleExport('pptx')"
+                >
+                  <Presentation class="h-3.5 w-3.5 text-orange-400" />
+                  {{ t('cd.exportPPTX' as any) }}
+                </button>
+              </div>
+              <div v-if="showExportMenu" class="fixed inset-0 z-40" @click="showExportMenu = false" />
+            </div>
           </div>
         </div>
 

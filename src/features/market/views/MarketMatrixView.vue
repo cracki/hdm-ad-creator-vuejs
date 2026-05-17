@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Grid3X3, Loader2, AlertCircle, RefreshCw, MapPin, ShoppingBag, Users } from 'lucide-vue-next'
+import { Grid3X3, Loader2, AlertCircle, RefreshCw, MapPin, ShoppingBag, Users, Download, FileText, LayoutGrid, BarChart3 } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import ContentMatrixRenderer from '@/shared/components/renderers/ContentMatrixRenderer.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { useGetContentMatrix } from '../queries'
+import { exportContentMatrixPDF, exportContentMatrixPPTX, exportContentMatrixXLSX } from '@/shared/utils/exportMarket'
 import type { ContentMatrixResponse } from '../types'
 
 const { t } = useI18n()
@@ -17,6 +18,19 @@ const personas = ref('')
 const matrixResult = ref<ContentMatrixResponse | null>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)
+const showExportMenu = ref(false)
+const exporting = ref(false)
+
+async function handleExport(format: 'pdf' | 'pptx' | 'xlsx') {
+  showExportMenu.value = false
+  if (!matrixResult.value) return
+  exporting.value = true
+  try {
+    if (format === 'pdf') await exportContentMatrixPDF(matrixResult.value)
+    else if (format === 'pptx') await exportContentMatrixPPTX(matrixResult.value)
+    else await exportContentMatrixXLSX(matrixResult.value)
+  } finally { exporting.value = false }
+}
 
 async function runMatrix() {
   if (!industry.value || !location.value) return
@@ -109,9 +123,24 @@ async function runMatrix() {
       <div v-if="matrixResult && !loading">
         <div class="flex items-center justify-between mb-4">
           <div class="text-xs text-muted-foreground">{{ t('market.analysisComplete') }}</div>
-          <button data-loc="market.matrix.re-run-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="matrixResult = null">
-            <RefreshCw class="h-3 w-3" /> {{ t('market.reRun') }}
-          </button>
+          <div class="flex items-center gap-2">
+            <div class="relative">
+              <button :disabled="exporting" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition disabled:opacity-50" @click="showExportMenu = !showExportMenu">
+                <Loader2 v-if="exporting" class="h-3 w-3 animate-spin" />
+                <Download v-else class="h-3 w-3" />
+                {{ exporting ? t('market.exporting') : t('market.export') }}
+              </button>
+              <div v-if="showExportMenu" class="absolute end-0 top-full mt-1 z-50 min-w-[180px] rounded-lg border border-border/40 bg-[#1E1B2E] shadow-lg shadow-black/30 py-1">
+                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition" @click="handleExport('pdf')"><FileText class="h-3.5 w-3.5 text-red-400" /> {{ t('market.exportPDF') }}</button>
+                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition" @click="handleExport('pptx')"><LayoutGrid class="h-3.5 w-3.5 text-orange-400" /> {{ t('market.exportPPTX') }}</button>
+                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition" @click="handleExport('xlsx')"><BarChart3 class="h-3.5 w-3.5 text-green-400" /> {{ t('market.exportXLSX') }}</button>
+              </div>
+              <div v-if="showExportMenu" class="fixed inset-0 z-40" @click="showExportMenu = false" />
+            </div>
+            <button data-loc="market.matrix.re-run-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="matrixResult = null">
+              <RefreshCw class="h-3 w-3" /> {{ t('market.reRun') }}
+            </button>
+          </div>
         </div>
 
         <div class="surface-card p-5">

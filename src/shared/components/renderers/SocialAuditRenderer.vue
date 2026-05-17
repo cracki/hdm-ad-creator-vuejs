@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from '@/shared/utils/i18n'
+import { exportAuditPDF, exportAuditPPTX, exportAuditXLSX } from '@/shared/utils/exportSocialAudit'
 import {
   FileText, LayoutGrid, Lightbulb, BarChart3, Users, Wrench,
   Calendar, Target, Check, Clock, DollarSign,
   Briefcase, TrendingUp, Eye, Zap, ArrowUpRight,
-  Star, Activity, CircleDot,
+  Star, Activity, CircleDot, Download, Loader2,
 } from 'lucide-vue-next'
 
 const { t } = useI18n()
@@ -163,12 +164,34 @@ const monthLabels: Record<string, string> = {
   month_2: t('socialAudit.month2'),
   month_3: t('socialAudit.month3'),
 }
+
+const showExportMenu = ref(false)
+const exporting = ref(false)
+
+async function handleExport(format: 'pdf' | 'pptx' | 'xlsx') {
+  showExportMenu.value = false
+  exporting.value = true
+  const name = 'Social-Audit'
+  try {
+    if (format === 'pdf') await exportAuditPDF(props.data, name)
+    else if (format === 'pptx') await exportAuditPPTX(props.data, name)
+    else await exportAuditXLSX(props.data, name)
+  } finally {
+    exporting.value = false
+  }
+}
+
+function closeExportMenu(e: MouseEvent) {
+  const target = e.target as HTMLElement
+  if (!target.closest('[data-export-menu]')) showExportMenu.value = false
+}
 </script>
 
 <template>
   <div class="space-y-4">
-    <!-- Tab bar -->
-    <div class="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+    <!-- Tab bar + Export -->
+    <div class="flex items-center justify-between gap-3">
+      <div class="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
       <button
         v-for="tab in tabs"
         :key="tab.key"
@@ -184,6 +207,48 @@ const monthLabels: Record<string, string> = {
         {{ tab.label }}
       </button>
     </div>
+
+    <!-- Export Dropdown -->
+    <div class="relative shrink-0" data-export-menu>
+      <button
+        :disabled="exporting"
+        class="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border/40 bg-white/[0.02] text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition disabled:opacity-50"
+        @click="showExportMenu = !showExportMenu"
+      >
+        <Loader2 v-if="exporting" class="h-3 w-3 animate-spin" />
+        <Download v-else class="h-3 w-3" />
+        {{ exporting ? t('socialAudit.exporting') : t('socialAudit.export') }}
+      </button>
+      <div
+        v-if="showExportMenu"
+        class="absolute end-0 top-full mt-1.5 z-50 min-w-[180px] rounded-lg border border-border/40 bg-[#1E1B2E] shadow-lg shadow-black/30 py-1"
+      >
+        <button
+          class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition"
+          @click="handleExport('pdf')"
+        >
+          <FileText class="h-3.5 w-3.5 text-red-400" />
+          {{ t('socialAudit.exportPDF') }}
+        </button>
+        <button
+          class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition"
+          @click="handleExport('pptx')"
+        >
+          <LayoutGrid class="h-3.5 w-3.5 text-orange-400" />
+          {{ t('socialAudit.exportPPTX') }}
+        </button>
+        <button
+          class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition"
+          @click="handleExport('xlsx')"
+        >
+          <BarChart3 class="h-3.5 w-3.5 text-green-400" />
+          {{ t('socialAudit.exportXLSX') }}
+        </button>
+      </div>
+      <!-- Click-outside backdrop -->
+      <div v-if="showExportMenu" class="fixed inset-0 z-40" @click="closeExportMenu" />
+    </div>
+  </div>
 
     <!-- Overview Tab -->
     <div v-if="activeTab === 'overview'" class="space-y-4">

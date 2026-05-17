@@ -4,10 +4,12 @@ import {
   Sparkles, AlertCircle, RefreshCw, Plus, Trash2,
   Copy, Check, Filter, LayoutGrid, BarChart3, Lightbulb,
   Hash, MessageCircle, Zap, TrendingUp, Target, Flame, ArrowLeftRight,
+  Download, FileText,
 } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { useGenerateAIHooks } from '../queries'
+import { exportHooksPDF, exportHooksPPTX, exportHooksXLSX } from '@/shared/utils/exportMarket'
 import type { AIHook, AIHookType, AIHookPlatform, AIHooksResponse } from '../types'
 
 const { t } = useI18n()
@@ -27,6 +29,19 @@ const copiedIdx = ref<number | null>(null)
 const copiedAll = ref(false)
 const showResults = ref(true)
 const showInsights = ref(false)
+const showExportMenu = ref(false)
+const exporting = ref(false)
+
+async function handleExport(format: 'pdf' | 'pptx' | 'xlsx') {
+  showExportMenu.value = false
+  if (!hooksResult.value) return
+  exporting.value = true
+  try {
+    if (format === 'pdf') await exportHooksPDF(hooksResult.value)
+    else if (format === 'pptx') await exportHooksPPTX(hooksResult.value)
+    else await exportHooksXLSX(hooksResult.value)
+  } finally { exporting.value = false }
+}
 
 const allHookTypes = computed((): AIHookType[] => {
   const types = new Set<AIHookType>()
@@ -266,6 +281,20 @@ const platformLabels: Record<AIHookPlatform, string> = {
               <component :is="copiedAll ? Check : Copy" class="h-3 w-3" />
               {{ copiedAll ? t('market.copied') : t('market.copyAllHooks') }}
             </button>
+            <!-- Export dropdown -->
+            <div class="relative">
+              <button :disabled="exporting" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition disabled:opacity-50" @click="showExportMenu = !showExportMenu">
+                <Loader2 v-if="exporting" class="h-3 w-3 animate-spin" />
+                <Download v-else class="h-3 w-3" />
+                {{ exporting ? t('market.exporting') : t('market.export') }}
+              </button>
+              <div v-if="showExportMenu" class="absolute end-0 top-full mt-1 z-50 min-w-[180px] rounded-lg border border-border/40 bg-[#1E1B2E] shadow-lg shadow-black/30 py-1">
+                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition" @click="handleExport('pdf')"><FileText class="h-3.5 w-3.5 text-red-400" /> {{ t('market.exportPDF') }}</button>
+                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition" @click="handleExport('pptx')"><LayoutGrid class="h-3.5 w-3.5 text-orange-400" /> {{ t('market.exportPPTX') }}</button>
+                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition" @click="handleExport('xlsx')"><BarChart3 class="h-3.5 w-3.5 text-green-400" /> {{ t('market.exportXLSX') }}</button>
+              </div>
+              <div v-if="showExportMenu" class="fixed inset-0 z-40" @click="showExportMenu = false" />
+            </div>
             <button data-loc="market.hooks.re-run-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="hooksResult = null">
               <RefreshCw class="h-3 w-3" /> {{ t('market.reRun') }}
             </button>
