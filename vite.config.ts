@@ -56,6 +56,15 @@ export default defineConfig({
           if (id.includes('node_modules/tw-animate-css/')) {
             return 'vendor-ui'
           }
+          if (id.includes('node_modules/jspdf') || id.includes('node_modules/jspdf-autotable')) {
+            return 'vendor-export-pdf'
+          }
+          if (id.includes('node_modules/pptxgenjs')) {
+            return 'vendor-export-pptx'
+          }
+          if (id.includes('node_modules/exceljs')) {
+            return 'vendor-export-xlsx'
+          }
           if (id.includes('node_modules/')) {
             return 'vendor-other'
           }
