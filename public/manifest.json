@@ -1,0 +1,21 @@
+{
+  "name": "HDM Platform — AI Ad Creator",
+  "short_name": "HDM Ads",
+  "description": "AI-powered marketing intelligence platform. Brand analysis, campaign creation and ad generation across Meta, Google, LinkedIn and TikTok.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0e0e1a",
+  "theme_color": "#7c3aed",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icons.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "lang": "en",
+  "dir": "ltr"
+}
