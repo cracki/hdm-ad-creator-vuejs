@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowRight, Mail, Lock, User } from 'lucide-vue-next'
+import { ArrowRight, Mail, Lock, User, X } from 'lucide-vue-next'
 import { useAuthStore } from '@/features/auth/store'
 import { useI18n } from '@/shared/utils/i18n'
 import { useGoogleAuth } from '@/shared/composables/useGoogleAuth'
@@ -16,6 +16,14 @@ const { triggerGoogleLogin, loading: googleLoading } = useGoogleAuth()
 const form = ref({ email: '', password: '', firstName: '', lastName: '' })
 const error = ref('')
 const loading = ref(false)
+
+const popupOpen = ref(false)
+const popupType = ref<'terms' | 'privacy'>('terms')
+
+function openPopup(type: 'terms' | 'privacy') {
+  popupType.value = type
+  popupOpen.value = true
+}
 
 async function handleRegister() {
   error.value = ''
@@ -136,7 +144,7 @@ async function handleGoogleRegister() {
 
             <label class="flex items-start gap-2 text-xs text-muted-foreground">
               <input type="checkbox" data-loc="auth.register.agreement" class="mt-0.5 h-3.5 w-3.5 rounded accent-[oklch(0.68_0.24_295)]" />
-              <span>{{ t('auth.agreePre') }} <a data-loc="auth.register.terms-link" class="text-primary hover:underline">{{ t('auth.terms') }}</a> {{ t('auth.agreeMid') }} <a class="text-primary hover:underline">{{ t('auth.privacy') }}</a>.</span>
+              <span>{{ t('auth.agreePre') }} <button type="button" data-loc="auth.register.terms-link" class="text-primary hover:underline" @click="openPopup('terms')">{{ t('auth.terms') }}</button> {{ t('auth.agreeMid') }} <button type="button" class="text-primary hover:underline" @click="openPopup('privacy')">{{ t('auth.privacy') }}</button>.</span>
             </label>
 
             <button
@@ -174,5 +182,29 @@ async function handleGoogleRegister() {
         </div>
       </div>
     </div>
+
+    <!-- Terms / Privacy Popup -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div v-if="popupOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @click.self="popupOpen = false">
+          <div class="relative w-full max-w-lg max-h-[85vh] surface-card rounded-2xl border border-border/60 shadow-xl flex flex-col overflow-hidden">
+            <div class="flex items-center justify-between p-5 border-b border-border/40">
+              <h2 class="text-lg font-semibold">{{ popupType === 'terms' ? t('terms.title') : t('privacy.title') }}</h2>
+              <button class="p-1.5 rounded-lg hover:bg-white/[0.06] transition" @click="popupOpen = false">
+                <X class="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-5 text-sm text-muted-foreground leading-relaxed">
+              {{ popupType === 'terms' ? t('terms.content') : t('privacy.content') }}
+            </div>
+            <div class="p-4 border-t border-border/40">
+              <button class="w-full h-10 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-sm font-medium transition" @click="popupOpen = false">
+                {{ t('popup.close') }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>

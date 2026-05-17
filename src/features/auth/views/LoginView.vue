@@ -107,13 +107,10 @@ async function handleGoogleLogin() {
 
             <div v-if="error" class="text-sm text-destructive">{{ error }}</div>
 
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs">
-              <label class="flex items-center gap-2 text-muted-foreground cursor-pointer">
-                <input type="checkbox" data-loc="auth.login.remember-me" class="h-3.5 w-3.5 rounded border-border bg-transparent accent-[oklch(0.68_0.24_295)]" />
-                {{ t('auth.rememberMe') }}
-              </label>
-              <a href="#" data-loc="auth.login.forgot-link" class="text-primary hover:underline">{{ t('auth.forgot') }}</a>
-            </div>
+            <label class="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+              <input type="checkbox" data-loc="auth.login.remember-me" class="h-3.5 w-3.5 rounded border-border bg-transparent accent-[oklch(0.68_0.24_295)]" />
+              {{ t('auth.rememberMe') }}
+            </label>
 
             <button
               type="submit"
