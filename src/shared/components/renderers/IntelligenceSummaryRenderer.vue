@@ -30,7 +30,7 @@ const stats = computed(() => {
       <div
         v-for="stat in stats"
         :key="stat.label"
-        class="rounded-lg border border-border/30 bg-white/[0.015] p-3 text-center space-y-1"
+        class="rounded-lg border border-border/30 bg-overlay-subtle p-3 text-center space-y-1"
       >
         <div class="flex justify-center">
           <component :is="stat.icon" :class="['h-4 w-4', stat.color]" />

@@ -131,26 +131,26 @@ function getAdData(ad: any) {
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         <div>
           <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('adgen.persona') }}</label>
-          <select v-model="selectedPersona" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none">
+          <select v-model="selectedPersona" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none">
             <option value="">{{ t('adgen.allPersonas') }}</option>
             <option v-for="p in personas" :key="p" :value="p">{{ p }}</option>
           </select>
         </div>
         <div>
           <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('adgen.funnelStage') }}</label>
-          <select v-model="selectedFunnel" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none">
+          <select v-model="selectedFunnel" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none">
             <option v-for="s in funnelStages" :key="s" :value="s">{{ s }}</option>
           </select>
         </div>
         <div>
           <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('adgen.platform') }}</label>
-          <select v-model="selectedPlatform" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none">
+          <select v-model="selectedPlatform" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none">
             <option v-for="p in selectedPlatforms" :key="p" :value="p">{{ adPlatformLabel(p) }}</option>
           </select>
         </div>
         <div>
           <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('adgen.quantity') }}</label>
-          <select v-model.number="quantity" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none">
+          <select v-model.number="quantity" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none">
             <option :value="1">1</option><option :value="3">3</option><option :value="5">5</option><option :value="10">10</option>
           </select>
         </div>
@@ -198,23 +198,23 @@ function getAdData(ad: any) {
             <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
               <div class="flex flex-wrap items-center gap-1.5">
                 <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-blue-500/15 text-blue-300">{{ adPlatformLabel(ad.platform) }}</span>
-                <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-white/[0.05] text-muted-foreground">{{ ad.funnel_stage }}</span>
+                <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-overlay-light text-muted-foreground">{{ ad.funnel_stage }}</span>
                 <span v-if="getAdData(ad).framework" class="text-[11px] font-semibold px-2 py-0.5 rounded border border-primary/40 text-primary">{{ getAdData(ad).framework }}</span>
               </div>
               <div v-if="getAdData(ad).score" class="flex items-center gap-1 text-[11px] font-semibold text-success">
                 <span class="h-1.5 w-1.5 rounded-full bg-success" /> {{ getAdData(ad).score }}
               </div>
             </div>
-            <div class="rounded-lg border border-border/50 bg-white/[0.02] p-3 space-y-2 mb-3">
+            <div class="rounded-lg border border-border/50 bg-overlay-subtle p-3 space-y-2 mb-3">
               <div v-if="ad.persona" class="text-[11px] text-muted-foreground">{{ ad.persona }}</div>
               <div v-if="getAdData(ad).headline" class="text-sm font-semibold">{{ getAdData(ad).headline }}</div>
               <div v-if="getAdData(ad).body" class="text-xs leading-relaxed">{{ getAdData(ad).body }}</div>
               <div v-if="getAdData(ad).cta" class="flex items-center justify-end pt-1">
-                <span class="h-7 px-2.5 rounded-md bg-white/[0.06] text-[11px] font-medium">{{ getAdData(ad).cta }}</span>
+                <span class="h-7 px-2.5 rounded-md bg-overlay-medium text-[11px] font-medium">{{ getAdData(ad).cta }}</span>
               </div>
             </div>
             <div class="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition">
-              <button class="h-10 w-10 grid place-items-center rounded-md hover:bg-white/[0.06] transition" @click="copyToClipboard(JSON.stringify(ad.data, null, 2))">
+              <button class="h-10 w-10 grid place-items-center rounded-md hover:bg-overlay-medium transition" @click="copyToClipboard(JSON.stringify(ad.data, null, 2))">
                 <Copy class="h-3.5 w-3.5 text-muted-foreground" />
               </button>
             </div>

@@ -202,7 +202,7 @@ function getStepStatusLabel(step: StepDef, idx: number): string {
             <div class="relative shrink-0">
               <button
                 :disabled="exporting"
-                class="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border/40 bg-white/[0.02] text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition disabled:opacity-50"
+                class="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border/40 bg-overlay-subtle text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-overlay-light transition disabled:opacity-50"
                 @click="showExportMenu = !showExportMenu"
               >
                 <Loader2 v-if="exporting" class="h-3 w-3 animate-spin" />
@@ -214,14 +214,14 @@ function getStepStatusLabel(step: StepDef, idx: number): string {
                 class="absolute end-0 top-full mt-1.5 z-50 min-w-[180px] rounded-lg border border-border/40 bg-[#1E1B2E] shadow-lg shadow-black/30 py-1"
               >
                 <button
-                  class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition"
+                  class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition"
                   @click="handleExport('pdf')"
                 >
                   <FileText class="h-3.5 w-3.5 text-red-400" />
                   {{ t('cd.exportPDF' as any) }}
                 </button>
                 <button
-                  class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition"
+                  class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition"
                   @click="handleExport('pptx')"
                 >
                   <Presentation class="h-3.5 w-3.5 text-orange-400" />

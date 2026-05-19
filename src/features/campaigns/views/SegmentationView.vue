@@ -72,7 +72,7 @@ function goNext() {
   <Topbar :title="campaign?.name ?? ''" :subtitle="campaign?.brand?.company_name">
     <template #actions>
       <button
-        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
+        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition"
         @click="router.push(`/campaigns/${campaignUuid}`)"
       >
         {{ t('camp.backToCampaign') }}
@@ -104,14 +104,14 @@ function goNext() {
           <div class="grid sm:grid-cols-2 gap-4">
             <div>
               <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('seg.businessType') }}</label>
-              <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60">
+              <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60">
                 <ShoppingBag class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                 <input v-model="businessType" :placeholder="t('seg.businessTypeHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" data-loc="campaigns.segmentation.business-type-input" />
               </div>
             </div>
             <div>
               <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('seg.location') }}</label>
-              <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60">
+              <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60">
                 <MapPin class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                 <input v-model="location" :placeholder="t('seg.locationHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" data-loc="campaigns.segmentation.location-input" />
               </div>
@@ -123,7 +123,7 @@ function goNext() {
               v-model="productDescription"
               :placeholder="t('seg.productDescHint')"
               rows="3"
-              class="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60 resize-none"
+              class="w-full px-3 py-2 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60 resize-none"
               data-loc="campaigns.segmentation.product-desc-input"
             />
           </div>
@@ -152,7 +152,7 @@ function goNext() {
           <div class="text-sm font-medium mb-1">{{ t('status.completed') }}</div>
           <div class="text-xs text-muted-foreground mb-4">{{ t('seg.alreadyCompletedDesc') }}</div>
           <div class="flex items-center justify-center gap-3">
-            <button class="h-9 px-4 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="runSegmentation">
+            <button class="h-9 px-4 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="runSegmentation">
               <RefreshCw class="h-3 w-3" /> {{ t('seg.reRun') }}
             </button>
             <button
@@ -179,7 +179,7 @@ function goNext() {
         <div v-if="stepData && !loading">
           <div class="flex items-center justify-between mb-4">
             <div class="text-xs text-muted-foreground">{{ t('seg.segmentsFound', { count: segments.length }) }}</div>
-            <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="runSegmentation">
+            <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="runSegmentation">
               <RefreshCw class="h-3 w-3" /> {{ t('seg.reRun') }}
             </button>
           </div>
@@ -213,7 +213,7 @@ function goNext() {
               </p>
 
               <div v-if="seg.goals_motivations?.secondary_goals?.length" class="flex flex-wrap gap-1">
-                <span v-for="goal in seg.goals_motivations.secondary_goals.slice(0, 3)" :key="goal" class="text-[11px] px-2 py-0.5 rounded bg-white/[0.05] text-muted-foreground">
+                <span v-for="goal in seg.goals_motivations.secondary_goals.slice(0, 3)" :key="goal" class="text-[11px] px-2 py-0.5 rounded bg-overlay-light text-muted-foreground">
                   {{ goal }}
                 </span>
               </div>

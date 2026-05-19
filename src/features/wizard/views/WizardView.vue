@@ -120,7 +120,7 @@ const stepComponent = computed(() => {
     :subtitle="campaign?.brand?.company_name ?? ''"
   >
     <template #actions>
-      <button data-loc="wizard.save-exit-btn" class="h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition" @click="saveAndExit">
+      <button data-loc="wizard.save-exit-btn" class="h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition" @click="saveAndExit">
         {{ t('smart.saveExit') }}
       </button>
     </template>
@@ -130,7 +130,7 @@ const stepComponent = computed(() => {
   <div class="px-4 sm:px-6 py-3 border-b border-border/60 bg-background/40 backdrop-blur-xl">
     <div class="flex items-center gap-3">
       <span class="text-xs font-medium whitespace-nowrap">{{ t('smart.stepOf') }} {{ wizard.currentStep.value }}/10</span>
-      <div data-loc="wizard.progress-bar" class="flex-1 h-1.5 rounded-full bg-white/5 overflow-hidden">
+      <div data-loc="wizard.progress-bar" class="flex-1 h-1.5 rounded-full bg-overlay-subtle overflow-hidden">
         <div class="h-full rounded-full bg-[image:var(--gradient-brand)] relative transition-all duration-500" :style="{ width: `${wizard.progress.value}%` }">
           <div class="absolute inset-0 shimmer" />
         </div>
@@ -149,7 +149,7 @@ const stepComponent = computed(() => {
         :class="[
           'flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] sm:text-[11px] font-medium whitespace-nowrap transition',
           wizard.currentStep.value === step.n ? 'bg-[image:var(--gradient-brand)] text-primary-foreground' :
-          wizard.stepCompletion.value[step.n] ? 'bg-success/15 text-success' : 'bg-white/[0.03] text-muted-foreground',
+          wizard.stepCompletion.value[step.n] ? 'bg-success/15 text-success' : 'bg-overlay-subtle text-muted-foreground',
         ]"
         @click="goToStep(step.n)"
       >
@@ -168,7 +168,7 @@ const stepComponent = computed(() => {
           data-loc="wizard.desktop-step"
           :class="[
             'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-start transition relative',
-            wizard.currentStep.value === step.n ? 'bg-white/[0.05]' : 'hover:bg-white/[0.02]',
+            wizard.currentStep.value === step.n ? 'bg-overlay-light' : 'hover:bg-overlay-subtle',
           ]"
           @click="goToStep(step.n)"
         >
@@ -217,7 +217,7 @@ const stepComponent = computed(() => {
           <div class="flex items-center justify-between gap-2 pt-4">
             <button
               data-loc="wizard.prev-btn"
-              class="h-10 px-3 sm:px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition flex items-center gap-1.5"
+              class="h-10 px-3 sm:px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition flex items-center gap-1.5"
               :class="{ 'opacity-50 pointer-events-none': !wizard.canGoBack.value }"
               @click="goBack"
             >

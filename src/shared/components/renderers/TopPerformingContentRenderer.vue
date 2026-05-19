@@ -22,7 +22,7 @@ const contentTypeColors: Record<string, string> = {
   tips: 'bg-amber-500/10 text-amber-400',
   review: 'bg-success/10 text-success',
   case_study: 'bg-purple-500/10 text-purple-400',
-  article: 'bg-white/5 text-muted-foreground',
+  article: 'bg-overlay-subtle text-muted-foreground',
 }
 
 function getTypeClass(type: string): string {
@@ -50,7 +50,7 @@ function getTypeClass(type: string): string {
         <div v-if="patterns.dominant_domains?.length" class="space-y-1">
           <div class="text-[11px] text-muted-foreground">{{ t('topContent.topDomains') }}</div>
           <div class="flex flex-wrap gap-1">
-            <span v-for="d in patterns.dominant_domains.slice(0, 4)" :key="d" class="text-[11px] px-1.5 py-0.5 rounded bg-white/[0.04] text-muted-foreground">
+            <span v-for="d in patterns.dominant_domains.slice(0, 4)" :key="d" class="text-[11px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground">
               {{ d }}
             </span>
           </div>
@@ -68,7 +68,7 @@ function getTypeClass(type: string): string {
         <div
           v-for="(item, idx) in performers"
           :key="idx"
-          class="rounded-lg border border-border/30 bg-white/[0.015] p-3.5 space-y-2.5"
+          class="rounded-lg border border-border/30 bg-overlay-subtle p-3.5 space-y-2.5"
         >
           <div class="flex items-start gap-3">
             <span class="shrink-0 h-6 w-6 rounded bg-[image:var(--gradient-brand)] text-primary-foreground text-[10px] font-bold grid place-items-center">

@@ -36,7 +36,7 @@ async function handleRunAudit() {
       <RouterLink
         :to="`/brands/${brandUuid}/social`"
         data-loc="competitors.audit.back-btn"
-        class="hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
+        class="hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition"
       >
         <ChevronLeft class="h-3.5 w-3.5" /> {{ t('socialAudit.back') }}
       </RouterLink>
@@ -78,7 +78,7 @@ async function handleRunAudit() {
       <button
         data-loc="competitors.audit.retry-btn"
         @click="handleRunAudit"
-        class="mt-3 inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
+        class="mt-3 inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition"
       >
         {{ t('socialAudit.retry') }}
       </button>
@@ -93,7 +93,7 @@ async function handleRunAudit() {
           data-loc="competitors.audit.re-run-btn"
           @click="handleRunAudit"
           :disabled="auditMutation.isPending.value"
-          class="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition disabled:opacity-50"
+          class="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition disabled:opacity-50"
         >
           <Loader2 v-if="auditMutation.isPending.value" class="h-3.5 w-3.5 animate-spin" />
           {{ t('socialAudit.reRun') }}

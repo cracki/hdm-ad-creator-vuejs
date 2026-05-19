@@ -157,7 +157,7 @@ function exportCSV() {
           <select
             v-model="selectedBrandUuid"
             data-loc="funnel.brand-select"
-            class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none focus:ring-1 focus:ring-primary/50"
+            class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none focus:ring-1 focus:ring-primary/50"
           >
             <option value="" disabled>{{ t('funnelLauncher.chooseBrand') }}</option>
             <option v-for="b in (brands ?? [])" :key="b.brand_uuid" :value="b.brand_uuid">
@@ -178,7 +178,7 @@ function exportCSV() {
                 'p-3 rounded-lg border text-center text-xs transition',
                 selectedPlatforms.includes(p.id)
                   ? 'border-primary/60 bg-primary/10'
-                  : 'border-border/60 bg-white/[0.02] hover:border-border',
+                  : 'border-border/60 bg-overlay-subtle hover:border-border',
               ]"
             >
               <span class="text-xl block mb-1">{{ p.icon }}</span>
@@ -199,7 +199,7 @@ function exportCSV() {
                 'p-3 rounded-lg border text-center text-xs transition',
                 selectedStages.includes(s.id)
                   ? `border-${s.color}/60 bg-${s.color}/10`
-                  : 'border-border/60 bg-white/[0.02] hover:border-border',
+                  : 'border-border/60 bg-overlay-subtle hover:border-border',
               ]"
             >
               <div class="font-semibold">{{ s.name }}</div>
@@ -214,7 +214,7 @@ function exportCSV() {
             <label class="text-xs font-medium text-muted-foreground">{{ t('funnelLauncher.personas') }}</label>
             <button
               data-loc="funnel.add-persona-btn"
-              class="h-7 px-2 rounded border border-border/60 text-[11px] text-muted-foreground flex items-center gap-1 hover:bg-white/[0.03] transition"
+              class="h-7 px-2 rounded border border-border/60 text-[11px] text-muted-foreground flex items-center gap-1 hover:bg-overlay-subtle transition"
               @click="personas.push({ name: '', description: '' })"
             >
               <Plus class="h-3 w-3" /> {{ t('funnelLauncher.addPersona') }}
@@ -226,13 +226,13 @@ function exportCSV() {
                 v-model="persona.name"
                 data-loc="funnel.persona-name-input"
                 :placeholder="t('funnelLauncher.personaName')"
-                class="flex-1 h-9 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60 min-w-0"
+                class="flex-1 h-9 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60 min-w-0"
               />
               <input
                 v-model="persona.description"
                 data-loc="funnel.persona-desc-input"
                 :placeholder="t('funnelLauncher.personaDesc')"
-                class="flex-1 h-9 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60 min-w-0"
+                class="flex-1 h-9 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60 min-w-0"
               />
               <button
                 v-if="personas.length > 1"
@@ -250,11 +250,11 @@ function exportCSV() {
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div>
             <label class="text-xs font-medium text-muted-foreground block mb-1">{{ t('funnelLauncher.budget') }}</label>
-            <input v-model.number="budget" data-loc="funnel.budget-input" type="number" class="w-full h-9 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none" />
+            <input v-model.number="budget" data-loc="funnel.budget-input" type="number" class="w-full h-9 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none" />
           </div>
           <div>
             <label class="text-xs font-medium text-muted-foreground block mb-1">{{ t('funnelLauncher.currency') }}</label>
-            <select v-model="currency" data-loc="funnel.currency-select" class="w-full h-9 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none">
+            <select v-model="currency" data-loc="funnel.currency-select" class="w-full h-9 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none">
               <option value="USD">USD ($)</option>
               <option value="EUR">EUR</option>
               <option value="GBP">GBP</option>
@@ -263,11 +263,11 @@ function exportCSV() {
           </div>
           <div>
             <label class="text-xs font-medium text-muted-foreground block mb-1">{{ t('funnelLauncher.duration') }}</label>
-            <input v-model.number="duration" data-loc="funnel.duration-input" type="number" class="w-full h-9 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none" />
+            <input v-model.number="duration" data-loc="funnel.duration-input" type="number" class="w-full h-9 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none" />
           </div>
           <div>
             <label class="text-xs font-medium text-muted-foreground block mb-1">{{ t('funnelLauncher.adsPerStage') }}</label>
-            <select v-model.number="adsPerStage" data-loc="funnel.ads-per-stage-select" class="w-full h-9 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none">
+            <select v-model.number="adsPerStage" data-loc="funnel.ads-per-stage-select" class="w-full h-9 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none">
               <option :value="2">2</option>
               <option :value="3">3</option>
               <option :value="5">5</option>
@@ -309,7 +309,7 @@ function exportCSV() {
               </div>
             </div>
             <div class="flex gap-2">
-              <button class="h-9 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="campaign = null; $forceUpdate()">
+              <button class="h-9 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="campaign = null; $forceUpdate()">
                 <RefreshCw class="h-3 w-3" /> {{ t('funnelLauncher.newCampaign') }}
               </button>
               <button data-loc="funnel.export-btn" class="h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs flex items-center gap-1.5" @click="exportCSV">
@@ -320,31 +320,31 @@ function exportCSV() {
         </div>
 
         <!-- Tabs -->
-        <div class="flex gap-1 bg-white/[0.03] p-1 rounded-lg">
+        <div class="flex gap-1 bg-overlay-subtle p-1 rounded-lg">
           <button
             v-for="tab in ['overview', 'ads', 'targeting'] as const" :key="tab"
             data-loc="funnel.tab-btn"
             @click="activeTab = tab"
-            :class="['flex-1 h-9 rounded-md text-xs font-medium capitalize transition', activeTab === tab ? 'bg-white/[0.08] text-foreground' : 'text-muted-foreground']"
+            :class="['flex-1 h-9 rounded-md text-xs font-medium capitalize transition', activeTab === tab ? 'bg-overlay-medium text-foreground' : 'text-muted-foreground']"
           >{{ tab }}</button>
         </div>
 
         <!-- Overview -->
         <div v-if="activeTab === 'overview'" class="surface-card p-5 space-y-4">
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div class="p-3 rounded-lg bg-white/[0.03]">
+            <div class="p-3 rounded-lg bg-overlay-subtle">
               <div class="text-xs text-muted-foreground">{{ t('funnelLauncher.totalAds') }}</div>
               <div class="text-xl font-bold">{{ Object.values(adsByStage).flat().length }}</div>
             </div>
-            <div class="p-3 rounded-lg bg-white/[0.03]">
+            <div class="p-3 rounded-lg bg-overlay-subtle">
               <div class="text-xs text-muted-foreground">{{ t('funnelLauncher.platformCount') }}</div>
               <div class="text-xl font-bold">{{ selectedPlatforms.length }}</div>
             </div>
-            <div class="p-3 rounded-lg bg-white/[0.03]">
+            <div class="p-3 rounded-lg bg-overlay-subtle">
               <div class="text-xs text-muted-foreground">{{ t('funnelLauncher.budgetLabel') }}</div>
               <div class="text-xl font-bold">{{ currency }} {{ budget.toLocaleString() }}</div>
             </div>
-            <div class="p-3 rounded-lg bg-white/[0.03]">
+            <div class="p-3 rounded-lg bg-overlay-subtle">
               <div class="text-xs text-muted-foreground">{{ t('funnelLauncher.durationLabel') }}</div>
               <div class="text-xl font-bold">{{ duration }} {{ t('funnelLauncher.days') }}</div>
             </div>
@@ -361,7 +361,7 @@ function exportCSV() {
             >
               <div class="flex items-center gap-2">
                 <span class="text-sm font-semibold">{{ stages.find((s) => s.id === stage)?.name }}</span>
-                <span class="text-[11px] px-2 py-0.5 rounded bg-white/[0.06] text-muted-foreground">{{ adsByStage[stage]?.length ?? 0 }} {{ t('funnelLauncher.ads') }}</span>
+                <span class="text-[11px] px-2 py-0.5 rounded bg-overlay-medium text-muted-foreground">{{ adsByStage[stage]?.length ?? 0 }} {{ t('funnelLauncher.ads') }}</span>
               </div>
               <component :is="expandedSections[stage] ? ChevronUp : ChevronDown" class="h-4 w-4 text-muted-foreground" />
             </button>
@@ -378,7 +378,7 @@ function exportCSV() {
         <!-- Targeting -->
         <div v-if="activeTab === 'targeting' && campaignData?.targeting_specs" class="surface-card p-5">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div v-for="(spec, platform) in campaignData.targeting_specs" :key="platform" class="p-3 rounded-lg bg-white/[0.03]">
+            <div v-for="(spec, platform) in campaignData.targeting_specs" :key="platform" class="p-3 rounded-lg bg-overlay-subtle">
               <div class="text-sm font-semibold mb-2">{{ String(platform).toUpperCase() }}</div>
               <div v-if="spec.demographics" class="text-xs text-muted-foreground">
                 {{ spec.demographics.age_range ?? '' }} · {{ spec.demographics.gender ?? '' }}

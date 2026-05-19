@@ -66,7 +66,7 @@ function reset() {
       <div class="flex items-center gap-1">
         <button
           data-loc="ad-copy-editor.reset-btn"
-          class="h-7 w-7 grid place-items-center rounded-md hover:bg-white/[0.06] text-muted-foreground transition"
+          class="h-7 w-7 grid place-items-center rounded-md hover:bg-overlay-medium text-muted-foreground transition"
           @click="reset"
           title="Reset"
         >
@@ -76,7 +76,7 @@ function reset() {
           data-loc="ad-copy-editor.toggle-edit-btn"
           :class="[
             'h-7 px-2.5 rounded-md text-xs font-medium flex items-center gap-1 transition',
-            isEditing ? 'bg-success/15 text-success' : 'hover:bg-white/[0.06] text-muted-foreground',
+            isEditing ? 'bg-success/15 text-success' : 'hover:bg-overlay-medium text-muted-foreground',
           ]"
           @click="toggleEdit"
         >
@@ -95,7 +95,7 @@ function reset() {
           {{ localAd.headline?.length ?? 0 }}/{{ limits.headline }}
         </span>
       </div>
-      <div class="h-1 rounded-full bg-white/5 overflow-hidden mb-1.5">
+      <div class="h-1 rounded-full bg-overlay-subtle overflow-hidden mb-1.5">
         <div
           :class="['h-full rounded-full transition-all', charPercent('headline') > 95 ? 'bg-destructive' : 'bg-primary']"
           :style="{ width: `${charPercent('headline')}%` }"
@@ -106,7 +106,7 @@ function reset() {
         v-model="localAd.headline"
         data-loc="ad-copy-editor.headline-input"
         :maxlength="limits.headline"
-        class="w-full h-9 px-3 rounded-lg bg-white/[0.03] border border-border/70 text-sm outline-none focus:border-primary/60 transition"
+        class="w-full h-9 px-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm outline-none focus:border-primary/60 transition"
       />
       <div v-else class="text-sm font-semibold">{{ localAd.headline }}</div>
     </div>
@@ -119,7 +119,7 @@ function reset() {
           {{ localAd.primary_text?.length ?? 0 }}/{{ limits.primary_text }}
         </span>
       </div>
-      <div class="h-1 rounded-full bg-white/5 overflow-hidden mb-1.5">
+      <div class="h-1 rounded-full bg-overlay-subtle overflow-hidden mb-1.5">
         <div
           :class="['h-full rounded-full transition-all', charPercent('primary_text') > 95 ? 'bg-destructive' : 'bg-primary']"
           :style="{ width: `${charPercent('primary_text')}%` }"
@@ -131,7 +131,7 @@ function reset() {
         data-loc="ad-copy-editor.primary-text-input"
         :maxlength="limits.primary_text"
         rows="3"
-        class="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-border/70 text-sm outline-none focus:border-primary/60 transition resize-none"
+        class="w-full px-3 py-2 rounded-lg bg-overlay-subtle border border-border/70 text-sm outline-none focus:border-primary/60 transition resize-none"
       />
       <div v-else class="text-sm text-muted-foreground leading-relaxed">{{ localAd.primary_text }}</div>
     </div>
@@ -144,7 +144,7 @@ function reset() {
           {{ localAd.description?.length ?? 0 }}/{{ limits.description }}
         </span>
       </div>
-      <div class="h-1 rounded-full bg-white/5 overflow-hidden mb-1.5">
+      <div class="h-1 rounded-full bg-overlay-subtle overflow-hidden mb-1.5">
         <div
           :class="['h-full rounded-full transition-all', charPercent('description') > 95 ? 'bg-destructive' : 'bg-primary']"
           :style="{ width: `${charPercent('description')}%` }"
@@ -155,7 +155,7 @@ function reset() {
         v-model="localAd.description"
         data-loc="ad-copy-editor.description-input"
         :maxlength="limits.description"
-        class="w-full h-9 px-3 rounded-lg bg-white/[0.03] border border-border/70 text-sm outline-none focus:border-primary/60 transition"
+        class="w-full h-9 px-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm outline-none focus:border-primary/60 transition"
       />
       <div v-else class="text-xs text-muted-foreground">{{ localAd.description }}</div>
     </div>
@@ -169,7 +169,7 @@ function reset() {
       v-if="isEditing"
       v-model="localAd.cta"
       data-loc="ad-copy-editor.cta-select"
-      class="w-full h-9 px-3 rounded-lg bg-white/[0.03] border border-border/70 text-sm outline-none focus:border-primary/60 transition"
+      class="w-full h-9 px-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm outline-none focus:border-primary/60 transition"
     >
       <option>Shop Now</option>
       <option>Learn More</option>

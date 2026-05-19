@@ -139,10 +139,10 @@ function getGrade(item: TreeNode): string {
     <div v-for="item in items" :key="item.key">
       <!-- Score section -->
       <template v-if="item.type === 'score'">
-        <div class="rounded-lg border border-border/30 bg-white/[0.015] p-3.5 space-y-2">
+        <div class="rounded-lg border border-border/30 bg-overlay-subtle p-3.5 space-y-2">
           <div class="text-xs font-semibold text-foreground">{{ item.label }}</div>
           <div class="flex items-center gap-3">
-            <div class="flex-1 h-2 rounded-full bg-white/[0.06] overflow-hidden">
+            <div class="flex-1 h-2 rounded-full bg-overlay-medium overflow-hidden">
               <div
                 :class="scoreBarColor(getGrade(item))"
                 class="h-full rounded-full transition-all"
@@ -175,7 +175,7 @@ function getGrade(item: TreeNode): string {
                 <span class="text-muted-foreground/50">{{ child.label }}</span>
                 <span v-if="(child.value as string[])?.length === 0" class="text-muted-foreground/40">None</span>
                 <div v-else class="flex flex-wrap gap-1 mt-0.5">
-                  <span v-for="(t, i) in (child.value as string[])" :key="i" class="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] text-muted-foreground">{{ t }}</span>
+                  <span v-for="(t, i) in (child.value as string[])" :key="i" class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground">{{ t }}</span>
                 </div>
               </div>
             </template>
@@ -185,14 +185,14 @@ function getGrade(item: TreeNode): string {
 
       <!-- Nested section -->
       <template v-else-if="item.type === 'nested' && item.children">
-        <div class="rounded-lg border border-border/30 bg-white/[0.015] p-3.5 space-y-2">
+        <div class="rounded-lg border border-border/30 bg-overlay-subtle p-3.5 space-y-2">
           <div class="text-xs font-semibold text-foreground">{{ item.label }}</div>
           <div class="space-y-1.5 ps-1">
             <template v-for="child in item.children" :key="child.key">
               <!-- Child score -->
               <div v-if="child.type === 'score'" class="flex items-center gap-2 text-xs">
                 <span class="text-muted-foreground/50 shrink-0">{{ child.label }}</span>
-                <div class="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                <div class="flex-1 h-1.5 rounded-full bg-overlay-medium overflow-hidden">
                   <div
                     :class="scoreBarColor(getGrade(child))"
                     class="h-full rounded-full"
@@ -223,7 +223,7 @@ function getGrade(item: TreeNode): string {
                   <span
                     v-for="(entry, i) in (child.value as string[])"
                     :key="i"
-                    class="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] text-muted-foreground"
+                    class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground"
                   >
                     {{ entry }}
                   </span>
@@ -238,7 +238,7 @@ function getGrade(item: TreeNode): string {
                     <!-- Sub score -->
                     <div v-if="sub.type === 'score'" class="text-xs flex items-center gap-2">
                       <span class="text-muted-foreground/50 shrink-0">{{ sub.label }}</span>
-                      <div class="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                      <div class="flex-1 h-1.5 rounded-full bg-overlay-medium overflow-hidden">
                         <div class="h-full rounded-full bg-primary/60" :style="{ width: `${Math.min((sub.scoreValue ?? 0) / (sub.scoreMax ?? 100) * 100, 100)}%` }" />
                       </div>
                       <span class="text-muted-foreground tabular-nums">{{ sub.scoreValue ?? 0 }}/{{ sub.scoreMax ?? 100 }}</span>
@@ -248,7 +248,7 @@ function getGrade(item: TreeNode): string {
                       <div class="text-muted-foreground/50 mb-1">{{ sub.label }}</div>
                       <div v-if="(sub.value as string[])?.length === 0" class="text-muted-foreground/40">None</div>
                       <div v-else class="flex flex-wrap gap-1">
-                        <span v-for="(tag, i) in (sub.value as string[])" :key="i" class="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] text-muted-foreground">{{ tag }}</span>
+                        <span v-for="(tag, i) in (sub.value as string[])" :key="i" class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground">{{ tag }}</span>
                       </div>
                     </div>
                     <!-- Sub nested (3rd level inline) -->
@@ -264,7 +264,7 @@ function getGrade(item: TreeNode): string {
                               </template>
                               <template v-else-if="Array.isArray(deep.value)">
                                 <span class="flex flex-wrap gap-1">
-                                  <span v-for="(tag, ti) in (deep.value as string[])" :key="ti" class="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04]">{{ tag }}</span>
+                                  <span v-for="(tag, ti) in (deep.value as string[])" :key="ti" class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium">{{ tag }}</span>
                                 </span>
                               </template>
                               <template v-else>{{ deep.value != null ? deep.value : '—' }}</template>
@@ -314,7 +314,7 @@ function getGrade(item: TreeNode): string {
             <span
               v-for="(entry, i) in (item.value as string[])"
               :key="i"
-              class="text-[10px] px-2 py-0.5 rounded-full border border-border/50 bg-white/[0.02] text-muted-foreground"
+              class="text-[10px] px-2 py-0.5 rounded-full border border-border/50 bg-overlay-subtle text-muted-foreground"
             >
               {{ entry }}
             </span>

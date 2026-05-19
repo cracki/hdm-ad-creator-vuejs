@@ -70,7 +70,7 @@ async function handleGoogleRegister() {
             <p class="text-sm text-muted-foreground">{{ t('auth.regSub') }}</p>
           </div>
 
-          <button data-loc="auth.register.google-btn" class="w-full h-11 rounded-lg border border-border/70 bg-white/[0.03] hover:bg-white/[0.06] transition flex items-center justify-center gap-3 text-sm font-medium" :disabled="googleLoading" @click="handleGoogleRegister">
+          <button data-loc="auth.register.google-btn" class="w-full h-11 rounded-lg border border-border/70 bg-overlay-subtle hover:bg-overlay-medium transition flex items-center justify-center gap-3 text-sm font-medium" :disabled="googleLoading" @click="handleGoogleRegister">
             <svg viewBox="0 0 24 24" class="h-4 w-4">
               <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.4-1.6 4.1-5.5 4.1-3.3 0-6-2.7-6-6.2s2.7-6.2 6-6.2c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.3 14.6 2.4 12 2.4 6.7 2.4 2.4 6.7 2.4 12S6.7 21.6 12 21.6c6.9 0 11.4-4.8 11.4-11.6 0-.8-.1-1.4-.2-1.9H12z"/>
             </svg>
@@ -91,7 +91,7 @@ async function handleGoogleRegister() {
                     v-model="form.firstName"
                     data-loc="auth.register.first-name-input"
                     placeholder="Ada"
-                    class="w-full h-11 ps-9 pe-3 rounded-lg bg-white/[0.03] border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 transition"
+                    class="w-full h-11 ps-9 pe-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 transition"
                   />
                 </div>
               </label>
@@ -103,7 +103,7 @@ async function handleGoogleRegister() {
                     v-model="form.lastName"
                     data-loc="auth.register.last-name-input"
                     placeholder="Khan"
-                    class="w-full h-11 ps-9 pe-3 rounded-lg bg-white/[0.03] border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 transition"
+                    class="w-full h-11 ps-9 pe-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 transition"
                   />
                 </div>
               </label>
@@ -119,7 +119,7 @@ async function handleGoogleRegister() {
                   data-loc="auth.register.email-input"
                   placeholder="you@company.com"
                   required
-                  class="w-full h-11 ps-9 pe-3 rounded-lg bg-white/[0.03] border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 transition"
+                  class="w-full h-11 ps-9 pe-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 transition"
                 />
               </div>
             </label>
@@ -135,7 +135,7 @@ async function handleGoogleRegister() {
                   :placeholder="t('auth.passHint')"
                   required
                   minlength="8"
-                  class="w-full h-11 ps-9 pe-3 rounded-lg bg-white/[0.03] border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 transition"
+                  class="w-full h-11 ps-9 pe-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 transition"
                 />
               </div>
             </label>
@@ -190,7 +190,7 @@ async function handleGoogleRegister() {
           <div class="relative w-full max-w-lg max-h-[85vh] surface-card rounded-2xl border border-border/60 shadow-xl flex flex-col overflow-hidden">
             <div class="flex items-center justify-between p-5 border-b border-border/40">
               <h2 class="text-lg font-semibold">{{ popupType === 'terms' ? t('terms.title') : t('privacy.title') }}</h2>
-              <button class="p-1.5 rounded-lg hover:bg-white/[0.06] transition" @click="popupOpen = false">
+              <button class="p-1.5 rounded-lg hover:bg-overlay-medium transition" @click="popupOpen = false">
                 <X class="h-4 w-4 text-muted-foreground" />
               </button>
             </div>
@@ -198,7 +198,7 @@ async function handleGoogleRegister() {
               {{ popupType === 'terms' ? t('terms.content') : t('privacy.content') }}
             </div>
             <div class="p-4 border-t border-border/40">
-              <button class="w-full h-10 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-sm font-medium transition" @click="popupOpen = false">
+              <button class="w-full h-10 rounded-lg bg-overlay-medium hover:bg-overlay-strong text-sm font-medium transition" @click="popupOpen = false">
                 {{ t('popup.close') }}
               </button>
             </div>

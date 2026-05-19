@@ -93,7 +93,7 @@ const normalizedPayload = computed(() => {
   <Topbar :title="campaign?.name ?? ''" :subtitle="campaign?.brand?.company_name">
     <template #actions>
       <button
-        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
+        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition"
         @click="router.push(`/campaigns/${campaignUuid}`)"
       >
         {{ t('camp.backToCampaign') }}
@@ -157,7 +157,7 @@ const normalizedPayload = computed(() => {
           >
             <div class="flex items-center justify-between mb-3">
               <div class="flex items-center gap-3">
-                <div class="h-8 w-8 rounded-lg bg-white/[0.05] grid place-items-center">
+                <div class="h-8 w-8 rounded-lg bg-overlay-light grid place-items-center">
                   <Settings2 class="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div>
@@ -204,7 +204,7 @@ const normalizedPayload = computed(() => {
 
         <div class="flex items-center justify-between">
           <button
-            class="h-10 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition flex items-center gap-1.5"
+            class="h-10 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition flex items-center gap-1.5"
             data-loc="campaigns.strategy.prev-btn"
             @click="router.push(`/campaigns/${campaignUuid}/platform`)"
           >

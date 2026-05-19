@@ -212,7 +212,7 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
       <button
         v-if="variants.length > 0"
         data-loc="variant.main.export-btn"
-        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium flex items-center gap-1.5 hover:bg-white/[0.03] transition"
+        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium flex items-center gap-1.5 hover:bg-overlay-subtle transition"
         @click="exportCSV"
       >
         <Download class="h-3.5 w-3.5" /> {{ t('variant.exportCSV') }}
@@ -229,7 +229,7 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
         <select
           v-model="brandUuid"
           data-loc="variant.main.brand-select"
-          class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none focus:ring-1 focus:ring-primary/50"
+          class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none focus:ring-1 focus:ring-primary/50"
         >
           <option value="" disabled>{{ t('variant.chooseBrand') }}</option>
           <option v-for="b in (brands ?? [])" :key="b.brand_uuid" :value="b.brand_uuid">
@@ -256,7 +256,7 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
               'p-3 rounded-lg border text-start text-xs transition',
               selectedAudiences.includes(aud.id)
                 ? 'border-primary/60 bg-primary/10'
-                : 'border-border/60 bg-white/[0.02] hover:border-border',
+                : 'border-border/60 bg-overlay-subtle hover:border-border',
             ]"
           >
             <div class="flex items-center justify-between mb-1">
@@ -271,7 +271,7 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
             v-model="audienceNotes"
             data-loc="variant.main.audience-notes"
             :placeholder="t('variant.audienceNotesPlaceholder')"
-            class="w-full p-2 rounded-lg border border-border/60 bg-white/[0.02] text-xs outline-none resize-y min-h-[48px]"
+            class="w-full p-2 rounded-lg border border-border/60 bg-overlay-subtle text-xs outline-none resize-y min-h-[48px]"
             rows="2"
           />
         </div>
@@ -295,7 +295,7 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
               'p-3 rounded-lg border text-start text-xs transition',
               selectedStyles.includes(style.id)
                 ? 'border-accent-magenta/60 bg-accent-magenta/10'
-                : 'border-border/60 bg-white/[0.02] hover:border-border',
+                : 'border-border/60 bg-overlay-subtle hover:border-border',
             ]"
           >
             <div class="flex items-center justify-between mb-1">
@@ -310,7 +310,7 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
             v-model="styleNotes"
             data-loc="variant.main.style-notes"
             :placeholder="t('variant.styleNotesPlaceholder')"
-            class="w-full p-2 rounded-lg border border-border/60 bg-white/[0.02] text-xs outline-none resize-y min-h-[48px]"
+            class="w-full p-2 rounded-lg border border-border/60 bg-overlay-subtle text-xs outline-none resize-y min-h-[48px]"
             rows="2"
           />
         </div>
@@ -332,7 +332,7 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
               'p-3 rounded-lg border text-start text-xs transition',
               selectedMetaFrameworks.includes(fw.id)
                 ? 'border-accent-cyan/60 bg-accent-cyan/10'
-                : 'border-border/60 bg-white/[0.02] hover:border-accent-cyan/40',
+                : 'border-border/60 bg-overlay-subtle hover:border-accent-cyan/40',
             ]"
           >
             <div class="flex items-center justify-between mb-1">
@@ -341,7 +341,7 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
             </div>
             <span class="text-muted-foreground text-[11px] line-clamp-2">{{ fw.description }}</span>
             <div class="flex gap-1 mt-2 flex-wrap">
-              <span class="text-[11px] px-1.5 py-0.5 rounded bg-white/[0.06] text-muted-foreground">{{ fw.tone }}</span>
+              <span class="text-[11px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground">{{ fw.tone }}</span>
               <span v-if="fw.visual_style" class="text-[11px] px-1.5 py-0.5 rounded bg-accent-cyan/10 text-accent-cyan">{{ fw.visual_style.split(',')[0] }}</span>
             </div>
           </button>
@@ -366,7 +366,7 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
               'p-3 rounded-lg border text-center text-xs transition',
               selectedFormats.includes(fmt.id)
                 ? 'border-accent-amber/60 bg-accent-amber/10'
-                : 'border-border/60 bg-white/[0.02] hover:border-border',
+                : 'border-border/60 bg-overlay-subtle hover:border-border',
             ]"
           >
             <div class="font-medium">{{ fmt.name }}</div>
@@ -379,7 +379,7 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
             v-model="formatNotes"
             data-loc="variant.main.format-notes"
             :placeholder="t('variant.formatNotesPlaceholder')"
-            class="w-full p-2 rounded-lg border border-border/60 bg-white/[0.02] text-xs outline-none resize-y min-h-[48px]"
+            class="w-full p-2 rounded-lg border border-border/60 bg-overlay-subtle text-xs outline-none resize-y min-h-[48px]"
             rows="2"
           />
         </div>
@@ -420,18 +420,18 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
       <div v-if="variants.length > 0">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-sm font-semibold">{{ variants.length }} {{ t('variant.totalVariants') }}</h3>
-          <div class="flex gap-1 bg-white/[0.03] rounded-lg p-0.5">
+          <div class="flex gap-1 bg-overlay-subtle rounded-lg p-0.5">
             <button
               data-loc="variant.main.view-cards"
               @click="viewMode = 'cards'"
-              :class="['min-h-[44px] px-2.5 py-1 rounded text-xs font-medium transition', viewMode === 'cards' ? 'bg-white/[0.08] text-foreground' : 'text-muted-foreground']"
+              :class="['min-h-[44px] px-2.5 py-1 rounded text-xs font-medium transition', viewMode === 'cards' ? 'bg-overlay-medium text-foreground' : 'text-muted-foreground']"
             >
               {{ t('variant.cards') }}
             </button>
             <button
               data-loc="variant.main.view-table"
               @click="viewMode = 'table'"
-              :class="['min-h-[44px] px-2.5 py-1 rounded text-xs font-medium transition', viewMode === 'table' ? 'bg-white/[0.08] text-foreground' : 'text-muted-foreground']"
+              :class="['min-h-[44px] px-2.5 py-1 rounded text-xs font-medium transition', viewMode === 'table' ? 'bg-overlay-medium text-foreground' : 'text-muted-foreground']"
             >
               {{ t('variant.table') }}
             </button>
@@ -449,14 +449,14 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
             <template v-if="v.ad_copy && typeof v.ad_copy === 'object'">
               <div v-if="v.ad_copy.headline" class="font-semibold text-sm mb-2">{{ v.ad_copy.headline }}</div>
               <div class="text-xs text-muted-foreground mb-2">{{ v.ad_copy.body ?? v.ad_copy.primary_text }}</div>
-              <span v-if="v.ad_copy.cta" class="inline-block text-[10px] px-2 py-0.5 rounded bg-white/[0.06] border border-border/40 text-muted-foreground cursor-default select-none">
+              <span v-if="v.ad_copy.cta" class="inline-block text-[10px] px-2 py-0.5 rounded bg-overlay-medium border border-border/40 text-muted-foreground cursor-default select-none">
                 {{ t('variant.ctaLabel') }}: {{ v.ad_copy.cta }}
               </span>
             </template>
             <template v-else>
               <div v-if="v.headline" class="font-semibold text-sm mb-2">{{ v.headline }}</div>
               <div class="text-xs text-muted-foreground mb-2">{{ v.primary_text ?? v.body }}</div>
-              <span v-if="v.cta" class="inline-block text-[10px] px-2 py-0.5 rounded bg-white/[0.06] border border-border/40 text-muted-foreground cursor-default select-none">
+              <span v-if="v.cta" class="inline-block text-[10px] px-2 py-0.5 rounded bg-overlay-medium border border-border/40 text-muted-foreground cursor-default select-none">
                 {{ t('variant.ctaLabel') }}: {{ v.cta }}
               </span>
             </template>
@@ -471,7 +471,7 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
         <div v-else class="surface-card overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-xs">
-              <thead class="border-b border-border/60 bg-white/[0.02]">
+              <thead class="border-b border-border/60 bg-overlay-subtle">
                 <tr>
                   <th class="px-3 py-2 text-start font-semibold text-muted-foreground">{{ t('variant.audience') }}</th>
                   <th class="px-3 py-2 text-start font-semibold text-muted-foreground">{{ t('variant.style') }}</th>
@@ -482,7 +482,7 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
                 </tr>
               </thead>
               <tbody class="divide-y divide-border/40">
-                <tr v-for="(v, idx) in variants" :key="idx" class="hover:bg-white/[0.02]">
+                <tr v-for="(v, idx) in variants" :key="idx" class="hover:bg-overlay-subtle">
                   <td class="px-3 py-2">{{ v.audience }}</td>
                   <td class="px-3 py-2">{{ v.style ?? v.creative_style }}</td>
                   <td class="px-3 py-2">{{ v.format ?? v.ad_format }}</td>
@@ -511,7 +511,7 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
             </div>
             <div v-if="mv.headline ?? mv.ad_copy?.headline" class="font-semibold text-sm mb-2">{{ mv.headline ?? mv.ad_copy?.headline }}</div>
             <div class="text-xs text-muted-foreground mb-2">{{ mv.primary_text ?? mv.ad_copy?.body }}</div>
-            <span v-if="mv.cta ?? mv.ad_copy?.cta" class="inline-block text-[10px] px-2 py-0.5 rounded bg-white/[0.06] border border-border/40 text-muted-foreground cursor-default select-none">
+            <span v-if="mv.cta ?? mv.ad_copy?.cta" class="inline-block text-[10px] px-2 py-0.5 rounded bg-overlay-medium border border-border/40 text-muted-foreground cursor-default select-none">
               {{ t('variant.ctaLabel') }}: {{ mv.cta ?? mv.ad_copy?.cta }}
             </span>
             <div v-if="mv.image_prompt ?? mv.visual_prompt" class="mt-3 pt-3 border-t border-border/40">

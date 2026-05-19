@@ -119,7 +119,7 @@ setActions([
         data-loc="competitors.manage.auto-discover-btn"
         @click="handleIdentify"
         :disabled="identifyMutation.isPending.value"
-        class="hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition disabled:opacity-50"
+        class="hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition disabled:opacity-50"
       >
         <Crosshair v-if="!identifyMutation.isPending.value" class="h-3.5 w-3.5" />
         <Loader2 v-else class="h-3.5 w-3.5 animate-spin" />
@@ -129,7 +129,7 @@ setActions([
         data-loc="competitors.manage.insights-btn"
         @click="handleInsights"
         :disabled="insightsMutation.isPending.value"
-        class="hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition disabled:opacity-50"
+        class="hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition disabled:opacity-50"
       >
         <Lightbulb v-if="!insightsMutation.isPending.value" class="h-3.5 w-3.5" />
         <Loader2 v-else class="h-3.5 w-3.5 animate-spin" />
@@ -154,13 +154,13 @@ setActions([
           v-model="newName"
           data-loc="competitors.manage.name-input"
           :placeholder="t('competitors.namePlaceholder')"
-          class="h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none focus:border-primary/60 transition"
+          class="h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none focus:border-primary/60 transition"
         />
         <input
           v-model="newUrl"
           data-loc="competitors.manage.url-input"
           :placeholder="t('competitors.urlPlaceholder')"
-          class="h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none focus:border-primary/60 transition"
+          class="h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none focus:border-primary/60 transition"
         />
       </div>
       <div class="flex items-center gap-3">
@@ -182,7 +182,7 @@ setActions([
         <button
           data-loc="competitors.manage.cancel-btn"
           @click="showAddForm = false"
-          class="inline-flex items-center h-9 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
+          class="inline-flex items-center h-9 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition"
         >
           {{ t('competitors.cancel') }}
         </button>
@@ -227,7 +227,7 @@ setActions([
         </button>
         <button
           @click="showAddForm = true"
-          class="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
+          class="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition"
         >
           <Plus class="h-3.5 w-3.5" /> {{ t('competitors.addManual') }}
         </button>
@@ -289,7 +289,7 @@ setActions([
         >
           <!-- Card header -->
           <div
-            class="px-4 py-3.5 flex items-center gap-3 cursor-pointer transition-colors hover:bg-white/[0.015]"
+            class="px-4 py-3.5 flex items-center gap-3 cursor-pointer transition-colors hover:bg-overlay-subtle"
             @click="toggleExpand(comp.competitor_uuid)"
           >
             <!-- Color accent bar -->
@@ -319,7 +319,7 @@ setActions([
               <span v-if="comp.analysis_record?.last_analysis" class="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-success/10 text-success border border-success/20">
                 <CheckCircle2 class="h-2.5 w-2.5" /> {{ t('competitors.analyzed') }}
               </span>
-              <span v-else class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/[0.04] text-muted-foreground border border-border/30">
+              <span v-else class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-overlay-light text-muted-foreground border border-border/30">
                 {{ t('competitors.pending') }}
               </span>
             </div>

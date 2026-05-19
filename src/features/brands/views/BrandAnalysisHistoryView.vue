@@ -25,7 +25,7 @@ function statusIcon(status: string) {
     case 'completed': return { icon: CheckCircle2, cls: 'text-success bg-success/10' }
     case 'failed': return { icon: XCircle, cls: 'text-destructive bg-destructive/10' }
     case 'running': case 'pending': return { icon: Loader2, cls: 'text-info bg-info/10', spin: true }
-    default: return { icon: Clock, cls: 'text-muted-foreground bg-white/5' }
+    default: return { icon: Clock, cls: 'text-muted-foreground bg-overlay-subtle' }
   }
 }
 </script>
@@ -39,7 +39,7 @@ function statusIcon(status: string) {
       <button
         @click="router.push(`/brands/${brandUuid}/analysis`)"
         data-loc="brands.history.back-btn"
-        class="hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
+        class="hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition"
       >
         <ChevronLeft class="h-3.5 w-3.5" /> {{ t('analysis.backToAnalysis') }}
       </button>

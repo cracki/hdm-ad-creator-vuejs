@@ -202,7 +202,7 @@ function priorityColor(p: string): string {
             <div class="text-[11px] text-muted-foreground font-medium">{{ item.label }}</div>
             <div class="flex items-center gap-2">
               <span :class="['text-base sm:text-lg font-bold leading-none', scoreColor(item.value as number, item.scoreMax)]">{{ item.value }}</span>
-              <div class="flex-1 h-1.5 rounded-full bg-white/5 overflow-hidden">
+              <div class="flex-1 h-1.5 rounded-full bg-overlay-subtle overflow-hidden">
                 <div
                   class="h-full rounded-full bg-[image:var(--gradient-brand)]"
                   :style="{ width: scoreBarWidth(item.value as number, item.scoreMax) }"
@@ -240,7 +240,7 @@ function priorityColor(p: string): string {
             <div
               v-for="(obj, idx) in group.item.items"
               :key="idx"
-              class="rounded-lg border border-border/40 bg-white/[0.02] p-2.5 sm:p-3 space-y-2"
+              class="rounded-lg border border-border/40 bg-overlay-subtle p-2.5 sm:p-3 space-y-2"
             >
               <div v-if="getObjectTitle(obj as Record<string, unknown>)" class="text-sm font-medium text-foreground leading-relaxed">
                 {{ getObjectTitle(obj as Record<string, unknown>) }}
@@ -266,7 +266,7 @@ function priorityColor(p: string): string {
             <span
               v-for="(tag, i) in (group.item.value as string[])"
               :key="i"
-              class="text-[11px] px-2 py-0.5 rounded-full border border-border/60 text-muted-foreground bg-white/[0.02] max-w-full truncate"
+              class="text-[11px] px-2 py-0.5 rounded-full border border-border/60 text-muted-foreground bg-overlay-subtle max-w-full truncate"
             >
               {{ tag }}
             </span>

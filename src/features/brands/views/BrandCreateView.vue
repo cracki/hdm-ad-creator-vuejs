@@ -221,7 +221,7 @@ async function handleSubmit() {
             <span class="text-xs font-medium text-muted-foreground mb-1.5 block">{{ t('newbrand.field.url') }}</span>
             <div class="relative">
               <Globe class="absolute start-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <input v-model="form.website_url" placeholder="https://yourbrand.com" class="w-full h-11 ps-9 pe-3 rounded-lg bg-white/[0.03] border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 focus:bg-white/[0.05] transition" />
+              <input v-model="form.website_url" placeholder="https://yourbrand.com" class="w-full h-11 ps-9 pe-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 focus:bg-overlay-light transition" />
             </div>
             <span class="text-[11px] text-muted-foreground mt-1.5 block">{{ t('newbrand.field.urlHint') }}</span>
           </label>
@@ -229,13 +229,13 @@ async function handleSubmit() {
             <span class="text-xs font-medium text-muted-foreground mb-1.5 block">{{ t('newbrand.field.company') }}</span>
             <div class="relative">
               <Building2 class="absolute start-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <input v-model="form.company_name" placeholder="Lumen Skincare" class="w-full h-11 ps-9 pe-3 rounded-lg bg-white/[0.03] border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 focus:bg-white/[0.05] transition" />
+              <input v-model="form.company_name" placeholder="Lumen Skincare" class="w-full h-11 ps-9 pe-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 focus:bg-overlay-light transition" />
             </div>
           </label>
           <div class="grid md:grid-cols-2 gap-4">
             <label class="block">
               <span class="text-xs font-medium text-muted-foreground mb-1.5 block">{{ t('newbrand.field.industry') }}</span>
-              <select v-model="form.selected_industry_id" data-loc="brands.create.industry-dropdown" class="w-full h-11 px-3 rounded-lg bg-white/[0.03] border border-border/70 text-sm outline-none focus:border-primary/60 transition">
+              <select v-model="form.selected_industry_id" data-loc="brands.create.industry-dropdown" class="w-full h-11 px-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm outline-none focus:border-primary/60 transition">
                 <option :value="null" disabled>Select industry</option>
                 <option v-for="ind in industries" :key="ind.industry_uuid" :value="ind.industry_uuid" class="bg-card">
                   {{ ind.name }}
@@ -246,7 +246,7 @@ async function handleSubmit() {
               <span class="text-xs font-medium text-muted-foreground mb-1.5 block">{{ t('newbrand.field.location') }}</span>
               <div class="relative">
                 <MapPin class="absolute start-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                <input v-model="form.location" placeholder="Dubai, UAE" class="w-full h-11 ps-9 pe-3 rounded-lg bg-white/[0.03] border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 focus:bg-white/[0.05] transition" />
+                <input v-model="form.location" placeholder="Dubai, UAE" class="w-full h-11 ps-9 pe-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 focus:bg-overlay-light transition" />
               </div>
             </label>
           </div>
@@ -265,10 +265,10 @@ async function handleSubmit() {
             <div
               v-if="!logoPreview"
               data-loc="brands.create.logo-upload"
-              class="rounded-xl border-2 border-dashed border-border/60 p-8 text-center hover:border-primary/50 hover:bg-white/[0.02] transition cursor-pointer"
+              class="rounded-xl border-2 border-dashed border-border/60 p-8 text-center hover:border-primary/50 hover:bg-overlay-subtle transition cursor-pointer"
               @click="openLogoPicker"
             >
-              <div class="h-12 w-12 rounded-xl bg-white/[0.05] grid place-items-center mx-auto mb-3">
+              <div class="h-12 w-12 rounded-xl bg-overlay-light grid place-items-center mx-auto mb-3">
                 <Upload class="h-5 w-5 text-muted-foreground" />
               </div>
               <div class="text-sm font-medium">{{ t('newbrand.dropLogo') }}</div>
@@ -293,7 +293,7 @@ async function handleSubmit() {
               <div class="flex-1 min-w-[140px]">
                 <div class="relative">
                   <Palette class="absolute start-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                  <input v-model="form.brand_color" placeholder="#A855F7" class="w-full h-11 ps-9 pe-3 rounded-lg bg-white/[0.03] border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 transition" />
+                  <input v-model="form.brand_color" placeholder="#A855F7" class="w-full h-11 ps-9 pe-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 transition" />
                 </div>
               </div>
               <div class="flex flex-wrap gap-1.5">
@@ -305,7 +305,7 @@ async function handleSubmit() {
           <div>
             <span class="text-xs font-medium text-muted-foreground mb-2 block">{{ t('newbrand.social') }}</span>
             <div class="grid md:grid-cols-2 gap-3">
-              <div v-for="(platform, key) in { facebook: Facebook, instagram: Instagram, linkedin: Linkedin, youtube: Youtube }" :key="key" class="flex items-center gap-2 px-3 h-10 rounded-lg bg-white/[0.03] border border-border/70">
+              <div v-for="(platform, key) in { facebook: Facebook, instagram: Instagram, linkedin: Linkedin, youtube: Youtube }" :key="key" class="flex items-center gap-2 px-3 h-10 rounded-lg bg-overlay-subtle border border-border/70">
                 <component :is="platform" class="h-3.5 w-3.5 text-muted-foreground" />
                 <input v-model="socialLinks[key]" :placeholder="`${key.charAt(0).toUpperCase() + key.slice(1)} URL`" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
               </div>
@@ -357,7 +357,7 @@ async function handleSubmit() {
           @click="step = Math.max(1, step - 1)"
           :disabled="step === 1"
           data-loc="brands.create.back-btn"
-          class="h-10 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+          class="h-10 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <ArrowLeft class="h-3.5 w-3.5" /> {{ t('newbrand.previous') }}
         </button>

@@ -92,7 +92,7 @@ async function runIntelligence() {
           <select
             v-model="selectedBrandUuid"
             data-loc="market.intel.brand-select"
-            class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none focus:ring-1 focus:ring-primary/50"
+            class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none focus:ring-1 focus:ring-primary/50"
           >
             <option value="" disabled>{{ t('market.chooseBrand') }}</option>
             <option v-for="b in (brands ?? [])" :key="b.brand_uuid" :value="b.brand_uuid">
@@ -104,14 +104,14 @@ async function runIntelligence() {
         <div class="grid sm:grid-cols-2 gap-4">
           <div>
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.industry') }}</label>
-            <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60">
+            <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60">
               <ShoppingBag class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               <input v-model="industry" data-loc="market.intel.industry-input" :placeholder="t('market.industryHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
             </div>
           </div>
           <div>
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.location') }}</label>
-            <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60">
+            <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60">
               <MapPin class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               <input v-model="location" data-loc="market.intel.location-input" :placeholder="t('market.locationHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
             </div>
@@ -119,7 +119,7 @@ async function runIntelligence() {
         </div>
         <div>
           <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.brandServices') }}</label>
-          <input v-model="brandServices" data-loc="market.intel.brand-services-input" :placeholder="t('market.brandServicesHint')" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60" />
+          <input v-model="brandServices" data-loc="market.intel.brand-services-input" :placeholder="t('market.brandServicesHint')" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60" />
         </div>
         <div>
           <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.contentGoal') }}</label>
@@ -132,7 +132,7 @@ async function runIntelligence() {
                 'h-8 px-3 rounded-lg text-xs font-medium border transition',
                 contentGoal === goal.value
                   ? 'bg-[image:var(--gradient-brand)] text-primary-foreground border-transparent'
-                  : 'bg-white/[0.03] border-border/60 text-muted-foreground hover:text-foreground',
+                  : 'bg-overlay-subtle border-border/60 text-muted-foreground hover:text-foreground',
               ]"
               @click="contentGoal = goal.value"
             >
@@ -177,7 +177,7 @@ async function runIntelligence() {
             <Check class="h-4 w-4 text-success" />
             <span class="text-xs text-muted-foreground">{{ t('market.completed') }}</span>
           </div>
-          <button data-loc="market.intel.re-run-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="result = null">
+          <button data-loc="market.intel.re-run-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="result = null">
             <RefreshCw class="h-3 w-3" /> {{ t('market.reRun') }}
           </button>
         </div>
@@ -191,7 +191,7 @@ async function runIntelligence() {
               'h-8 px-3 rounded-lg text-xs font-medium border transition whitespace-nowrap flex items-center gap-1.5',
               activeTab === tab.key
                 ? 'border-primary/60 bg-primary/10 text-primary'
-                : 'border-border/40 bg-white/[0.02] text-muted-foreground hover:text-foreground',
+                : 'border-border/40 bg-overlay-subtle text-muted-foreground hover:text-foreground',
             ]"
             @click="activeTab = tab.key"
           >
@@ -204,22 +204,22 @@ async function runIntelligence() {
         <!-- Summary Tab -->
         <div v-if="activeTab === 'summary'" class="space-y-4">
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div class="rounded-lg border border-border/30 bg-white/[0.015] p-3 text-center space-y-1">
+            <div class="rounded-lg border border-border/30 bg-overlay-subtle p-3 text-center space-y-1">
               <div class="flex justify-center"><TrendingUp class="h-4 w-4 text-info" /></div>
               <div class="text-xl font-bold text-info">{{ payload.content_opportunities?.total_topics_found ?? 0 }}</div>
               <div class="text-[10px] text-muted-foreground">{{ t('intelSummary.opportunities') }}</div>
             </div>
-            <div class="rounded-lg border border-border/30 bg-white/[0.015] p-3 text-center space-y-1">
+            <div class="rounded-lg border border-border/30 bg-overlay-subtle p-3 text-center space-y-1">
               <div class="flex justify-center"><Layers class="h-4 w-4 text-amber-400" /></div>
               <div class="text-xl font-bold text-amber-400">{{ payload.content_gaps?.total_gaps_found ?? 0 }}</div>
               <div class="text-[10px] text-muted-foreground">{{ t('intelSummary.gaps') }}</div>
             </div>
-            <div class="rounded-lg border border-border/30 bg-white/[0.015] p-3 text-center space-y-1">
+            <div class="rounded-lg border border-border/30 bg-overlay-subtle p-3 text-center space-y-1">
               <div class="flex justify-center"><Lightbulb class="h-4 w-4 text-primary" /></div>
               <div class="text-xl font-bold text-primary">{{ payload.content_matrix?.total_content_ideas ?? 0 }}</div>
               <div class="text-[10px] text-muted-foreground">{{ t('intelSummary.contentIdeas') }}</div>
             </div>
-            <div class="rounded-lg border border-border/30 bg-white/[0.015] p-3 text-center space-y-1">
+            <div class="rounded-lg border border-border/30 bg-overlay-subtle p-3 text-center space-y-1">
               <div class="flex justify-center"><BarChart3 class="h-4 w-4 text-success" /></div>
               <div class="text-xl font-bold text-success">{{ payload.top_performers?.top_performers?.length ?? 0 }}</div>
               <div class="text-[10px] text-muted-foreground">{{ t('intelSummary.topAnalyzed') }}</div>
@@ -233,7 +233,7 @@ async function runIntelligence() {
               <div
                 v-for="d in payload.content_opportunities.top_competing_domains.slice(0, 6)"
                 :key="d.domain"
-                class="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border border-border/30 bg-white/[0.02]"
+                class="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border border-border/30 bg-overlay-subtle"
               >
                 <span class="font-medium text-foreground">{{ d.domain }}</span>
                 <span class="text-muted-foreground">({{ d.content_count }})</span>

@@ -86,7 +86,7 @@ async function runFunnel() {
         </div>
         <div class="text-sm font-medium mb-1">{{ t('status.completed') }}</div>
         <div class="text-xs text-muted-foreground mb-4">{{ t('funnel.alreadyCompletedDesc') }}</div>
-        <button class="h-9 px-4 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition mx-auto" @click="runFunnel">
+        <button class="h-9 px-4 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition mx-auto" @click="runFunnel">
           <RefreshCw class="h-3 w-3" /> {{ t('seg.reRun') }}
         </button>
       </div>
@@ -111,7 +111,7 @@ async function runFunnel() {
       <div v-if="stepData && !loading">
         <div class="flex items-center justify-between mb-4">
           <div class="text-xs text-muted-foreground">{{ t('funnel.stagesFound', { count: stages.length }) }}</div>
-          <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="runFunnel">
+          <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="runFunnel">
             <RefreshCw class="h-3 w-3" /> {{ t('seg.reRun') }}
           </button>
         </div>

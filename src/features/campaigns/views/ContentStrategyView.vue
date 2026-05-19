@@ -102,7 +102,7 @@ async function runContentStrategy() {
   <Topbar :title="campaign?.name ?? ''" :subtitle="campaign?.brand?.company_name">
     <template #actions>
       <button
-        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
+        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition"
         @click="router.push(`/campaigns/${campaignUuid}`)"
       >
         {{ t('camp.backToCampaign') }}
@@ -145,7 +145,7 @@ async function runContentStrategy() {
           <div class="text-sm font-medium mb-1">{{ t('status.completed') }}</div>
           <div class="text-xs text-muted-foreground mb-4">{{ t('content.alreadyCompletedDesc') }}</div>
           <div class="flex items-center justify-center gap-3">
-            <button class="h-9 px-4 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="runContentStrategy">
+            <button class="h-9 px-4 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="runContentStrategy">
               <RefreshCw class="h-3 w-3" /> {{ t('seg.reRun') }}
             </button>
             <button
@@ -188,7 +188,7 @@ async function runContentStrategy() {
         <div v-if="stepData && !loading">
           <div class="flex items-center justify-between mb-4">
             <div class="text-xs text-muted-foreground">{{ t('content.itemsFound', { count: matrix.length }) }}</div>
-            <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="runContentStrategy">
+            <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="runContentStrategy">
               <RefreshCw class="h-3 w-3" /> {{ t('seg.reRun') }}
             </button>
           </div>
@@ -201,7 +201,7 @@ async function runContentStrategy() {
               <div v-for="stage in funnelStages" :key="stage" class="space-y-1">
                 <div class="text-[11px] text-muted-foreground font-medium mb-1">{{ stage }}</div>
                 <div v-if="row[stage] || row[stage.toLowerCase()]" class="space-y-1">
-                  <div v-for="(item, iIdx) in (row[stage] ?? row[stage.toLowerCase()] ?? [])" :key="iIdx" class="p-1.5 rounded bg-white/[0.03]">
+                  <div v-for="(item, iIdx) in (row[stage] ?? row[stage.toLowerCase()] ?? [])" :key="iIdx" class="p-1.5 rounded bg-overlay-subtle">
                     <div v-if="typeof item === 'string'" class="text-[11px]">{{ item }}</div>
                     <div v-else>
                       <div class="font-medium">{{ item.title || item.topic || item.type }}</div>
@@ -225,13 +225,13 @@ async function runContentStrategy() {
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(row, rIdx) in matrix" :key="rIdx" class="hover:bg-white/[0.02] transition">
+                <tr v-for="(row, rIdx) in matrix" :key="rIdx" class="hover:bg-overlay-subtle transition">
                   <td class="p-2 font-medium border-b border-border/20 align-top">
                     {{ row.persona || row.audience || row.name || `${t('content.persona')} ${rIdx + 1}` }}
                   </td>
                   <td v-for="stage in funnelStages" :key="stage" class="p-2 border-b border-border/20 align-top">
                     <div v-if="row[stage] || row[stage.toLowerCase()]" class="space-y-1">
-                      <div v-for="(item, iIdx) in (row[stage] ?? row[stage.toLowerCase()] ?? [])" :key="iIdx" class="p-1.5 rounded bg-white/[0.03]">
+                      <div v-for="(item, iIdx) in (row[stage] ?? row[stage.toLowerCase()] ?? [])" :key="iIdx" class="p-1.5 rounded bg-overlay-subtle">
                         <div v-if="typeof item === 'string'" class="text-[11px]">{{ item }}</div>
                         <div v-else>
                           <div class="font-medium">{{ item.title || item.topic || item.type }}</div>
@@ -254,7 +254,7 @@ async function runContentStrategy() {
               >
                 <div class="text-xs font-semibold mb-2">{{ item.name || item.persona_name || `${t('content.item')} ${idx + 1}` }}</div>
                 <div v-if="item.topics || item.content_ideas" class="flex flex-wrap gap-1">
-                  <span v-for="topic in (item.topics ?? item.content_ideas ?? []).slice(0, 5)" :key="topic" class="text-[11px] px-2 py-0.5 rounded bg-white/[0.05] text-muted-foreground">
+                  <span v-for="topic in (item.topics ?? item.content_ideas ?? []).slice(0, 5)" :key="topic" class="text-[11px] px-2 py-0.5 rounded bg-overlay-light text-muted-foreground">
                     {{ topic }}
                   </span>
                 </div>
@@ -267,7 +267,7 @@ async function runContentStrategy() {
 
           <div class="flex items-center justify-between">
             <button
-              class="h-10 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition flex items-center gap-1.5"
+              class="h-10 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition flex items-center gap-1.5"
               data-loc="campaigns.content.prev-btn"
               @click="router.push(`/campaigns/${campaignUuid}`)"
             >

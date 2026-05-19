@@ -66,7 +66,7 @@ const stageLabels: Record<string, string> = {
           'h-8 px-3.5 rounded-lg text-xs font-medium border transition',
           activeTab === key
             ? `${stageColors[key].bg} ${stageColors[key].text} ${stageColors[key].border}`
-            : 'bg-white/[0.02] border-border/40 text-muted-foreground hover:text-foreground',
+            : 'bg-overlay-subtle border-border/40 text-muted-foreground hover:text-foreground',
         ]"
         @click="activeTab = key"
       >
@@ -88,7 +88,7 @@ const stageLabels: Record<string, string> = {
         <span
           v-for="fmt in activeStage.recommended_formats"
           :key="fmt"
-          class="text-[11px] px-2 py-0.5 rounded-full border border-border/50 bg-white/[0.02] text-muted-foreground flex items-center gap-1"
+          class="text-[11px] px-2 py-0.5 rounded-full border border-border/50 bg-overlay-subtle text-muted-foreground flex items-center gap-1"
         >
           <Tag class="h-2.5 w-2.5" /> {{ fmt }}
         </span>
@@ -110,7 +110,7 @@ const stageLabels: Record<string, string> = {
         <div
           v-for="(idea, idx) in activeStage.content_ideas"
           :key="idx"
-          class="rounded-lg border border-border/30 bg-white/[0.015] p-3.5 space-y-2"
+          class="rounded-lg border border-border/30 bg-overlay-subtle p-3.5 space-y-2"
         >
           <div class="flex items-start gap-2">
             <span :class="['shrink-0 h-5 w-5 rounded text-[10px] font-bold grid place-items-center', stageColors[activeTab].bg, stageColors[activeTab].text]">

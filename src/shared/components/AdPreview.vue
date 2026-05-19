@@ -44,7 +44,7 @@ const ctaClass = computed(() => ctaColors[props.ad.cta] ?? ctaColors.default)
 <template>
   <div class="space-y-3">
     <!-- Platform Tabs -->
-    <div class="flex gap-1 p-1 rounded-lg bg-white/[0.03] border border-border/60 w-fit">
+    <div class="flex gap-1 p-1 rounded-lg bg-overlay-subtle border border-border/60 w-fit">
       <button
         v-for="p in platforms"
         :key="p.key"

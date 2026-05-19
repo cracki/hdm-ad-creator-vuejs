@@ -7,6 +7,7 @@ import { useAuthStore } from '@/features/auth/store'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import { useMobileDrawer } from '@/shared/composables/useMobileDrawer'
 import LangSwitch from './LangSwitch.vue'
+import ThemeToggle from '@/shared/components/ThemeToggle.vue'
 
 defineProps<{
   title?: string
@@ -55,7 +56,7 @@ function getUserInitials(): string {
   <header class="h-16 border-b border-border/60 bg-background/60 backdrop-blur-xl sticky top-0 z-30">
     <div class="h-full px-3 sm:px-6 flex items-center gap-2 sm:gap-4">
       <button
-        class="lg:hidden h-9 w-9 grid place-items-center rounded-lg hover:bg-white/[0.04] text-muted-foreground transition"
+        class="lg:hidden h-9 w-9 grid place-items-center rounded-lg hover:bg-overlay-light text-muted-foreground transition"
         aria-label="Open menu"
         data-loc="topbar.mobile-menu"
         @click="toggleDrawer"
@@ -70,7 +71,7 @@ function getUserInitials(): string {
       </div>
 
       <!-- Desktop search -->
-      <form class="hidden md:flex items-center gap-2 px-3 h-9 rounded-lg bg-white/[0.03] border border-border/60 w-72" @submit.prevent="handleSearch" data-tour="topbar-search" data-loc="topbar.search-form">
+      <form class="hidden md:flex items-center gap-2 px-3 h-9 rounded-lg bg-overlay-subtle border border-border/60 w-72" @submit.prevent="handleSearch" data-tour="topbar-search" data-loc="topbar.search-form">
         <Search class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
         <input
           v-model="searchQuery"
@@ -88,7 +89,7 @@ function getUserInitials(): string {
       <div v-if="hasMobileActions" class="relative sm:hidden">
         <button
           aria-label="Page actions"
-          class="h-9 w-9 grid place-items-center rounded-lg hover:bg-white/[0.04] transition"
+          class="h-9 w-9 grid place-items-center rounded-lg hover:bg-overlay-light transition"
           data-loc="topbar.mobile-actions"
           @click="showMobileActions = !showMobileActions"
         >
@@ -103,7 +104,7 @@ function getUserInitials(): string {
                 'w-full flex items-center gap-2 px-3 py-2 text-xs rounded-md transition disabled:opacity-50',
                 action.variant === 'destructive'
                   ? 'text-destructive hover:bg-destructive/10'
-                  : 'text-foreground hover:bg-white/[0.04]',
+                  : 'text-foreground hover:bg-overlay-light',
               ]"
               @click="showMobileActions = false; action.to ? router.push(action.to) : action.handler?.()"
             >
@@ -114,6 +115,8 @@ function getUserInitials(): string {
         </div>
         <div v-if="showMobileActions" class="fixed inset-0 z-40" @click="showMobileActions = false" />
       </div>
+
+      <ThemeToggle />
 
       <div class="hidden sm:block">
         <LangSwitch />
@@ -137,7 +140,7 @@ function getUserInitials(): string {
           </div>
           <hr class="border-border/40 my-1" />
           <button
-            class="w-full flex items-center gap-2 px-3 py-2 text-xs text-foreground hover:bg-white/[0.04] rounded-md transition"
+            class="w-full flex items-center gap-2 px-3 py-2 text-xs text-foreground hover:bg-overlay-light rounded-md transition"
             data-loc="topbar.profile"
             @click="showUserMenu = false; router.push({ name: 'profile' })"
           >
@@ -146,7 +149,7 @@ function getUserInitials(): string {
           </button>
           <hr class="border-border/40 my-1" />
           <button
-            class="w-full flex items-center gap-2 px-3 py-2 text-xs text-destructive hover:bg-white/[0.04] rounded-md transition"
+            class="w-full flex items-center gap-2 px-3 py-2 text-xs text-destructive hover:bg-overlay-light rounded-md transition"
             data-loc="topbar.logout"
             @click="handleLogout"
           >

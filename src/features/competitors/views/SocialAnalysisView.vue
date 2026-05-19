@@ -96,7 +96,7 @@ function getPlatformMeta(platform: string) {
         <!-- Header row -->
         <div
           data-loc="competitors.social.profile-header"
-          class="p-4 sm:p-5 flex items-center justify-between cursor-pointer hover:bg-white/[0.01] transition"
+          class="p-4 sm:p-5 flex items-center justify-between cursor-pointer hover:bg-overlay-subtle transition"
           @click="toggleExpand(profile.social_media_uuid)"
         >
           <div class="flex items-center gap-3">
@@ -123,7 +123,7 @@ function getPlatformMeta(platform: string) {
               data-loc="competitors.social.analyze-btn"
               class="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium transition"
               :class="profile.analysis_data
-                ? 'border border-border/60 hover:bg-white/[0.03]'
+                ? 'border border-border/60 hover:bg-overlay-subtle'
                 : 'bg-[image:var(--gradient-brand)] text-primary-foreground shadow-[var(--shadow-glow)] hover:opacity-95'"
             >
               <Loader2 v-if="analyzingUuid === profile.social_media_uuid" class="h-3 w-3 animate-spin" />
@@ -152,7 +152,7 @@ function getPlatformMeta(platform: string) {
       <RouterLink
         :to="`/brands/${brandUuid}/social/audit`"
         data-loc="competitors.social.full-audit-link"
-        class="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
+        class="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition"
       >
         <ExternalLink class="h-3.5 w-3.5" /> {{ t('social.fullAudit') }}
       </RouterLink>

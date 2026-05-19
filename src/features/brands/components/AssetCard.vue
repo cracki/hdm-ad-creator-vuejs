@@ -22,7 +22,7 @@ const hasAnalysis = computed(() => !!props.asset.analysis_data)
 <template>
   <div class="surface-card overflow-hidden">
     <!-- Thumbnail -->
-    <div class="aspect-square bg-white/[0.02] relative flex items-center justify-center overflow-hidden">
+    <div class="aspect-square bg-overlay-subtle relative flex items-center justify-center overflow-hidden">
       <img
         v-if="asset.file_url || asset.file"
         :src="asset.file_url || asset.file"
@@ -32,7 +32,7 @@ const hasAnalysis = computed(() => !!props.asset.analysis_data)
       <Image v-else class="h-8 w-8 text-muted-foreground/40" />
 
       <!-- Type badge -->
-      <span class="absolute top-2 start-2 text-[11px] px-2 py-0.5 rounded-full bg-white/[0.08] border border-border/60 capitalize">
+      <span class="absolute top-2 start-2 text-[11px] px-2 py-0.5 rounded-full bg-overlay-medium border border-border/60 capitalize">
         {{ asset.asset_type }}
       </span>
 
@@ -49,7 +49,7 @@ const hasAnalysis = computed(() => !!props.asset.analysis_data)
           v-if="!hasAnalysis"
           :disabled="analyzing"
           data-loc="brands.assets.analyze-btn"
-          class="flex-1 h-8 rounded-md bg-white/[0.04] border border-border/60 text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-white/[0.08] transition disabled:opacity-50"
+          class="flex-1 h-8 rounded-md bg-overlay-light border border-border/60 text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-overlay-medium transition disabled:opacity-50"
           @click="emit('analyze', asset.asset_uuid)"
         >
           <Loader2 v-if="analyzing" class="h-3 w-3 animate-spin" />
@@ -58,7 +58,7 @@ const hasAnalysis = computed(() => !!props.asset.analysis_data)
         </button>
         <button
           v-if="hasAnalysis"
-          class="flex-1 h-8 rounded-md bg-white/[0.04] border border-border/60 text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-white/[0.08] transition"
+          class="flex-1 h-8 rounded-md bg-overlay-light border border-border/60 text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-overlay-medium transition"
           @click="showResults = !showResults"
         >
           {{ showResults ? t('common.close') : t('assets.viewResults') }}

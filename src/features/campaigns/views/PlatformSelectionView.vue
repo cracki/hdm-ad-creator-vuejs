@@ -90,7 +90,7 @@ function goNext() {
   <Topbar :title="campaign?.name ?? ''" :subtitle="campaign?.brand?.company_name">
     <template #actions>
       <button
-        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
+        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition"
         @click="router.push(`/campaigns/${campaignUuid}`)"
       >
         {{ t('camp.backToCampaign') }}
@@ -138,7 +138,7 @@ function goNext() {
             {{ savedPlatforms.map((p) => platforms.find((pl) => pl.key === p)?.label ?? p).join(', ') }}
           </div>
           <div class="flex items-center justify-center gap-3">
-            <button class="h-9 px-4 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="selected = new Set(savedPlatforms)">
+            <button class="h-9 px-4 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="selected = new Set(savedPlatforms)">
               {{ t('platform.edit') }}
             </button>
             <button
@@ -182,7 +182,7 @@ function goNext() {
 
         <div v-if="!isAlreadySaved || selected.size > 0" class="flex items-center justify-between">
           <button
-            class="h-10 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition flex items-center gap-1.5"
+            class="h-10 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition flex items-center gap-1.5"
             @click="router.push(`/campaigns/${campaignUuid}/content`)"
           >
             <ArrowLeft class="h-3.5 w-3.5" /> {{ t('smart.previous') }}

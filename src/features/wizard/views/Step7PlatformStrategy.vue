@@ -79,7 +79,7 @@ function platformLabel(key: string) {
         <div v-for="p in selectedPlatforms" :key="p" class="surface-card p-5">
           <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
             <div class="flex items-center gap-3">
-              <div class="h-8 w-8 rounded-lg bg-white/[0.05] grid place-items-center">
+              <div class="h-8 w-8 rounded-lg bg-overlay-light grid place-items-center">
                 <Settings2 class="h-4 w-4 text-muted-foreground" />
               </div>
               <div>

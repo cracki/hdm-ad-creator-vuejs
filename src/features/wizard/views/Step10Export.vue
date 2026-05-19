@@ -74,12 +74,12 @@ function adPlatformLabel(p: string) {
         <div class="text-sm font-semibold">{{ t('review.progress') }}</div>
         <div class="text-xs text-muted-foreground">{{ progress }}%</div>
       </div>
-      <div class="h-2 rounded-full bg-white/5 overflow-hidden mb-4">
+      <div class="h-2 rounded-full bg-overlay-subtle overflow-hidden mb-4">
         <div class="h-full rounded-full bg-[image:var(--gradient-brand)] transition-all duration-500" :style="{ width: `${progress}%` }" />
       </div>
       <div class="grid sm:grid-cols-2 gap-2">
         <div v-for="flag in completionFlags" :key="flag.key" class="flex items-center gap-2 text-xs">
-          <div :class="['h-4 w-4 rounded grid place-items-center shrink-0', flag.done ? 'bg-success/15 text-success' : 'bg-white/5 text-muted-foreground']">
+          <div :class="['h-4 w-4 rounded grid place-items-center shrink-0', flag.done ? 'bg-success/15 text-success' : 'bg-overlay-subtle text-muted-foreground']">
             <Check v-if="flag.done" class="h-3 w-3" />
           </div>
           <span :class="flag.done ? '' : 'text-muted-foreground'">{{ flag.label }}</span>
@@ -94,7 +94,7 @@ function adPlatformLabel(p: string) {
         <div class="text-xs text-muted-foreground">{{ t('adgen.adsFound', { count: adsList.length }) }}</div>
       </div>
       <div class="grid sm:grid-cols-3 gap-3">
-        <div v-for="platform in (['meta', 'google', 'linkedin'] as const)" :key="platform" class="p-3 rounded-lg bg-white/[0.03] border border-border/40">
+        <div v-for="platform in (['meta', 'google', 'linkedin'] as const)" :key="platform" class="p-3 rounded-lg bg-overlay-subtle border border-border/40">
           <div class="text-xs font-semibold mb-1">{{ adPlatformLabel(platform) }}</div>
           <div class="text-2xl font-bold">{{ adsList.filter((a: any) => a.platform === platform).length }}</div>
           <div class="text-[11px] text-muted-foreground">{{ t('review.ads') }}</div>

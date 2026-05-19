@@ -60,21 +60,21 @@ function submitColor() {
       />
       <button
         data-loc="mood-board.add-image-btn"
-        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.04] transition flex items-center gap-1.5"
+        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-light transition flex items-center gap-1.5"
         @click="fileInput?.click()"
       >
         <ImagePlus class="h-3.5 w-3.5" /> {{ t('moodboard.addImage') }}
       </button>
       <button
         data-loc="mood-board.add-color-btn"
-        :class="['h-9 px-3 rounded-lg border border-border/60 text-xs font-medium transition flex items-center gap-1.5', showColorInput ? 'bg-white/[0.06]' : 'hover:bg-white/[0.04]']"
+        :class="['h-9 px-3 rounded-lg border border-border/60 text-xs font-medium transition flex items-center gap-1.5', showColorInput ? 'bg-overlay-medium' : 'hover:bg-overlay-light']"
         @click="showColorInput = !showColorInput"
       >
         <Palette class="h-3.5 w-3.5" /> {{ t('moodboard.addColor') }}
       </button>
       <button
         data-loc="mood-board.add-note-btn"
-        :class="['h-9 px-3 rounded-lg border border-border/60 text-xs font-medium transition flex items-center gap-1.5', showNoteInput ? 'bg-white/[0.06]' : 'hover:bg-white/[0.04]']"
+        :class="['h-9 px-3 rounded-lg border border-border/60 text-xs font-medium transition flex items-center gap-1.5', showNoteInput ? 'bg-overlay-medium' : 'hover:bg-overlay-light']"
         @click="showNoteInput = !showNoteInput"
       >
         <StickyNote class="h-3.5 w-3.5" /> {{ t('moodboard.addNote') }}
@@ -100,7 +100,7 @@ function submitColor() {
       <input
         v-model="newNote"
         data-loc="mood-board.note-input"
-        class="flex-1 h-9 px-3 rounded-lg bg-white/[0.03] border border-border/70 text-sm outline-none"
+        class="flex-1 h-9 px-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm outline-none"
         placeholder="Type a note…"
         @keyup.enter="submitNote"
       />

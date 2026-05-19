@@ -30,7 +30,7 @@ function retry() {
     <p class="text-sm text-muted-foreground mb-4">{{ error?.message ?? '' }}</p>
     <button
       data-loc="error-boundary.retry-btn"
-      class="h-9 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition inline-flex items-center gap-1.5"
+      class="h-9 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition inline-flex items-center gap-1.5"
       @click="retry"
     >
       <RefreshCw class="h-3 w-3" /> {{ t('common.retry') }}

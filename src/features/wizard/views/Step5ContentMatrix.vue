@@ -80,7 +80,7 @@ async function runContentStrategy() {
         </div>
         <div class="text-sm font-medium mb-1">{{ t('status.completed') }}</div>
         <div class="text-xs text-muted-foreground mb-4">{{ t('content.alreadyCompletedDesc') }}</div>
-        <button class="h-9 px-4 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition mx-auto" @click="runContentStrategy">
+        <button class="h-9 px-4 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition mx-auto" @click="runContentStrategy">
           <RefreshCw class="h-3 w-3" /> {{ t('seg.reRun') }}
         </button>
       </div>
@@ -105,7 +105,7 @@ async function runContentStrategy() {
       <div v-if="stepData && !loading">
         <div class="flex items-center justify-between mb-4">
           <div class="text-xs text-muted-foreground">{{ t('content.itemsFound', { count: items.length }) }}</div>
-          <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="runContentStrategy">
+          <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="runContentStrategy">
             <RefreshCw class="h-3 w-3" /> {{ t('seg.reRun') }}
           </button>
         </div>
@@ -114,7 +114,7 @@ async function runContentStrategy() {
             <div class="text-sm font-semibold">{{ item.title || item.name || `${t('content.item')} ${idx + 1}` }}</div>
             <div v-if="item.persona || item.funnel_stage" class="flex items-center gap-1.5">
               <span v-if="item.persona" class="text-[11px] px-2 py-0.5 rounded bg-primary/15 text-primary">{{ item.persona }}</span>
-              <span v-if="item.funnel_stage" class="text-[11px] px-2 py-0.5 rounded bg-white/[0.05] text-muted-foreground">{{ item.funnel_stage }}</span>
+              <span v-if="item.funnel_stage" class="text-[11px] px-2 py-0.5 rounded bg-overlay-light text-muted-foreground">{{ item.funnel_stage }}</span>
             </div>
             <p v-if="item.description || item.content_idea" class="text-xs text-muted-foreground leading-relaxed line-clamp-3">{{ item.description || item.content_idea }}</p>
           </div>

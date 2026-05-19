@@ -150,7 +150,7 @@ function getPlatformColor(p: AIHookPlatform): string {
     facebook: 'bg-[#1877F2]/15 text-[#1877F2]',
     instagram: 'bg-[#E4405F]/15 text-[#E4405F]',
     linkedin: 'bg-[#0A66C2]/15 text-[#0A66C2]',
-    tiktok: 'bg-white/10 text-white/70',
+    tiktok: 'bg-overlay-strong text-white/70',
   }
   return map[p] ?? 'bg-muted text-muted-foreground'
 }
@@ -197,28 +197,28 @@ const platformLabels: Record<AIHookPlatform, string> = {
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.titles') }}</label>
             <div class="space-y-2">
               <div v-for="(_, idx) in titles" :key="idx" class="flex items-center gap-2">
-                <input v-model="titles[idx]" data-loc="market.hooks.title-input" :placeholder="t('market.titleHint')" class="flex-1 h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60 focus:border-primary/40 transition" />
-                <button v-if="titles.length > 1" class="h-10 w-10 rounded-lg border border-border/60 grid place-items-center hover:bg-white/[0.03] transition shrink-0" @click="removeTitle(idx)">
+                <input v-model="titles[idx]" data-loc="market.hooks.title-input" :placeholder="t('market.titleHint')" class="flex-1 h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60 focus:border-primary/40 transition" />
+                <button v-if="titles.length > 1" class="h-10 w-10 rounded-lg border border-border/60 grid place-items-center hover:bg-overlay-subtle transition shrink-0" @click="removeTitle(idx)">
                   <Trash2 class="h-3.5 w-3.5 text-muted-foreground" />
                 </button>
               </div>
             </div>
-            <button data-loc="market.hooks.add-title-btn" class="mt-2 h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="addTitle">
+            <button data-loc="market.hooks.add-title-btn" class="mt-2 h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="addTitle">
               <Plus class="h-3 w-3" /> {{ t('market.addTitle') }}
             </button>
           </div>
           <div class="grid sm:grid-cols-3 gap-4">
             <div>
               <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.industry') }}</label>
-              <input v-model="industry" data-loc="market.hooks.industry-input" :placeholder="t('market.industryHint')" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60 focus:border-primary/40 transition" />
+              <input v-model="industry" data-loc="market.hooks.industry-input" :placeholder="t('market.industryHint')" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60 focus:border-primary/40 transition" />
             </div>
             <div>
               <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.brandName') }}</label>
-              <input v-model="brandName" data-loc="market.hooks.brand-name-input" :placeholder="t('market.brandNameHint')" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60 focus:border-primary/40 transition" />
+              <input v-model="brandName" data-loc="market.hooks.brand-name-input" :placeholder="t('market.brandNameHint')" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60 focus:border-primary/40 transition" />
             </div>
             <div>
               <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.hookCount') }}</label>
-              <input v-model.number="hookCount" data-loc="market.hooks.hook-count-input" type="number" min="1" max="50" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60 focus:border-primary/40 transition" />
+              <input v-model.number="hookCount" data-loc="market.hooks.hook-count-input" type="number" min="1" max="50" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60 focus:border-primary/40 transition" />
             </div>
           </div>
           <button
@@ -275,7 +275,7 @@ const platformLabels: Record<AIHookPlatform, string> = {
           </div>
           <div class="flex items-center gap-2 shrink-0">
             <button
-              class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition"
+              class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition"
               @click="copyAllHooks"
             >
               <component :is="copiedAll ? Check : Copy" class="h-3 w-3" />
@@ -283,26 +283,26 @@ const platformLabels: Record<AIHookPlatform, string> = {
             </button>
             <!-- Export dropdown -->
             <div class="relative">
-              <button :disabled="exporting" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition disabled:opacity-50" @click="showExportMenu = !showExportMenu">
+              <button :disabled="exporting" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition disabled:opacity-50" @click="showExportMenu = !showExportMenu">
                 <Loader2 v-if="exporting" class="h-3 w-3 animate-spin" />
                 <Download v-else class="h-3 w-3" />
                 {{ exporting ? t('market.exporting') : t('market.export') }}
               </button>
               <div v-if="showExportMenu" class="absolute end-0 top-full mt-1 z-50 min-w-[180px] rounded-lg border border-border/40 bg-[#1E1B2E] shadow-lg shadow-black/30 py-1">
-                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition" @click="handleExport('pdf')"><FileText class="h-3.5 w-3.5 text-red-400" /> {{ t('market.exportPDF') }}</button>
-                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition" @click="handleExport('pptx')"><LayoutGrid class="h-3.5 w-3.5 text-orange-400" /> {{ t('market.exportPPTX') }}</button>
-                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition" @click="handleExport('xlsx')"><BarChart3 class="h-3.5 w-3.5 text-green-400" /> {{ t('market.exportXLSX') }}</button>
+                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition" @click="handleExport('pdf')"><FileText class="h-3.5 w-3.5 text-red-400" /> {{ t('market.exportPDF') }}</button>
+                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition" @click="handleExport('pptx')"><LayoutGrid class="h-3.5 w-3.5 text-orange-400" /> {{ t('market.exportPPTX') }}</button>
+                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition" @click="handleExport('xlsx')"><BarChart3 class="h-3.5 w-3.5 text-green-400" /> {{ t('market.exportXLSX') }}</button>
               </div>
               <div v-if="showExportMenu" class="fixed inset-0 z-40" @click="showExportMenu = false" />
             </div>
-            <button data-loc="market.hooks.re-run-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="hooksResult = null">
+            <button data-loc="market.hooks.re-run-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="hooksResult = null">
               <RefreshCw class="h-3 w-3" /> {{ t('market.reRun') }}
             </button>
           </div>
         </div>
 
         <!-- Tab toggle: Results / Insights -->
-        <div class="grid grid-cols-2 gap-1 p-1 rounded-lg bg-white/[0.03] border border-border/40 mb-4">
+        <div class="grid grid-cols-2 gap-1 p-1 rounded-lg bg-overlay-subtle border border-border/40 mb-4">
           <button
             class="h-8 rounded-md text-xs font-medium flex items-center justify-center gap-1.5 transition"
             :class="showResults ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground'"
@@ -332,13 +332,13 @@ const platformLabels: Record<AIHookPlatform, string> = {
               <div class="flex flex-wrap gap-1.5">
                 <button
                   class="h-7 px-2.5 rounded-md text-[11px] font-medium border transition"
-                  :class="activeFilter === 'all' ? 'bg-primary/15 text-primary border-primary/30' : 'bg-white/[0.02] text-muted-foreground border-border/40 hover:bg-white/[0.04]'"
+                  :class="activeFilter === 'all' ? 'bg-primary/15 text-primary border-primary/30' : 'bg-overlay-subtle text-muted-foreground border-border/40 hover:bg-overlay-light'"
                   @click="activeFilter = 'all'"
                 >{{ t('market.allTypes') }}</button>
                 <button
                   v-for="ht in allHookTypes" :key="ht"
                   class="h-7 px-2.5 rounded-md text-[11px] font-medium border transition flex items-center gap-1"
-                  :class="activeFilter === ht ? getTypeColor(ht) + ' border' : 'bg-white/[0.02] text-muted-foreground border-border/40 hover:bg-white/[0.04]'"
+                  :class="activeFilter === ht ? getTypeColor(ht) + ' border' : 'bg-overlay-subtle text-muted-foreground border-border/40 hover:bg-overlay-light'"
                   @click="activeFilter = activeFilter === ht ? 'all' : ht"
                 >
                   <component :is="getTypeIcon(ht)" class="h-2.5 w-2.5" />
@@ -355,13 +355,13 @@ const platformLabels: Record<AIHookPlatform, string> = {
               <div class="flex flex-wrap gap-1.5">
                 <button
                   class="h-7 px-2.5 rounded-md text-[11px] font-medium border transition"
-                  :class="activePlatform === 'all' ? 'bg-primary/15 text-primary border-primary/30' : 'bg-white/[0.02] text-muted-foreground border-border/40 hover:bg-white/[0.04]'"
+                  :class="activePlatform === 'all' ? 'bg-primary/15 text-primary border-primary/30' : 'bg-overlay-subtle text-muted-foreground border-border/40 hover:bg-overlay-light'"
                   @click="activePlatform = 'all'"
                 >{{ t('market.allPlatforms') }}</button>
                 <button
                   v-for="p in allPlatforms" :key="p"
                   class="h-7 px-2.5 rounded-md text-[11px] font-medium border transition flex items-center gap-1"
-                  :class="activePlatform === p ? getPlatformColor(p) + ' border border-current/20' : 'bg-white/[0.02] text-muted-foreground border-border/40 hover:bg-white/[0.04]'"
+                  :class="activePlatform === p ? getPlatformColor(p) + ' border border-current/20' : 'bg-overlay-subtle text-muted-foreground border-border/40 hover:bg-overlay-light'"
                   @click="activePlatform = activePlatform === p ? 'all' : p"
                 >
                   {{ platformLabels[p] }}
@@ -392,7 +392,7 @@ const platformLabels: Record<AIHookPlatform, string> = {
                   >{{ platformLabels[p] }}</span>
                 </div>
                 <button
-                  class="ms-auto h-7 w-7 rounded-md grid place-items-center sm:opacity-0 sm:group-hover:opacity-100 transition text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
+                  class="ms-auto h-7 w-7 rounded-md grid place-items-center sm:opacity-0 sm:group-hover:opacity-100 transition text-muted-foreground hover:text-foreground hover:bg-overlay-light"
                   @click="copyHook(hook.hook, idx)"
                 >
                   <component :is="copiedIdx === idx ? Check : Copy" class="h-3 w-3" />
@@ -441,7 +441,7 @@ const platformLabels: Record<AIHookPlatform, string> = {
             <div class="space-y-2">
               <div
                 v-for="(pattern, idx) in hooksResult.analysis.common_patterns" :key="idx"
-                class="flex items-start gap-2.5 p-2.5 rounded-lg bg-white/[0.02]"
+                class="flex items-start gap-2.5 p-2.5 rounded-lg bg-overlay-subtle"
               >
                 <div class="h-5 w-5 rounded-full bg-accent-cyan/10 grid place-items-center shrink-0 mt-0.5">
                   <span class="text-[10px] font-bold text-accent-cyan">{{ idx + 1 }}</span>
@@ -481,7 +481,7 @@ const platformLabels: Record<AIHookPlatform, string> = {
                   <component :is="getTypeIcon(ht)" class="h-3 w-3 shrink-0" />
                   <span class="truncate">{{ hookTypeLabels[ht] }}</span>
                 </div>
-                <div class="flex-1 h-2 rounded-full bg-white/[0.04] overflow-hidden">
+                <div class="flex-1 h-2 rounded-full bg-overlay-light overflow-hidden">
                   <div
                     class="h-full rounded-full transition-all duration-700"
                     :class="{

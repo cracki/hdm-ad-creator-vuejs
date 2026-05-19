@@ -61,7 +61,7 @@ function contentTypeName(type: string): string {
       <div
         v-for="(gap, idx) in gaps"
         :key="idx"
-        class="rounded-lg border border-border/30 bg-white/[0.015] p-4 space-y-3"
+        class="rounded-lg border border-border/30 bg-overlay-subtle p-4 space-y-3"
       >
         <div class="flex items-start justify-between gap-3">
           <div class="flex items-start gap-2.5 min-w-0">
@@ -71,7 +71,7 @@ function contentTypeName(type: string): string {
             <div class="min-w-0">
               <div class="text-sm font-medium text-foreground leading-snug">{{ gap.topic }}</div>
               <div v-if="gap.suggested_content_type" class="mt-1">
-                <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.05] text-muted-foreground">
+                <span class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-light text-muted-foreground">
                   {{ contentTypeName(gap.suggested_content_type) }}
                 </span>
               </div>
@@ -81,7 +81,7 @@ function contentTypeName(type: string): string {
           <!-- Opportunity score -->
           <div class="shrink-0 text-center space-y-1">
             <div :class="['text-lg font-bold', scoreColor(gap.opportunity_score)]">{{ gap.opportunity_score }}</div>
-            <div class="w-14 h-1 rounded-full bg-white/5 overflow-hidden">
+            <div class="w-14 h-1 rounded-full bg-overlay-subtle overflow-hidden">
               <div class="h-full rounded-full bg-[image:var(--gradient-brand)]" :style="{ width: scoreBarWidth(gap.opportunity_score) }" />
             </div>
             <div class="text-[10px] text-muted-foreground/60">{{ scoreLabel(gap.opportunity_score) }}</div>
@@ -114,7 +114,7 @@ function contentTypeName(type: string): string {
             <span
               v-for="(q, qIdx) in gap.people_also_ask"
               :key="qIdx"
-              class="text-[11px] px-1.5 py-0.5 rounded bg-white/[0.03] text-muted-foreground flex items-center gap-1"
+              class="text-[11px] px-1.5 py-0.5 rounded bg-overlay-subtle text-muted-foreground flex items-center gap-1"
             >
               <HelpCircle class="h-2.5 w-2.5" /> {{ q }}
             </span>

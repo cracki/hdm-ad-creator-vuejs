@@ -64,7 +64,7 @@ function goNext() {
   <Topbar :title="campaign?.name ?? ''" :subtitle="campaign?.brand?.company_name">
     <template #actions>
       <button
-        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
+        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition"
         @click="router.push(`/campaigns/${campaignUuid}`)"
       >
         {{ t('camp.backToCampaign') }}
@@ -108,7 +108,7 @@ function goNext() {
           <div class="text-sm font-medium mb-1">{{ t('status.completed') }}</div>
           <div class="text-xs text-muted-foreground mb-4">{{ t('ppc.alreadyCompletedDesc') }}</div>
           <div class="flex items-center justify-center gap-3">
-            <button class="h-9 px-4 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="runPPC">
+            <button class="h-9 px-4 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="runPPC">
               <RefreshCw class="h-3 w-3" /> {{ t('seg.reRun') }}
             </button>
             <button
@@ -154,7 +154,7 @@ function goNext() {
         <div v-if="stepData && !loading">
           <div class="flex items-center justify-between mb-4">
             <div class="text-xs text-muted-foreground">{{ t('ppc.servicesFound', { count: services.length }) }}</div>
-            <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="runPPC">
+            <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="runPPC">
               <RefreshCw class="h-3 w-3" /> {{ t('seg.reRun') }}
             </button>
           </div>
@@ -167,7 +167,7 @@ function goNext() {
             >
               <div class="flex items-start justify-between mb-3">
                 <div class="flex items-center gap-3">
-                  <div class="h-8 w-8 rounded-lg bg-white/[0.05] grid place-items-center shrink-0">
+                  <div class="h-8 w-8 rounded-lg bg-overlay-light grid place-items-center shrink-0">
                     <TrendingUp class="h-4 w-4 text-primary" />
                   </div>
                   <div>

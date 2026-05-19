@@ -70,14 +70,14 @@ async function runTopPerforming() {
         <div class="grid sm:grid-cols-2 gap-4">
           <div>
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.industry') }}</label>
-            <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60">
+            <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60">
               <ShoppingBag class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               <input v-model="industry" data-loc="market.top.industry-input" :placeholder="t('market.industryHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
             </div>
           </div>
           <div>
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.location') }}</label>
-            <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60">
+            <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60">
               <MapPin class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               <input v-model="location" data-loc="market.top.location-input" :placeholder="t('market.locationHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
             </div>
@@ -119,7 +119,7 @@ async function runTopPerforming() {
             <div class="relative">
               <button
                 :disabled="exporting"
-                class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition disabled:opacity-50"
+                class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition disabled:opacity-50"
                 @click="showExportMenu = !showExportMenu"
               >
                 <Loader2 v-if="exporting" class="h-3 w-3 animate-spin" />
@@ -127,19 +127,19 @@ async function runTopPerforming() {
                 {{ exporting ? t('market.exporting') : t('market.export') }}
               </button>
               <div v-if="showExportMenu" class="absolute end-0 top-full mt-1 z-50 min-w-[180px] rounded-lg border border-border/40 bg-[#1E1B2E] shadow-lg shadow-black/30 py-1">
-                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition" @click="handleExport('pdf')">
+                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition" @click="handleExport('pdf')">
                   <FileText class="h-3.5 w-3.5 text-red-400" /> {{ t('market.exportPDF') }}
                 </button>
-                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition" @click="handleExport('pptx')">
+                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition" @click="handleExport('pptx')">
                   <LayoutGrid class="h-3.5 w-3.5 text-orange-400" /> {{ t('market.exportPPTX') }}
                 </button>
-                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition" @click="handleExport('xlsx')">
+                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition" @click="handleExport('xlsx')">
                   <BarChart3 class="h-3.5 w-3.5 text-green-400" /> {{ t('market.exportXLSX') }}
                 </button>
               </div>
               <div v-if="showExportMenu" class="fixed inset-0 z-40" @click="showExportMenu = false" />
             </div>
-            <button data-loc="market.top.re-run-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="topResult = null">
+            <button data-loc="market.top.re-run-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="topResult = null">
               <RefreshCw class="h-3 w-3" /> {{ t('market.reRun') }}
             </button>
           </div>

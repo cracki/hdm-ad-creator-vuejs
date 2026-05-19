@@ -66,7 +66,7 @@ function adPlatformLabel(p: string) {
   <Topbar :title="campaign?.name ?? ''" :subtitle="campaign?.brand?.company_name">
     <template #actions>
       <button
-        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
+        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition"
         @click="router.push(`/campaigns/${campaignUuid}`)"
       >
         {{ t('camp.backToCampaign') }}
@@ -98,7 +98,7 @@ function adPlatformLabel(p: string) {
             <div class="text-sm font-semibold">{{ t('review.progress') }}</div>
             <div class="text-xs text-muted-foreground">{{ progress }}%</div>
           </div>
-          <div class="h-2 rounded-full bg-white/5 overflow-hidden mb-4">
+          <div class="h-2 rounded-full bg-overlay-subtle overflow-hidden mb-4">
             <div class="h-full rounded-full bg-[image:var(--gradient-brand)] transition-all duration-500" :style="{ width: `${progress}%` }" />
           </div>
           <div class="grid sm:grid-cols-2 gap-2">
@@ -107,7 +107,7 @@ function adPlatformLabel(p: string) {
               :key="flag.key"
               class="flex items-center gap-2 text-xs"
             >
-              <div :class="['h-4 w-4 rounded grid place-items-center shrink-0', flag.done ? 'bg-success/15 text-success' : 'bg-white/5 text-muted-foreground']">
+              <div :class="['h-4 w-4 rounded grid place-items-center shrink-0', flag.done ? 'bg-success/15 text-success' : 'bg-overlay-subtle text-muted-foreground']">
                 <Check v-if="flag.done" class="h-3 w-3" />
               </div>
               <span :class="flag.done ? '' : 'text-muted-foreground'">{{ flag.label }}</span>
@@ -125,7 +125,7 @@ function adPlatformLabel(p: string) {
             <div
               v-for="platform in (['meta', 'google', 'linkedin'] as const)"
               :key="platform"
-              class="p-3 rounded-lg bg-white/[0.03] border border-border/40"
+              class="p-3 rounded-lg bg-overlay-subtle border border-border/40"
             >
               <div class="text-xs font-semibold mb-1">{{ adPlatformLabel(platform) }}</div>
               <div class="text-2xl font-bold">{{ adsList.filter((a: any) => a.platform === platform).length }}</div>
@@ -159,7 +159,7 @@ function adPlatformLabel(p: string) {
 
         <div class="flex items-center justify-between">
           <button
-            class="h-10 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition flex items-center gap-1.5"
+            class="h-10 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition flex items-center gap-1.5"
             @click="router.push(`/campaigns/${campaignUuid}/visuals`)"
           >
             <ArrowLeft class="h-3.5 w-3.5" /> {{ t('smart.previous') }}

@@ -128,7 +128,7 @@ setActions([
       <button
         @click="router.push(`/brands/${brandUuid}`)"
         data-loc="brands.analysis.back-btn"
-        class="hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
+        class="hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition"
       >
         <ChevronLeft class="h-3.5 w-3.5" /> {{ t('analysis.backToBrand') }}
       </button>
@@ -190,7 +190,7 @@ setActions([
         <p class="text-sm text-muted-foreground">{{ currentStage }}</p>
       </div>
       <div class="flex justify-center gap-1">
-        <div v-for="i in 5" :key="i" class="h-1.5 w-1.5 rounded-full animate-pulse" :class="i <= progressDots ? 'bg-primary' : 'bg-white/10'" :style="{ animationDelay: `${i * 150}ms` }" />
+        <div v-for="i in 5" :key="i" class="h-1.5 w-1.5 rounded-full animate-pulse" :class="i <= progressDots ? 'bg-primary' : 'bg-overlay-strong'" :style="{ animationDelay: `${i * 150}ms` }" />
       </div>
       <p class="text-xs text-muted-foreground">{{ t('analysis.runningHint') }}</p>
     </div>
@@ -207,7 +207,7 @@ setActions([
       <button
         @click="retryAnalysis"
         data-loc="brands.analysis.retry-btn"
-        class="inline-flex items-center gap-2 h-10 px-5 rounded-xl border border-border/60 text-sm font-medium hover:bg-white/[0.03] transition"
+        class="inline-flex items-center gap-2 h-10 px-5 rounded-xl border border-border/60 text-sm font-medium hover:bg-overlay-subtle transition"
       >
         <RefreshCw class="h-4 w-4" /> {{ t('analysis.retry') }}
       </button>
@@ -232,14 +232,14 @@ setActions([
         <button
           @click="retryAnalysis"
           data-loc="brands.analysis.re-analyze-btn"
-          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
+          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition"
         >
           <RefreshCw class="h-3.5 w-3.5" /> {{ t('analysis.reAnalyze') }}
         </button>
       </div>
 
       <!-- Tabs -->
-      <div class="flex gap-1 p-1 rounded-lg bg-white/[0.03] border border-border/40 w-full sm:w-fit overflow-x-auto">
+      <div class="flex gap-1 p-1 rounded-lg bg-overlay-subtle border border-border/40 w-full sm:w-fit overflow-x-auto">
         <button
           v-for="tab in (['overview', 'audience', 'competitors', 'insights'] as const)"
           :key="tab"
@@ -249,7 +249,7 @@ setActions([
             'h-8 px-3 rounded-md text-xs font-medium transition',
             activeTab === tab
               ? 'bg-[image:var(--gradient-brand)] text-primary-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground hover:bg-white/[0.03]',
+              : 'text-muted-foreground hover:text-foreground hover:bg-overlay-subtle',
           ]"
         >
           {{ t(`analysis.tab.${tab}`) }}

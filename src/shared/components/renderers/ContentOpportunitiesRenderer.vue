@@ -36,15 +36,15 @@ function typeName(key: string): string {
   <div v-if="topContent.length || typeKeys.length || domains.length" class="space-y-5">
     <!-- Stats row -->
     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-      <div class="rounded-lg border border-border/30 bg-white/[0.015] p-3 text-center">
+      <div class="rounded-lg border border-border/30 bg-overlay-subtle p-3 text-center">
         <div class="text-xl font-bold text-primary">{{ result.total_topics_found ?? 0 }}</div>
         <div class="text-[10px] text-muted-foreground">{{ t('opportunities.topicsFound') }}</div>
       </div>
-      <div class="rounded-lg border border-border/30 bg-white/[0.015] p-3 text-center">
+      <div class="rounded-lg border border-border/30 bg-overlay-subtle p-3 text-center">
         <div class="text-xl font-bold text-info">{{ topContent.length }}</div>
         <div class="text-[10px] text-muted-foreground">{{ t('opportunities.topResults') }}</div>
       </div>
-      <div class="rounded-lg border border-border/30 bg-white/[0.015] p-3 text-center">
+      <div class="rounded-lg border border-border/30 bg-overlay-subtle p-3 text-center">
         <div class="text-xl font-bold text-amber-400">{{ domains.length }}</div>
         <div class="text-[10px] text-muted-foreground">{{ t('opportunities.competingDomains') }}</div>
       </div>
@@ -60,7 +60,7 @@ function typeName(key: string): string {
         <div
           v-for="(item, idx) in topContent.slice(0, 10)"
           :key="idx"
-          class="rounded-lg border border-border/30 bg-white/[0.015] p-3 flex items-start gap-2.5"
+          class="rounded-lg border border-border/30 bg-overlay-subtle p-3 flex items-start gap-2.5"
         >
           <span class="shrink-0 h-5 w-5 rounded bg-[image:var(--gradient-brand)] text-primary-foreground text-[10px] font-bold grid place-items-center">
             {{ item.position ?? idx + 1 }}
@@ -72,12 +72,12 @@ function typeName(key: string): string {
               <span v-if="item.domain" class="text-[10px] text-muted-foreground/60 flex items-center gap-0.5">
                 <Globe class="h-2.5 w-2.5" /> {{ item.domain }}
               </span>
-              <span v-if="item.query" class="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] text-muted-foreground">
+              <span v-if="item.query" class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground">
                 {{ item.query }}
               </span>
             </div>
           </div>
-          <a v-if="item.url" :href="item.url" target="_blank" rel="noopener" class="shrink-0 h-6 w-6 rounded flex items-center justify-center hover:bg-white/[0.05] transition">
+          <a v-if="item.url" :href="item.url" target="_blank" rel="noopener" class="shrink-0 h-6 w-6 rounded flex items-center justify-center hover:bg-overlay-light transition">
             <ExternalLink class="h-3 w-3 text-muted-foreground" />
           </a>
         </div>
@@ -95,7 +95,7 @@ function typeName(key: string): string {
             'h-7 px-3 rounded-lg text-[11px] font-medium border transition',
             activeType === key
               ? 'border-primary/60 bg-primary/10 text-primary'
-              : 'border-border/40 bg-white/[0.02] text-muted-foreground hover:text-foreground',
+              : 'border-border/40 bg-overlay-subtle text-muted-foreground hover:text-foreground',
           ]"
           @click="activeType = key"
         >
@@ -106,7 +106,7 @@ function typeName(key: string): string {
         <div
           v-for="(item, idx) in (contentByType[activeType] as ContentOpportunityTopic[])"
           :key="idx"
-          class="rounded-lg border border-border/30 bg-white/[0.015] p-3 flex items-start gap-2"
+          class="rounded-lg border border-border/30 bg-overlay-subtle p-3 flex items-start gap-2"
         >
           <span class="shrink-0 text-[10px] text-muted-foreground/50 w-4 text-end">{{ idx + 1 }}</span>
           <div class="min-w-0 flex-1">
@@ -116,12 +116,12 @@ function typeName(key: string): string {
               <span v-if="item.domain" class="text-[10px] text-muted-foreground/60 flex items-center gap-0.5">
                 <Globe class="h-2.5 w-2.5" /> {{ item.domain }}
               </span>
-              <span v-if="item.query" class="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] text-muted-foreground">
+              <span v-if="item.query" class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground">
                 <Tag class="h-2 w-2 inline" /> {{ item.query }}
               </span>
             </div>
           </div>
-          <a v-if="item.url" :href="item.url" target="_blank" rel="noopener" class="shrink-0 h-5 w-5 rounded flex items-center justify-center hover:bg-white/[0.05] transition">
+          <a v-if="item.url" :href="item.url" target="_blank" rel="noopener" class="shrink-0 h-5 w-5 rounded flex items-center justify-center hover:bg-overlay-light transition">
             <ExternalLink class="h-2.5 w-2.5 text-muted-foreground" />
           </a>
         </div>
@@ -135,7 +135,7 @@ function typeName(key: string): string {
         <div
           v-for="d in domains"
           :key="d.domain"
-          class="rounded-lg border border-border/30 bg-white/[0.015] p-2.5 text-center"
+          class="rounded-lg border border-border/30 bg-overlay-subtle p-2.5 text-center"
         >
           <div class="text-[11px] font-medium text-foreground truncate">{{ d.domain }}</div>
           <div class="text-lg font-bold text-primary">{{ d.content_count }}</div>

@@ -33,10 +33,10 @@ const filteredCampaigns = computed(() => {
 
 function getStatusBadge(campaign: { status: string }) {
   const map: Record<string, { label: string; cls: string }> = {
-    draft: { label: 'Draft', cls: 'bg-white/10 text-muted-foreground' },
+    draft: { label: 'Draft', cls: 'bg-overlay-strong text-muted-foreground' },
     in_progress: { label: 'In progress', cls: 'bg-blue-500/15 text-blue-300' },
     completed: { label: 'Completed', cls: 'bg-success/15 text-success' },
-    archived: { label: 'Archived', cls: 'bg-white/5 text-muted-foreground' },
+    archived: { label: 'Archived', cls: 'bg-overlay-subtle text-muted-foreground' },
   }
   return map[campaign.status] ?? map.draft
 }
@@ -63,7 +63,7 @@ async function confirmDelete() {
   <main class="flex-1 p-4 sm:p-6">
     <!-- Search + Create -->
     <div class="flex items-center gap-3 flex-wrap mb-6">
-      <div class="flex-1 flex items-center gap-2 px-3 h-10 rounded-lg bg-white/[0.03] border border-border/60">
+      <div class="flex-1 flex items-center gap-2 px-3 h-10 rounded-lg bg-overlay-subtle border border-border/60">
         <Search class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
         <input
           v-model="searchQuery"
@@ -124,7 +124,7 @@ async function confirmDelete() {
               {{ getStatusBadge(campaign).label }}
             </span>
             <button
-              class="h-10 w-10 grid place-items-center rounded-md sm:opacity-0 sm:group-hover:opacity-60 hover:!opacity-100 hover:bg-white/[0.06] transition"
+              class="h-10 w-10 grid place-items-center rounded-md sm:opacity-0 sm:group-hover:opacity-60 hover:!opacity-100 hover:bg-overlay-medium transition"
               data-loc="campaigns.list.card-delete"
               @click.stop="handleDelete(campaign.campaign_uuid, campaign.name)"
             >
@@ -145,7 +145,7 @@ async function confirmDelete() {
               <span class="text-[11px] text-muted-foreground">{{ t('camp.progress') }}</span>
               <span class="text-[11px] font-medium">{{ getCampaignProgress(campaign) }}%</span>
             </div>
-            <div class="h-1.5 rounded-full bg-white/5 overflow-hidden">
+            <div class="h-1.5 rounded-full bg-overlay-subtle overflow-hidden">
               <div
                 class="h-full rounded-full bg-[image:var(--gradient-brand)] transition-all duration-500"
                 :style="{ width: `${getCampaignProgress(campaign)}%` }"
@@ -155,15 +155,15 @@ async function confirmDelete() {
 
           <!-- Stats row -->
           <div class="grid grid-cols-3 gap-2 text-center">
-            <div class="p-2 rounded-lg bg-white/[0.02]">
+            <div class="p-2 rounded-lg bg-overlay-subtle">
               <div class="text-sm font-bold">{{ campaign.steps_count }}</div>
               <div class="text-[11px] text-muted-foreground">{{ t('camp.steps') }}</div>
             </div>
-            <div class="p-2 rounded-lg bg-white/[0.02]">
+            <div class="p-2 rounded-lg bg-overlay-subtle">
               <div class="text-sm font-bold capitalize">{{ campaign.current_step.replace('_', ' ') }}</div>
               <div class="text-[11px] text-muted-foreground">{{ t('camp.current') }}</div>
             </div>
-            <div class="p-2 rounded-lg bg-white/[0.02]">
+            <div class="p-2 rounded-lg bg-overlay-subtle">
               <div class="text-sm font-bold">{{ campaign.brand?.selected_industry?.name ?? '—' }}</div>
               <div class="text-[11px] text-muted-foreground">{{ t('camp.industry') }}</div>
             </div>

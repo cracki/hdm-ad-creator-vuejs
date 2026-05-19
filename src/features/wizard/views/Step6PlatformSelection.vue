@@ -87,7 +87,7 @@ async function savePlatforms() {
         <div class="text-xs text-muted-foreground mb-3">
           {{ savedPlatforms.map((p: string) => platforms.find(pl => pl.key === p)?.label ?? p).join(', ') }}
         </div>
-        <button class="h-9 px-4 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition mx-auto" @click="selected = new Set(savedPlatforms)">
+        <button class="h-9 px-4 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition mx-auto" @click="selected = new Set(savedPlatforms)">
           {{ t('platform.edit') }}
         </button>
       </div>

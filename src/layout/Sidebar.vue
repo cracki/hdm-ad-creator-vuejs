@@ -7,6 +7,7 @@ import {
 } from 'lucide-vue-next'
 import Logo from './Logo.vue'
 import LangSwitch from './LangSwitch.vue'
+import ThemeToggle from '@/shared/components/ThemeToggle.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { useAuthStore } from '@/features/auth/store'
 import { useMobileDrawer } from '@/shared/composables/useMobileDrawer'
@@ -159,7 +160,7 @@ function isActive(item: NavItem): boolean {
               'group flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all relative',
               isActive(item)
                 ? 'bg-gradient-to-r from-primary/15 to-transparent text-foreground'
-                : 'text-muted-foreground hover:text-foreground hover:bg-white/[0.03]',
+                : 'text-muted-foreground hover:text-foreground hover:bg-overlay-subtle',
             ]"
           >
             <span
@@ -192,7 +193,7 @@ function isActive(item: NavItem): boolean {
         <div class="relative">
           <div class="text-xs font-semibold mb-1">{{ t('sidebar.aiCredits') }}</div>
           <div class="text-[11px] text-muted-foreground mb-2">{{ t('sidebar.creditsUsed') }}</div>
-          <div class="h-1.5 rounded-full bg-white/5 overflow-hidden">
+          <div class="h-1.5 rounded-full bg-overlay-subtle overflow-hidden">
             <div class="h-full w-1/2 rounded-full bg-[image:var(--gradient-brand)]" />
           </div>
         </div>
@@ -216,7 +217,7 @@ function isActive(item: NavItem): boolean {
         <aside class="relative w-72 h-full flex flex-col border-e border-border/60 bg-background">
           <div class="h-16 flex items-center justify-between px-5 border-b border-border/60 shrink-0">
             <Logo />
-            <button class="h-8 w-8 grid place-items-center rounded-md hover:bg-white/[0.06] text-muted-foreground" aria-label="Close menu" data-loc="sidebar.mobile-close" @click="close">
+            <button class="h-8 w-8 grid place-items-center rounded-md hover:bg-overlay-medium text-muted-foreground" aria-label="Close menu" data-loc="sidebar.mobile-close" @click="close">
               <X class="h-4 w-4" />
             </button>
           </div>
@@ -235,7 +236,7 @@ function isActive(item: NavItem): boolean {
                     'group flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all relative',
                     isActive(item)
                       ? 'bg-gradient-to-r from-primary/15 to-transparent text-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-white/[0.03]',
+                      : 'text-muted-foreground hover:text-foreground hover:bg-overlay-subtle',
                   ]"
                   @click="close"
                 >
@@ -251,14 +252,15 @@ function isActive(item: NavItem): boolean {
               <div class="relative">
                 <div class="text-xs font-semibold mb-1">{{ t('sidebar.aiCredits') }}</div>
                 <div class="text-[11px] text-muted-foreground mb-2">{{ t('sidebar.creditsUsed') }}</div>
-                <div class="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                <div class="h-1.5 rounded-full bg-overlay-subtle overflow-hidden">
                   <div class="h-full w-1/2 rounded-full bg-[image:var(--gradient-brand)]" />
                 </div>
               </div>
             </div>
+            <ThemeToggle />
             <LangSwitch />
             <button
-              class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition"
+              class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-overlay-light transition"
               data-loc="sidebar.mobile-profile"
               @click="close(); router.push({ name: 'profile' })"
             >

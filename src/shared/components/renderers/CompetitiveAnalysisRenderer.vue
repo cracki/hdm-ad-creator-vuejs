@@ -180,7 +180,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
         <div
           v-for="(r, i) in analyzeResults"
           :key="i"
-          class="rounded-lg border border-border/30 bg-white/[0.015] p-3.5 space-y-2"
+          class="rounded-lg border border-border/30 bg-overlay-subtle p-3.5 space-y-2"
         >
           <div class="flex items-center justify-between">
             <span class="text-sm font-medium text-foreground">{{ r.name }}</span>
@@ -216,7 +216,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
         <!-- Competitor Header (always visible, clickable) -->
         <button
           @click="toggleCompetitor(ci)"
-          class="w-full flex items-center justify-between p-4 hover:bg-white/[0.02] transition text-start"
+          class="w-full flex items-center justify-between p-4 hover:bg-overlay-subtle transition text-start"
         >
           <div class="flex items-center gap-3 min-w-0">
             <component :is="expandedCompetitors.has(ci) ? ChevronDown : ChevronRight" class="h-4 w-4 text-muted-foreground shrink-0" />
@@ -310,16 +310,16 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
               <div class="space-y-2">
                 <div v-if="getMessaging(comp)!.tone" class="flex items-center gap-2 text-xs">
                   <span class="text-muted-foreground/50">Tone</span>
-                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] text-muted-foreground border border-border/20">{{ getMessaging(comp)!.tone }}</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground border border-border/20">{{ getMessaging(comp)!.tone }}</span>
                 </div>
-                <div v-if="getMessaging(comp)!.primary_message" class="text-xs text-muted-foreground bg-white/[0.02] rounded-lg p-3 border border-border/10 leading-relaxed">
+                <div v-if="getMessaging(comp)!.primary_message" class="text-xs text-muted-foreground bg-overlay-subtle rounded-lg p-3 border border-border/10 leading-relaxed">
                   {{ getMessaging(comp)!.primary_message }}
                 </div>
                 <div v-if="asStringArray(getMessaging(comp)!.key_themes).length" class="flex flex-wrap gap-1">
                   <span
                     v-for="(theme, i) in asStringArray(getMessaging(comp)!.key_themes)"
                     :key="i"
-                    class="text-[10px] px-1.5 py-0.5 rounded-full border border-border/30 bg-white/[0.02] text-muted-foreground"
+                    class="text-[10px] px-1.5 py-0.5 rounded-full border border-border/30 bg-overlay-subtle text-muted-foreground"
                   >
                     {{ theme }}
                   </span>
@@ -342,11 +342,11 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
                 <template v-for="(val, key) in getPositioning(comp)" :key="String(key)">
                   <div v-if="val != null && String(key) !== 'vs_your_brand' && String(key) !== 'positioning_statement'" class="text-xs flex items-start gap-2">
                     <span class="text-muted-foreground/50 shrink-0">{{ formatLabel(String(key)) }}</span>
-                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] text-muted-foreground">{{ val }}</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground">{{ val }}</span>
                   </div>
                 </template>
               </div>
-              <div v-if="getPositioning(comp)!.positioning_statement" class="text-xs text-muted-foreground bg-white/[0.02] rounded-lg p-3 border border-border/10 leading-relaxed mt-2">
+              <div v-if="getPositioning(comp)!.positioning_statement" class="text-xs text-muted-foreground bg-overlay-subtle rounded-lg p-3 border border-border/10 leading-relaxed mt-2">
                 {{ getPositioning(comp)!.positioning_statement }}
               </div>
               <div v-if="getPositioning(comp)!.vs_your_brand" class="text-xs text-muted-foreground bg-primary/[0.03] rounded-lg p-3 border border-primary/10 leading-relaxed mt-2">
@@ -362,7 +362,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
               <div class="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
                 <Users class="h-3 w-3 text-primary" /> Target Audience
               </div>
-              <div v-if="typeof getTargetAudience(comp)!.primary === 'string'" class="text-xs text-muted-foreground bg-white/[0.02] rounded-lg p-3 border border-border/10 leading-relaxed mb-2">
+              <div v-if="typeof getTargetAudience(comp)!.primary === 'string'" class="text-xs text-muted-foreground bg-overlay-subtle rounded-lg p-3 border border-border/10 leading-relaxed mb-2">
                 {{ getTargetAudience(comp)!.primary }}
               </div>
               <template v-if="asObject(getTargetAudience(comp)!.demographics)">
@@ -395,10 +395,10 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <template v-for="scoreKey in ['hybrid_quality_score', 'website_quality_score', 'trust_score']" :key="scoreKey">
               <template v-if="getScoreInfo(asObject(comp[scoreKey]))">
-                <div class="rounded-lg border border-border/20 bg-white/[0.01] p-3">
+                <div class="rounded-lg border border-border/20 bg-overlay-subtle p-3">
                   <div class="text-[11px] text-muted-foreground/60 mb-2">{{ formatLabel(scoreKey) }}</div>
                   <div class="flex items-center gap-2 mb-2">
-                    <div class="flex-1 h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                    <div class="flex-1 h-2 rounded-full bg-overlay-medium overflow-hidden">
                       <div
                         :class="barColor(getScoreInfo(asObject(comp[scoreKey]))!.grade)"
                         class="h-full rounded-full transition-all"
@@ -414,7 +414,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
                         <template v-if="bVal && typeof bVal === 'object' && !Array.isArray(bVal)">
                           <div v-if="typeof (bVal as any).score === 'number' && typeof (bVal as any).max === 'number'" class="text-[11px] flex items-center gap-2">
                             <span class="text-muted-foreground/50 shrink-0 truncate max-w-[80px]">{{ formatLabel(String(bKey)) }}</span>
-                            <div class="flex-1 h-1 rounded-full bg-white/[0.06] overflow-hidden">
+                            <div class="flex-1 h-1 rounded-full bg-overlay-medium overflow-hidden">
                               <div class="h-full rounded-full bg-primary/40" :style="{ width: `${((bVal as any).score / (bVal as any).max) * 100}%` }" />
                             </div>
                             <span class="text-muted-foreground/60 tabular-nums">{{ (bVal as any).score }}/{{ (bVal as any).max }}</span>
@@ -436,7 +436,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
               </div>
               <template v-if="getScoreInfo(asObject(comp.credibility))">
                 <div class="flex items-center gap-2 mb-2">
-                  <div class="flex-1 h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                  <div class="flex-1 h-2 rounded-full bg-overlay-medium overflow-hidden">
                     <div
                       :class="barColor(getScoreInfo(asObject(comp.credibility))!.grade)"
                       class="h-full rounded-full"
@@ -448,7 +448,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
                 </div>
               </template>
               <template v-if="asObject(comp.credibility)?.trust_summary">
-                <div class="text-xs text-muted-foreground bg-white/[0.02] rounded-lg p-3 border border-border/10 leading-relaxed">
+                <div class="text-xs text-muted-foreground bg-overlay-subtle rounded-lg p-3 border border-border/10 leading-relaxed">
                   <template v-if="typeof (asObject(comp.credibility)!.trust_summary as any)?.recommendation === 'string'">
                     {{ (asObject(comp.credibility)!.trust_summary as any).recommendation }}
                   </template>
@@ -467,7 +467,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
                 <div
                   v-for="(area, i) in asObjectArray(comp.improvement_areas)"
                   :key="i"
-                  class="rounded-lg border border-border/20 bg-white/[0.01] p-3 space-y-1.5"
+                  class="rounded-lg border border-border/20 bg-overlay-subtle p-3 space-y-1.5"
                 >
                   <div class="flex items-center gap-2 flex-wrap">
                     <span class="text-xs font-medium text-foreground">{{ area.area }}</span>
@@ -497,7 +497,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
                 <div
                   v-for="(opp, i) in asObjectArray(comp.growth_opportunities)"
                   :key="i"
-                  class="rounded-lg border border-border/20 bg-white/[0.01] p-3 space-y-1.5"
+                  class="rounded-lg border border-border/20 bg-overlay-subtle p-3 space-y-1.5"
                 >
                   <div class="flex items-center gap-2 flex-wrap">
                     <span class="text-xs font-medium text-foreground">{{ opp.opportunity || opp.action }}</span>
@@ -525,7 +525,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
                 <div
                   v-for="(diff, i) in asObjectArray(comp.differentiation_opportunities)"
                   :key="i"
-                  class="rounded-lg border border-border/20 bg-white/[0.01] p-3 space-y-1.5"
+                  class="rounded-lg border border-border/20 bg-overlay-subtle p-3 space-y-1.5"
                 >
                   <div class="text-xs font-medium text-primary flex items-center gap-1.5">
                     <ArrowUpRight class="h-3 w-3" />
@@ -534,7 +534,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
                   <div v-if="diff.rationale" class="text-xs text-muted-foreground leading-relaxed">
                     {{ diff.rationale }}
                   </div>
-                  <div v-if="diff.implementation" class="text-[11px] text-muted-foreground/70 leading-relaxed bg-white/[0.02] rounded p-2 border border-border/10">
+                  <div v-if="diff.implementation" class="text-[11px] text-muted-foreground/70 leading-relaxed bg-overlay-subtle rounded p-2 border border-border/10">
                     {{ diff.implementation }}
                   </div>
                   <div v-if="diff.competitor_weakness" class="text-[11px] text-muted-foreground/60">
@@ -548,7 +548,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
           <!-- Services & Content Strategy (compact) -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <template v-if="asObject(comp.services)">
-              <div class="rounded-lg border border-border/20 bg-white/[0.01] p-3">
+              <div class="rounded-lg border border-border/20 bg-overlay-subtle p-3">
                 <div class="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
                   <Award class="h-3 w-3 text-primary" /> Services
                 </div>
@@ -561,14 +561,14 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
                   </template>
                 </div>
                 <div v-if="asStringArray(asObject(comp.services)!.services_list).length" class="flex flex-wrap gap-1 mt-2">
-                  <span v-for="(s, i) in asStringArray(asObject(comp.services)!.services_list)" :key="i" class="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] text-muted-foreground">
+                  <span v-for="(s, i) in asStringArray(asObject(comp.services)!.services_list)" :key="i" class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground">
                     {{ s }}
                   </span>
                 </div>
               </div>
             </template>
             <template v-if="asObject(comp.content_strategy)">
-              <div class="rounded-lg border border-border/20 bg-white/[0.01] p-3">
+              <div class="rounded-lg border border-border/20 bg-overlay-subtle p-3">
                 <div class="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
                   <MessageSquare class="h-3 w-3 text-primary" /> Content Strategy
                 </div>

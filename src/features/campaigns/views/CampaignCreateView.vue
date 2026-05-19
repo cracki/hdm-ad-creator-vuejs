@@ -53,7 +53,7 @@ async function handleCreate() {
             @click="selectedBrandUuid = brand.brand_uuid"
           >
             <div class="flex items-center gap-3">
-              <div class="h-9 w-9 rounded-lg bg-white/[0.05] grid place-items-center shrink-0">
+              <div class="h-9 w-9 rounded-lg bg-overlay-light grid place-items-center shrink-0">
                 <Megaphone class="h-4 w-4 text-muted-foreground" />
               </div>
               <div class="min-w-0">
@@ -80,7 +80,7 @@ async function handleCreate() {
         <input
           v-model="campaignName"
           :placeholder="t('camp.namePlaceholder')"
-          class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none focus:border-primary/60 transition"
+          class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none focus:border-primary/60 transition"
           data-loc="campaigns.create.name-input"
         />
       </div>
@@ -88,7 +88,7 @@ async function handleCreate() {
       <!-- Actions -->
       <div class="flex items-center gap-3 pt-2">
         <button
-          class="h-10 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition flex items-center gap-1.5"
+          class="h-10 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition flex items-center gap-1.5"
           data-loc="campaigns.create.cancel-btn"
           @click="router.back()"
         >
@@ -100,7 +100,7 @@ async function handleCreate() {
             'h-10 px-5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition',
             selectedBrandUuid && !creating
               ? 'bg-[image:var(--gradient-brand)] text-primary-foreground shadow-[var(--shadow-glow)]'
-              : 'bg-white/5 text-muted-foreground cursor-not-allowed',
+              : 'bg-overlay-subtle text-muted-foreground cursor-not-allowed',
           ]"
           data-loc="campaigns.create.create-btn"
           @click="handleCreate"

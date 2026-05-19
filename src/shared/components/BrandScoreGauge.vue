@@ -73,7 +73,7 @@ const ringColor = computed(() => {
             <span class="text-muted-foreground">{{ t(factor.labelKey as any) }}</span>
             <span class="font-medium">{{ factor.score }}/{{ factor.maxScore }}</span>
           </div>
-          <div class="h-1 rounded-full bg-white/5 overflow-hidden">
+          <div class="h-1 rounded-full bg-overlay-subtle overflow-hidden">
             <div
               class="h-full rounded-full bg-[image:var(--gradient-brand)] transition-all duration-500"
               :style="{ width: `${(factor.score / factor.maxScore) * 100}%` }"

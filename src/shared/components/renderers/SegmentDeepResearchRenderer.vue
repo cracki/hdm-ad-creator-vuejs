@@ -144,7 +144,7 @@ const hasData = computed(() => items.value.length > 0)
     <div v-for="item in items" :key="item.key" class="space-y-2">
       <!-- NESTED SECTION -->
       <template v-if="item.type === 'nested' && item.children">
-        <div class="rounded-lg border border-border/30 bg-white/[0.015] p-4 space-y-2.5">
+        <div class="rounded-lg border border-border/30 bg-overlay-subtle p-4 space-y-2.5">
           <div class="flex items-center gap-2 text-xs font-semibold text-foreground">
             <component :is="pickIcon(item.key)" class="h-3.5 w-3.5 text-primary" />
             {{ item.label }}
@@ -162,7 +162,7 @@ const hasData = computed(() => items.value.length > 0)
                 <span
                   v-for="(tag, i) in (child.value as string[])"
                   :key="i"
-                  class="text-[11px] px-2 py-0.5 rounded-full border border-border/50 bg-white/[0.02] text-muted-foreground"
+                  class="text-[11px] px-2 py-0.5 rounded-full border border-border/50 bg-overlay-subtle text-muted-foreground"
                 >
                   {{ tag }}
                 </span>
@@ -190,7 +190,7 @@ const hasData = computed(() => items.value.length > 0)
                   <div
                     v-for="(card, ci) in child.cards"
                     :key="ci"
-                    class="rounded-lg bg-white/[0.02] border border-border/20 p-3 space-y-1.5"
+                    class="rounded-lg bg-overlay-subtle border border-border/20 p-3 space-y-1.5"
                   >
                     <template v-if="cardTitleField(card)">
                       <div class="text-xs font-medium text-foreground">{{ card[cardTitleField(card)!] }}</div>
@@ -204,7 +204,7 @@ const hasData = computed(() => items.value.length > 0)
                       </template>
                       <template v-else-if="Array.isArray(v) && typeof v[0] === 'string'">
                         <div class="flex flex-wrap gap-1">
-                          <span v-for="(t, ti) in (v as string[])" :key="ti" class="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] text-muted-foreground">{{ t }}</span>
+                          <span v-for="(t, ti) in (v as string[])" :key="ti" class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground">{{ t }}</span>
                         </div>
                       </template>
                     </template>
@@ -253,7 +253,7 @@ const hasData = computed(() => items.value.length > 0)
             <span
               v-for="(tag, i) in (item.value as string[])"
               :key="i"
-              class="text-[11px] px-2 py-0.5 rounded-full border border-border/50 bg-white/[0.02] text-muted-foreground"
+              class="text-[11px] px-2 py-0.5 rounded-full border border-border/50 bg-overlay-subtle text-muted-foreground"
             >
               {{ tag }}
             </span>
@@ -292,7 +292,7 @@ const hasData = computed(() => items.value.length > 0)
             <div
               v-for="(card, ci) in item.cards"
               :key="ci"
-              class="rounded-lg bg-white/[0.02] border border-border/20 p-3 space-y-1.5"
+              class="rounded-lg bg-overlay-subtle border border-border/20 p-3 space-y-1.5"
             >
               <template v-if="cardTitleField(card)">
                 <div class="text-xs font-medium text-foreground">{{ card[cardTitleField(card)!] }}</div>
@@ -312,7 +312,7 @@ const hasData = computed(() => items.value.length > 0)
                 </template>
                 <template v-else-if="Array.isArray(v) && typeof v[0] === 'string'">
                   <div class="flex flex-wrap gap-1">
-                    <span v-for="(t, ti) in (v as string[])" :key="ti" class="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] text-muted-foreground">{{ t }}</span>
+                    <span v-for="(t, ti) in (v as string[])" :key="ti" class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground">{{ t }}</span>
                   </div>
                 </template>
                 <template v-else-if="Array.isArray(v) && v.length > 0 && typeof v[0] === 'object'">

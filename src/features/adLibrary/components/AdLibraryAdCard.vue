@@ -81,11 +81,11 @@ function copyAll() {
       <span v-if="ad.funnel_stage" class="text-[11px] px-2 py-0.5 rounded-full bg-info/10 text-info">{{ ad.funnel_stage }}</span>
       <span v-if="ad.angle_name" class="text-[11px] px-2 py-0.5 rounded-full bg-accent-magenta/15 text-accent-magenta">{{ ad.angle_name }}</span>
       <span v-if="ad.persona" class="text-[11px] px-2 py-0.5 rounded-full bg-accent-cyan/15 text-accent-cyan">{{ ad.persona }}</span>
-      <span v-if="hookType" class="text-[11px] px-2 py-0.5 rounded-full bg-white/[0.06] text-muted-foreground">{{ hookType }}</span>
+      <span v-if="hookType" class="text-[11px] px-2 py-0.5 rounded-full bg-overlay-medium text-muted-foreground">{{ hookType }}</span>
     </div>
 
     <!-- Ad copy preview -->
-    <div class="rounded-lg border border-border/40 bg-white/[0.015] p-3 space-y-2 mb-3">
+    <div class="rounded-lg border border-border/40 bg-overlay-subtle p-3 space-y-2 mb-3">
       <div v-if="headline" class="text-sm font-semibold leading-snug">{{ headline }}</div>
       <div v-if="primaryText" class="text-xs leading-relaxed text-foreground/80 line-clamp-4">{{ primaryText }}</div>
       <div v-if="description" class="text-[11px] leading-relaxed text-muted-foreground line-clamp-2">{{ description }}</div>
@@ -127,7 +127,7 @@ function copyAll() {
     <!-- Action bar -->
     <div class="flex items-center gap-1 pt-2 border-t border-border/30">
       <button
-        class="h-7 px-2 rounded-md text-[11px] flex items-center gap-1 hover:bg-white/[0.06] transition text-muted-foreground hover:text-foreground"
+        class="h-7 px-2 rounded-md text-[11px] flex items-center gap-1 hover:bg-overlay-medium transition text-muted-foreground hover:text-foreground"
         @click="copyAdCopy"
       >
         <Check v-if="copiedField === 'adCopy'" class="h-3 w-3 text-success" />
@@ -138,7 +138,7 @@ function copyAll() {
 
       <button
         v-if="visualDirection"
-        class="h-7 px-2 rounded-md text-[11px] flex items-center gap-1 hover:bg-white/[0.06] transition text-muted-foreground hover:text-foreground"
+        class="h-7 px-2 rounded-md text-[11px] flex items-center gap-1 hover:bg-overlay-medium transition text-muted-foreground hover:text-foreground"
         @click="copyVisual"
       >
         <Check v-if="copiedField === 'visual'" class="h-3 w-3 text-success" />
@@ -150,7 +150,7 @@ function copyAll() {
       <div class="flex-1" />
 
       <button
-        class="h-7 px-2 rounded-md text-[11px] flex items-center gap-1 hover:bg-white/[0.06] transition text-muted-foreground hover:text-foreground"
+        class="h-7 px-2 rounded-md text-[11px] flex items-center gap-1 hover:bg-overlay-medium transition text-muted-foreground hover:text-foreground"
         @click="copyAll"
       >
         <Check v-if="copiedField === 'all'" class="h-3 w-3 text-success" />
@@ -158,7 +158,7 @@ function copyAll() {
       </button>
 
       <button
-        class="h-7 px-2.5 rounded-md text-[11px] flex items-center gap-1 hover:bg-white/[0.06] transition text-muted-foreground hover:text-primary font-medium"
+        class="h-7 px-2.5 rounded-md text-[11px] flex items-center gap-1 hover:bg-overlay-medium transition text-muted-foreground hover:text-primary font-medium"
         @click="emit('viewDetails', ad)"
       >
         <Eye class="h-3 w-3" /> {{ t('adlib.viewDetails') }}

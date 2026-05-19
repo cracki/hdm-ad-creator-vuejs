@@ -187,7 +187,7 @@ const recentBrands = computed(() => {
                 'text-[11px] font-medium px-2 py-0.5 rounded-md',
                 camp.status === 'completed' ? 'bg-success/10 text-success' :
                 camp.status === 'in_progress' ? 'bg-primary/10 text-primary' :
-                'bg-white/5 text-muted-foreground',
+                'bg-overlay-subtle text-muted-foreground',
               ]"
             >
               {{ camp.status }}

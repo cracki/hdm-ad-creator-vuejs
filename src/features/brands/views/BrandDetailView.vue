@@ -40,7 +40,7 @@ function runStatusBadge(run: any) {
     case 'completed': return { icon: CheckCircle2, cls: 'text-success bg-success/10', label: t('analysis.status.completed') }
     case 'failed': return { icon: XCircle, cls: 'text-destructive bg-destructive/10', label: t('analysis.status.failed') }
     case 'running': case 'pending': return { icon: Loader2, cls: 'text-info bg-info/10', label: t('analysis.status.running'), spin: true }
-    default: return { icon: Clock, cls: 'text-muted-foreground bg-white/5', label: run.status }
+    default: return { icon: Clock, cls: 'text-muted-foreground bg-overlay-subtle', label: run.status }
   }
 }
 
@@ -75,7 +75,7 @@ setActions([
       <RouterLink
         :to="`/brands/${brandUuid}/edit`"
         data-loc="brands.detail.edit-btn"
-        class="hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
+        class="hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition"
       >
         <Pencil class="h-3.5 w-3.5" /> Edit
       </RouterLink>
@@ -95,7 +95,7 @@ setActions([
 
     <div v-else-if="brand" class="max-w-3xl mx-auto space-y-5">
       <!-- Tabs -->
-      <div class="flex gap-1 p-1 rounded-lg bg-white/[0.03] border border-border/40 w-fit">
+      <div class="flex gap-1 p-1 rounded-lg bg-overlay-subtle border border-border/40 w-fit">
         <button
           v-for="tab in (['overview', 'analysis'] as const)"
           :key="tab"
@@ -105,7 +105,7 @@ setActions([
             'h-8 px-3 rounded-md text-xs font-medium transition',
             activeTab === tab
               ? 'bg-[image:var(--gradient-brand)] text-primary-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground hover:bg-white/[0.03]',
+              : 'text-muted-foreground hover:text-foreground hover:bg-overlay-subtle',
           ]"
         >
           {{ t(`analysis.tab.${tab}`) }}
@@ -174,7 +174,7 @@ setActions([
             <RouterLink
               :to="`/brands/${brandUuid}/analysis/history`"
               data-loc="brands.detail.view-history-btn"
-              class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
+              class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition"
             >
               <BarChart3 class="h-3.5 w-3.5" /> {{ t('analysis.viewHistory') }}
             </RouterLink>

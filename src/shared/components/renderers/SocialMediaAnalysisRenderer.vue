@@ -212,7 +212,7 @@ function exportIdeasCsv(sectionKey: string, items: Record<string, unknown>[]) {
         <button
           v-if="isVideoIdeaSection(sec.key) && isObjectArray(sec.value)"
           @click="exportIdeasCsv(sec.key, sec.value as Record<string, unknown>[])"
-          class="inline-flex items-center gap-1 h-7 px-2.5 rounded-md border border-border/40 text-[11px] font-medium text-muted-foreground hover:bg-white/[0.03] transition"
+          class="inline-flex items-center gap-1 h-7 px-2.5 rounded-md border border-border/40 text-[11px] font-medium text-muted-foreground hover:bg-overlay-subtle transition"
         >
           <Download class="h-3 w-3" /> CSV
         </button>
@@ -223,7 +223,7 @@ function exportIdeasCsv(sectionKey: string, items: Record<string, unknown>[]) {
         <div
           v-for="(item, i) in (sec.value as string[])"
           :key="i"
-          class="rounded-lg border border-border/30 bg-white/[0.015] p-3 text-sm text-muted-foreground leading-relaxed"
+          class="rounded-lg border border-border/30 bg-overlay-subtle p-3 text-sm text-muted-foreground leading-relaxed"
         >
           {{ item }}
         </div>
@@ -234,7 +234,7 @@ function exportIdeasCsv(sectionKey: string, items: Record<string, unknown>[]) {
         <div
           v-for="(obj, i) in (sec.value as Record<string, unknown>[])"
           :key="i"
-          class="rounded-xl border border-border/30 bg-white/[0.015] overflow-hidden group"
+          class="rounded-xl border border-border/30 bg-overlay-subtle overflow-hidden group"
         >
           <!-- Video-style top bar -->
           <div class="h-1.5 bg-gradient-to-r from-red-500/40 via-red-500/20 to-transparent" />
@@ -252,7 +252,7 @@ function exportIdeasCsv(sectionKey: string, items: Record<string, unknown>[]) {
               <template v-for="[k, v] in Object.entries(obj)" :key="k">
                 <span
                   v-if="isPrimitive(v) && k !== 'name' && k !== 'title' && k !== 'segment_name'"
-                  class="text-[11px] px-2 py-0.5 rounded-md bg-white/[0.03] border border-border/20 text-muted-foreground"
+                  class="text-[11px] px-2 py-0.5 rounded-md bg-overlay-subtle border border-border/20 text-muted-foreground"
                 >
                   <span class="text-muted-foreground/50">{{ formatLabel(k) }}:</span> {{ String(v) }}
                 </span>
@@ -283,7 +283,7 @@ function exportIdeasCsv(sectionKey: string, items: Record<string, unknown>[]) {
                     <span
                       v-for="(tag, ti) in (v as string[])"
                       :key="ti"
-                      class="text-[11px] px-2 py-0.5 rounded-full border border-border/40 bg-white/[0.02] text-muted-foreground"
+                      class="text-[11px] px-2 py-0.5 rounded-full border border-border/40 bg-overlay-subtle text-muted-foreground"
                     >{{ tag }}</span>
                   </div>
                 </div>
@@ -294,12 +294,12 @@ function exportIdeasCsv(sectionKey: string, items: Record<string, unknown>[]) {
                     <span
                       v-for="(tag, ti) in (v as string[])"
                       :key="ti"
-                      class="text-[11px] px-2 py-0.5 rounded-full border border-border/40 bg-white/[0.02] text-muted-foreground"
+                      class="text-[11px] px-2 py-0.5 rounded-full border border-border/40 bg-overlay-subtle text-muted-foreground"
                     >{{ tag }}</span>
                   </div>
                 </div>
                 <!-- Thumbnail concept -->
-                <div v-else-if="k === 'thumbnail_concept' && typeof v === 'string'" class="rounded-lg border border-border/20 bg-white/[0.01] p-2.5 flex items-start gap-2">
+                <div v-else-if="k === 'thumbnail_concept' && typeof v === 'string'" class="rounded-lg border border-border/20 bg-overlay-subtle p-2.5 flex items-start gap-2">
                   <Clapperboard class="h-3.5 w-3.5 text-red-400/60 shrink-0 mt-0.5" />
                   <div>
                     <div class="text-[11px] text-muted-foreground/50 mb-0.5">{{ formatLabel(k) }}</div>
@@ -307,7 +307,7 @@ function exportIdeasCsv(sectionKey: string, items: Record<string, unknown>[]) {
                   </div>
                 </div>
                 <!-- Nested object -->
-                <div v-else-if="isObject(v) && k !== 'demographics'" class="rounded-lg border border-border/20 bg-white/[0.01] p-3 space-y-2">
+                <div v-else-if="isObject(v) && k !== 'demographics'" class="rounded-lg border border-border/20 bg-overlay-subtle p-3 space-y-2">
                   <div v-if="getObjectTitle(v as Record<string, unknown>)" class="text-xs font-medium text-foreground">{{ getObjectTitle(v as Record<string, unknown>) }}</div>
                   <template v-for="sub in renderSubContent(v as Record<string, unknown>)" :key="sub.label">
                     <div v-if="!sub.isTags" class="text-xs text-muted-foreground flex items-start gap-2">
@@ -317,13 +317,13 @@ function exportIdeasCsv(sectionKey: string, items: Record<string, unknown>[]) {
                     <div v-else class="text-xs">
                       <div class="text-muted-foreground/50 mb-1">{{ sub.label }}</div>
                       <div class="flex flex-wrap gap-1">
-                        <span v-for="(tag, ti) in (sub.value as string[])" :key="ti" class="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] text-muted-foreground">{{ tag }}</span>
+                        <span v-for="(tag, ti) in (sub.value as string[])" :key="ti" class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground">{{ tag }}</span>
                       </div>
                     </div>
                   </template>
                 </div>
                 <!-- Demographics grid -->
-                <div v-else-if="k === 'demographics' && isObject(v)" class="rounded-lg border border-border/20 bg-white/[0.01] p-3">
+                <div v-else-if="k === 'demographics' && isObject(v)" class="rounded-lg border border-border/20 bg-overlay-subtle p-3">
                   <div class="text-xs font-medium text-foreground mb-2">{{ formatLabel(k) }}</div>
                   <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     <template v-for="[dk, dv] in Object.entries(v as Record<string, unknown>)" :key="dk">
@@ -345,7 +345,7 @@ function exportIdeasCsv(sectionKey: string, items: Record<string, unknown>[]) {
         <div
           v-for="(obj, i) in (sec.value as Record<string, unknown>[])"
           :key="i"
-          class="rounded-xl border border-border/30 bg-white/[0.015] overflow-hidden"
+          class="rounded-xl border border-border/30 bg-overlay-subtle overflow-hidden"
         >
           <div class="p-4 space-y-3">
             <div v-if="getObjectTitle(obj)" class="flex items-start gap-2">
@@ -356,7 +356,7 @@ function exportIdeasCsv(sectionKey: string, items: Record<string, unknown>[]) {
               <template v-for="[k, v] in Object.entries(obj)" :key="k">
                 <span
                   v-if="isPrimitive(v) && k !== 'name' && k !== 'title' && k !== 'segment_name'"
-                  class="text-[11px] px-2 py-0.5 rounded-md bg-white/[0.03] border border-border/20 text-muted-foreground"
+                  class="text-[11px] px-2 py-0.5 rounded-md bg-overlay-subtle border border-border/20 text-muted-foreground"
                 >
                   <span class="text-muted-foreground/50">{{ formatLabel(k) }}:</span> {{ String(v) }}
                 </span>
@@ -370,11 +370,11 @@ function exportIdeasCsv(sectionKey: string, items: Record<string, unknown>[]) {
                     <span
                       v-for="(tag, ti) in (v as string[])"
                       :key="ti"
-                      class="text-[11px] px-2 py-0.5 rounded-full border border-border/40 bg-white/[0.02] text-muted-foreground"
+                      class="text-[11px] px-2 py-0.5 rounded-full border border-border/40 bg-overlay-subtle text-muted-foreground"
                     >{{ tag }}</span>
                   </div>
                 </div>
-                <div v-else-if="isObject(v) && k !== 'demographics' && k !== 'thumbnail_concept'" class="rounded-lg border border-border/20 bg-white/[0.01] p-3 space-y-2">
+                <div v-else-if="isObject(v) && k !== 'demographics' && k !== 'thumbnail_concept'" class="rounded-lg border border-border/20 bg-overlay-subtle p-3 space-y-2">
                   <div v-if="getObjectTitle(v as Record<string, unknown>)" class="text-xs font-medium text-foreground">{{ getObjectTitle(v as Record<string, unknown>) }}</div>
                   <template v-for="sub in renderSubContent(v as Record<string, unknown>)" :key="sub.label">
                     <div v-if="!sub.isTags" class="text-xs text-muted-foreground flex items-start gap-2">
@@ -384,12 +384,12 @@ function exportIdeasCsv(sectionKey: string, items: Record<string, unknown>[]) {
                     <div v-else class="text-xs">
                       <div class="text-muted-foreground/50 mb-1">{{ sub.label }}</div>
                       <div class="flex flex-wrap gap-1">
-                        <span v-for="(tag, ti) in (sub.value as string[])" :key="ti" class="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] text-muted-foreground">{{ tag }}</span>
+                        <span v-for="(tag, ti) in (sub.value as string[])" :key="ti" class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground">{{ tag }}</span>
                       </div>
                     </div>
                   </template>
                 </div>
-                <div v-else-if="k === 'demographics' && isObject(v)" class="rounded-lg border border-border/20 bg-white/[0.01] p-3">
+                <div v-else-if="k === 'demographics' && isObject(v)" class="rounded-lg border border-border/20 bg-overlay-subtle p-3">
                   <div class="text-xs font-medium text-foreground mb-2">{{ formatLabel(k) }}</div>
                   <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     <template v-for="[dk, dv] in Object.entries(v as Record<string, unknown>)" :key="dk">
@@ -400,7 +400,7 @@ function exportIdeasCsv(sectionKey: string, items: Record<string, unknown>[]) {
                     </template>
                   </div>
                 </div>
-                <div v-else-if="k === 'thumbnail_concept' && typeof v === 'string'" class="rounded-lg border border-border/20 bg-white/[0.01] p-3 flex items-start gap-2">
+                <div v-else-if="k === 'thumbnail_concept' && typeof v === 'string'" class="rounded-lg border border-border/20 bg-overlay-subtle p-3 flex items-start gap-2">
                   <Eye class="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
                   <div>
                     <div class="text-[11px] text-muted-foreground/50 mb-0.5">{{ formatLabel(k) }}</div>
@@ -444,7 +444,7 @@ function exportIdeasCsv(sectionKey: string, items: Record<string, unknown>[]) {
               <span
                 v-for="(tag, ti) in (v as string[])"
                 :key="ti"
-                class="text-[11px] px-2 py-0.5 rounded-full border border-border/40 bg-white/[0.02] text-muted-foreground"
+                class="text-[11px] px-2 py-0.5 rounded-full border border-border/40 bg-overlay-subtle text-muted-foreground"
               >{{ tag }}</span>
             </div>
           </div>
@@ -453,7 +453,7 @@ function exportIdeasCsv(sectionKey: string, items: Record<string, unknown>[]) {
             <div
               v-for="(obj, i) in (v as Record<string, unknown>[])"
               :key="i"
-              class="rounded-lg border border-border/20 bg-white/[0.02] p-3 space-y-2"
+              class="rounded-lg border border-border/20 bg-overlay-subtle p-3 space-y-2"
             >
               <div v-if="getObjectTitle(obj)" class="text-xs font-semibold text-foreground">{{ getObjectTitle(obj) }}</div>
               <template v-for="sub in renderSubContent(obj)" :key="sub.label">
@@ -464,13 +464,13 @@ function exportIdeasCsv(sectionKey: string, items: Record<string, unknown>[]) {
                 <div v-else class="text-[11px]">
                   <div class="text-muted-foreground/50 mb-0.5">{{ sub.label }}</div>
                   <div class="flex flex-wrap gap-1">
-                    <span v-for="(tag, ti) in (sub.value as string[])" :key="ti" class="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] text-muted-foreground">{{ tag }}</span>
+                    <span v-for="(tag, ti) in (sub.value as string[])" :key="ti" class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground">{{ tag }}</span>
                   </div>
                 </div>
               </template>
             </div>
           </div>
-          <div v-else-if="isObject(v)" class="rounded-lg border border-border/20 bg-white/[0.01] p-3 space-y-2">
+          <div v-else-if="isObject(v)" class="rounded-lg border border-border/20 bg-overlay-subtle p-3 space-y-2">
             <div class="text-[11px] text-muted-foreground/60 font-medium mb-1">{{ formatLabel(k) }}</div>
             <template v-for="sub in renderSubContent(v as Record<string, unknown>)" :key="sub.label">
               <div v-if="!sub.isTags" class="text-[11px] text-muted-foreground flex items-start gap-2">
@@ -480,7 +480,7 @@ function exportIdeasCsv(sectionKey: string, items: Record<string, unknown>[]) {
               <div v-else class="text-[11px]">
                 <div class="text-muted-foreground/50 mb-0.5">{{ sub.label }}</div>
                 <div class="flex flex-wrap gap-1">
-                  <span v-for="(tag, ti) in (sub.value as string[])" :key="ti" class="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] text-muted-foreground">{{ tag }}</span>
+                  <span v-for="(tag, ti) in (sub.value as string[])" :key="ti" class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground">{{ tag }}</span>
                 </div>
               </div>
             </template>

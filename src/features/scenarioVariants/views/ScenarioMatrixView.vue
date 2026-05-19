@@ -139,7 +139,7 @@ function getAdCopy(v: any) {
     <template #actions>
       <button
         data-loc="variant.matrix.back-btn"
-        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium flex items-center gap-1.5 hover:bg-white/[0.03] transition"
+        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium flex items-center gap-1.5 hover:bg-overlay-subtle transition"
         @click="router.push(`/campaigns/${campaignUuid}`)"
       >
         <ArrowLeft class="h-3.5 w-3.5" /> {{ t('camp.backToCampaign') }}
@@ -198,28 +198,28 @@ function getAdCopy(v: any) {
           <div class="flex items-center gap-2">
             <button
               data-loc="variant.matrix.export-btn"
-              class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition"
+              class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition"
               @click="exportCSV"
             >
               <Download class="h-3 w-3" /> {{ t('variant.exportCSV') }}
             </button>
             <button
               data-loc="variant.matrix.re-run-btn"
-              class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition"
+              class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition"
               @click="generate"
             >
               <RefreshCw class="h-3 w-3" /> {{ t('seg.reRun') }}
             </button>
-            <div class="flex gap-1 bg-white/[0.03] rounded-lg p-0.5">
+            <div class="flex gap-1 bg-overlay-subtle rounded-lg p-0.5">
               <button
                 data-loc="variant.matrix.view-cards"
                 @click="viewMode = 'cards'"
-                :class="['min-h-[44px] px-2.5 py-1 rounded text-xs font-medium transition', viewMode === 'cards' ? 'bg-white/[0.08] text-foreground' : 'text-muted-foreground']"
+                :class="['min-h-[44px] px-2.5 py-1 rounded text-xs font-medium transition', viewMode === 'cards' ? 'bg-overlay-medium text-foreground' : 'text-muted-foreground']"
               >{{ t('variant.cards') }}</button>
               <button
                 data-loc="variant.matrix.view-table"
                 @click="viewMode = 'table'"
-                :class="['min-h-[44px] px-2.5 py-1 rounded text-xs font-medium transition', viewMode === 'table' ? 'bg-white/[0.08] text-foreground' : 'text-muted-foreground']"
+                :class="['min-h-[44px] px-2.5 py-1 rounded text-xs font-medium transition', viewMode === 'table' ? 'bg-overlay-medium text-foreground' : 'text-muted-foreground']"
               >{{ t('variant.table') }}</button>
             </div>
           </div>
@@ -240,7 +240,7 @@ function getAdCopy(v: any) {
         <div v-else class="surface-card overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-xs">
-              <thead class="border-b border-border/60 bg-white/[0.02]">
+              <thead class="border-b border-border/60 bg-overlay-subtle">
                 <tr>
                   <th class="px-3 py-2 text-start font-semibold text-muted-foreground">{{ t('variant.type') }}</th>
                   <th class="px-3 py-2 text-start font-semibold text-muted-foreground">{{ t('variant.audience') }}</th>
@@ -253,7 +253,7 @@ function getAdCopy(v: any) {
                 </tr>
               </thead>
               <tbody class="divide-y divide-border/40">
-                <tr v-for="(v, idx) in variants" :key="idx" class="hover:bg-white/[0.02] group">
+                <tr v-for="(v, idx) in variants" :key="idx" class="hover:bg-overlay-subtle group">
                   <td class="px-3 py-2">
                     <span v-if="v.variant_type === 'meta_creative'" class="text-accent-cyan">{{ t('variant.meta') }}</span>
                     <span v-else>{{ t('variant.regular') }}</span>
@@ -267,7 +267,7 @@ function getAdCopy(v: any) {
                       <button
                         v-if="getAdCopy(v).headline"
                         data-loc="variant.matrix.copy-headline-btn"
-                        class="shrink-0 h-5 w-5 grid place-items-center rounded hover:bg-white/[0.08] opacity-0 group-hover:opacity-100 transition"
+                        class="shrink-0 h-5 w-5 grid place-items-center rounded hover:bg-overlay-medium opacity-0 group-hover:opacity-100 transition"
                         @click="copyTableField(getAdCopy(v).headline, `h-${idx}`)"
                       >
                         <Check v-if="copiedTableRow === `h-${idx}`" class="h-2.5 w-2.5 text-success" />
@@ -281,7 +281,7 @@ function getAdCopy(v: any) {
                       <button
                         v-if="getAdCopy(v).body"
                         data-loc="variant.matrix.copy-body-btn"
-                        class="shrink-0 h-5 w-5 grid place-items-center rounded hover:bg-white/[0.08] opacity-0 group-hover:opacity-100 transition"
+                        class="shrink-0 h-5 w-5 grid place-items-center rounded hover:bg-overlay-medium opacity-0 group-hover:opacity-100 transition"
                         @click="copyTableField(getAdCopy(v).body, `b-${idx}`)"
                       >
                         <Check v-if="copiedTableRow === `b-${idx}`" class="h-2.5 w-2.5 text-success" />
@@ -295,7 +295,7 @@ function getAdCopy(v: any) {
                   <td class="px-3 py-2 text-center">
                     <button
                       data-loc="variant.matrix.view-details-btn"
-                      class="h-6 px-2 rounded text-[11px] inline-flex items-center gap-1 hover:bg-white/[0.06] transition text-muted-foreground hover:text-primary"
+                      class="h-6 px-2 rounded text-[11px] inline-flex items-center gap-1 hover:bg-overlay-medium transition text-muted-foreground hover:text-primary"
                       @click="openDetail(v)"
                     >
                       <Eye class="h-3 w-3" />

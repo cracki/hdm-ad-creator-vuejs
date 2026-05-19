@@ -123,7 +123,7 @@ setActions([
 
   <main class="flex-1 p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto" @click="closeMenu">
     <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-      <div class="flex items-center gap-2 px-3 h-10 rounded-lg bg-white/[0.03] border border-border/60 flex-1 min-w-0 sm:max-w-md">
+      <div class="flex items-center gap-2 px-3 h-10 rounded-lg bg-overlay-subtle border border-border/60 flex-1 min-w-0 sm:max-w-md">
         <Search class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
         <input
           v-model="searchQuery"
@@ -138,7 +138,7 @@ setActions([
         <button
           @click="toggleIndustryDropdown"
           data-loc="brands.list.industry-filter"
-          class="h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-xs font-medium hover:bg-white/[0.06] transition flex items-center gap-1.5"
+          class="h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-xs font-medium hover:bg-overlay-medium transition flex items-center gap-1.5"
         >
           <SlidersHorizontal class="h-3.5 w-3.5" />
           <span class="hidden sm:inline">{{ selectedIndustryName() }}</span>
@@ -149,7 +149,7 @@ setActions([
         >
           <button
             @click="selectIndustry(null)"
-            :class="['w-full text-start px-3 py-2 text-xs hover:bg-white/[0.04] transition', !selectedIndustry ? 'text-primary font-medium' : 'text-muted-foreground']"
+            :class="['w-full text-start px-3 py-2 text-xs hover:bg-overlay-light transition', !selectedIndustry ? 'text-primary font-medium' : 'text-muted-foreground']"
           >
             {{ t('brands.allIndustries') }}
           </button>
@@ -157,7 +157,7 @@ setActions([
             v-for="ind in industries"
             :key="ind.industry_uuid"
             @click="selectIndustry(ind.industry_uuid)"
-            :class="['w-full text-start px-3 py-2 text-xs hover:bg-white/[0.04] transition', selectedIndustry === ind.industry_uuid ? 'text-primary font-medium' : 'text-muted-foreground']"
+            :class="['w-full text-start px-3 py-2 text-xs hover:bg-overlay-light transition', selectedIndustry === ind.industry_uuid ? 'text-primary font-medium' : 'text-muted-foreground']"
           >
             {{ ind.name }}
           </button>
@@ -187,7 +187,7 @@ setActions([
             {{ getInitials(brand.company_name) }}
           </div>
           <div class="relative">
-            <button @click="toggleMenu(brand.brand_uuid, $event)" data-loc="brands.list.card-menu-toggle" class="h-10 w-10 grid place-items-center rounded-md hover:bg-white/[0.06] text-muted-foreground">
+            <button @click="toggleMenu(brand.brand_uuid, $event)" data-loc="brands.list.card-menu-toggle" class="h-10 w-10 grid place-items-center rounded-md hover:bg-overlay-medium text-muted-foreground">
               <MoreHorizontal class="h-4 w-4" />
             </button>
             <!-- Dropdown menu -->
@@ -199,7 +199,7 @@ setActions([
               <RouterLink
                 :to="`/brands/${brand.brand_uuid}`"
                 data-loc="brands.list.card-view-details"
-                class="flex items-center gap-2 w-full text-start px-3 py-2 text-xs text-muted-foreground hover:bg-white/[0.04] hover:text-foreground transition"
+                class="flex items-center gap-2 w-full text-start px-3 py-2 text-xs text-muted-foreground hover:bg-overlay-light hover:text-foreground transition"
                 @click="closeMenu"
               >
                 <Eye class="h-3.5 w-3.5" /> {{ t('brands.viewDetails') }}
@@ -207,7 +207,7 @@ setActions([
               <RouterLink
                 :to="`/brands/${brand.brand_uuid}/edit`"
                 data-loc="brands.list.card-edit"
-                class="flex items-center gap-2 w-full text-start px-3 py-2 text-xs text-muted-foreground hover:bg-white/[0.04] hover:text-foreground transition"
+                class="flex items-center gap-2 w-full text-start px-3 py-2 text-xs text-muted-foreground hover:bg-overlay-light hover:text-foreground transition"
                 @click="closeMenu"
               >
                 <Pencil class="h-3.5 w-3.5" /> {{ t('brands.edit') }}
@@ -215,7 +215,7 @@ setActions([
               <RouterLink
                 :to="`/brands/${brand.brand_uuid}/analysis`"
                 data-loc="brands.list.card-analyze"
-                class="flex items-center gap-2 w-full text-start px-3 py-2 text-xs text-muted-foreground hover:bg-white/[0.04] hover:text-foreground transition"
+                class="flex items-center gap-2 w-full text-start px-3 py-2 text-xs text-muted-foreground hover:bg-overlay-light hover:text-foreground transition"
                 @click="closeMenu"
               >
                 <Sparkles class="h-3.5 w-3.5" /> {{ t('brands.analyze') }}
@@ -241,7 +241,7 @@ setActions([
           <span v-if="brand.selected_industry" class="text-[11px] px-2 py-0.5 rounded-full border border-border/60 text-muted-foreground">
             {{ brand.selected_industry.name }}
           </span>
-          <span class="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full text-muted-foreground bg-white/5">
+          <span class="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full text-muted-foreground bg-overlay-subtle">
             <Sparkles class="h-2.5 w-2.5" /> {{ t('status.notAnalyzed') }}
           </span>
         </div>
@@ -250,7 +250,7 @@ setActions([
       <RouterLink
         to="/brands/new"
         data-loc="brands.list.add-brand-card"
-        class="rounded-xl border-2 border-dashed border-border/60 hover:border-primary/50 hover:bg-white/[0.02] transition flex flex-col items-center justify-center p-8 min-h-[180px] sm:min-h-[230px] text-center gap-3 group"
+        class="rounded-xl border-2 border-dashed border-border/60 hover:border-primary/50 hover:bg-overlay-subtle transition flex flex-col items-center justify-center p-8 min-h-[180px] sm:min-h-[230px] text-center gap-3 group"
       >
         <div class="h-12 w-12 rounded-xl bg-[image:var(--gradient-brand)] grid place-items-center shadow-[var(--shadow-glow)] group-hover:scale-110 transition-transform">
           <Plus class="h-5 w-5 text-primary-foreground" />

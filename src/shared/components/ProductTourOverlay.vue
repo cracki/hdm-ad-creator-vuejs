@@ -109,7 +109,7 @@ watch([currentStep, isActive], () => nextTick(updatePosition), { immediate: true
           <div class="text-xs font-semibold text-primary uppercase tracking-wider">
             {{ currentStep + 1 }} / {{ TOUR_STEPS.length }}
           </div>
-          <button data-loc="product-tour.close-btn" class="h-6 w-6 grid place-items-center rounded-md hover:bg-white/[0.06] text-muted-foreground" @click="close">
+          <button data-loc="product-tour.close-btn" class="h-6 w-6 grid place-items-center rounded-md hover:bg-overlay-medium text-muted-foreground" @click="close">
             <X class="h-3.5 w-3.5" />
           </button>
         </div>
@@ -120,7 +120,7 @@ watch([currentStep, isActive], () => nextTick(updatePosition), { immediate: true
         <div class="flex items-center justify-between">
           <button
             data-loc="product-tour.prev-btn"
-            class="h-8 px-3 rounded-md text-xs font-medium hover:bg-white/[0.04] transition"
+            class="h-8 px-3 rounded-md text-xs font-medium hover:bg-overlay-light transition"
             :class="{ 'opacity-30 pointer-events-none': currentStep === 0 }"
             @click="prev"
           >
@@ -131,7 +131,7 @@ watch([currentStep, isActive], () => nextTick(updatePosition), { immediate: true
             <span
               v-for="i in TOUR_STEPS.length"
               :key="i"
-              :class="['h-1 rounded-full transition-all', i - 1 === currentStep ? 'w-4 bg-primary' : 'w-1.5 bg-white/20']"
+              :class="['h-1 rounded-full transition-all', i - 1 === currentStep ? 'w-4 bg-primary' : 'w-1.5 bg-overlay-strong']"
             />
           </div>
           <button

@@ -58,7 +58,7 @@ const stageColors: Record<string, { bg: string; text: string }> = {
 
 function getStageColor(stage: string) {
   const key = (stage || '').toLowerCase()
-  return stageColors[key] ?? { bg: 'bg-white/5', text: 'text-muted-foreground' }
+  return stageColors[key] ?? { bg: 'bg-overlay-subtle', text: 'text-muted-foreground' }
 }
 
 function renderValue(val: unknown): string {
@@ -109,14 +109,14 @@ function renderValue(val: unknown): string {
         <div
           v-for="(camp, idx) in funnelCampaigns"
           :key="idx"
-          class="rounded-lg border border-border/30 bg-white/[0.015] p-4 space-y-3"
+          class="rounded-lg border border-border/30 bg-overlay-subtle p-4 space-y-3"
         >
           <div class="flex items-start justify-between gap-3">
             <div class="flex items-center gap-2">
               <span :class="['text-[11px] px-1.5 py-0.5 rounded font-medium capitalize', getStageColor(camp.funnel_stage).bg, getStageColor(camp.funnel_stage).text]">
                 {{ camp.funnel_stage ?? camp.funnel_stage }}
               </span>
-              <span v-if="camp.objective" class="text-[11px] px-1.5 py-0.5 rounded bg-white/[0.05] text-muted-foreground">
+              <span v-if="camp.objective" class="text-[11px] px-1.5 py-0.5 rounded bg-overlay-light text-muted-foreground">
                 {{ camp.objective }}
               </span>
             </div>
@@ -172,7 +172,7 @@ function renderValue(val: unknown): string {
               <span
                 v-for="(h, hIdx) in (camp.creative?.headlines ?? [camp.creative?.primary_text]).filter(Boolean)"
                 :key="hIdx"
-                class="text-[11px] px-1.5 py-0.5 rounded bg-white/[0.04]"
+                class="text-[11px] px-1.5 py-0.5 rounded bg-overlay-medium"
               >
                 {{ h }}
               </span>
@@ -196,7 +196,7 @@ function renderValue(val: unknown): string {
           <div v-if="camp.placements?.length" class="space-y-1.5 text-xs">
             <div class="text-[10px] uppercase tracking-wider text-muted-foreground/60">{{ t('strategy.placements') }}</div>
             <div class="flex flex-wrap gap-1">
-              <span v-for="p in camp.placements" :key="p" class="text-[11px] px-1.5 py-0.5 rounded bg-white/[0.04]">{{ p }}</span>
+              <span v-for="p in camp.placements" :key="p" class="text-[11px] px-1.5 py-0.5 rounded bg-overlay-medium">{{ p }}</span>
             </div>
           </div>
         </div>
@@ -215,7 +215,7 @@ function renderValue(val: unknown): string {
           <template v-if="Array.isArray(val)">
             <div class="text-[11px] text-muted-foreground/60 mb-1">{{ formatLabel(String(sKey)) }}</div>
             <div class="flex flex-wrap gap-1">
-              <span v-for="(item, iIdx) in val" :key="iIdx" class="text-[11px] px-1.5 py-0.5 rounded bg-white/[0.04]">
+              <span v-for="(item, iIdx) in val" :key="iIdx" class="text-[11px] px-1.5 py-0.5 rounded bg-overlay-medium">
                 {{ typeof item === 'string' ? item : JSON.stringify(item) }}
               </span>
             </div>

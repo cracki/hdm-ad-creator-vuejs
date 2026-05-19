@@ -78,7 +78,7 @@ const isPrereqMet = computed(() => adsList.value.length > 0)
   <Topbar :title="campaign?.name ?? ''" :subtitle="campaign?.brand?.company_name">
     <template #actions>
       <button
-        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
+        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition"
         @click="router.push(`/campaigns/${campaignUuid}`)"
       >
         {{ t('camp.backToCampaign') }}
@@ -120,7 +120,7 @@ const isPrereqMet = computed(() => adsList.value.length > 0)
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
           <div>
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('visual.aspectRatio') }}</label>
-            <select v-model="aspectRatio" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none" data-loc="campaigns.visual.setting-aspect-ratio">
+            <select v-model="aspectRatio" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none" data-loc="campaigns.visual.setting-aspect-ratio">
               <option value="1:1">1:1</option>
               <option value="9:16">9:16</option>
               <option value="16:9">16:9</option>
@@ -129,14 +129,14 @@ const isPrereqMet = computed(() => adsList.value.length > 0)
           </div>
           <div>
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('visual.quality') }}</label>
-            <select v-model="quality" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none" data-loc="campaigns.visual.setting-quality">
+            <select v-model="quality" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none" data-loc="campaigns.visual.setting-quality">
               <option value="standard">{{ t('visual.standard') }}</option>
               <option value="hd">HD</option>
             </select>
           </div>
           <div>
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('visual.style') }}</label>
-            <select v-model="style" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none" data-loc="campaigns.visual.setting-style">
+            <select v-model="style" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none" data-loc="campaigns.visual.setting-style">
               <option value="natural">{{ t('visual.natural') }}</option>
               <option value="vivid">{{ t('visual.vivid') }}</option>
             </select>
@@ -228,7 +228,7 @@ const isPrereqMet = computed(() => adsList.value.length > 0)
 
         <div class="flex items-center justify-between">
           <button
-            class="h-10 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition flex items-center gap-1.5"
+            class="h-10 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition flex items-center gap-1.5"
             @click="router.push(`/campaigns/${campaignUuid}/generate-ads`)"
           >
             <ArrowLeft class="h-3.5 w-3.5" /> {{ t('smart.previous') }}

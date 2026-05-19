@@ -79,7 +79,7 @@ const isLoading = computed(() => anglesLoading.value || stagesLoading.value || p
               </div>
               <p class="text-xs text-muted-foreground leading-relaxed line-clamp-2">{{ angle.description }}</p>
               <div v-if="angle.best_for_platforms?.length" class="flex flex-wrap gap-1 mt-2">
-                <span v-for="p in angle.best_for_platforms.slice(0, 3)" :key="p" class="text-[11px] px-1.5 py-0.5 rounded bg-white/[0.05] text-muted-foreground">
+                <span v-for="p in angle.best_for_platforms.slice(0, 3)" :key="p" class="text-[11px] px-1.5 py-0.5 rounded bg-overlay-light text-muted-foreground">
                   {{ p }}
                 </span>
               </div>
@@ -165,7 +165,7 @@ const isLoading = computed(() => anglesLoading.value || stagesLoading.value || p
                   'text-[11px] font-medium px-2 py-1 rounded-md',
                   run.status === 'completed' ? 'bg-success/10 text-success' :
                   run.status === 'failed' ? 'bg-destructive/10 text-destructive' :
-                  'bg-white/5 text-muted-foreground',
+                  'bg-overlay-subtle text-muted-foreground',
                 ]"
               >
                 {{ run.status }}

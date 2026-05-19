@@ -91,13 +91,13 @@ function copyVisual() {
           </div>
           <div class="flex items-center gap-1">
             <button
-              class="h-8 px-3 rounded-lg border border-border/60 text-[11px] flex items-center gap-1.5 hover:bg-white/[0.04] transition"
+              class="h-8 px-3 rounded-lg border border-border/60 text-[11px] flex items-center gap-1.5 hover:bg-overlay-light transition"
               @click="copyJson"
             >
               <Copy class="h-3 w-3" /> {{ t('adlib.copyAll') }}
             </button>
             <button
-              class="h-8 w-8 grid place-items-center rounded-lg hover:bg-white/[0.06] transition"
+              class="h-8 w-8 grid place-items-center rounded-lg hover:bg-overlay-medium transition"
               @click="emit('close')"
             >
               <X class="h-4 w-4 text-muted-foreground" />
@@ -113,7 +113,7 @@ function copyVisual() {
             <span v-if="ad.funnel_stage" class="text-[11px] px-2 py-0.5 rounded-full bg-info/10 text-info">{{ ad.funnel_stage }}</span>
             <span v-if="ad.angle_name" class="text-[11px] px-2 py-0.5 rounded-full bg-accent-magenta/15 text-accent-magenta">{{ ad.angle_name }}</span>
             <span v-if="ad.persona" class="text-[11px] px-2 py-0.5 rounded-full bg-accent-cyan/15 text-accent-cyan">{{ ad.persona }}</span>
-            <span v-if="hookType" class="text-[11px] px-2 py-0.5 rounded-full bg-white/[0.06] text-muted-foreground">{{ hookType }}</span>
+            <span v-if="hookType" class="text-[11px] px-2 py-0.5 rounded-full bg-overlay-medium text-muted-foreground">{{ hookType }}</span>
           </div>
 
           <!-- Ad Copy Section -->
@@ -121,14 +121,14 @@ function copyVisual() {
             <div class="flex items-center justify-between mb-3">
               <h4 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{{ t('adlib.adCopySection') }}</h4>
               <button
-                class="h-6 px-2 rounded border border-border/50 text-[10px] flex items-center gap-1 hover:bg-white/[0.04] transition"
+                class="h-6 px-2 rounded border border-border/50 text-[10px] flex items-center gap-1 hover:bg-overlay-light transition"
                 @click="copyFullAdCopy"
               >
                 <Copy class="h-2.5 w-2.5" /> {{ t('adlib.copyAdCopy') }}
               </button>
             </div>
 
-            <div class="rounded-xl border border-border/50 bg-white/[0.02] p-4 space-y-3">
+            <div class="rounded-xl border border-border/50 bg-overlay-subtle p-4 space-y-3">
               <div v-if="headline" class="text-base font-semibold leading-snug">{{ headline }}</div>
               <div v-if="primaryText" class="text-sm leading-relaxed text-foreground/80">{{ primaryText }}</div>
               <div v-if="description" class="text-sm leading-relaxed text-muted-foreground">{{ description }}</div>
@@ -143,31 +143,31 @@ function copyVisual() {
             <div class="flex items-center justify-between mb-3">
               <h4 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{{ t('adlib.visualSection') }}</h4>
               <button
-                class="h-6 px-2 rounded border border-border/50 text-[10px] flex items-center gap-1 hover:bg-white/[0.04] transition"
+                class="h-6 px-2 rounded border border-border/50 text-[10px] flex items-center gap-1 hover:bg-overlay-light transition"
                 @click="copyVisual"
               >
                 <Copy class="h-2.5 w-2.5" /> {{ t('adlib.copyVisual') }}
               </button>
             </div>
-            <div class="rounded-xl border border-border/50 bg-white/[0.02] p-4 space-y-3">
+            <div class="rounded-xl border border-border/50 bg-overlay-subtle p-4 space-y-3">
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div v-if="visualMood" class="p-2.5 rounded-lg bg-white/[0.02] border border-border/30">
+                <div v-if="visualMood" class="p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
                   <div class="flex items-center gap-1.5 mb-1">
                     <Palette class="h-3 w-3 text-muted-foreground" />
                     <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{{ t('adlib.mood') }}</span>
                   </div>
                   <div class="text-xs">{{ visualMood }}</div>
                 </div>
-                <div v-if="visualStyle" class="p-2.5 rounded-lg bg-white/[0.02] border border-border/30">
+                <div v-if="visualStyle" class="p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
                   <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1">{{ t('adlib.style') }}</span>
                   <div class="text-xs">{{ visualStyle }}</div>
                 </div>
               </div>
-              <div v-if="visualSubject" class="p-2.5 rounded-lg bg-white/[0.02] border border-border/30">
+              <div v-if="visualSubject" class="p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
                 <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1">{{ t('adlib.subject') }}</span>
                 <div class="text-xs leading-relaxed">{{ visualSubject }}</div>
               </div>
-              <div v-if="colorPalette" class="p-2.5 rounded-lg bg-white/[0.02] border border-border/30">
+              <div v-if="colorPalette" class="p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
                 <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1">{{ t('adlib.colorPalette') }}</span>
                 <div class="text-xs">{{ colorPalette }}</div>
               </div>
@@ -178,20 +178,20 @@ function copyVisual() {
           <section v-if="emotionalAppeal || valueProp">
             <h4 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">{{ t('adlib.metadataSection') }}</h4>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div v-if="emotionalAppeal" class="p-2.5 rounded-lg bg-white/[0.02] border border-border/30">
+              <div v-if="emotionalAppeal" class="p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
                 <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1">{{ t('adlib.emotionalAppeal') }}</span>
                 <span class="text-xs px-2 py-0.5 rounded-full bg-accent-amber/15 text-accent-amber">{{ emotionalAppeal }}</span>
               </div>
-              <div v-if="hookType" class="p-2.5 rounded-lg bg-white/[0.02] border border-border/30">
+              <div v-if="hookType" class="p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
                 <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1">{{ t('adlib.hookType') }}</span>
                 <span class="text-xs">{{ hookType }}</span>
               </div>
             </div>
-            <div v-if="valueProp" class="mt-2 p-2.5 rounded-lg bg-white/[0.02] border border-border/30">
+            <div v-if="valueProp" class="mt-2 p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
               <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1">{{ t('adlib.valueProp') }}</span>
               <div class="text-xs leading-relaxed">{{ valueProp }}</div>
             </div>
-            <div v-if="hypothesis" class="mt-2 p-2.5 rounded-lg bg-white/[0.02] border border-border/30">
+            <div v-if="hypothesis" class="mt-2 p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
               <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1">{{ t('adlib.hypothesis') }}</span>
               <div class="text-xs leading-relaxed text-muted-foreground">{{ hypothesis }}</div>
             </div>
@@ -221,13 +221,13 @@ function copyVisual() {
             <div class="flex items-center justify-between mb-3">
               <h4 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{{ t('adlib.rawData') }}</h4>
               <button
-                class="h-6 px-2 rounded border border-border/50 text-[10px] flex items-center gap-1 hover:bg-white/[0.04] transition"
+                class="h-6 px-2 rounded border border-border/50 text-[10px] flex items-center gap-1 hover:bg-overlay-light transition"
                 @click="copyJson"
               >
                 <Copy class="h-2.5 w-2.5" /> {{ t('adlib.copyAll') }}
               </button>
             </div>
-            <div class="rounded-xl border border-border/50 bg-white/[0.02] p-4 max-h-60 overflow-auto">
+            <div class="rounded-xl border border-border/50 bg-overlay-subtle p-4 max-h-60 overflow-auto">
               <pre class="text-[11px] text-muted-foreground whitespace-pre-wrap break-all font-mono">{{ JSON.stringify(ad, null, 2) }}</pre>
             </div>
           </section>

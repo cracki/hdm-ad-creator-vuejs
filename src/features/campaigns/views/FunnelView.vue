@@ -82,7 +82,7 @@ function goNext() {
   <Topbar :title="campaign?.name ?? ''" :subtitle="campaign?.brand?.company_name">
     <template #actions>
       <button
-        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
+        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition"
         @click="router.push(`/campaigns/${campaignUuid}`)"
       >
         {{ t('camp.backToCampaign') }}
@@ -125,7 +125,7 @@ function goNext() {
           <div class="text-sm font-medium mb-1">{{ t('status.completed') }}</div>
           <div class="text-xs text-muted-foreground mb-4">{{ t('funnel.alreadyCompletedDesc') }}</div>
           <div class="flex items-center justify-center gap-3">
-            <button class="h-9 px-4 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="runFunnel">
+            <button class="h-9 px-4 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="runFunnel">
               <RefreshCw class="h-3 w-3" /> {{ t('seg.reRun') }}
             </button>
             <button
@@ -169,7 +169,7 @@ function goNext() {
         <div v-if="stepData && !loading">
           <div class="flex items-center justify-between mb-4">
             <div class="text-xs text-muted-foreground">{{ t('funnel.stagesFound', { count: stages.length }) }}</div>
-            <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition" @click="runFunnel">
+            <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="runFunnel">
               <RefreshCw class="h-3 w-3" /> {{ t('seg.reRun') }}
             </button>
           </div>
@@ -183,7 +183,7 @@ function goNext() {
                 <span class="text-xs font-semibold text-accent-cyan">TOFU · Awareness</span>
               </div>
               <div class="space-y-2">
-                <div v-for="(item, idx) in (tofuItems.length ? tofuItems : stages.slice(0, Math.ceil(stages.length / 3)))" :key="idx" class="text-xs p-2 rounded bg-white/[0.03]">
+                <div v-for="(item, idx) in (tofuItems.length ? tofuItems : stages.slice(0, Math.ceil(stages.length / 3)))" :key="idx" class="text-xs p-2 rounded bg-overlay-subtle">
                   <div class="font-medium">{{ item.name || item.stage || item.title || `${t('funnel.stage')} ${idx + 1}` }}</div>
                   <div v-if="item.description || item.content_ideas" class="text-[11px] text-muted-foreground mt-1 line-clamp-2">
                     {{ item.description || (Array.isArray(item.content_ideas) ? item.content_ideas.join(', ') : item.content_ideas) }}
@@ -199,7 +199,7 @@ function goNext() {
                 <span class="text-xs font-semibold text-accent-magenta">MOFU · Consideration</span>
               </div>
               <div class="space-y-2">
-                <div v-for="(item, idx) in (mofuItems.length ? mofuItems : stages.slice(Math.ceil(stages.length / 3), Math.ceil(stages.length * 2 / 3)))" :key="idx" class="text-xs p-2 rounded bg-white/[0.03]">
+                <div v-for="(item, idx) in (mofuItems.length ? mofuItems : stages.slice(Math.ceil(stages.length / 3), Math.ceil(stages.length * 2 / 3)))" :key="idx" class="text-xs p-2 rounded bg-overlay-subtle">
                   <div class="font-medium">{{ item.name || item.stage || item.title || `${t('funnel.stage')} ${idx + 1}` }}</div>
                   <div v-if="item.description || item.content_ideas" class="text-[11px] text-muted-foreground mt-1 line-clamp-2">
                     {{ item.description || (Array.isArray(item.content_ideas) ? item.content_ideas.join(', ') : item.content_ideas) }}
@@ -215,7 +215,7 @@ function goNext() {
                 <span class="text-xs font-semibold text-accent-amber">BOFU · Conversion</span>
               </div>
               <div class="space-y-2">
-                <div v-for="(item, idx) in (bofuItems.length ? bofuItems : stages.slice(Math.ceil(stages.length * 2 / 3)))" :key="idx" class="text-xs p-2 rounded bg-white/[0.03]">
+                <div v-for="(item, idx) in (bofuItems.length ? bofuItems : stages.slice(Math.ceil(stages.length * 2 / 3)))" :key="idx" class="text-xs p-2 rounded bg-overlay-subtle">
                   <div class="font-medium">{{ item.name || item.stage || item.title || `${t('funnel.stage')} ${idx + 1}` }}</div>
                   <div v-if="item.description || item.content_ideas" class="text-[11px] text-muted-foreground mt-1 line-clamp-2">
                     {{ item.description || (Array.isArray(item.content_ideas) ? item.content_ideas.join(', ') : item.content_ideas) }}

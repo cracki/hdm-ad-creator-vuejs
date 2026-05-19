@@ -39,7 +39,7 @@ const statusClass = computed(() => {
   if (s === 'completed') return 'bg-success/10 text-success'
   if (s === 'failed') return 'bg-destructive/10 text-destructive'
   if (s === 'running') return 'bg-info/10 text-info'
-  return 'bg-white/5 text-muted-foreground'
+  return 'bg-overlay-subtle text-muted-foreground'
 })
 
 const duration = computed(() => {
@@ -186,14 +186,14 @@ function getAdField(ad: AdLibraryAd, field: string): string {
       <button
         v-if="ads?.length"
         data-loc="adlib.detail.export-btn"
-        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium flex items-center gap-1.5 hover:bg-white/[0.03] transition"
+        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium flex items-center gap-1.5 hover:bg-overlay-subtle transition"
         @click="exportRunCSV"
       >
         <Download class="h-3.5 w-3.5" /> {{ t('adlib.exportCSV') }}
       </button>
       <button
         data-loc="adlib.detail.back-btn"
-        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition flex items-center gap-1.5"
+        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition flex items-center gap-1.5"
         @click="router.push('/ad-library')"
       >
         <ChevronLeft class="h-3.5 w-3.5" /> {{ t('adlib.backToLibrary') }}
@@ -223,7 +223,7 @@ function getAdField(ad: AdLibraryAd, field: string): string {
               <div class="flex items-center gap-2 flex-wrap">
                 <h2 class="text-lg font-semibold tracking-tight">{{ run.brand?.company_name ?? t('adlib.standalone') }}</h2>
                 <span :class="['text-[11px] font-medium px-2 py-0.5 rounded-md', statusClass]">{{ run.status }}</span>
-                <span class="text-[11px] px-2 py-0.5 rounded-md bg-white/5 text-muted-foreground">{{ run.run_type }}</span>
+                <span class="text-[11px] px-2 py-0.5 rounded-md bg-overlay-subtle text-muted-foreground">{{ run.run_type }}</span>
               </div>
               <div v-if="industry" class="text-xs text-muted-foreground mt-1">{{ industry }}</div>
             </div>
@@ -236,7 +236,7 @@ function getAdField(ad: AdLibraryAd, field: string): string {
 
           <!-- Info grid -->
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            <div v-if="run.brand?.website_url" class="p-2.5 rounded-lg bg-white/[0.02] border border-border/30">
+            <div v-if="run.brand?.website_url" class="p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
               <div class="flex items-center gap-1.5 mb-1">
                 <Globe class="h-3 w-3 text-muted-foreground" />
                 <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{{ t('adlib.website') }}</span>
@@ -244,12 +244,12 @@ function getAdField(ad: AdLibraryAd, field: string): string {
               <a :href="run.brand.website_url" target="_blank" rel="noopener" class="text-xs text-primary hover:underline truncate block">{{ run.brand.website_url }}</a>
             </div>
 
-            <div v-if="run.run_type" class="p-2.5 rounded-lg bg-white/[0.02] border border-border/30">
+            <div v-if="run.run_type" class="p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
               <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1">{{ t('adlib.runType') }}</span>
               <span class="text-xs font-medium">{{ run.run_type }}</span>
             </div>
 
-            <div v-if="run.created_at" class="p-2.5 rounded-lg bg-white/[0.02] border border-border/30">
+            <div v-if="run.created_at" class="p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
               <div class="flex items-center gap-1.5 mb-1">
                 <Clock class="h-3 w-3 text-muted-foreground" />
                 <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{{ t('adlib.startedAt') }}</span>
@@ -257,17 +257,17 @@ function getAdField(ad: AdLibraryAd, field: string): string {
               <span class="text-xs">{{ new Date(run.started_at ?? run.created_at).toLocaleString() }}</span>
             </div>
 
-            <div v-if="run.completed_at" class="p-2.5 rounded-lg bg-white/[0.02] border border-border/30">
+            <div v-if="run.completed_at" class="p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
               <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1">{{ t('adlib.completedAt') }}</span>
               <span class="text-xs">{{ new Date(run.completed_at).toLocaleString() }}</span>
             </div>
 
-            <div v-if="duration" class="p-2.5 rounded-lg bg-white/[0.02] border border-border/30">
+            <div v-if="duration" class="p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
               <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1">{{ t('adlib.duration') }}</span>
               <span class="text-xs font-medium text-primary">{{ duration }}</span>
             </div>
 
-            <div class="p-2.5 rounded-lg bg-white/[0.02] border border-border/30">
+            <div class="p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
               <div class="flex items-center gap-1.5 mb-1">
                 <Hash class="h-3 w-3 text-muted-foreground" />
                 <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{{ t('adlib.totalAds') }}</span>
@@ -275,7 +275,7 @@ function getAdField(ad: AdLibraryAd, field: string): string {
               <span class="text-sm font-bold">{{ totalAds }}</span>
             </div>
 
-            <div v-if="personasCount" class="p-2.5 rounded-lg bg-white/[0.02] border border-border/30">
+            <div v-if="personasCount" class="p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
               <div class="flex items-center gap-1.5 mb-1">
                 <Users class="h-3 w-3 text-muted-foreground" />
                 <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{{ t('adlib.personasCount') }}</span>
@@ -283,21 +283,21 @@ function getAdField(ad: AdLibraryAd, field: string): string {
               <span class="text-xs font-medium">{{ personasCount }}</span>
             </div>
 
-            <div v-if="platforms.length" class="p-2.5 rounded-lg bg-white/[0.02] border border-border/30">
+            <div v-if="platforms.length" class="p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
               <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1.5">{{ t('adlib.platforms') }}</span>
               <div class="flex flex-wrap gap-1">
                 <span v-for="p in platforms" :key="p" class="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">{{ p }}</span>
               </div>
             </div>
 
-            <div v-if="anglesUsed.length" class="p-2.5 rounded-lg bg-white/[0.02] border border-border/30">
+            <div v-if="anglesUsed.length" class="p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
               <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1.5">{{ t('adlib.anglesUsed') }}</span>
               <div class="flex flex-wrap gap-1">
                 <span v-for="a in anglesUsed" :key="a" class="text-[10px] px-1.5 py-0.5 rounded-full bg-accent-magenta/10 text-accent-magenta">{{ a }}</span>
               </div>
             </div>
 
-            <div v-if="funnelStages.length" class="p-2.5 rounded-lg bg-white/[0.02] border border-border/30">
+            <div v-if="funnelStages.length" class="p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
               <span class="text-[10px] font-medium text-muted-foreground uppercase tracking-wider block mb-1.5">{{ t('adlib.funnelUsed') }}</span>
               <div class="flex flex-wrap gap-1">
                 <span v-for="f in funnelStages" :key="f" class="text-[10px] px-1.5 py-0.5 rounded-full bg-info/10 text-info">{{ f }}</span>
@@ -312,7 +312,7 @@ function getAdField(ad: AdLibraryAd, field: string): string {
             </summary>
             <div class="mt-3 pt-3 border-t border-border/30 space-y-2">
               <div v-if="requestPersonas.length" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <div v-for="(p, idx) in requestPersonas" :key="idx" class="p-2.5 rounded-lg bg-white/[0.02] border border-border/30">
+                <div v-for="(p, idx) in requestPersonas" :key="idx" class="p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
                   <div class="text-xs font-medium">{{ (p as Record<string, unknown>).name }}</div>
                   <div v-if="(p as Record<string, unknown>).demographics" class="text-[11px] text-muted-foreground mt-0.5">{{ (p as Record<string, unknown>).demographics }}</div>
                 </div>
@@ -330,21 +330,21 @@ function getAdField(ad: AdLibraryAd, field: string): string {
             <h3 class="text-sm font-semibold">{{ t('adlib.generatedAds') }} ({{ ads.length }})</h3>
             <div class="flex items-center gap-2">
               <button
-                class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-white/[0.03] transition"
+                class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition"
                 @click="exportRunCSV"
               >
                 <Download class="h-3 w-3" /> {{ t('adlib.exportCSV') }}
               </button>
-              <div class="flex gap-1 bg-white/[0.03] rounded-lg p-0.5">
+              <div class="flex gap-1 bg-overlay-subtle rounded-lg p-0.5">
                 <button
                   data-loc="adlib.detail.view-cards"
                   @click="viewMode = 'cards'"
-                  :class="['min-h-[36px] px-2.5 py-1 rounded text-xs font-medium transition', viewMode === 'cards' ? 'bg-white/[0.08] text-foreground' : 'text-muted-foreground']"
+                  :class="['min-h-[36px] px-2.5 py-1 rounded text-xs font-medium transition', viewMode === 'cards' ? 'bg-overlay-medium text-foreground' : 'text-muted-foreground']"
                 >{{ t('adlib.cards') }}</button>
                 <button
                   data-loc="adlib.detail.view-table"
                   @click="viewMode = 'table'"
-                  :class="['min-h-[36px] px-2.5 py-1 rounded text-xs font-medium transition', viewMode === 'table' ? 'bg-white/[0.08] text-foreground' : 'text-muted-foreground']"
+                  :class="['min-h-[36px] px-2.5 py-1 rounded text-xs font-medium transition', viewMode === 'table' ? 'bg-overlay-medium text-foreground' : 'text-muted-foreground']"
                 >{{ t('adlib.table') }}</button>
               </div>
             </div>
@@ -365,7 +365,7 @@ function getAdField(ad: AdLibraryAd, field: string): string {
           <div v-else class="surface-card overflow-hidden">
             <div class="overflow-x-auto">
               <table class="w-full text-xs">
-                <thead class="border-b border-border/60 bg-white/[0.02]">
+                <thead class="border-b border-border/60 bg-overlay-subtle">
                   <tr>
                     <th class="px-3 py-2 text-start font-semibold text-muted-foreground">{{ t('adlib.platforms') }}</th>
                     <th class="px-3 py-2 text-start font-semibold text-muted-foreground">{{ t('adlib.funnelStages') }}</th>
@@ -376,7 +376,7 @@ function getAdField(ad: AdLibraryAd, field: string): string {
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-border/40">
-                  <tr v-for="ad in ads" :key="ad.ad_library_ad_uuid" class="hover:bg-white/[0.02] group cursor-pointer" @click="openDetail(ad)">
+                  <tr v-for="ad in ads" :key="ad.ad_library_ad_uuid" class="hover:bg-overlay-subtle group cursor-pointer" @click="openDetail(ad)">
                     <td class="px-3 py-2">
                       <span v-if="ad.platform" class="text-[11px] px-2 py-0.5 rounded-full bg-primary/15 text-primary">{{ ad.platform }}</span>
                     </td>
@@ -392,7 +392,7 @@ function getAdField(ad: AdLibraryAd, field: string): string {
                         <span class="truncate">{{ getAdField(ad, 'headline') }}</span>
                         <button
                           v-if="getAdField(ad, 'headline')"
-                          class="shrink-0 h-5 w-5 grid place-items-center rounded hover:bg-white/[0.08] opacity-0 group-hover:opacity-100 transition"
+                          class="shrink-0 h-5 w-5 grid place-items-center rounded hover:bg-overlay-medium opacity-0 group-hover:opacity-100 transition"
                           @click.stop="copyTableField(getAdField(ad, 'headline'), `h-${ad.ad_library_ad_uuid}`)"
                         >
                           <Check v-if="copiedTableRow === `h-${ad.ad_library_ad_uuid}`" class="h-2.5 w-2.5 text-success" />

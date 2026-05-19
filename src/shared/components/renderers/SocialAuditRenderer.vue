@@ -199,7 +199,7 @@ function closeExportMenu(e: MouseEvent) {
           'flex items-center gap-1.5 h-8 px-3 rounded-lg text-[11px] font-medium border whitespace-nowrap transition',
           activeTab === tab.key
             ? 'border-primary/60 bg-primary/10 text-primary'
-            : 'border-border/40 bg-white/[0.02] text-muted-foreground hover:text-foreground',
+            : 'border-border/40 bg-overlay-subtle text-muted-foreground hover:text-foreground',
         ]"
         @click="activeTab = tab.key"
       >
@@ -212,7 +212,7 @@ function closeExportMenu(e: MouseEvent) {
     <div class="relative shrink-0" data-export-menu>
       <button
         :disabled="exporting"
-        class="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border/40 bg-white/[0.02] text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition disabled:opacity-50"
+        class="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border/40 bg-overlay-subtle text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-overlay-light transition disabled:opacity-50"
         @click="showExportMenu = !showExportMenu"
       >
         <Loader2 v-if="exporting" class="h-3 w-3 animate-spin" />
@@ -224,21 +224,21 @@ function closeExportMenu(e: MouseEvent) {
         class="absolute end-0 top-full mt-1.5 z-50 min-w-[180px] rounded-lg border border-border/40 bg-[#1E1B2E] shadow-lg shadow-black/30 py-1"
       >
         <button
-          class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition"
+          class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition"
           @click="handleExport('pdf')"
         >
           <FileText class="h-3.5 w-3.5 text-red-400" />
           {{ t('socialAudit.exportPDF') }}
         </button>
         <button
-          class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition"
+          class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition"
           @click="handleExport('pptx')"
         >
           <LayoutGrid class="h-3.5 w-3.5 text-orange-400" />
           {{ t('socialAudit.exportPPTX') }}
         </button>
         <button
-          class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition"
+          class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition"
           @click="handleExport('xlsx')"
         >
           <BarChart3 class="h-3.5 w-3.5 text-green-400" />
@@ -262,19 +262,19 @@ function closeExportMenu(e: MouseEvent) {
 
       <!-- Quick stats -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div class="rounded-lg border border-border/30 bg-white/[0.015] p-3 text-center">
+        <div class="rounded-lg border border-border/30 bg-overlay-subtle p-3 text-center">
           <div class="text-xl font-bold text-primary">{{ platformRecs.length }}</div>
           <div class="text-[10px] text-muted-foreground">{{ t('socialAudit.platformsCount') }}</div>
         </div>
-        <div class="rounded-lg border border-border/30 bg-white/[0.015] p-3 text-center">
+        <div class="rounded-lg border border-border/30 bg-overlay-subtle p-3 text-center">
           <div class="text-xl font-bold text-amber-400">{{ contentGaps.length }}</div>
           <div class="text-[10px] text-muted-foreground">{{ t('socialAudit.gapsCount') }}</div>
         </div>
-        <div class="rounded-lg border border-border/30 bg-white/[0.015] p-3 text-center">
+        <div class="rounded-lg border border-border/30 bg-overlay-subtle p-3 text-center">
           <div class="text-xl font-bold text-info">{{ teamMembers.length }}</div>
           <div class="text-[10px] text-muted-foreground">{{ t('socialAudit.teamRoles') }}</div>
         </div>
-        <div class="rounded-lg border border-border/30 bg-white/[0.015] p-3 text-center">
+        <div class="rounded-lg border border-border/30 bg-overlay-subtle p-3 text-center">
           <div class="text-xl font-bold text-success">90</div>
           <div class="text-[10px] text-muted-foreground">{{ t('socialAudit.dayPlan') }}</div>
         </div>
@@ -285,7 +285,7 @@ function closeExportMenu(e: MouseEvent) {
         <div
           v-for="(rec, i) in platformRecs.filter(r => r.priority === 'high').slice(0, 3)"
           :key="i"
-          class="rounded-xl border border-border/30 bg-white/[0.015] p-4 space-y-2"
+          class="rounded-xl border border-border/30 bg-overlay-subtle p-4 space-y-2"
         >
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -306,7 +306,7 @@ function closeExportMenu(e: MouseEvent) {
       <div
         v-for="(rec, i) in platformRecs"
         :key="i"
-        class="rounded-xl border border-border/30 bg-white/[0.015] overflow-hidden"
+        class="rounded-xl border border-border/30 bg-overlay-subtle overflow-hidden"
       >
         <div class="p-4 space-y-3">
           <div class="flex items-center justify-between gap-2">
@@ -344,7 +344,7 @@ function closeExportMenu(e: MouseEvent) {
       <div
         v-for="(gap, i) in contentGaps"
         :key="i"
-        class="rounded-xl border border-border/30 bg-white/[0.015] overflow-hidden"
+        class="rounded-xl border border-border/30 bg-overlay-subtle overflow-hidden"
       >
         <div class="p-4 space-y-3">
           <div class="flex items-start justify-between gap-2">
@@ -372,7 +372,7 @@ function closeExportMenu(e: MouseEvent) {
     <!-- Competitive Benchmarks Tab -->
     <div v-else-if="activeTab === 'benchmarks' && benchmarks" class="space-y-4">
       <!-- Posting frequency -->
-      <div v-if="benchmarks.average_posting_frequency" class="rounded-xl border border-border/30 bg-white/[0.015] p-4 space-y-2">
+      <div v-if="benchmarks.average_posting_frequency" class="rounded-xl border border-border/30 bg-overlay-subtle p-4 space-y-2">
         <div class="flex items-center gap-2 text-xs font-semibold text-foreground">
           <Calendar class="h-3.5 w-3.5 text-primary" />
           {{ t('socialAudit.postingFrequency') }}
@@ -381,7 +381,7 @@ function closeExportMenu(e: MouseEvent) {
       </div>
 
       <!-- Engagement rate -->
-      <div v-if="benchmarks.average_engagement_rate" class="rounded-xl border border-border/30 bg-white/[0.015] p-4 space-y-2">
+      <div v-if="benchmarks.average_engagement_rate" class="rounded-xl border border-border/30 bg-overlay-subtle p-4 space-y-2">
         <div class="flex items-center gap-2 text-xs font-semibold text-foreground">
           <Activity class="h-3.5 w-3.5 text-primary" />
           {{ t('socialAudit.engagementRate') }}
@@ -390,7 +390,7 @@ function closeExportMenu(e: MouseEvent) {
       </div>
 
       <!-- Common content types -->
-      <div v-if="Array.isArray(benchmarks.common_content_types) && (benchmarks.common_content_types as string[]).length" class="rounded-xl border border-border/30 bg-white/[0.015] p-4 space-y-3">
+      <div v-if="Array.isArray(benchmarks.common_content_types) && (benchmarks.common_content_types as string[]).length" class="rounded-xl border border-border/30 bg-overlay-subtle p-4 space-y-3">
         <div class="flex items-center gap-2 text-xs font-semibold text-foreground">
           <LayoutGrid class="h-3.5 w-3.5 text-primary" />
           {{ t('socialAudit.contentTypes') }}
@@ -420,7 +420,7 @@ function closeExportMenu(e: MouseEvent) {
           <div
             v-for="(member, i) in teamMembers"
             :key="i"
-            class="rounded-xl border border-border/30 bg-white/[0.015] p-4 space-y-3"
+            class="rounded-xl border border-border/30 bg-overlay-subtle p-4 space-y-3"
           >
             <div class="flex items-start justify-between gap-2">
               <div class="flex items-center gap-2.5">
@@ -429,7 +429,7 @@ function closeExportMenu(e: MouseEvent) {
                 </div>
                 <span class="text-xs font-semibold text-foreground leading-snug">{{ member.role }}</span>
               </div>
-              <span class="text-[10px] px-1.5 py-0.5 rounded border border-border/30 bg-white/[0.02] text-muted-foreground whitespace-nowrap">
+              <span class="text-[10px] px-1.5 py-0.5 rounded border border-border/30 bg-overlay-subtle text-muted-foreground whitespace-nowrap">
                 {{ member.time_commitment }}
               </span>
             </div>
@@ -437,7 +437,7 @@ function closeExportMenu(e: MouseEvent) {
               <span
                 v-for="(skill, si) in member.skills_needed"
                 :key="si"
-                class="text-[10px] px-1.5 py-0.5 rounded-full border border-border/30 bg-white/[0.02] text-muted-foreground"
+                class="text-[10px] px-1.5 py-0.5 rounded-full border border-border/30 bg-overlay-subtle text-muted-foreground"
               >
                 {{ skill }}
               </span>
@@ -456,7 +456,7 @@ function closeExportMenu(e: MouseEvent) {
           <div
             v-for="(tool, i) in tools"
             :key="i"
-            class="rounded-xl border border-border/30 bg-white/[0.015] p-4 space-y-2"
+            class="rounded-xl border border-border/30 bg-overlay-subtle p-4 space-y-2"
           >
             <div class="flex items-center justify-between gap-2">
               <span class="text-xs font-semibold text-foreground">{{ tool.tool }}</span>
@@ -479,7 +479,7 @@ function closeExportMenu(e: MouseEvent) {
           <div
             v-for="(val, key) in budget"
             :key="key"
-            class="rounded-lg border border-border/30 bg-white/[0.015] p-3 text-center"
+            class="rounded-lg border border-border/30 bg-overlay-subtle p-3 text-center"
           >
             <div class="text-[10px] text-muted-foreground/60 mb-1">{{ key.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase()) }}</div>
             <div class="text-sm font-bold text-primary">{{ val }}</div>
@@ -501,10 +501,10 @@ function closeExportMenu(e: MouseEvent) {
           <div
             v-for="(week, i) in monthWeeks(monthKey)"
             :key="i"
-            class="rounded-xl border border-border/30 bg-white/[0.015] overflow-hidden"
+            class="rounded-xl border border-border/30 bg-overlay-subtle overflow-hidden"
           >
             <!-- Week header -->
-            <div class="px-4 py-2.5 bg-white/[0.02] border-b border-border/20 flex items-center gap-2">
+            <div class="px-4 py-2.5 bg-overlay-subtle border-b border-border/20 flex items-center gap-2">
               <CircleDot class="h-3 w-3 text-primary" />
               <span class="text-[11px] font-semibold text-foreground">{{ t('socialAudit.week') }} {{ week.week }}</span>
             </div>
@@ -534,7 +534,7 @@ function closeExportMenu(e: MouseEvent) {
                   <span
                     v-for="(del, di) in week.deliverables"
                     :key="di"
-                    class="text-[10px] px-2 py-0.5 rounded-full border border-border/30 bg-white/[0.02] text-muted-foreground"
+                    class="text-[10px] px-2 py-0.5 rounded-full border border-border/30 bg-overlay-subtle text-muted-foreground"
                   >
                     {{ del }}
                   </span>
@@ -565,7 +565,7 @@ function closeExportMenu(e: MouseEvent) {
             <div
               v-for="(val, metricKey) in (successMetrics[periodKey] as Record<string, string>)"
               :key="metricKey"
-              class="rounded-lg border border-border/20 bg-white/[0.01] p-3 space-y-1"
+              class="rounded-lg border border-border/20 bg-overlay-subtle p-3 space-y-1"
             >
               <div class="text-[10px] text-muted-foreground/50">{{ metricKey.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase()) }}</div>
               <div class="text-xs text-foreground font-medium leading-relaxed">{{ val }}</div>

@@ -79,7 +79,7 @@ async function generate() {
     <template #actions>
       <button
         data-loc="adlib.generate.back-btn"
-        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.03] transition"
+        class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition"
         @click="router.push('/ad-library')"
       >
         {{ t('adlib.backToLibrary') }}
@@ -93,7 +93,7 @@ async function generate() {
         <!-- Brand selection -->
         <div v-if="brandsData?.length">
           <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('adlib.selectBrand') }}</label>
-          <select v-model="selectedBrandUuid" data-loc="adlib.generate.brand-select" class="w-full h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none">
+          <select v-model="selectedBrandUuid" data-loc="adlib.generate.brand-select" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none">
             <option value="">{{ t('adlib.noBrand') }}</option>
             <option v-for="brand in brandsData" :key="brand.brand_uuid" :value="brand.brand_uuid">
               {{ brand.company_name }}
@@ -113,7 +113,7 @@ async function generate() {
                 'h-8 px-3 rounded-lg text-xs font-medium border transition',
                 selectedAngles.includes(key)
                   ? 'bg-[image:var(--gradient-brand)] text-primary-foreground border-transparent'
-                  : 'bg-white/[0.03] border-border/60 text-muted-foreground hover:text-foreground',
+                  : 'bg-overlay-subtle border-border/60 text-muted-foreground hover:text-foreground',
               ]"
               @click="toggleItem(selectedAngles, key)"
             >
@@ -134,7 +134,7 @@ async function generate() {
                 'h-8 px-3 rounded-lg text-xs font-medium border transition',
                 selectedStages.includes(key)
                   ? 'bg-[image:var(--gradient-brand)] text-primary-foreground border-transparent'
-                  : 'bg-white/[0.03] border-border/60 text-muted-foreground hover:text-foreground',
+                  : 'bg-overlay-subtle border-border/60 text-muted-foreground hover:text-foreground',
               ]"
               @click="toggleItem(selectedStages, key)"
             >
@@ -155,7 +155,7 @@ async function generate() {
                 'h-8 px-3 rounded-lg text-xs font-medium border transition',
                 selectedPlatforms.includes(key)
                   ? 'bg-[image:var(--gradient-brand)] text-primary-foreground border-transparent'
-                  : 'bg-white/[0.03] border-border/60 text-muted-foreground hover:text-foreground',
+                  : 'bg-overlay-subtle border-border/60 text-muted-foreground hover:text-foreground',
               ]"
               @click="toggleItem(selectedPlatforms, key)"
             >
@@ -167,7 +167,7 @@ async function generate() {
         <!-- Ads per combination -->
         <div>
           <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('adlib.adsPerCombo') }}</label>
-          <input v-model.number="adsPerCombination" data-loc="adlib.generate.ads-per-combo-input" type="number" min="1" max="10" class="w-32 h-10 px-3 rounded-lg bg-white/[0.03] border border-border/60 text-sm outline-none" />
+          <input v-model.number="adsPerCombination" data-loc="adlib.generate.ads-per-combo-input" type="number" min="1" max="10" class="w-32 h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none" />
         </div>
 
         <!-- Error -->

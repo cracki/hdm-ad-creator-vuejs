@@ -50,7 +50,7 @@ function getHeatLevel(persona: string, stage: string, platform: string): number 
 }
 
 const heatClasses = [
-  'bg-white/[0.02] border-border/30',
+  'bg-overlay-subtle border-border/30',
   'bg-primary/5 border-primary/20',
   'bg-primary/10 border-primary/30',
   'bg-primary/20 border-primary/40',

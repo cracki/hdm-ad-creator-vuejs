@@ -156,7 +156,7 @@ const progressPct = computed(() => Math.round((filledCount.value / 5) * 100))
       <div class="flex gap-2">
         <button
           data-loc="creative-brief.download-text-btn"
-          class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.04] transition flex items-center gap-1.5"
+          class="h-9 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-light transition flex items-center gap-1.5"
           @click="downloadBrief"
         >
           <Download class="h-3.5 w-3.5" /> {{ t('brief.download') }}
@@ -173,7 +173,7 @@ const progressPct = computed(() => Math.round((filledCount.value / 5) * 100))
 
     <!-- Progress -->
     <div class="flex items-center gap-3">
-      <div class="flex-1 h-1.5 rounded-full bg-white/5 overflow-hidden">
+      <div class="flex-1 h-1.5 rounded-full bg-overlay-subtle overflow-hidden">
         <div class="h-full rounded-full bg-[image:var(--gradient-brand)] transition-all" :style="{ width: `${progressPct}%` }" />
       </div>
       <span class="text-[11px] text-muted-foreground">{{ filledCount }}/5 required</span>
@@ -189,7 +189,7 @@ const progressPct = computed(() => Math.round((filledCount.value / 5) * 100))
           data-loc="creative-brief.platform-btn"
           :class="[
             'px-3 py-1.5 rounded-lg text-xs font-medium border transition',
-            brief.platforms.includes(p) ? 'bg-primary/15 border-primary/40 text-primary' : 'border-border/60 text-muted-foreground hover:bg-white/[0.04]',
+            brief.platforms.includes(p) ? 'bg-primary/15 border-primary/40 text-primary' : 'border-border/60 text-muted-foreground hover:bg-overlay-light',
           ]"
           @click="togglePlatform(p)"
         >
@@ -207,14 +207,14 @@ const progressPct = computed(() => Math.round((filledCount.value / 5) * 100))
             v-if="field.type === 'input'"
             v-model="(brief as any)[field.key]"
             data-loc="creative-brief.form-input"
-            class="w-full h-9 px-3 rounded-lg bg-white/[0.03] border border-border/70 text-sm outline-none focus:border-primary/60 transition"
+            class="w-full h-9 px-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm outline-none focus:border-primary/60 transition"
           />
           <textarea
             v-else
             v-model="(brief as any)[field.key]"
             data-loc="creative-brief.form-textarea"
             :rows="field.rows ?? 2"
-            class="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-border/70 text-sm outline-none focus:border-primary/60 transition resize-none"
+            class="w-full px-3 py-2 rounded-lg bg-overlay-subtle border border-border/70 text-sm outline-none focus:border-primary/60 transition resize-none"
           />
         </label>
       </div>

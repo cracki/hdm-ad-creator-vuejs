@@ -74,7 +74,7 @@ const analyzingUuid = computed(() =>
 
     <!-- Empty state -->
     <div v-else-if="!assets?.length" class="flex flex-col items-center justify-center py-20 gap-4">
-      <div class="h-16 w-16 rounded-2xl bg-white/[0.04] border border-border/60 grid place-items-center">
+      <div class="h-16 w-16 rounded-2xl bg-overlay-light border border-border/60 grid place-items-center">
         <Upload class="h-6 w-6 text-muted-foreground" />
       </div>
       <div class="text-center space-y-1">
@@ -99,7 +99,7 @@ const analyzingUuid = computed(() =>
         <button
           :disabled="uploading"
           data-loc="brands.assets.upload-btn"
-          class="h-9 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-white/[0.04] transition flex items-center gap-1.5"
+          class="h-9 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-light transition flex items-center gap-1.5"
           @click="openFilePicker"
         >
           <Upload class="h-3.5 w-3.5" />

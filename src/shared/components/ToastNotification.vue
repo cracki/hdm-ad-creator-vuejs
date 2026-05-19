@@ -33,7 +33,7 @@ const colorMap: Record<ToastType, string> = {
           <p class="flex-1 text-sm text-foreground leading-snug">{{ toast.message }}</p>
           <button
             data-loc="toast-notification.close-btn"
-            class="h-6 w-6 grid place-items-center rounded-md hover:bg-white/[0.06] transition shrink-0 text-muted-foreground"
+            class="h-6 w-6 grid place-items-center rounded-md hover:bg-overlay-medium transition shrink-0 text-muted-foreground"
             @click="remove(toast.id)"
           >
             <X class="h-3.5 w-3.5" />

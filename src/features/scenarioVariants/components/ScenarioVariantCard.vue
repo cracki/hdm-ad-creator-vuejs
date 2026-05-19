@@ -76,7 +76,7 @@ function copyAll() {
     </div>
 
     <!-- Ad copy content -->
-    <div class="rounded-lg border border-border/40 bg-white/[0.015] p-3 space-y-2 mb-3">
+    <div class="rounded-lg border border-border/40 bg-overlay-subtle p-3 space-y-2 mb-3">
       <div v-if="adCopy.headline" class="text-sm font-semibold leading-snug">{{ adCopy.headline }}</div>
       <div v-if="adCopy.body" class="text-xs leading-relaxed text-foreground/80 line-clamp-4">{{ adCopy.body }}</div>
       <div v-if="adCopy.cta" class="flex items-center justify-end pt-1">
@@ -95,7 +95,7 @@ function copyAll() {
     <!-- Action bar -->
     <div class="flex items-center gap-1 pt-2 border-t border-border/30">
       <button
-        class="h-7 px-2 rounded-md text-[11px] flex items-center gap-1 hover:bg-white/[0.06] transition text-muted-foreground hover:text-foreground"
+        class="h-7 px-2 rounded-md text-[11px] flex items-center gap-1 hover:bg-overlay-medium transition text-muted-foreground hover:text-foreground"
         @click="copyAdCopy"
       >
         <Check v-if="copiedField === 'adCopy'" class="h-3 w-3 text-success" />
@@ -106,7 +106,7 @@ function copyAll() {
 
       <button
         v-if="hasVisualPrompt"
-        class="h-7 px-2 rounded-md text-[11px] flex items-center gap-1 hover:bg-white/[0.06] transition text-muted-foreground hover:text-foreground"
+        class="h-7 px-2 rounded-md text-[11px] flex items-center gap-1 hover:bg-overlay-medium transition text-muted-foreground hover:text-foreground"
         @click="copyVisualPrompt"
       >
         <Check v-if="copiedField === 'prompt'" class="h-3 w-3 text-success" />
@@ -118,7 +118,7 @@ function copyAll() {
       <div class="flex-1" />
 
       <button
-        class="h-7 px-2 rounded-md text-[11px] flex items-center gap-1 hover:bg-white/[0.06] transition text-muted-foreground hover:text-foreground"
+        class="h-7 px-2 rounded-md text-[11px] flex items-center gap-1 hover:bg-overlay-medium transition text-muted-foreground hover:text-foreground"
         @click="copyAll"
       >
         <Check v-if="copiedField === 'all'" class="h-3 w-3 text-success" />
@@ -128,7 +128,7 @@ function copyAll() {
       </button>
 
       <button
-        class="h-7 px-2.5 rounded-md text-[11px] flex items-center gap-1 hover:bg-white/[0.06] transition text-muted-foreground hover:text-primary font-medium"
+        class="h-7 px-2.5 rounded-md text-[11px] flex items-center gap-1 hover:bg-overlay-medium transition text-muted-foreground hover:text-primary font-medium"
         @click="emit('viewDetails', variant)"
       >
         <Eye class="h-3 w-3" /> {{ t('variant.viewDetails') }}

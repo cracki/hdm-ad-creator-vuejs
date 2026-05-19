@@ -74,13 +74,13 @@ function copyFullAdCopy() {
           </div>
           <div class="flex items-center gap-1">
             <button
-              class="h-8 px-3 rounded-lg border border-border/60 text-[11px] flex items-center gap-1.5 hover:bg-white/[0.04] transition"
+              class="h-8 px-3 rounded-lg border border-border/60 text-[11px] flex items-center gap-1.5 hover:bg-overlay-light transition"
               @click="copyJson"
             >
               <Copy class="h-3 w-3" /> {{ t('variant.copyAll') }}
             </button>
             <button
-              class="h-8 w-8 grid place-items-center rounded-lg hover:bg-white/[0.06] transition"
+              class="h-8 w-8 grid place-items-center rounded-lg hover:bg-overlay-medium transition"
               @click="emit('close')"
             >
               <X class="h-4 w-4 text-muted-foreground" />
@@ -106,7 +106,7 @@ function copyFullAdCopy() {
             <div class="flex items-center justify-between mb-3">
               <h4 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{{ t('variant.adCopySection') }}</h4>
               <button
-                class="h-6 px-2 rounded border border-border/50 text-[10px] flex items-center gap-1 hover:bg-white/[0.04] transition"
+                class="h-6 px-2 rounded border border-border/50 text-[10px] flex items-center gap-1 hover:bg-overlay-light transition"
                 @click="copyFullAdCopy"
               >
                 <Copy class="h-2.5 w-2.5" /> {{ t('variant.copyAdCopy') }}
@@ -114,7 +114,7 @@ function copyFullAdCopy() {
             </div>
 
             <!-- Preview card -->
-            <div class="rounded-xl border border-border/50 bg-white/[0.02] p-4 space-y-3">
+            <div class="rounded-xl border border-border/50 bg-overlay-subtle p-4 space-y-3">
               <div v-if="adCopy.headline" class="text-base font-semibold leading-snug">{{ adCopy.headline }}</div>
               <div v-if="adCopy.body" class="text-sm leading-relaxed text-foreground/80">{{ adCopy.body }}</div>
               <div v-if="adCopy.cta" class="flex items-center justify-end pt-1">
@@ -128,13 +128,13 @@ function copyFullAdCopy() {
             <div class="flex items-center justify-between mb-3">
               <h4 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{{ t('variant.visualPromptSection') }}</h4>
               <button
-                class="h-6 px-2 rounded border border-border/50 text-[10px] flex items-center gap-1 hover:bg-white/[0.04] transition"
+                class="h-6 px-2 rounded border border-border/50 text-[10px] flex items-center gap-1 hover:bg-overlay-light transition"
                 @click="copyText(visualPrompt)"
               >
                 <Copy class="h-2.5 w-2.5" /> {{ t('variant.copyPrompt') }}
               </button>
             </div>
-            <div class="rounded-xl border border-border/50 bg-white/[0.02] p-4">
+            <div class="rounded-xl border border-border/50 bg-overlay-subtle p-4">
               <p class="text-sm leading-relaxed text-muted-foreground italic">{{ visualPrompt }}</p>
             </div>
           </section>
@@ -143,31 +143,31 @@ function copyFullAdCopy() {
           <section>
             <h4 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">{{ t('variant.metadata') }}</h4>
             <div class="grid grid-cols-2 gap-2 text-xs">
-              <div v-if="variant.platform" class="flex items-center gap-2 p-2.5 rounded-lg bg-white/[0.02] border border-border/30">
+              <div v-if="variant.platform" class="flex items-center gap-2 p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
                 <span class="text-muted-foreground">{{ t('variant.platformLabel') }}:</span>
                 <span class="font-medium">{{ variant.platform }}</span>
               </div>
-              <div v-if="variant.audience" class="flex items-center gap-2 p-2.5 rounded-lg bg-white/[0.02] border border-border/30">
+              <div v-if="variant.audience" class="flex items-center gap-2 p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
                 <span class="text-muted-foreground">{{ t('variant.audience') }}:</span>
                 <span class="font-medium">{{ variant.audience }}</span>
               </div>
-              <div v-if="variant.style" class="flex items-center gap-2 p-2.5 rounded-lg bg-white/[0.02] border border-border/30">
+              <div v-if="variant.style" class="flex items-center gap-2 p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
                 <span class="text-muted-foreground">{{ t('variant.style') }}:</span>
                 <span class="font-medium">{{ variant.style }}</span>
               </div>
-              <div v-if="variant.ad_format" class="flex items-center gap-2 p-2.5 rounded-lg bg-white/[0.02] border border-border/30">
+              <div v-if="variant.ad_format" class="flex items-center gap-2 p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
                 <span class="text-muted-foreground">{{ t('variant.format') }}:</span>
                 <span class="font-medium">{{ variant.ad_format }}</span>
               </div>
-              <div v-if="variant.framework_name" class="flex items-center gap-2 p-2.5 rounded-lg bg-white/[0.02] border border-border/30">
+              <div v-if="variant.framework_name" class="flex items-center gap-2 p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
                 <span class="text-muted-foreground">{{ t('variant.frameworkLabel') }}:</span>
                 <span class="font-medium">{{ variant.framework_name }}</span>
               </div>
-              <div v-if="variant.variant_type" class="flex items-center gap-2 p-2.5 rounded-lg bg-white/[0.02] border border-border/30">
+              <div v-if="variant.variant_type" class="flex items-center gap-2 p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
                 <span class="text-muted-foreground">{{ t('variant.type') }}:</span>
                 <span class="font-medium">{{ variant.variant_type === 'meta_creative' ? t('variant.meta') : t('variant.regular') }}</span>
               </div>
-              <div v-if="variant.created_at" class="flex items-center gap-2 p-2.5 rounded-lg bg-white/[0.02] border border-border/30">
+              <div v-if="variant.created_at" class="flex items-center gap-2 p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
                 <span class="text-muted-foreground">{{ t('variant.createdAt') }}:</span>
                 <span class="font-medium">{{ new Date(variant.created_at).toLocaleString() }}</span>
               </div>
@@ -179,13 +179,13 @@ function copyFullAdCopy() {
             <div class="flex items-center justify-between mb-3">
               <h4 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{{ t('variant.rawData') }}</h4>
               <button
-                class="h-6 px-2 rounded border border-border/50 text-[10px] flex items-center gap-1 hover:bg-white/[0.04] transition"
+                class="h-6 px-2 rounded border border-border/50 text-[10px] flex items-center gap-1 hover:bg-overlay-light transition"
                 @click="copyJson"
               >
                 <Copy class="h-2.5 w-2.5" /> {{ t('variant.copyAll') }}
               </button>
             </div>
-            <div class="rounded-xl border border-border/50 bg-white/[0.02] p-4 max-h-60 overflow-auto">
+            <div class="rounded-xl border border-border/50 bg-overlay-subtle p-4 max-h-60 overflow-auto">
               <pre class="text-[11px] text-muted-foreground whitespace-pre-wrap break-all font-mono">{{ JSON.stringify(variant, null, 2) }}</pre>
             </div>
           </section>

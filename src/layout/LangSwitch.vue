@@ -15,8 +15,8 @@ const { lang, setLang } = useI18n()
       :class="[
         'px-2 py-0.5 rounded text-xs transition min-h-[44px] min-w-[44px]',
         lang === l.code
-          ? 'bg-white/[0.08] text-foreground'
-          : 'text-muted-foreground hover:bg-white/[0.04]',
+          ? 'bg-overlay-medium text-foreground'
+          : 'text-muted-foreground hover:bg-overlay-light',
       ]"
     >
       {{ l.label }}
