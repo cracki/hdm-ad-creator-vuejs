@@ -7,6 +7,7 @@ import { useI18n } from '@/shared/utils/i18n'
 import { useGoogleAuth } from '@/shared/composables/useGoogleAuth'
 import Logo from '@/layout/Logo.vue'
 import LangSwitch from '@/layout/LangSwitch.vue'
+import ThemeToggle from '@/shared/components/ThemeToggle.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -61,7 +62,10 @@ async function handleGoogleRegister() {
     <div class="flex flex-col p-6 sm:p-8 lg:p-12">
       <div class="flex items-center justify-between">
         <Logo />
-        <LangSwitch />
+        <div class="flex items-center gap-2">
+          <ThemeToggle />
+          <LangSwitch />
+        </div>
       </div>
       <div class="flex-1 flex items-center justify-center py-10">
         <div class="w-full max-w-sm space-y-6 animate-[fade-up_0.5s_ease-out_both]">
@@ -143,7 +147,7 @@ async function handleGoogleRegister() {
             <div v-if="error" class="text-sm text-destructive">{{ error }}</div>
 
             <label class="flex items-start gap-2 text-xs text-muted-foreground">
-              <input type="checkbox" data-loc="auth.register.agreement" class="mt-0.5 h-3.5 w-3.5 rounded accent-[oklch(0.68_0.24_295)]" />
+              <input type="checkbox" data-loc="auth.register.agreement" class="mt-0.5 h-3.5 w-3.5 rounded accent-primary" />
               <span>{{ t('auth.agreePre') }} <button type="button" data-loc="auth.register.terms-link" class="text-primary hover:underline" @click="openPopup('terms')">{{ t('auth.terms') }}</button> {{ t('auth.agreeMid') }} <button type="button" class="text-primary hover:underline" @click="openPopup('privacy')">{{ t('auth.privacy') }}</button>.</span>
             </label>
 

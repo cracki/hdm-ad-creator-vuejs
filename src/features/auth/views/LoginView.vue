@@ -7,6 +7,7 @@ import { useI18n } from '@/shared/utils/i18n'
 import { useGoogleAuth } from '@/shared/composables/useGoogleAuth'
 import Logo from '@/layout/Logo.vue'
 import LangSwitch from '@/layout/LangSwitch.vue'
+import ThemeToggle from '@/shared/components/ThemeToggle.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -49,7 +50,13 @@ async function handleGoogleLogin() {
 <template>
   <div class="min-h-screen grid lg:grid-cols-2 bg-background text-foreground">
     <div class="flex flex-col p-6 sm:p-8 lg:p-12">
-      <Logo />
+      <div class="flex items-center justify-between">
+        <Logo />
+        <div class="flex items-center gap-2">
+          <ThemeToggle />
+          <LangSwitch />
+        </div>
+      </div>
       <div class="flex-1 flex items-center justify-center py-10">
         <div class="w-full max-w-sm space-y-7 animate-[fade-up_0.5s_ease-out_both]">
           <div class="space-y-2">
@@ -108,7 +115,7 @@ async function handleGoogleLogin() {
             <div v-if="error" class="text-sm text-destructive">{{ error }}</div>
 
             <label class="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-              <input type="checkbox" data-loc="auth.login.remember-me" class="h-3.5 w-3.5 rounded border-border bg-transparent accent-[oklch(0.68_0.24_295)]" />
+              <input type="checkbox" data-loc="auth.login.remember-me" class="h-3.5 w-3.5 rounded border-border bg-transparent accent-primary" />
               {{ t('auth.rememberMe') }}
             </label>
 
@@ -130,9 +137,8 @@ async function handleGoogleLogin() {
         </div>
       </div>
 
-      <div class="flex items-center justify-between text-[11px] text-muted-foreground">
-        <span>{{ t('auth.copyright') }}</span>
-        <LangSwitch />
+      <div class="text-[11px] text-muted-foreground">
+        {{ t('auth.copyright') }}
       </div>
     </div>
 
