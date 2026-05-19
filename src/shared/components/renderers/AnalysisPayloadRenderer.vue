@@ -10,8 +10,9 @@ interface TreeNode {
   key: string
   label: string
   value: unknown
-  type: 'text' | 'list' | 'nested' | 'score'
+  type: 'text' | 'list' | 'object_list' | 'nested' | 'score'
   children?: TreeNode[]
+  objectItems?: Record<string, unknown>[]
   scoreMax?: number
   scoreValue?: number
 }
@@ -67,8 +68,9 @@ function classify(key: string, val: unknown): TreeNode {
     return {
       key,
       label: formatLabel(key),
-      value: val.map((v) => (typeof v === 'string' ? v : JSON.stringify(v, null, 2))),
-      type: 'list',
+      value: val,
+      type: 'object_list',
+      objectItems: val as Record<string, unknown>[],
     }
   }
   if (typeof val === 'object') {
@@ -131,6 +133,47 @@ function getGrade(item: TreeNode): string {
   if (!item.children) return ''
   const gradeChild = item.children.find(c => c.key === 'grade' || c.key === 'grade_label')
   return gradeChild ? String(gradeChild.value) : ''
+}
+
+function getItemTitle(obj: Record<string, unknown>): string | null {
+  for (const k of ['name', 'title', 'hook', 'theme', 'concept', 'angle', 'type', 'action']) {
+    if (typeof obj[k] === 'string' && (obj[k] as string).length > 0) return obj[k] as string
+  }
+  return null
+}
+
+function getPrimitiveFields(obj: Record<string, unknown>): { label: string; value: string }[] {
+  const result: { label: string; value: string }[] = []
+  for (const [k, v] of Object.entries(obj)) {
+    if (v === null || v === undefined) continue
+    if (k === 'name' || k === 'title' || k === 'hook' || k === 'theme' || k === 'concept') continue
+    if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
+      result.push({ label: formatLabel(k), value: typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v) })
+    }
+  }
+  return result
+}
+
+function getListFields(obj: Record<string, unknown>): { label: string; items: string[] }[] {
+  const result: { label: string; items: string[] }[] = []
+  for (const [k, v] of Object.entries(obj)) {
+    if (v === null || v === undefined) continue
+    if (Array.isArray(v) && v.length > 0 && typeof v[0] === 'string') {
+      result.push({ label: formatLabel(k), items: v as string[] })
+    }
+  }
+  return result
+}
+
+function getNestedObjectFields(obj: Record<string, unknown>): { label: string; data: Record<string, unknown> }[] {
+  const result: { label: string; data: Record<string, unknown> }[] = []
+  for (const [k, v] of Object.entries(obj)) {
+    if (v === null || v === undefined) continue
+    if (typeof v === 'object' && !Array.isArray(v)) {
+      result.push({ label: formatLabel(k), data: v as Record<string, unknown> })
+    }
+  }
+  return result
 }
 </script>
 
@@ -251,6 +294,29 @@ function getGrade(item: TreeNode): string {
                         <span v-for="(tag, i) in (sub.value as string[])" :key="i" class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground">{{ tag }}</span>
                       </div>
                     </div>
+                    <!-- Sub object_list -->
+                    <div v-else-if="sub.type === 'object_list' && sub.objectItems" class="space-y-1.5">
+                      <div class="text-[11px] text-muted-foreground/60 font-medium">{{ sub.label }}</div>
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                        <div
+                          v-for="(obj, oi) in sub.objectItems"
+                          :key="oi"
+                          class="rounded-md border border-border/15 bg-overlay-subtle p-2 space-y-1"
+                        >
+                          <div v-if="getItemTitle(obj)" class="text-[11px] font-semibold text-foreground">{{ getItemTitle(obj) }}</div>
+                          <div v-if="getPrimitiveFields(obj).length" class="flex flex-wrap gap-1">
+                            <span v-for="field in getPrimitiveFields(obj)" :key="field.label" class="text-[9px] px-1 py-0.5 rounded bg-overlay-medium text-muted-foreground">
+                              <span class="text-muted-foreground/50">{{ field.label }}:</span> {{ field.value }}
+                            </span>
+                          </div>
+                          <template v-for="lf in getListFields(obj)" :key="lf.label">
+                            <div class="flex flex-wrap gap-0.5">
+                              <span v-for="(tag, ti) in lf.items" :key="ti" class="text-[9px] px-1 py-0.5 rounded bg-overlay-medium text-muted-foreground">{{ tag }}</span>
+                            </div>
+                          </template>
+                        </div>
+                      </div>
+                    </div>
                     <!-- Sub nested (3rd level inline) -->
                     <div v-else-if="sub.type === 'nested' && sub.children" class="text-xs">
                       <div class="text-muted-foreground/50 mb-1">{{ sub.label }}</div>
@@ -262,10 +328,17 @@ function getGrade(item: TreeNode): string {
                               <template v-if="typeof deep.value === 'boolean'">
                                 <component :is="deep.value ? Check : X" class="h-3 w-3 inline" :class="deep.value ? 'text-success' : 'text-destructive'" />
                               </template>
-                              <template v-else-if="Array.isArray(deep.value)">
+                              <template v-else-if="deep.type === 'list' && Array.isArray(deep.value)">
                                 <span class="flex flex-wrap gap-1">
                                   <span v-for="(tag, ti) in (deep.value as string[])" :key="ti" class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium">{{ tag }}</span>
                                 </span>
+                              </template>
+                              <template v-else-if="deep.type === 'object_list' && deep.objectItems">
+                                <div class="grid grid-cols-1 gap-1">
+                                  <div v-for="(oi, oidx) in deep.objectItems" :key="oidx" class="rounded border border-border/10 bg-overlay-subtle px-1.5 py-1">
+                                    <span v-if="getItemTitle(oi)" class="text-[10px] font-medium text-foreground">{{ getItemTitle(oi) }}</span>
+                                  </div>
+                                </div>
                               </template>
                               <template v-else>{{ deep.value != null ? deep.value : '—' }}</template>
                             </span>
@@ -284,6 +357,29 @@ function getGrade(item: TreeNode): string {
                       </span>
                     </div>
                   </template>
+                </div>
+              </div>
+              <!-- Child object_list -->
+              <div v-else-if="child.type === 'object_list' && child.objectItems" class="space-y-1.5">
+                <div class="text-[11px] text-muted-foreground/60 font-medium">{{ child.label }}</div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  <div
+                    v-for="(obj, oi) in child.objectItems"
+                    :key="oi"
+                    class="rounded-md border border-border/15 bg-overlay-subtle p-2.5 space-y-1.5"
+                  >
+                    <div v-if="getItemTitle(obj)" class="text-xs font-semibold text-foreground">{{ getItemTitle(obj) }}</div>
+                    <div v-if="getPrimitiveFields(obj).length" class="flex flex-wrap gap-1">
+                      <span v-for="field in getPrimitiveFields(obj)" :key="field.label" class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground">
+                        <span class="text-muted-foreground/50">{{ field.label }}:</span> {{ field.value }}
+                      </span>
+                    </div>
+                    <template v-for="lf in getListFields(obj)" :key="lf.label">
+                      <div class="flex flex-wrap gap-0.5">
+                        <span v-for="(tag, ti) in lf.items" :key="ti" class="text-[9px] px-1 py-0.5 rounded bg-overlay-medium text-muted-foreground">{{ tag }}</span>
+                      </div>
+                    </template>
+                  </div>
                 </div>
               </div>
             </template>
@@ -318,6 +414,60 @@ function getGrade(item: TreeNode): string {
             >
               {{ entry }}
             </span>
+          </div>
+        </div>
+      </template>
+
+      <!-- Object list (array of objects rendered as cards) -->
+      <template v-else-if="item.type === 'object_list' && item.objectItems">
+        <div class="space-y-2">
+          <div class="text-[11px] text-muted-foreground/60 mb-1">{{ item.label }}</div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-2">
+            <div
+              v-for="(obj, i) in item.objectItems"
+              :key="i"
+              class="rounded-lg border border-border/20 bg-overlay-subtle p-3 space-y-2"
+            >
+              <div v-if="getItemTitle(obj)" class="text-xs font-semibold text-foreground">
+                {{ getItemTitle(obj) }}
+              </div>
+              <div v-if="getPrimitiveFields(obj).length" class="flex flex-wrap gap-1.5">
+                <span
+                  v-for="field in getPrimitiveFields(obj)"
+                  :key="field.label"
+                  class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground"
+                >
+                  <span class="text-muted-foreground/50">{{ field.label }}:</span> {{ field.value }}
+                </span>
+              </div>
+              <template v-for="listField in getListFields(obj)" :key="listField.label">
+                <div class="text-[11px]">
+                  <span class="text-muted-foreground/50">{{ listField.label }}:</span>
+                  <div class="flex flex-wrap gap-1 mt-0.5">
+                    <span v-for="(tag, ti) in listField.items" :key="ti" class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground">{{ tag }}</span>
+                  </div>
+                </div>
+              </template>
+              <template v-for="nestedField in getNestedObjectFields(obj)" :key="nestedField.label">
+                <div class="rounded-md border border-border/15 bg-overlay-subtle p-2 space-y-1">
+                  <div class="text-[10px] text-muted-foreground/50 font-medium">{{ nestedField.label }}</div>
+                  <div class="grid grid-cols-2 gap-x-3 gap-y-1">
+                    <template v-for="[dk, dv] in Object.entries(nestedField.data)" :key="dk">
+                      <div v-if="typeof dv === 'string' || typeof dv === 'number'" class="text-[10px] flex items-start gap-1">
+                        <span class="text-muted-foreground/50 shrink-0">{{ formatLabel(dk) }}:</span>
+                        <span class="text-muted-foreground">{{ dv }}</span>
+                      </div>
+                      <div v-else-if="Array.isArray(dv) && dv.length > 0 && typeof dv[0] === 'string'" class="col-span-2 text-[10px]">
+                        <span class="text-muted-foreground/50">{{ formatLabel(dk) }}:</span>
+                        <div class="flex flex-wrap gap-0.5 mt-0.5">
+                          <span v-for="(tag, ti) in (dv as string[])" :key="ti" class="px-1 py-0.5 rounded bg-overlay-medium text-muted-foreground">{{ tag }}</span>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </template>
+            </div>
           </div>
         </div>
       </template>

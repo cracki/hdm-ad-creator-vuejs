@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import Topbar from '@/layout/Topbar.vue'
 import AnalysisPayloadRenderer from '@/shared/components/renderers/AnalysisPayloadRenderer.vue'
 import CompetitiveAnalysisRenderer from '@/shared/components/renderers/CompetitiveAnalysisRenderer.vue'
+import SocialPresenceRenderer from '@/shared/components/renderers/SocialPresenceRenderer.vue'
 import { useBrand, useAnalysisRun, useStartAnalysis } from '@/features/brands/queries'
 import { useJobTracker } from '@/shared/composables/useJobTracker'
 import { brandsApi } from '@/features/brands/api'
@@ -271,7 +272,7 @@ setActions([
           <div class="flex items-center gap-2 text-sm font-semibold">
             <Brain class="h-4 w-4 text-primary" /> {{ t('analysis.section.socialPresence') }}
           </div>
-          <AnalysisPayloadRenderer :data="socialPresence" />
+          <SocialPresenceRenderer :data="socialPresence" />
         </div>
 
         <!-- Emotion Profile -->

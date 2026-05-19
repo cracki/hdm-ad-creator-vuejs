@@ -1,0 +1,57 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - link "HDM HDM Ad Creator" [ref=e6] [cursor=pointer]:
+        - /url: /
+        - img "HDM" [ref=e8]
+        - generic [ref=e9]:
+          - generic [ref=e10]: HDM
+          - generic [ref=e11]: Ad Creator
+      - generic [ref=e12]:
+        - generic [ref=e13]:
+          - button "Auto" [ref=e14]:
+            - img [ref=e15]
+          - button "Light" [ref=e17]:
+            - img [ref=e18]
+          - button "Dark" [ref=e24]:
+            - img [ref=e25]
+        - generic [ref=e27]:
+          - button "English" [ref=e28]: EN
+          - button "العربية" [ref=e29]: ع
+          - button "فارسی" [ref=e30]: فا
+    - generic [ref=e32]:
+      - generic [ref=e33]:
+        - generic [ref=e34]:
+          - img [ref=e35]
+          - text: AI-powered marketing intelligence
+        - heading "Welcome back" [level=1] [ref=e38]
+        - paragraph [ref=e39]: Sign in to keep building campaigns that convert.
+      - button "Continue with Google" [ref=e40]:
+        - img [ref=e41]
+        - text: Continue with Google
+      - generic [ref=e45]: OR CONTINUE WITH EMAIL
+      - generic [ref=e47]:
+        - generic [ref=e48]:
+          - generic [ref=e49]: Email
+          - generic [ref=e50]:
+            - img [ref=e51]
+            - textbox "Email" [ref=e54]:
+              - /placeholder: you@company.com
+        - generic [ref=e55]:
+          - generic [ref=e56]: Password
+          - generic [ref=e57]:
+            - img [ref=e58]
+            - textbox "Password" [ref=e61]:
+              - /placeholder: ••••••••
+        - generic [ref=e62] [cursor=pointer]:
+          - checkbox "Remember me" [ref=e63]
+          - text: Remember me
+        - button "Sign in" [ref=e64]:
+          - text: Sign in
+          - img [ref=e65]
+      - paragraph [ref=e67]:
+        - text: Don't have an account?
+        - link "Create one" [ref=e68] [cursor=pointer]:
+          - /url: /register
+    - generic [ref=e69]: © 2026 HD Marketing
+  - status

@@ -116,6 +116,43 @@ function isObject(val: unknown): boolean {
   return val !== null && typeof val === 'object' && !Array.isArray(val)
 }
 
+function isPostingMap(val: unknown): boolean {
+  if (!isObject(val)) return false
+  const obj = val as Record<string, unknown>
+  const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+  return Object.keys(obj).some(k => days.includes(k.toLowerCase()))
+}
+
+function isTimeStringArray(val: unknown): boolean {
+  if (!isStringArray(val)) return false
+  const arr = val as string[]
+  return arr.length > 0 && arr.every(s => /^\d{1,2}:\d{2}\s*(AM|PM)/i.test(s))
+}
+
+const TYPE_COLORS: Record<string, string> = {
+  reel: 'bg-pink-500/15 text-pink-400 border-pink-500/20',
+  carousel: 'bg-blue-500/15 text-blue-400 border-blue-500/20',
+  post: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
+  story: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
+  engagement: 'bg-violet-500/15 text-violet-400 border-violet-500/20',
+  live: 'bg-red-500/15 text-red-400 border-red-500/20',
+}
+
+function getTypeColor(type: string): string {
+  const lower = type.toLowerCase()
+  for (const [key, color] of Object.entries(TYPE_COLORS)) {
+    if (lower.includes(key)) return color
+  }
+  return 'bg-primary/15 text-primary border-primary/20'
+}
+
+const DAY_ORDER = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+const DAY_SHORT: Record<string, string> = {
+  monday: 'Mon', tuesday: 'Tue', wednesday: 'Wed',
+  thursday: 'Thu', friday: 'Fri', saturday: 'Sat', sunday: 'Sun',
+}
+
+
 // Extract only the `analysis` object — skip handler, platform, profile_url
 const analysisSections = computed<Section[]>(() => {
   const d = props.data
@@ -218,8 +255,53 @@ function exportIdeasCsv(sectionKey: string, items: Record<string, unknown>[]) {
         </button>
       </div>
 
+      <!-- CASE 0: Time strings (best_times, etc.) → compact pills -->
+      <div v-if="isTimeStringArray(sec.value)" class="space-y-1">
+        <div class="flex items-center gap-1.5">
+          <Clock class="h-3.5 w-3.5 text-primary/60 shrink-0" />
+          <div class="flex gap-1.5">
+            <span
+              v-for="(time, ti) in (sec.value as string[])"
+              :key="ti"
+              class="text-xs px-2.5 py-1 rounded-lg bg-primary/10 border border-primary/15 text-primary/80 font-medium tabular-nums"
+            >
+              {{ time }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CASE 0.5: Posting map → weekly calendar grid -->
+      <div v-else-if="isPostingMap(sec.value)" class="space-y-2">
+        <div class="grid grid-cols-7 gap-1">
+          <div
+            v-for="day in DAY_ORDER"
+            :key="day"
+            class="rounded-lg border border-border/20 bg-overlay-subtle p-1.5 text-center min-h-[72px] flex flex-col"
+            :class="(sec.value as Record<string, unknown>)[day] ? '' : 'opacity-30'"
+          >
+            <div class="text-[10px] font-semibold text-muted-foreground/60 mb-1">{{ DAY_SHORT[day] }}</div>
+            <template v-if="(sec.value as Record<string, unknown>)[day]">
+              <div
+                v-if="typeof (sec.value as Record<string, unknown>)[day] === 'object'"
+                class="flex-1 flex flex-col items-center justify-center gap-0.5"
+              >
+                <span :class="['text-[9px] font-bold px-1.5 py-0.5 rounded border', getTypeColor(String(((sec.value as Record<string, unknown>)[day] as Record<string, unknown>).type))]">
+                  {{ ((sec.value as Record<string, unknown>)[day] as Record<string, unknown>).type }}
+                </span>
+                <span class="text-[8px] text-muted-foreground/50 leading-tight line-clamp-2">
+                  {{ ((sec.value as Record<string, unknown>)[day] as Record<string, unknown>).theme }}
+                </span>
+              </div>
+              <div v-else class="text-[9px] text-muted-foreground">{{ String((sec.value as Record<string, unknown>)[day]) }}</div>
+            </template>
+            <div v-else class="flex-1 flex items-center justify-center text-[9px] text-muted-foreground/30">—</div>
+          </div>
+        </div>
+      </div>
+
       <!-- CASE 1: String array → cards -->
-      <div v-if="isStringArray(sec.value)" class="space-y-2">
+      <div v-else-if="isStringArray(sec.value)" class="space-y-2">
         <div
           v-for="(item, i) in (sec.value as string[])"
           :key="i"
@@ -416,7 +498,54 @@ function exportIdeasCsv(sectionKey: string, items: Record<string, unknown>[]) {
       <!-- CASE 4: Nested object → key-value pairs -->
       <div v-else-if="isObject(sec.value)" class="space-y-3">
         <template v-for="[k, v] in Object.entries(sec.value as Record<string, unknown>)" :key="k">
-          <div v-if="typeof v === 'string'" class="text-xs text-muted-foreground flex items-start gap-2">
+          <!-- Posting map → weekly schedule -->
+          <div v-if="isPostingMap(v)" class="space-y-2">
+            <div class="text-[11px] text-muted-foreground/60 font-medium mb-1">{{ formatLabel(k) }}</div>
+            <div class="grid grid-cols-7 gap-1">
+              <div
+                v-for="day in DAY_ORDER"
+                :key="day"
+                class="rounded-lg border border-border/20 bg-overlay-subtle p-2 text-center min-h-[70px] flex flex-col"
+                :class="(v as Record<string, unknown>)[day] ? '' : 'opacity-30'"
+              >
+                <div class="text-[10px] font-semibold text-muted-foreground/60 mb-1">{{ DAY_SHORT[day] }}</div>
+                <template v-if="(v as Record<string, unknown>)[day]">
+                  <div
+                    v-if="typeof (v as Record<string, unknown>)[day] === 'object'"
+                    class="flex-1 flex flex-col items-center justify-center gap-0.5"
+                  >
+                    <span :class="['text-[9px] font-bold px-1.5 py-0.5 rounded border', getTypeColor(String(((v as Record<string, unknown>)[day] as Record<string, unknown>).type))]">
+                      {{ ((v as Record<string, unknown>)[day] as Record<string, unknown>).type }}
+                    </span>
+                    <span class="text-[8px] text-muted-foreground/50 leading-tight line-clamp-2">
+                      {{ ((v as Record<string, unknown>)[day] as Record<string, unknown>).theme }}
+                    </span>
+                  </div>
+                  <div v-else class="text-[9px] text-muted-foreground">{{ String((v as Record<string, unknown>)[day]) }}</div>
+                </template>
+                <div v-else class="flex-1 flex items-center justify-center text-[9px] text-muted-foreground/30">—</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Time strings (best_times, etc.) → compact pills -->
+          <div v-else-if="isTimeStringArray(v)" class="space-y-1">
+            <div class="text-[11px] text-muted-foreground/60 font-medium mb-1.5">{{ formatLabel(k) }}</div>
+            <div class="flex items-center gap-1.5">
+              <Clock class="h-3 w-3 text-primary/60 shrink-0" />
+              <div class="flex gap-1">
+                <span
+                  v-for="(time, ti) in (v as string[])"
+                  :key="ti"
+                  class="text-[11px] px-2 py-0.5 rounded-md bg-primary/10 border border-primary/15 text-primary/80 font-medium tabular-nums"
+                >
+                  {{ time }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div v-else-if="typeof v === 'string'" class="text-xs text-muted-foreground flex items-start gap-2">
             <span class="text-muted-foreground/50 min-w-[120px] shrink-0">{{ formatLabel(k) }}</span>
             <span class="leading-relaxed">{{ v }}</span>
           </div>

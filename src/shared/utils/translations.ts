@@ -409,6 +409,9 @@ export const translations = {
   'analysis.section.audience': { en: 'Audience Insights', ar: 'رؤى الجمهور', fa: 'بینش‌های مخاطب' },
   'analysis.section.recommendations': { en: 'Recommendations', ar: 'التوصيات', fa: 'توصیه‌ها' },
   'analysis.section.competitive': { en: 'Competitive Analysis', ar: 'التحليل التنافسي', fa: 'تحلیل رقابتی' },
+  'analysis.socialPresence.recommendations': { en: 'Recommendations', ar: 'التوصيات', fa: 'توصیه‌ها' },
+  'analysis.socialPresence.viewProfile': { en: 'View Profile', ar: 'عرض الملف الشخصي', fa: 'مشاهده پروفایل' },
+  'analysis.socialPresence.noPlatforms': { en: 'No social platform data available', ar: 'لا توجد بيانات منصة اجتماعية', fa: 'داده‌ای برای شبکه اجتماعی موجود نیست' },
 
   // ---------- Sidebar - Market ----------
   'nav.marketIntel': { en: 'Content Intelligence', ar: 'ذكاء المحتوى', fa: 'هوش محتوا' },
