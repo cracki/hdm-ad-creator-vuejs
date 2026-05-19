@@ -271,13 +271,14 @@ function exportIdeasCsv(sectionKey: string, items: Record<string, unknown>[]) {
         </div>
       </div>
 
-      <!-- CASE 0.5: Posting map → weekly calendar grid -->
+      <!-- CASE 0.5: Posting map → weekly calendar -->
       <div v-else-if="isPostingMap(sec.value)" class="space-y-2">
-        <div class="grid grid-cols-7 gap-1">
+        <!-- Desktop: 7-column grid -->
+        <div class="hidden md:grid grid-cols-7 gap-1.5">
           <div
             v-for="day in DAY_ORDER"
             :key="day"
-            class="rounded-lg border border-border/20 bg-overlay-subtle p-1.5 text-center min-h-[72px] flex flex-col"
+            class="rounded-lg border border-border/20 bg-overlay-subtle p-1.5 text-center min-h-[76px] flex flex-col"
             :class="(sec.value as Record<string, unknown>)[day] ? '' : 'opacity-30'"
           >
             <div class="text-[10px] font-semibold text-muted-foreground/60 mb-1">{{ DAY_SHORT[day] }}</div>
@@ -296,6 +297,29 @@ function exportIdeasCsv(sectionKey: string, items: Record<string, unknown>[]) {
               <div v-else class="text-[9px] text-muted-foreground">{{ String((sec.value as Record<string, unknown>)[day]) }}</div>
             </template>
             <div v-else class="flex-1 flex items-center justify-center text-[9px] text-muted-foreground/30">—</div>
+          </div>
+        </div>
+        <!-- Mobile: horizontal scroll or stacked list -->
+        <div class="md:hidden space-y-1">
+          <div
+            v-for="day in DAY_ORDER"
+            :key="day"
+            class="rounded-lg border border-border/20 bg-overlay-subtle px-3 py-2 flex items-center gap-3"
+            :class="(sec.value as Record<string, unknown>)[day] ? '' : 'opacity-30'"
+          >
+            <span class="text-[11px] font-semibold text-muted-foreground/60 w-8 shrink-0">{{ DAY_SHORT[day] }}</span>
+            <template v-if="(sec.value as Record<string, unknown>)[day]">
+              <template v-if="typeof (sec.value as Record<string, unknown>)[day] === 'object'">
+                <span :class="['text-[10px] font-bold px-1.5 py-0.5 rounded border', getTypeColor(String(((sec.value as Record<string, unknown>)[day] as Record<string, unknown>).type))]">
+                  {{ ((sec.value as Record<string, unknown>)[day] as Record<string, unknown>).type }}
+                </span>
+                <span class="text-[11px] text-muted-foreground leading-tight">
+                  {{ ((sec.value as Record<string, unknown>)[day] as Record<string, unknown>).theme }}
+                </span>
+              </template>
+              <span v-else class="text-[11px] text-muted-foreground">{{ String((sec.value as Record<string, unknown>)[day]) }}</span>
+            </template>
+            <span v-else class="text-[11px] text-muted-foreground/30">—</span>
           </div>
         </div>
       </div>
@@ -319,7 +343,7 @@ function exportIdeasCsv(sectionKey: string, items: Record<string, unknown>[]) {
           class="rounded-xl border border-border/30 bg-overlay-subtle overflow-hidden group"
         >
           <!-- Video-style top bar -->
-          <div class="h-1.5 bg-gradient-to-r from-red-500/40 via-red-500/20 to-transparent" />
+          <div class="h-1.5 bg-gradient-to-e from-red-500/40 via-red-500/20 to-transparent" />
           <div class="p-4 space-y-3">
             <!-- Number badge + title -->
             <div class="flex items-start gap-2.5">
@@ -501,11 +525,12 @@ function exportIdeasCsv(sectionKey: string, items: Record<string, unknown>[]) {
           <!-- Posting map → weekly schedule -->
           <div v-if="isPostingMap(v)" class="space-y-2">
             <div class="text-[11px] text-muted-foreground/60 font-medium mb-1">{{ formatLabel(k) }}</div>
-            <div class="grid grid-cols-7 gap-1">
+            <!-- Desktop: 7-column grid -->
+            <div class="hidden md:grid grid-cols-7 gap-1.5">
               <div
                 v-for="day in DAY_ORDER"
                 :key="day"
-                class="rounded-lg border border-border/20 bg-overlay-subtle p-2 text-center min-h-[70px] flex flex-col"
+                class="rounded-lg border border-border/20 bg-overlay-subtle p-1.5 text-center min-h-[76px] flex flex-col"
                 :class="(v as Record<string, unknown>)[day] ? '' : 'opacity-30'"
               >
                 <div class="text-[10px] font-semibold text-muted-foreground/60 mb-1">{{ DAY_SHORT[day] }}</div>
@@ -524,6 +549,29 @@ function exportIdeasCsv(sectionKey: string, items: Record<string, unknown>[]) {
                   <div v-else class="text-[9px] text-muted-foreground">{{ String((v as Record<string, unknown>)[day]) }}</div>
                 </template>
                 <div v-else class="flex-1 flex items-center justify-center text-[9px] text-muted-foreground/30">—</div>
+              </div>
+            </div>
+            <!-- Mobile: stacked list -->
+            <div class="md:hidden space-y-1">
+              <div
+                v-for="day in DAY_ORDER"
+                :key="day"
+                class="rounded-lg border border-border/20 bg-overlay-subtle px-3 py-2 flex items-center gap-3"
+                :class="(v as Record<string, unknown>)[day] ? '' : 'opacity-30'"
+              >
+                <span class="text-[11px] font-semibold text-muted-foreground/60 w-8 shrink-0">{{ DAY_SHORT[day] }}</span>
+                <template v-if="(v as Record<string, unknown>)[day]">
+                  <template v-if="typeof (v as Record<string, unknown>)[day] === 'object'">
+                    <span :class="['text-[10px] font-bold px-1.5 py-0.5 rounded border', getTypeColor(String(((v as Record<string, unknown>)[day] as Record<string, unknown>).type))]">
+                      {{ ((v as Record<string, unknown>)[day] as Record<string, unknown>).type }}
+                    </span>
+                    <span class="text-[11px] text-muted-foreground leading-tight">
+                      {{ ((v as Record<string, unknown>)[day] as Record<string, unknown>).theme }}
+                    </span>
+                  </template>
+                  <span v-else class="text-[11px] text-muted-foreground">{{ String((v as Record<string, unknown>)[day]) }}</span>
+                </template>
+                <span v-else class="text-[11px] text-muted-foreground/30">—</span>
               </div>
             </div>
           </div>
