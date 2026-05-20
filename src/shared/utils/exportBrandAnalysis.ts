@@ -278,6 +278,248 @@ function addScoreBar(ctx: PdfCtx, label: string, score: number, max: number, gra
   ctx.y += barHeight + 4
 }
 
+// ── Generic analysis sections renderer (mirrors SocialMediaAnalysisRenderer) ──
+
+function renderAnalysisSections(ctx: PdfCtx, data: Record<string, unknown>) {
+  // Extract the inner analysis object if nested
+  let analysis = data
+  if (data.analysis_data && typeof data.analysis_data === 'object') {
+    const ad = obj(data.analysis_data)
+    if (ad?.analysis) analysis = ad.analysis as Record<string, unknown>
+  } else if (data.analysis && typeof data.analysis === 'object') {
+    analysis = data.analysis as Record<string, unknown>
+  }
+
+  const doc = ctx.doc
+
+  for (const [key, value] of Object.entries(analysis)) {
+    if (value == null) continue
+    if (['handler', 'platform', 'profile_url', 'content_themes'].includes(key)) continue
+
+    const label = formatLabel(key)
+
+    // String
+    if (typeof value === 'string') {
+      ensureSpace(ctx, 10)
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(50, 50, 50)
+      doc.text(label, MARGIN, ctx.y)
+      ctx.y += 4
+      const lines = doc.splitTextToSize(str(value), CONTENT_WIDTH)
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(8)
+      doc.setTextColor(80, 80, 80)
+      for (const line of lines) {
+        ensureSpace(ctx, 5)
+        doc.text(line, MARGIN + 2, ctx.y)
+        ctx.y += 4
+      }
+      ctx.y += 3
+    }
+    // Number / boolean
+    else if (typeof value === 'number' || typeof value === 'boolean') {
+      ensureSpace(ctx, 7)
+      addKeyValueTable(ctx, [[label, str(value)]])
+    }
+    // String array
+    else if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'string') {
+      ensureSpace(ctx, 8)
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(50, 50, 50)
+      doc.text(label, MARGIN, ctx.y)
+      ctx.y += 5
+      addBulletList(ctx, (value as string[]).map(str), [88, 28, 135])
+    }
+    // Object array (video ideas, reel ideas, hashtag buckets, etc.)
+    else if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'object') {
+      ensureSpace(ctx, 10)
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(50, 50, 50)
+      doc.text(label, MARGIN, ctx.y)
+      ctx.y += 5
+
+      for (const [i, item] of (value as Record<string, unknown>[]).entries()) {
+        if (!item || typeof item !== 'object') continue
+        const o = item as Record<string, unknown>
+
+        // Get title
+        let title = ''
+        for (const tk of ['name', 'title', 'hook', 'concept', 'theme', 'segment_name', 'action', 'persona_name', 'group_name']) {
+          if (typeof o[tk] === 'string' && o[tk]) { title = str(o[tk]); break }
+        }
+
+        // Numbered item
+        ensureSpace(ctx, 10)
+        doc.setFontSize(8)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(88, 28, 135)
+        doc.text(`${i + 1}. ${title || `Item ${i + 1}`}`, MARGIN + 2, ctx.y)
+        ctx.y += 4
+
+        // Primitive fields as inline chips
+        const primitives: string[][] = []
+        for (const [k, v] of Object.entries(o)) {
+          if (v == null || typeof v === 'object') continue
+          if (['name', 'title', 'hook', 'concept', 'theme', 'segment_name'].includes(k)) continue
+          if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
+            primitives.push([formatLabel(k), str(v)])
+          }
+        }
+        if (primitives.length) {
+          addKeyValueTable(ctx, primitives)
+        }
+
+        // String array fields as bullet lists
+        for (const [k, v] of Object.entries(o)) {
+          if (!Array.isArray(v) || v.length === 0) continue
+          if (typeof v[0] === 'string') {
+            ensureSpace(ctx, 8)
+            doc.setFontSize(8)
+            doc.setFont('helvetica', 'bold')
+            doc.setTextColor(70, 70, 70)
+            doc.text(formatLabel(k) + ':', MARGIN + 4, ctx.y)
+            ctx.y += 4
+            addBulletList(ctx, (v as string[]).map(str), [100, 100, 100], 6)
+          } else if (typeof v[0] === 'object' && v[0] !== null) {
+            // Nested object arrays
+            ensureSpace(ctx, 8)
+            doc.setFontSize(8)
+            doc.setFont('helvetica', 'bold')
+            doc.setTextColor(70, 70, 70)
+            doc.text(formatLabel(k) + ':', MARGIN + 4, ctx.y)
+            ctx.y += 4
+            for (const sub of (v as Record<string, unknown>[])) {
+              if (!sub || typeof sub !== 'object') continue
+              const subStr = flattenObject(sub as Record<string, unknown>)
+              if (subStr) {
+                ensureSpace(ctx, 6)
+                doc.setFont('helvetica', 'normal')
+                doc.setFontSize(7.5)
+                doc.setTextColor(100, 100, 100)
+                const subLines = doc.splitTextToSize('- ' + subStr, CONTENT_WIDTH - 10)
+                for (const sl of subLines) {
+                  ensureSpace(ctx, 4)
+                  doc.text(sl, MARGIN + 8, ctx.y)
+                  ctx.y += 3.5
+                }
+              }
+            }
+            ctx.y += 2
+          }
+        }
+
+        // Nested object fields
+        for (const [k, v] of Object.entries(o)) {
+          if (typeof v !== 'object' || v == null || Array.isArray(v)) continue
+          ensureSpace(ctx, 8)
+          const nested = flattenObject(v as Record<string, unknown>)
+          if (nested) {
+            doc.setFontSize(8)
+            doc.setFont('helvetica', 'bold')
+            doc.setTextColor(70, 70, 70)
+            doc.text(formatLabel(k) + ':', MARGIN + 4, ctx.y)
+            ctx.y += 4
+            doc.setFont('helvetica', 'normal')
+            doc.setFontSize(7.5)
+            doc.setTextColor(100, 100, 100)
+            const nLines = doc.splitTextToSize(nested, CONTENT_WIDTH - 10)
+            for (const nl of nLines) {
+              ensureSpace(ctx, 4)
+              doc.text(nl, MARGIN + 6, ctx.y)
+              ctx.y += 3.5
+            }
+            ctx.y += 2
+          }
+        }
+
+        ctx.y += 3
+      }
+    }
+    // Nested object (posting_map, kpis, etc.)
+    else if (typeof value === 'object' && !Array.isArray(value)) {
+      const nestedObj = value as Record<string, unknown>
+
+      // Check if it's a posting map (day keys)
+      const dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+      const isPostingMap = Object.keys(nestedObj).some(k => dayKeys.includes(k.toLowerCase()))
+
+      if (isPostingMap) {
+        ensureSpace(ctx, 10)
+        doc.setFontSize(9)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(50, 50, 50)
+        doc.text(label, MARGIN, ctx.y)
+        ctx.y += 5
+
+        const scheduleRows: string[][] = []
+        for (const day of dayKeys) {
+          const dayData = nestedObj[day] ?? nestedObj[day.charAt(0).toUpperCase() + day.slice(1)]
+          if (!dayData) continue
+          if (typeof dayData === 'object' && dayData !== null) {
+            const dd = dayData as Record<string, unknown>
+            scheduleRows.push([day.charAt(0).toUpperCase() + day.slice(1), str(dd.type), str(dd.theme)])
+          } else {
+            scheduleRows.push([day.charAt(0).toUpperCase() + day.slice(1), str(dayData), ''])
+          }
+        }
+        if (scheduleRows.length) {
+          const { autoTable: at } = ctx
+          ensureSpace(ctx, 10)
+          at(doc, {
+            startY: ctx.y,
+            margin: { left: MARGIN, right: MARGIN },
+            head: [['Day', 'Type', 'Theme']],
+            body: scheduleRows,
+            styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
+            headStyles: { fillColor: [88, 28, 135], textColor: 255, fontStyle: 'bold' },
+            columnStyles: { 0: { cellWidth: 25 }, 1: { cellWidth: 30 }, 2: { cellWidth: 'auto' } },
+          })
+          ctx.y = (doc as any).lastAutoTable.finalY + 5
+        }
+      } else {
+        // Generic nested object — flatten to key-value
+        ensureSpace(ctx, 10)
+        doc.setFontSize(9)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(50, 50, 50)
+        doc.text(label, MARGIN, ctx.y)
+        ctx.y += 5
+
+        const rows: string[][] = []
+        for (const [k, v] of Object.entries(nestedObj)) {
+          if (v == null) continue
+          if (typeof v === 'object') {
+            rows.push([formatLabel(k), flattenObject(v as Record<string, unknown>)])
+          } else {
+            rows.push([formatLabel(k), str(v)])
+          }
+        }
+        if (rows.length) addKeyValueTable(ctx, rows)
+      }
+    }
+  }
+}
+
+/** Flatten a nested object to a single-line readable string. */
+function flattenObject(o: Record<string, unknown>, depth = 0): string {
+  const parts: string[] = []
+  for (const [k, v] of Object.entries(o)) {
+    if (v == null) continue
+    if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
+      parts.push(`${formatLabel(k)}: ${str(v)}`)
+    } else if (Array.isArray(v) && v.length > 0 && typeof v[0] === 'string') {
+      parts.push(`${formatLabel(k)}: ${(v as string[]).map(str).join(', ')}`)
+    } else if (typeof v === 'object' && !Array.isArray(v) && depth < 2) {
+      const inner = flattenObject(v as Record<string, unknown>, depth + 1)
+      if (inner) parts.push(inner)
+    }
+  }
+  return parts.join(' | ')
+}
+
 // ── Section Renderers ──────────────────────────────────────
 
 function renderOverviewSection(ctx: PdfCtx, data: AnalysisRun) {
@@ -363,32 +605,42 @@ function renderOverviewSection(ctx: PdfCtx, data: AnalysisRun) {
     }
     const contentAnalysis = obj(socialPresence.content_analysis)
     if (contentAnalysis) {
-      const platRows: string[][] = []
-      for (const [key, val] of Object.entries(contentAnalysis)) {
-        const pData = obj(val)
+      for (const [platformKey, platformVal] of Object.entries(contentAnalysis)) {
+        const pData = obj(platformVal)
         if (!pData) continue
+
+        const pLabel = platformKey.charAt(0).toUpperCase() + platformKey.slice(1)
         const rawThemes = parse(pData.content_themes)
         const themeLabels = rawThemes.map(v => str(v)).filter(Boolean)
-        platRows.push([
-          key.charAt(0).toUpperCase() + key.slice(1),
-          str(pData.status),
-          String(themeLabels.length),
-          themeLabels.slice(0, 3).join(', '),
-        ])
-      }
-      if (platRows.length) {
-        ensureSpace(ctx, 15)
-        const { doc, autoTable } = ctx
-        autoTable(doc, {
-          startY: ctx.y,
-          margin: { left: MARGIN, right: MARGIN },
-          head: [['Platform', 'Status', 'Themes', 'Sample Themes']],
-          body: platRows,
-          styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
-          headStyles: { fillColor: [88, 28, 135], textColor: 255, fontStyle: 'bold' },
-          columnStyles: { 0: { cellWidth: 25 }, 1: { cellWidth: 20 }, 2: { cellWidth: 15 }, 3: { cellWidth: 'auto' } },
-        })
-        ctx.y = (doc as any).lastAutoTable.finalY + 6
+
+        // Platform header
+        ensureSpace(ctx, 20)
+        const doc = ctx.doc
+        doc.setFillColor(88, 28, 135)
+        doc.roundedRect(MARGIN, ctx.y, CONTENT_WIDTH, 8, 1.5, 1.5, 'F')
+        doc.setTextColor(255, 255, 255)
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'bold')
+        doc.text(`${pLabel}  -  ${str(pData.status)}`, MARGIN + 4, ctx.y + 5.5)
+        doc.setTextColor(0, 0, 0)
+        ctx.y += 13
+
+        // Content themes
+        if (themeLabels.length) {
+          ensureSpace(ctx, 8)
+          doc.setFontSize(8)
+          doc.setFont('helvetica', 'bold')
+          doc.setTextColor(50, 50, 50)
+          doc.text('Content Themes:', MARGIN, ctx.y)
+          ctx.y += 4
+          addBulletList(ctx, themeLabels, [88, 28, 135])
+        }
+
+        // Extract the analysis/strategy content
+        const analysis = obj(pData.analysis) ?? obj(pData.strategy) ?? pData
+        renderAnalysisSections(ctx, analysis)
+
+        ctx.y += 6
       }
     }
   }
