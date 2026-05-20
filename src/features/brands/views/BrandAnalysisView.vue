@@ -15,8 +15,9 @@ import { TERMINAL_STATUSES } from '@/features/brands/schemas'
 import {
   Play, Loader2, RefreshCw, Users, BarChart3,
   Globe, Lightbulb, Brain, Heart, Target, ChevronLeft,
-  CheckCircle2, XCircle, Clock, Sparkles,
+  CheckCircle2, XCircle, Clock, Sparkles, Download,
 } from 'lucide-vue-next'
+import { exportBrandAnalysisPDF } from '@/shared/utils/exportBrandAnalysis'
 
 const route = useRoute()
 const router = useRouter()
@@ -114,6 +115,18 @@ const emotionProfile = computed(() => runData.value?.emotion_profile ?? null)
 const competitiveAnalysis = computed(() => runData.value?.competitive_analysis ?? null)
 
 const activeTab = ref<'overview' | 'audience' | 'competitors' | 'insights'>('overview')
+
+const isExporting = ref(false)
+
+async function handleExport() {
+  if (!runData.value || isExporting.value) return
+  isExporting.value = true
+  try {
+    await exportBrandAnalysisPDF(runData.value, brand.value?.company_name ?? 'Brand')
+  } finally {
+    isExporting.value = false
+  }
+}
 
 setActions([
   { label: t('analysis.backToBrand'), icon: ChevronLeft, to: `/brands/${brandUuid.value}` },
@@ -236,6 +249,16 @@ setActions([
           class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition"
         >
           <RefreshCw class="h-3.5 w-3.5" /> {{ t('analysis.reAnalyze') }}
+        </button>
+        <button
+          @click="handleExport"
+          :disabled="isExporting"
+          data-loc="brands.analysis.export-pdf-btn"
+          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-semibold shadow-[var(--shadow-glow)] hover:opacity-95 transition disabled:opacity-60"
+        >
+          <Download v-if="!isExporting" class="h-3.5 w-3.5" />
+          <Loader2 v-else class="h-3.5 w-3.5 animate-spin" />
+          {{ isExporting ? t('analysis.exporting') : t('analysis.exportPdf') }}
         </button>
       </div>
 

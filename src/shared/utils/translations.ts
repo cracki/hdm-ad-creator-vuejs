@@ -372,6 +372,8 @@ export const translations = {
   'analysis.retry': { en: 'Retry Analysis', ar: 'إعادة المحاولة', fa: 'تلاش مجدد' },
   'analysis.completedTitle': { en: 'Analysis Complete', ar: 'اكتمل التحليل', fa: 'تحلیل کامل شد' },
   'analysis.reAnalyze': { en: 'Re-Analyze', ar: 'إعادة التحليل', fa: 'تحلیل مجدد' },
+  'analysis.exportPdf': { en: 'Download PDF', ar: 'تنزيل PDF', fa: 'دانلود PDF' },
+  'analysis.exporting': { en: 'Exporting...', ar: 'جاري التصدير...', fa: 'در حال خروجی‌گیری...' },
   'analysis.newAnalysis': { en: 'New Analysis', ar: 'تحليل جديد', fa: 'تحلیل جدید' },
   'analysis.startAnalysis': { en: 'Start Analysis', ar: 'ابدأ التحليل', fa: 'شروع تحلیل' },
   'analysis.viewHistory': { en: 'View History', ar: 'عرض السجل', fa: 'مشاهده تاریخچه' },
