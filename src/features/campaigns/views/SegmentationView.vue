@@ -62,8 +62,9 @@ async function runSegmentation() {
         product_description: productDescription.value || undefined,
         include_deep_research: true,
       })
-      const rawSegments = res.data?.step?.response_payload?.segments
-        ?? res.data?.step?.response_payload?.data?.segments ?? []
+      const payload = res.data?.step?.response_payload as any
+      const rawSegments: any[] = payload?.segments
+        ?? payload?.data?.segments ?? []
       const segments = rawSegments.map((s: any) => ({
         ...s,
         persona_name: s.persona_name || s.name || '',
