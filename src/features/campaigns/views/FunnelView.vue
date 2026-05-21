@@ -27,7 +27,12 @@ const isPrereqMet = computed(() =>
 const opKey = computed(() => `${campaignUuid.value}:funnel`)
 const { data: result, loading, error, run } = useAsyncOperation<any>()
 
-const stepData = computed(() => result.value?.step)
+const stepData = computed(() => {
+  if (result.value?.step) return result.value.step
+  const latest = (campaign.value as any)?.latest_steps?.funnel
+  if (latest?.status === 'completed') return latest
+  return undefined
+})
 const funnelData = computed(() => {
   const payload = stepData.value?.response_payload
   if (!payload) return null
@@ -97,7 +102,7 @@ function goNext() {
           <Layers class="h-5 w-5 text-primary-foreground" />
         </div>
         <div class="min-w-0 flex-1">
-          <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">{{ t('smart.stepOf') }} 3 / 4</div>
+          <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">{{ t('smart.stepOf') }} 3 / 9</div>
           <h2 class="text-xl sm:text-2xl font-semibold tracking-tight mt-1">{{ t('smart.s4') }}</h2>
           <p class="text-sm text-muted-foreground mt-1">{{ t('funnel.description') }}</p>
         </div>
@@ -117,7 +122,7 @@ function goNext() {
       </div>
 
       <template v-else>
-        <!-- Already completed -->
+        <!-- Already completed (no data from latest_steps either) -->
         <div v-if="isPrereqMet && (campaign?.funnel_completed) && !stepData && !loading" class="surface-card p-8 text-center mb-6">
           <div class="h-10 w-10 rounded-lg bg-success/15 border border-success/40 grid place-items-center mx-auto mb-3">
             <Check class="h-5 w-5 text-success" />
@@ -138,7 +143,7 @@ function goNext() {
         </div>
 
         <!-- Run -->
-        <div v-if="!stepData && !loading && !(campaign?.funnel_completed)" class="surface-card p-8 text-center">
+        <div v-if="!stepData && !loading && !campaign?.funnel_completed" class="surface-card p-8 text-center">
           <Layers class="h-8 w-8 text-primary mx-auto mb-3" />
           <div class="text-sm font-medium mb-1">{{ t('funnel.ready') }}</div>
           <div class="text-xs text-muted-foreground mb-4">{{ t('funnel.readyDesc') }}</div>

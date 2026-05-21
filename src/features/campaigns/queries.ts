@@ -20,15 +20,6 @@ export function useCampaign(uuid: Ref<string>) {
   })
 }
 
-export function useCampaignSteps(uuid: Ref<string>) {
-  return useQuery({
-    queryKey: ['campaigns', uuid, 'steps'],
-    queryFn: ({ signal }) => campaignsApi.listSteps(uuid.value, { signal }).then(r => r.data),
-    enabled: computed(() => !!uuid.value),
-    staleTime: 10_000,
-  })
-}
-
 export function useCampaignAds(uuid: Ref<string>) {
   return useQuery({
     queryKey: ['campaigns', uuid, 'ads'],

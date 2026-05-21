@@ -120,7 +120,8 @@ export async function exportCampaignPDF(campaign: Campaign, steps: CampaignStep[
   const platforms: string[] = ctxPayload.selected_platforms ?? []
 
   // Cover page
-  addPdfCoverTitle(ctx, campaign.name, brand?.company_name ?? 'Campaign Report')
+  const campaignName = campaign.name || brand?.company_name || 'Campaign Report'
+  addPdfCoverTitle(ctx, campaignName, brand?.company_name ?? 'Campaign Report')
 
   // ── Campaign Overview ──
   doc.setFontSize(13)
@@ -259,7 +260,7 @@ export async function exportCampaignPDF(campaign: Campaign, steps: CampaignStep[
       doc.setFontSize(9)
       for (const svc of topServices) {
         if (y > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = margin }
-        doc.text(`  • ${svc}`, margin, y)
+        doc.text(`  • ${str(svc)}`, margin, y)
         y += 4.5
       }
       y += 4
@@ -394,7 +395,7 @@ export async function exportCampaignPDF(campaign: Campaign, steps: CampaignStep[
       doc.setFontSize(9)
       for (const theme of themes) {
         if (y > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = margin }
-        doc.text(`  • ${theme}`, margin, y)
+        doc.text(`  • ${str(theme)}`, margin, y)
         y += 4.5
       }
       y += 4
@@ -495,7 +496,7 @@ export async function exportCampaignPDF(campaign: Campaign, steps: CampaignStep[
   }
 
   addPdfFooter(ctx)
-  const filename = `${campaign.name.replace(/[^a-zA-Z0-9]/g, '_')}-report.pdf`
+  const filename = `${campaignName.replace(/[^a-zA-Z0-9]/g, '_')}-report.pdf`
   triggerDownload(doc.output('blob'), filename)
 }
 
@@ -522,12 +523,13 @@ export async function exportCampaignPPTX(campaign: Campaign, steps: CampaignStep
   const done = flags.filter(Boolean).length
 
   // ── Title Slide ──
+  const campaignName = campaign.name || brand?.company_name || 'Campaign Report'
   const titleSlide = pptx.addSlide()
   titleSlide.background = { fill: '1E1B2E' }
   titleSlide.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 0, w: '100%', h: 1.2, fill: { color: purple } })
   titleSlide.addImage({ data: hdmLogoBase64, x: 11.8, y: 0.15, w: 0.9, h: 0.9 })
   titleSlide.addText('Campaign Report', { x: 0.8, y: 0.25, w: 9, h: 0.6, fontSize: 32, color: white, bold: true })
-  titleSlide.addText(campaign.name, { x: 0.8, y: 1.5, w: 9, h: 0.5, fontSize: 20, color: gray })
+  titleSlide.addText(campaignName, { x: 0.8, y: 1.5, w: 9, h: 0.5, fontSize: 20, color: gray })
   titleSlide.addText(brand?.company_name ?? '', { x: 0.8, y: 2.1, w: 9, h: 0.4, fontSize: 14, color: gray })
   titleSlide.addText(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }), { x: 0.8, y: 2.6, w: 5, h: 0.3, fontSize: 12, color: gray })
 
@@ -783,6 +785,6 @@ export async function exportCampaignPPTX(campaign: Campaign, steps: CampaignStep
     })
   }
 
-  const filename = `${campaign.name.replace(/[^a-zA-Z0-9]/g, '_')}-report.pptx`
+  const filename = `${campaignName.replace(/[^a-zA-Z0-9]/g, '_')}-report.pptx`
   triggerDownload(await pptx.write({ outputType: 'blob' }) as Blob, filename)
 }

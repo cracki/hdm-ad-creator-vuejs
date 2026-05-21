@@ -58,10 +58,6 @@ export const campaignsApi = {
     return apiClient.post(`${campaign(uuid)}content/`)
   },
 
-  listSteps(uuid: string, config?: SignalConfig): Promise<{ data: StepResult['step'][] }> {
-    return apiClient.get(`${campaign(uuid)}steps/`, config)
-  },
-
   runAdsStrategy(uuid: string, payload: AdsStrategyPayload): Promise<{ data: StepResult }> {
     return apiClient.post(`${campaign(uuid)}ads-strategy/`, payload)
   },

@@ -38,12 +38,16 @@ const isPrereqMet = computed(() => {
   })
 })
 
-const personas = computed(() => {
+const personaObjects = computed(() => {
   const ctx = campaign.value?.context_payload as any
   const seg = ctx?.segmentation_data?.segments ?? ctx?.personas ?? []
   if (!Array.isArray(seg)) return []
-  return seg.map((s: any) => s.name || s.persona_name).filter(Boolean)
+  return seg
 })
+
+const personaLabels = computed(() =>
+  personaObjects.value.map((s: any) => s.persona_name || s.name).filter(Boolean)
+)
 
 const funnelStages: FunnelStage[] = ['TOFU', 'MOFU', 'BOFU']
 
@@ -65,7 +69,7 @@ async function generateAds() {
   operationManager.start(opKey.value)
   try {
     await genRun(async () => {
-      const persona = selectedPersona.value || personas.value[0] || 'General'
+      const persona = selectedPersona.value || personaLabels.value[0] || ''
       const res = await campaignsApi.generateAd(campaignUuid.value, {
         persona_name: persona,
         funnel_stage: selectedFunnel.value,
@@ -204,7 +208,7 @@ function getAdData(ad: any): { headline: string; body: string; cta: string; fram
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('adgen.persona') }}</label>
             <select v-model="selectedPersona" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none" data-loc="campaigns.adgen.filter-persona">
               <option value="">{{ t('adgen.allPersonas') }}</option>
-              <option v-for="p in personas" :key="p" :value="p">{{ p }}</option>
+              <option v-for="p in personaLabels" :key="p" :value="p">{{ p }}</option>
             </select>
           </div>
           <div>

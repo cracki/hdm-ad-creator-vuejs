@@ -11,7 +11,7 @@ import {
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import Breadcrumb from '@/shared/components/Breadcrumb.vue'
-import { useCampaign, useCampaignSteps } from '../queries'
+import { useCampaign } from '../queries'
 import { exportCampaignPDF, exportCampaignPPTX } from '@/shared/utils/exportCampaign'
 
 const route = useRoute()
@@ -20,7 +20,12 @@ const { t } = useI18n()
 
 const campaignUuid = computed(() => route.params.campaignUuid as string)
 const { data: campaign, isLoading } = useCampaign(campaignUuid)
-const { data: stepsData } = useCampaignSteps(campaignUuid)
+
+const stepsData = computed(() => {
+  const latest = (campaign.value as any)?.latest_steps
+  if (!latest) return []
+  return Object.values(latest) as any[]
+})
 
 const exporting = ref(false)
 const showExportMenu = ref(false)
@@ -65,11 +70,26 @@ const STEPS: StepDef[] = [
 
 
 function isStepDone(step: StepDef): boolean {
+  const c = campaign.value as any
+  if (step.flag === '_platform_selected') {
+    return (c?.context_payload?.selected_platforms?.length ?? 0) > 0
+  }
+  if (step.flag === '_ads_strategy_done') {
+    const platforms: string[] = c?.context_payload?.selected_platforms ?? []
+    if (platforms.length === 0) return false
+    return platforms.every((p: string) => c?.[`${p}_ads_completed`])
+  }
+  if (step.flag === '_ads_generated' || step.flag === '_visuals_generated') {
+    return false
+  }
+  if (step.flag === '_review') {
+    return c?.status === 'completed'
+  }
   if (step.flag.startsWith('_')) {
     const idx = STEPS.indexOf(step)
     return idx > 0 ? STEPS.slice(0, idx).every((s) => isStepDone(s)) : false
   }
-  return (campaign.value as any)?.[step.flag] ?? false
+  return c?.[step.flag] ?? false
 }
 
 function canNavigate(step: StepDef): boolean {
@@ -110,11 +130,9 @@ const contentSummary = computed(() => summary.value.content_strategy)
 const selectedPlatforms = computed<string[]>(() => contextPayload.value.selected_platforms || [])
 
 const completedCount = computed(() => {
-  if (!campaign.value) return 0
-  const c = campaign.value as any
-  return [c.segmentation_completed, c.ppc_viability_completed, c.funnel_completed, c.content_strategy_completed, c.meta_ads_completed, c.google_ads_completed, c.linkedin_ads_completed].filter(Boolean).length
+  return STEPS.filter((s) => isStepDone(s)).length
 })
-const totalSteps = 7
+const totalSteps = STEPS.length
 const progressPercent = computed(() => Math.round((completedCount.value / totalSteps) * 100))
 
 // Platform-specific ad completion

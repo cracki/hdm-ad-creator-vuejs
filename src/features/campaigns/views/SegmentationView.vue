@@ -29,7 +29,12 @@ const productDescription = ref('')
 const opKey = computed(() => `${campaignUuid.value}:segmentation`)
 const { data: result, loading, error, run } = useAsyncOperation<any>()
 
-const stepData = computed(() => result.value?.step)
+const stepData = computed(() => {
+  if (result.value?.step) return result.value.step
+  const latest = (campaign.value as any)?.latest_steps?.segmentation
+  if (latest?.status === 'completed') return latest
+  return undefined
+})
 const isAlreadyCompleted = computed(() => campaign.value?.segmentation_completed ?? false)
 const segments = computed(() => {
   const payload = stepData.value?.response_payload
@@ -51,12 +56,27 @@ async function runSegmentation() {
   try {
     await run(async () => {
       const { campaignsApi } = await import('../api')
-      return (await campaignsApi.runSegmentation(campaignUuid.value, {
+      const res = await campaignsApi.runSegmentation(campaignUuid.value, {
         business_type: businessType.value || undefined,
         location: location.value || undefined,
         product_description: productDescription.value || undefined,
         include_deep_research: true,
-      })).data
+      })
+      const rawSegments = res.data?.step?.response_payload?.segments
+        ?? res.data?.step?.response_payload?.data?.segments ?? []
+      const segments = rawSegments.map((s: any) => ({
+        ...s,
+        persona_name: s.persona_name || s.name || '',
+      }))
+      if (segments.length) {
+        await campaignsApi.update(campaignUuid.value, {
+          context_payload: {
+            ...((campaign.value as any)?.context_payload ?? {}),
+            segmentation_data: { segments },
+          },
+        })
+      }
+      return res.data
     })
   } finally {
     operationManager.finish(opKey.value)
@@ -88,7 +108,7 @@ function goNext() {
           <Brain class="h-5 w-5 text-primary-foreground" />
         </div>
         <div class="min-w-0 flex-1">
-          <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">{{ t('smart.stepOf') }} 1 / 4</div>
+          <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">{{ t('smart.stepOf') }} 1 / 9</div>
           <h2 class="text-xl sm:text-2xl font-semibold tracking-tight mt-1">{{ t('smart.s1') }}</h2>
           <p class="text-sm text-muted-foreground mt-1">{{ t('seg.description') }}</p>
         </div>
@@ -144,7 +164,7 @@ function goNext() {
           <div class="text-xs text-muted-foreground">{{ t('seg.analyzingDesc') }}</div>
         </div>
 
-        <!-- Already completed (no results loaded in this session) -->
+        <!-- Already completed (no data from latest_steps either) -->
         <div v-if="isAlreadyCompleted && !stepData && !loading" class="surface-card p-8 text-center mb-6">
           <div class="h-10 w-10 rounded-lg bg-success/15 border border-success/40 grid place-items-center mx-auto mb-3">
             <Check class="h-5 w-5 text-success" />
