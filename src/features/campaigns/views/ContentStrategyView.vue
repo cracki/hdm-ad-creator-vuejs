@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Grid3x3, ArrowLeft, ArrowRight, Loader2, AlertCircle, RefreshCw, Shield, Check } from 'lucide-vue-next'
+import StepExportButton from '@/shared/components/StepExportButton.vue'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import { useCampaign } from '../queries'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
+import { exportContentStrategy } from '@/shared/utils/exportStep'
 
 const route = useRoute()
 const router = useRouter()
@@ -99,6 +101,23 @@ async function runContentStrategy() {
     })
   } finally {
     operationManager.finish(opKey.value)
+  }
+}
+
+const exporting = ref(false)
+const hasExportData = computed(() => !!stepData.value?.response_payload)
+
+async function handleExport(format: 'csv' | 'pdf' | 'pptx') {
+  if (!stepData.value?.response_payload) return
+  exporting.value = true
+  try {
+    await exportContentStrategy(format, stepData.value.response_payload as Record<string, unknown>, {
+      stepName: t('smart.s5'),
+      campaignName: campaign.value?.name ?? 'Campaign',
+      brandName: campaign.value?.brand?.company_name,
+    })
+  } finally {
+    exporting.value = false
   }
 }
 </script>
@@ -193,9 +212,12 @@ async function runContentStrategy() {
         <div v-if="stepData && !loading">
           <div class="flex items-center justify-between mb-4">
             <div class="text-xs text-muted-foreground">{{ t('content.itemsFound', { count: matrix.length }) }}</div>
-            <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="runContentStrategy">
-              <RefreshCw class="h-3 w-3" /> {{ t('seg.reRun') }}
-            </button>
+            <div class="flex items-center gap-2">
+              <StepExportButton :disabled="!hasExportData || exporting" @export="handleExport" />
+              <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="runContentStrategy">
+                <RefreshCw class="h-3 w-3" /> {{ t('seg.reRun') }}
+              </button>
+            </div>
           </div>
 
           <!-- Persona x Funnel grid -->
@@ -280,10 +302,10 @@ async function runContentStrategy() {
             </button>
             <button
               class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5"
-              data-loc="campaigns.content.complete-btn"
-              @click="router.push(`/campaigns/${campaignUuid}`)"
+              data-loc="campaigns.content.next-btn"
+              @click="router.push(`/campaigns/${campaignUuid}/ads-strategy`)"
             >
-              {{ t('content.complete') }} <ArrowRight class="h-3.5 w-3.5" />
+              {{ t('smart.approveContinue') }} {{ t('smart.continue') }} <ArrowRight class="h-3.5 w-3.5" />
             </button>
           </div>
         </div>

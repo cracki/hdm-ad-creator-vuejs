@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Image as ImageIcon, ArrowLeft, ArrowRight, Loader2, AlertCircle, RefreshCw, Shield, Download } from 'lucide-vue-next'
+import StepExportButton from '@/shared/components/StepExportButton.vue'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
@@ -9,6 +10,7 @@ import { useCampaignAds, useCampaign } from '../queries'
 import { campaignsApi } from '../api'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
+import { exportVisuals } from '@/shared/utils/exportStep'
 
 const route = useRoute()
 const router = useRouter()
@@ -72,6 +74,21 @@ function adPlatformLabel(p: string) {
 }
 
 const isPrereqMet = computed(() => adsList.value.length > 0)
+
+const visExporting = ref(false)
+async function handleVisualExport(format: 'csv' | 'pdf' | 'pptx') {
+  if (!results.value.length) return
+  visExporting.value = true
+  try {
+    await exportVisuals(format, { results: results.value } as unknown as Record<string, unknown>, {
+      stepName: t('visual.title'),
+      campaignName: campaign.value?.name ?? 'Campaign',
+      brandName: campaign.value?.brand?.company_name,
+    })
+  } finally {
+    visExporting.value = false
+  }
+}
 </script>
 
 <template>
@@ -195,7 +212,10 @@ const isPrereqMet = computed(() => adsList.value.length > 0)
 
         <!-- Visual results -->
         <div v-if="results.length > 0" class="space-y-4 mb-6">
-          <div class="text-xs text-muted-foreground">{{ t('visual.generated', { count: generatedCount }) }}</div>
+          <div class="flex items-center justify-between">
+            <div class="text-xs text-muted-foreground">{{ t('visual.generated', { count: generatedCount }) }}</div>
+            <StepExportButton :disabled="visExporting" @export="handleVisualExport" />
+          </div>
           <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <div v-for="v in results" :key="v.campaign_ad_uuid" class="surface-card overflow-hidden">
               <div v-if="v.success && v.image_url" class="relative">

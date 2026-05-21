@@ -4,16 +4,16 @@ import type { Campaign, CampaignStep } from '@/features/campaigns/types'
 
 // ── Shared helpers ────────────────────────────────────────
 
-async function initPDF() {
+export async function initPDF() {
   const { jsPDF } = await import('jspdf')
   const autoTable = (await import('jspdf-autotable')).default
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   return { doc, autoTable }
 }
 
-type PdfCtx = { doc: any; autoTable: any }
+export type PdfCtx = { doc: any; autoTable: any }
 
-function addPdfFooter(ctx: PdfCtx) {
+export function addPdfFooter(ctx: PdfCtx) {
   const { doc } = ctx
   const pw = doc.internal.pageSize.getWidth()
   const ph = doc.internal.pageSize.getHeight()
@@ -37,7 +37,7 @@ function addPdfFooter(ctx: PdfCtx) {
   }
 }
 
-function addPdfCoverTitle(ctx: PdfCtx, title: string, subtitle: string) {
+export function addPdfCoverTitle(ctx: PdfCtx, title: string, subtitle: string) {
   const { doc } = ctx
   const pw = doc.internal.pageSize.getWidth()
   doc.setFillColor(88, 28, 135)
@@ -53,7 +53,7 @@ function addPdfCoverTitle(ctx: PdfCtx, title: string, subtitle: string) {
   doc.setTextColor(0, 0, 0)
 }
 
-async function initPPTX() {
+export async function initPPTX() {
   const PptxGenJS = (await import('pptxgenjs')).default
   const pptx: any = new PptxGenJS()
   pptx.layout = 'LAYOUT_WIDE'
@@ -78,15 +78,15 @@ async function initPPTX() {
   return { pptx, purple, white, gray, cardBg, addSlide }
 }
 
-function obj(raw: unknown): Record<string, unknown> | null {
+export function obj(raw: unknown): Record<string, unknown> | null {
   return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : null
 }
 
-function parse<T>(raw: unknown): T[] {
+export function parse<T>(raw: unknown): T[] {
   return Array.isArray(raw) ? raw as T[] : []
 }
 
-function str(raw: unknown): string {
+export function str(raw: unknown): string {
   return typeof raw === 'string' ? raw : String(raw ?? '')
 }
 

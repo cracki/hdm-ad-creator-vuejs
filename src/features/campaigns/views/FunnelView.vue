@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Layers, ArrowLeft, ArrowRight, Loader2, AlertCircle, RefreshCw, Shield, Check } from 'lucide-vue-next'
+import StepExportButton from '@/shared/components/StepExportButton.vue'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import { useCampaign } from '../queries'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
+import { exportFunnel } from '@/shared/utils/exportStep'
 
 const route = useRoute()
 const router = useRouter()
@@ -80,6 +82,23 @@ async function runFunnel() {
 
 function goNext() {
   router.push(`/campaigns/${campaignUuid.value}/content`)
+}
+
+const exporting = ref(false)
+const hasExportData = computed(() => !!stepData.value?.response_payload)
+
+async function handleExport(format: 'csv' | 'pdf' | 'pptx') {
+  if (!stepData.value?.response_payload) return
+  exporting.value = true
+  try {
+    await exportFunnel(format, stepData.value.response_payload as Record<string, unknown>, {
+      stepName: t('smart.s4'),
+      campaignName: campaign.value?.name ?? 'Campaign',
+      brandName: campaign.value?.brand?.company_name,
+    })
+  } finally {
+    exporting.value = false
+  }
 }
 </script>
 
@@ -174,9 +193,12 @@ function goNext() {
         <div v-if="stepData && !loading">
           <div class="flex items-center justify-between mb-4">
             <div class="text-xs text-muted-foreground">{{ t('funnel.stagesFound', { count: stages.length }) }}</div>
-            <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="runFunnel">
-              <RefreshCw class="h-3 w-3" /> {{ t('seg.reRun') }}
-            </button>
+            <div class="flex items-center gap-2">
+              <StepExportButton :disabled="!hasExportData || exporting" @export="handleExport" />
+              <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="runFunnel">
+                <RefreshCw class="h-3 w-3" /> {{ t('seg.reRun') }}
+              </button>
+            </div>
           </div>
 
           <!-- Funnel visualization -->

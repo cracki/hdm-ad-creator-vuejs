@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Brain, ArrowLeft, ArrowRight, Loader2, AlertCircle, MapPin, ShoppingBag, RefreshCw, Check } from 'lucide-vue-next'
 import SegmentDeepResearchRenderer from '@/shared/components/renderers/SegmentDeepResearchRenderer.vue'
+import StepExportButton from '@/shared/components/StepExportButton.vue'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
@@ -10,6 +11,7 @@ import { useCampaign } from '../queries'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { useNormalizeResponse } from '@/shared/composables/useNormalizeResponse'
 import { operationManager } from '@/infrastructure/operations/operationManager'
+import { exportSegmentation } from '@/shared/utils/exportStep'
 
 const route = useRoute()
 const router = useRouter()
@@ -63,8 +65,8 @@ async function runSegmentation() {
         include_deep_research: true,
       })
       const payload = res.data?.step?.response_payload as any
-      const rawSegments: any[] = payload?.segments
-        ?? payload?.data?.segments ?? []
+      const rawSegments: any[] = payload?.data?.segments
+        ?? payload?.segments ?? []
       const segments = rawSegments.map((s: any) => ({
         ...s,
         persona_name: s.persona_name || s.name || '',
@@ -86,6 +88,23 @@ async function runSegmentation() {
 
 function goNext() {
   router.push(`/campaigns/${campaignUuid.value}/ppc-viability`)
+}
+
+const exporting = ref(false)
+const hasExportData = computed(() => !!stepData.value?.response_payload)
+
+async function handleExport(format: 'csv' | 'pdf' | 'pptx') {
+  if (!stepData.value?.response_payload) return
+  exporting.value = true
+  try {
+    await exportSegmentation(format, stepData.value.response_payload as Record<string, unknown>, {
+      stepName: t('smart.s1'),
+      campaignName: campaign.value?.name ?? 'Campaign',
+      brandName: campaign.value?.brand?.company_name,
+    })
+  } finally {
+    exporting.value = false
+  }
 }
 </script>
 
@@ -200,9 +219,12 @@ function goNext() {
         <div v-if="stepData && !loading">
           <div class="flex items-center justify-between mb-4">
             <div class="text-xs text-muted-foreground">{{ t('seg.segmentsFound', { count: segments.length }) }}</div>
-            <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="runSegmentation">
-              <RefreshCw class="h-3 w-3" /> {{ t('seg.reRun') }}
-            </button>
+            <div class="flex items-center gap-2">
+              <StepExportButton :disabled="!hasExportData || exporting" @export="handleExport" />
+              <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="runSegmentation">
+                <RefreshCw class="h-3 w-3" /> {{ t('seg.reRun') }}
+              </button>
+            </div>
           </div>
 
           <div class="grid sm:grid-cols-2 gap-3 mb-6">

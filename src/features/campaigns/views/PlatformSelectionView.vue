@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { MonitorSmartphone, ArrowLeft, ArrowRight, Loader2, Shield, Check } from 'lucide-vue-next'
+import { MonitorSmartphone, ArrowLeft, ArrowRight, Loader2, Shield, Check, X } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
@@ -26,12 +26,13 @@ const isPrereqMet = computed(() => campaign.value?.content_strategy_completed ??
 interface PlatformOption {
   key: 'meta' | 'google' | 'linkedin'
   label: string
+  description: string
 }
 
 const platforms: PlatformOption[] = [
-  { key: 'meta', label: 'Meta (Facebook & Instagram)' },
-  { key: 'google', label: 'Google Ads' },
-  { key: 'linkedin', label: 'LinkedIn Ads' },
+  { key: 'meta', label: 'Meta (Facebook & Instagram)', description: 'Reach audiences across Facebook and Instagram feeds, Stories, Reels, and more.' },
+  { key: 'google', label: 'Google Ads', description: 'Search, Display, YouTube, Shopping, and Performance Max campaigns.' },
+  { key: 'linkedin', label: 'LinkedIn Ads', description: 'B2B targeting by job title, company size, industry, and seniority.' },
 ]
 
 const selected = ref<Set<string>>(new Set())
@@ -53,6 +54,11 @@ function togglePlatform(key: string) {
 
 function isSelected(key: string): boolean {
   return selected.value.has(key) || savedPlatforms.value.includes(key)
+}
+
+function isPlatformCompleted(key: string): boolean {
+  const flag = `${key}_ads_completed` as keyof typeof campaign.value
+  return !!campaign.value?.[flag]
 }
 
 async function savePlatforms() {
@@ -79,6 +85,34 @@ async function savePlatforms() {
     saving.value = false
     operationManager.finish(opKey)
   }
+}
+
+async function removePlatform(key: string) {
+  const remaining = savedPlatforms.value.filter((p) => p !== key)
+  const opKey = `${campaignUuid.value}:platform-remove`
+  if (!operationManager.canStart(opKey)) return
+  operationManager.start(opKey)
+  saving.value = true
+  error.value = null
+
+  try {
+    await campaignsApi.update(campaignUuid.value, {
+      context_payload: {
+        ...(campaign.value?.context_payload as any),
+        selected_platforms: remaining,
+      },
+    })
+    queryClient.invalidateQueries({ queryKey: ['campaigns', campaignUuid] })
+  } catch (e: any) {
+    error.value = e?.response?.data?.detail ?? e?.message ?? 'Failed to remove'
+  } finally {
+    saving.value = false
+    operationManager.finish(opKey)
+  }
+}
+
+function startEditing() {
+  selected.value = new Set(savedPlatforms.value)
 }
 
 function goNext() {
@@ -138,7 +172,7 @@ function goNext() {
             {{ savedPlatforms.map((p) => platforms.find((pl) => pl.key === p)?.label ?? p).join(', ') }}
           </div>
           <div class="flex items-center justify-center gap-3">
-            <button class="h-9 px-4 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="selected = new Set(savedPlatforms)">
+            <button class="h-9 px-4 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="startEditing">
               {{ t('platform.edit') }}
             </button>
             <button
@@ -150,7 +184,39 @@ function goNext() {
           </div>
         </div>
 
-        <!-- Selection -->
+        <!-- Saved platforms with remove option (when not editing) -->
+        <div v-if="isAlreadySaved && selected.size === 0" class="space-y-2 mb-6">
+          <div
+            v-for="key in savedPlatforms"
+            :key="'saved-' + key"
+            class="surface-card p-4 flex items-center justify-between gap-4"
+          >
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="h-8 w-8 rounded-lg bg-overlay-light grid place-items-center shrink-0">
+                <MonitorSmartphone class="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div class="min-w-0">
+                <div class="text-sm font-medium">{{ platforms.find((pl) => pl.key === key)?.label ?? key }}</div>
+                <div class="text-[11px] text-muted-foreground">{{ platforms.find((pl) => pl.key === key)?.description }}</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span v-if="isPlatformCompleted(key)" class="text-[11px] text-success flex items-center gap-1">
+                <Check class="h-3 w-3" /> {{ t('status.completed') }}
+              </span>
+              <button
+                :disabled="saving"
+                class="h-7 w-7 rounded-md border border-border/40 grid place-items-center hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive transition text-muted-foreground disabled:opacity-50"
+                :title="t('platform.remove')"
+                @click="removePlatform(key)"
+              >
+                <X class="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Selection (editing mode) -->
         <div v-if="!isAlreadySaved || selected.size > 0" class="space-y-3 mb-6">
           <div
             v-for="p in platforms"
@@ -170,8 +236,9 @@ function goNext() {
             >
               <Check v-if="isSelected(p.key)" class="h-3 w-3 text-primary-foreground" />
             </div>
-            <div class="flex-1">
+            <div class="flex-1 min-w-0">
               <div class="text-sm font-medium">{{ p.label }}</div>
+              <div class="text-[11px] text-muted-foreground mt-0.5">{{ p.description }}</div>
             </div>
           </div>
         </div>

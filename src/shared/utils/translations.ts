@@ -286,6 +286,7 @@ export const translations = {
   'platform.edit': { en: 'Edit', ar: 'تعديل', fa: 'ویرایش' },
   'platform.saveContinue': { en: 'Save & Continue', ar: 'حفظ ومتابعة', fa: 'ذخیره و ادامه' },
   'platform.saving': { en: 'Saving…', ar: 'جارٍ الحفظ…', fa: 'در حال ذخیره…' },
+  'platform.remove': { en: 'Remove platform', ar: 'إزالة المنصة', fa: 'حذف پلتفرم' },
 
   // Ads Strategy
   'strategy.title': { en: 'Ads Strategy', ar: 'استراتيجية الإعلانات', fa: 'استراتژی آگهی' },
@@ -312,6 +313,7 @@ export const translations = {
   'adgen.quantity': { en: 'Quantity', ar: 'الكمية', fa: 'تعداد' },
   'adgen.ready': { en: 'Ready to generate ads', ar: 'جاهز لتوليد الإعلانات', fa: 'آماده تولید آگهی' },
   'adgen.readyDesc': { en: 'Select persona, funnel stage and platform, then generate.', ar: 'اختر الشخصية ومرحلة القمع والمنصة، ثم ولّد.', fa: 'پرسونا، مرحله قیف و پلتفرم را انتخاب کن، بعد تولید کن.' },
+  'adgen.prereqRequired': { en: 'Complete all required campaign steps first.', ar: 'أكمل جميع خطوات الحملة المطلوبة أولاً.', fa: 'ابتدا تمام مراحل مورد نیاز کمپین را تکمیل کنید.' },
   'adgen.generate': { en: 'Generate Ads', ar: 'توليد الإعلانات', fa: 'تولید آگهی' },
   'adgen.generating': { en: 'Generating ads…', ar: 'جارٍ توليد الإعلانات…', fa: 'در حال تولید آگهی…' },
   'adgen.generatingDesc': { en: 'Creating ad copy for selected persona and platform.', ar: 'جارٍ إنشاء نصوص إعلانية للشخصية والمنصة المختارة.', fa: 'در حال ساخت متن آگهی برای پرسونا و پلتفرم انتخابی.' },

@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Sparkles, ArrowLeft, ArrowRight, Loader2, AlertCircle, RefreshCw, Shield, Trash2, Copy, Download } from 'lucide-vue-next'
+import { Sparkles, ArrowLeft, ArrowRight, Loader2, AlertCircle, RefreshCw, Shield, Trash2, Copy } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { useToast } from '@/shared/composables/useToast'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import { exportCsv } from '@/shared/utils/csv'
+import StepExportButton from '@/shared/components/StepExportButton.vue'
 import { useCampaign, useCampaignAds } from '../queries'
 import { campaignsApi } from '../api'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
+import { exportAds } from '@/shared/utils/exportStep'
 import type { CampaignAdPlatform, FunnelStage } from '../types'
 
 const route = useRoute()
@@ -45,9 +47,12 @@ const personaObjects = computed(() => {
   return seg
 })
 
-const personaLabels = computed(() =>
-  personaObjects.value.map((s: any) => s.persona_name || s.name).filter(Boolean)
-)
+const personaLabels = computed(() => {
+  const names = personaObjects.value.map((s: any) => s.persona_name || s.name).filter(Boolean)
+  if (names.length) return names
+  if (!adsList.value.length) return []
+  return [...new Set(adsList.value.map((ad: any) => ad.persona).filter(Boolean))]
+})
 
 const funnelStages: FunnelStage[] = ['TOFU', 'MOFU', 'BOFU']
 
@@ -69,7 +74,7 @@ async function generateAds() {
   operationManager.start(opKey.value)
   try {
     await genRun(async () => {
-      const persona = selectedPersona.value || personaLabels.value[0] || ''
+      const persona = selectedPersona.value || personaLabels.value[0] || 'General'
       const res = await campaignsApi.generateAd(campaignUuid.value, {
         persona_name: persona,
         funnel_stage: selectedFunnel.value,
@@ -147,6 +152,22 @@ function getAdData(ad: any): { headline: string; body: string; cta: string; fram
     score: d.score ?? d.quality_score ?? 0,
   }
 }
+
+const adExporting = ref(false)
+async function handleAdExport(format: 'csv' | 'pdf' | 'pptx') {
+  if (!adsList.value.length) return
+  if (format === 'csv') { exportAdsCsv(); return }
+  adExporting.value = true
+  try {
+    await exportAds(format, adsList.value, {
+      stepName: t('adgen.title'),
+      campaignName: campaign.value?.name ?? 'Campaign',
+      brandName: campaign.value?.brand?.company_name,
+    })
+  } finally {
+    adExporting.value = false
+  }
+}
 </script>
 
 <template>
@@ -174,7 +195,7 @@ function getAdData(ad: any): { headline: string; body: string; cta: string; fram
         </div>
         <button
           v-if="adsList.length > 0"
-          class="h-10 px-4 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5 shrink-0"
+          class="h-10 px-4 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
           data-loc="campaigns.adgen.generate-btn"
           @click="generateAds"
           :disabled="genLoading || !isPrereqMet"
@@ -240,12 +261,14 @@ function getAdData(ad: any): { headline: string; body: string; cta: string; fram
           <div class="text-sm font-medium mb-1">{{ t('adgen.ready') }}</div>
           <div class="text-xs text-muted-foreground mb-4">{{ t('adgen.readyDesc') }}</div>
           <button
-            class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5 mx-auto"
+            class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5 mx-auto disabled:opacity-40 disabled:cursor-not-allowed"
             data-loc="campaigns.adgen.generate-btn"
             @click="generateAds"
+            :disabled="!isPrereqMet"
           >
             <Sparkles class="h-3.5 w-3.5" /> {{ t('adgen.generate') }}
           </button>
+          <div v-if="!isPrereqMet" class="text-xs text-amber-400 mt-3">{{ t('adgen.prereqRequired') }}</div>
         </div>
 
         <div v-if="genLoading" class="surface-card p-8 text-center mb-6">
@@ -267,13 +290,7 @@ function getAdData(ad: any): { headline: string; body: string; cta: string; fram
           <div class="flex items-center justify-between">
             <div class="text-xs text-muted-foreground">{{ t('adgen.adsFound', { count: adsList.length }) }}</div>
             <div class="flex items-center gap-2">
-              <button
-                class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-light transition"
-                data-loc="campaigns.adgen.export-csv-btn"
-                @click="exportAdsCsv"
-              >
-                <Download class="h-3 w-3" /> {{ t('common.exportCsv') }}
-              </button>
+              <StepExportButton :disabled="!adsList.length || adExporting" @export="handleAdExport" />
               <button
                 class="h-8 px-3 rounded-lg border border-destructive/40 text-xs text-destructive flex items-center gap-1.5 hover:bg-destructive/10 transition"
                 data-loc="campaigns.adgen.clear-all-btn"

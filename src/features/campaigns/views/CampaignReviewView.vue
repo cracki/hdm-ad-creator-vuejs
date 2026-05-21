@@ -2,12 +2,14 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Download, ArrowLeft, Loader2, Check } from 'lucide-vue-next'
+import StepExportButton from '@/shared/components/StepExportButton.vue'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import { useCampaign, useCampaignAds } from '../queries'
 import { useCompleteCampaign } from '../queries'
 import { operationManager } from '@/infrastructure/operations/operationManager'
+import { exportReview } from '@/shared/utils/exportStep'
 
 const route = useRoute()
 const router = useRouter()
@@ -60,6 +62,21 @@ function adPlatformLabel(p: string) {
   const map: Record<string, string> = { meta: 'Meta', google: 'Google', linkedin: 'LinkedIn' }
   return map[p] ?? p
 }
+
+const reviewExporting = ref(false)
+async function handleReviewExport(format: 'csv' | 'pdf' | 'pptx') {
+  if (!campaign.value) return
+  reviewExporting.value = true
+  try {
+    await exportReview(format, campaign.value, adsList.value, {
+      stepName: 'Campaign Review',
+      campaignName: campaign.value?.name ?? 'Campaign',
+      brandName: campaign.value?.brand?.company_name,
+    })
+  } finally {
+    reviewExporting.value = false
+  }
+}
 </script>
 
 <template>
@@ -85,6 +102,7 @@ function adPlatformLabel(p: string) {
           <h2 class="text-xl sm:text-2xl font-semibold tracking-tight mt-1">{{ t('review.title') }}</h2>
           <p class="text-sm text-muted-foreground mt-1">{{ t('review.description') }}</p>
         </div>
+        <StepExportButton :disabled="!campaign || reviewExporting" @export="handleReviewExport" />
       </header>
 
       <div v-if="isLoading" class="flex justify-center py-12">
