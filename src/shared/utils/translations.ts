@@ -1039,6 +1039,28 @@ export const translations = {
     fa: 'ما تنها اطلاعات لازم برای ارائه و بهبود خدمات خود را جمع‌آوری می‌کنیم. داده‌های برند، محتوای کمپین و جزئیات حساب شما به‌صورت امن ذخیره می‌شود و هرگز به اشخاص ثالث فروخته نمی‌شود. ما از تحلیل‌ها برای بهبود عملکرد پلتفرم استفاده می‌کنیم. در هر زمان می‌توانید درخواست حذف داده‌های خود را بدهید. برای سؤالات، با تیم پشتیبانی تماس بگیرید.',
   },
   'popup.close': { en: 'Close', ar: 'إغلاق', fa: 'بستن' },
+
+  // ---------- Visual Settings ----------
+  'vsettings.title': { en: 'Visual Settings', ar: 'الإعدادات البصرية', fa: 'تنظیمات بصری' },
+  'vsettings.description': { en: 'Customize the appearance to your preference. Changes apply instantly.', ar: 'خصّص المظهر حسب تفضيلك. يتم تطبيق التغييرات فورًا.', fa: 'ظاهر اپلیکیشن را بر اساس سلیقه خود سفارشی کنید. تغییرات بلافاصله اعمال می‌شوند.' },
+  'vsettings.fontSize': { en: 'Font Size', ar: 'حجم الخط', fa: 'اندازه قلم' },
+  'vsettings.fontSize.small': { en: 'Small', ar: 'صغير', fa: 'کوچک' },
+  'vsettings.fontSize.default': { en: 'Default', ar: 'افتراضي', fa: 'پیش‌فرض' },
+  'vsettings.fontSize.large': { en: 'Large', ar: 'كبير', fa: 'بزرگ' },
+  'vsettings.contrast': { en: 'Text Contrast', ar: 'تباين النص', fa: 'تضاد متن' },
+  'vsettings.contrast.default': { en: 'Default', ar: 'افتراضي', fa: 'پیش‌فرض' },
+  'vsettings.contrast.enhanced': { en: 'Enhanced', ar: 'مُحسَّن', fa: 'افزایش‌یافته' },
+  'vsettings.contrast.maximum': { en: 'Maximum', ar: 'أقصى', fa: 'حداکثر' },
+  'vsettings.focusMode': { en: 'Focus Mode', ar: 'وضع التركيز', fa: 'حالت تمرکز' },
+  'vsettings.focusModeDesc': { en: 'Hide decorative effects like aurora and grid backgrounds', ar: 'إخفاء المؤثرات الزخرفية مثل الشفق وخلفيات الشبكة', fa: 'پنهان کردن جلوه‌های تزئینی مثل شفق و پس‌زمینه شبکه‌ای' },
+  'vsettings.reducedMotion': { en: 'Reduced Motion', ar: 'تقليل الحركة', fa: 'کاهش حرکت' },
+  'vsettings.reducedMotionDesc': { en: 'Minimize all animations and transitions', ar: 'تقليل جميع الحركات والانتقالات', fa: 'کاهش تمام انیمیشن‌ها و انتقال‌ها' },
+  'vsettings.dyslexiaFont': { en: 'Accessibility Font', ar: 'خط إمكانية الوصول', fa: 'فونت دسترسی‌پذیر' },
+  'vsettings.dyslexiaFontDesc': { en: 'Use a highly readable font designed for better legibility', ar: 'استخدم خطًا عالي القراءة مصمم لتحسين الوضوح', fa: 'استفاده از فونت با خوانایی بالا طراحی‌شده برای وضوح بهتر' },
+  'vsettings.reset': { en: 'Reset to defaults', ar: 'إعادة للإعدادات الافتراضية', fa: 'بازگشت به پیش‌فرض' },
+  'vsettings.typography': { en: 'Typography', ar: 'الطباعة', fa: 'تایپوگرافی' },
+  'vsettings.readability': { en: 'Readability', ar: 'القراءة', fa: 'خوانایی' },
+  'vsettings.display': { en: 'Display', ar: 'العرض', fa: 'نمایش' },
 } as const
 
 export type TKey = keyof typeof translations

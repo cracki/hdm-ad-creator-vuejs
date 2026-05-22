@@ -189,6 +189,20 @@
   to { opacity: 1; transform: scale(1); }
 }
 
+/* ─── Visual settings overrides ─── */
+html.focus-mode .aurora,
+html.focus-mode .grid-bg { display: none !important; }
+html.focus-mode .surface-card { box-shadow: none !important; --shadow-card: none; }
+
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
 @layer base {
   * { border-color: var(--color-border); }
   main { overflow-x: hidden; }

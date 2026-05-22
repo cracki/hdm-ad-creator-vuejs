@@ -1,13 +1,24 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, watch } from 'vue'
 import AppSidebar from './Sidebar.vue'
 import MobileBottomNav from './MobileBottomNav.vue'
 import { useProductTour } from '@/shared/composables/useProductTour'
+import { useVisualSettings } from '@/shared/composables/useVisualSettings'
+import { useAuthStore } from '@/features/auth/store'
 
 const { autoStart } = useProductTour()
+const visualSettings = useVisualSettings()
+const auth = useAuthStore()
 
 onMounted(() => {
   autoStart()
+  if (auth.user) {
+    visualSettings.initForUser(auth.user.user_uuid)
+  }
+})
+
+watch(() => auth.user, (user) => {
+  visualSettings.initForUser(user?.user_uuid)
 })
 </script>
 

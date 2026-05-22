@@ -3,7 +3,7 @@ import { useRoute, useRouter } from 'vue-router'
 import {
   LayoutDashboard, Building2, Megaphone, Library,
   ChevronRight, TrendingUp, Search,
-  MessageSquare, Grid3X3, Rocket, LogOut, User, X,
+  MessageSquare, Grid3X3, Rocket, LogOut, User, X, Settings2,
 } from 'lucide-vue-next'
 import Logo from './Logo.vue'
 import LangSwitch from './LangSwitch.vue'
@@ -199,6 +199,14 @@ function isActive(item: NavItem): boolean {
         </div>
       </div>
       <button
+        class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-overlay-light transition"
+        data-loc="sidebar.settings"
+        @click="router.push({ name: 'settings' })"
+      >
+        <Settings2 class="h-4 w-4" />
+        <span class="font-medium">{{ t('nav.settings') }}</span>
+      </button>
+      <button
         class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition"
         data-loc="sidebar.logout"
         @click="handleLogout"
@@ -266,6 +274,14 @@ function isActive(item: NavItem): boolean {
             >
               <User class="h-4 w-4" />
               <span class="font-medium">{{ t('nav.profile') }}</span>
+            </button>
+            <button
+              class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-overlay-light transition"
+              data-loc="sidebar.mobile-settings"
+              @click="close(); router.push({ name: 'settings' })"
+            >
+              <Settings2 class="h-4 w-4" />
+              <span class="font-medium">{{ t('nav.settings') }}</span>
             </button>
             <button
               class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition"
