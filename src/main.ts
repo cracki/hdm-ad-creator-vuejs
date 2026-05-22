@@ -21,7 +21,9 @@ import { VueQueryPlugin } from '@tanstack/vue-query'
 import App from './App.vue'
 import router from './infrastructure/router'
 import { registerServiceWorker } from './infrastructure/pwa'
+import { setupProgress } from './infrastructure/progress'
 import './styles.css'
+import './styles/pace.css'
 
 declare const __APP_VERSION__: string
 declare const __APP_COMMIT__: string
@@ -39,6 +41,7 @@ const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
+setupProgress(router)
 app.use(VueQueryPlugin, {
   queryClientConfig: {
     defaultOptions: {
