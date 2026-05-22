@@ -3,9 +3,11 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Sparkles, ArrowLeft, ArrowRight, Loader2, AlertCircle, RefreshCw, Shield, Trash2, Copy } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
+import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { useToast } from '@/shared/composables/useToast'
 import { usePageActions } from '@/shared/composables/usePageActions'
+import { useConfetti } from '@/shared/composables/useConfetti'
 import { exportCsv } from '@/shared/utils/csv'
 import StepExportButton from '@/shared/components/StepExportButton.vue'
 import { useCampaign, useCampaignAds } from '../queries'
@@ -19,6 +21,7 @@ const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
 const toast = useToast()
+const confetti = useConfetti()
 
 const campaignUuid = computed(() => route.params.campaignUuid as string)
 const { data: campaign, isLoading: campaignLoading } = useCampaign(campaignUuid)
@@ -140,6 +143,7 @@ function exportAdsCsv() {
     { key: 'score', header: 'Score' },
   ])
   toast.success(t('common.exportCsv'))
+  confetti.trigger()
 }
 
 function getAdData(ad: any): { headline: string; body: string; cta: string; framework: string; score: number } {
@@ -164,6 +168,7 @@ async function handleAdExport(format: 'csv' | 'pdf' | 'pptx') {
       campaignName: campaign.value?.name ?? 'Campaign',
       brandName: campaign.value?.brand?.company_name,
     })
+    confetti.trigger()
   } finally {
     adExporting.value = false
   }
@@ -206,8 +211,8 @@ async function handleAdExport(format: 'csv' | 'pdf' | 'pptx') {
         </button>
       </header>
 
-      <div v-if="campaignLoading || adsLoading" class="flex justify-center py-12">
-        <Loader2 class="h-6 w-6 animate-spin text-primary" />
+      <div v-if="campaignLoading || adsLoading" class="py-12">
+        <AiLoadingAnimation :message="t('adgen.title')" size="sm" />
       </div>
 
       <div v-else-if="!isPrereqMet" class="surface-card p-8 text-center">
@@ -271,10 +276,8 @@ async function handleAdExport(format: 'csv' | 'pdf' | 'pptx') {
           <div v-if="!isPrereqMet" class="text-xs text-amber-400 mt-3">{{ t('adgen.prereqRequired') }}</div>
         </div>
 
-        <div v-if="genLoading" class="surface-card p-8 text-center mb-6">
-          <Loader2 class="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <div class="text-sm font-medium mb-1">{{ t('adgen.generating') }}</div>
-          <div class="text-xs text-muted-foreground">{{ t('adgen.generatingDesc') }}</div>
+        <div v-if="genLoading" class="surface-card p-8 mb-6">
+          <AiLoadingAnimation :message="t('adgen.generating')" :description="t('adgen.generatingDesc')" />
         </div>
 
         <div v-if="genError" class="surface-card p-4 flex items-center gap-3 mb-4">

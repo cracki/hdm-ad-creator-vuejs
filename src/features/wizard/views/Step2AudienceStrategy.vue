@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Users, Loader2, AlertCircle, RefreshCw, Check, ShoppingBag, MapPin } from 'lucide-vue-next'
+import { Users, AlertCircle, RefreshCw, Check, ShoppingBag, MapPin } from 'lucide-vue-next'
+import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import SegmentDeepResearchRenderer from '@/shared/components/renderers/SegmentDeepResearchRenderer.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { campaignsApi } from '@/features/campaigns/api'
@@ -92,10 +93,8 @@ async function runSegmentation() {
     </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="surface-card p-8 text-center">
-      <Loader2 class="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-      <div class="text-sm font-medium mb-1">{{ t('seg.analyzing') }}</div>
-      <div class="text-xs text-muted-foreground">{{ t('seg.analyzingDesc') }}</div>
+    <div v-if="loading" class="surface-card p-8">
+      <AiLoadingAnimation :message="t('seg.analyzing')" :description="t('seg.analyzingDesc')" />
     </div>
 
     <!-- Already completed -->

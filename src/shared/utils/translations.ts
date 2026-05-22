@@ -1061,6 +1061,9 @@ export const translations = {
   'vsettings.typography': { en: 'Typography', ar: 'الطباعة', fa: 'تایپوگرافی' },
   'vsettings.readability': { en: 'Readability', ar: 'القراءة', fa: 'خوانایی' },
   'vsettings.display': { en: 'Display', ar: 'العرض', fa: 'نمایش' },
+  'vsettings.appearance': { en: 'Appearance', ar: 'المظهر', fa: 'ظاهر' },
+  'vsettings.theme': { en: 'Theme', ar: 'السمة', fa: 'تم' },
+  'vsettings.language': { en: 'Language', ar: 'اللغة', fa: 'زبان' },
 } as const
 
 export type TKey = keyof typeof translations

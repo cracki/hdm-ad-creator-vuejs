@@ -6,8 +6,6 @@ import { useI18n } from '@/shared/utils/i18n'
 import { useAuthStore } from '@/features/auth/store'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import { useMobileDrawer } from '@/shared/composables/useMobileDrawer'
-import LangSwitch from './LangSwitch.vue'
-import ThemeToggle from '@/shared/components/ThemeToggle.vue'
 
 defineProps<{
   title?: string
@@ -114,12 +112,6 @@ function getUserInitials(): string {
           </template>
         </div>
         <div v-if="showMobileActions" class="fixed inset-0 z-40" @click="showMobileActions = false" />
-      </div>
-
-      <ThemeToggle />
-
-      <div class="hidden sm:block">
-        <LangSwitch />
       </div>
 
       <div class="relative">

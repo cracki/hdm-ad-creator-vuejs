@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Grid3x3, Loader2, AlertCircle, RefreshCw, Check, Shield } from 'lucide-vue-next'
+import { Grid3x3, AlertCircle, RefreshCw, Check, Shield } from 'lucide-vue-next'
+import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { campaignsApi } from '@/features/campaigns/api'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
@@ -68,10 +69,8 @@ async function runContentStrategy() {
     </div>
 
     <template v-else>
-      <div v-if="loading" class="surface-card p-8 text-center">
-        <Loader2 class="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-        <div class="text-sm font-medium mb-1">{{ t('content.analyzing') }}</div>
-        <div class="text-xs text-muted-foreground">{{ t('content.analyzingDesc') }}</div>
+      <div v-if="loading" class="surface-card p-8">
+        <AiLoadingAnimation :message="t('content.analyzing')" :description="t('content.analyzingDesc')" />
       </div>
 
       <div v-if="isAlreadyCompleted && !stepData && !loading" class="surface-card p-8 text-center">

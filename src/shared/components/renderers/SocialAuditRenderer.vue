@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from '@/shared/utils/i18n'
+import { useConfetti } from '@/shared/composables/useConfetti'
 import { exportAuditPDF, exportAuditPPTX, exportAuditXLSX } from '@/shared/utils/exportSocialAudit'
 import {
   FileText, LayoutGrid, Lightbulb, BarChart3, Users, Wrench,
@@ -10,6 +11,7 @@ import {
 } from 'lucide-vue-next'
 
 const { t } = useI18n()
+const confetti = useConfetti()
 
 const props = defineProps<{
   data: Record<string, unknown>
@@ -136,6 +138,56 @@ function impactStyle(i: string): string {
   return 'text-blue-400 bg-blue-400/10'
 }
 
+function formatMetricLabel(key: string): string {
+  const abbr: Record<string, string> = { dm: 'DM', roi: 'ROI', kpi: 'KPI', cta: 'CTA', ppc: 'PPC', seo: 'SEO', api: 'API' }
+  return key
+    .replace(/_/g, ' ')
+    .split(' ')
+    .map(w => { const l = w.toLowerCase(); return abbr[l] ?? (w.charAt(0).toUpperCase() + w.slice(1)) })
+    .join(' ')
+}
+
+function formatMetricValue(val: unknown): string {
+  if (val == null) return ''
+  if (typeof val === 'string') return val
+  if (typeof val === 'number' || typeof val === 'boolean') return String(val)
+  if (Array.isArray(val)) return val.map(v => formatMetricValue(v)).join(', ')
+  if (typeof val === 'object') {
+    return Object.entries(val as Record<string, unknown>)
+      .map(([k, v]) => `${formatMetricLabel(k)}: ${formatMetricValue(v)}`)
+      .join(' • ')
+  }
+  return String(val)
+}
+
+function isMetricValueObject(val: unknown): val is Record<string, unknown> {
+  return val != null && typeof val === 'object' && !Array.isArray(val)
+}
+
+const periodColors: Record<string, { bg: string; text: string; border: string; icon: any }> = {
+  '30_days': { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/20', icon: Clock },
+  '60_days': { bg: 'bg-amber-400/10', text: 'text-amber-400', border: 'border-amber-400/20', icon: TrendingUp },
+  '90_days': { bg: 'bg-success/10', text: 'text-success', border: 'border-success/20', icon: Star },
+}
+
+const metricIconMap: Record<string, any> = {
+  reach: Eye,
+  growth: TrendingUp,
+  engagement: Activity,
+  rate: BarChart3,
+  conversion: Target,
+  subscriber: Users,
+  visit: Eye,
+  inquiry: Zap,
+  output: LayoutGrid,
+  retention: Clock,
+  generation: Zap,
+  positioning: Star,
+  save: Download,
+  watch: Eye,
+  lead: Users,
+}
+
 function monthWeeks(month: string): WeekTask[] {
   const raw = actionPlan.value?.[month]
   return Array.isArray(raw) ? raw as WeekTask[] : []
@@ -176,6 +228,7 @@ async function handleExport(format: 'pdf' | 'pptx' | 'xlsx') {
     if (format === 'pdf') await exportAuditPDF(props.data, name)
     else if (format === 'pptx') await exportAuditPPTX(props.data, name)
     else await exportAuditXLSX(props.data, name)
+    confetti.trigger()
   } finally {
     exporting.value = false
   }
@@ -221,7 +274,7 @@ function closeExportMenu(e: MouseEvent) {
       </button>
       <div
         v-if="showExportMenu"
-        class="absolute end-0 top-full mt-1.5 z-50 min-w-[180px] rounded-lg border border-border/40 bg-[#1E1B2E] shadow-lg shadow-black/30 py-1"
+        class="absolute end-0 top-full mt-1.5 z-50 min-w-[180px] rounded-lg border border-border/40 bg-popover shadow-lg py-1"
       >
         <button
           class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition"
@@ -547,30 +600,58 @@ function closeExportMenu(e: MouseEvent) {
     </div>
 
     <!-- Success Metrics Tab -->
-    <div v-else-if="activeTab === 'metrics' && successMetrics" class="space-y-4">
+    <div v-else-if="activeTab === 'metrics' && successMetrics" class="space-y-5">
       <div
-        v-for="(periodKey, pi) in ['30_days', '60_days', '90_days']"
+        v-for="periodKey in ['30_days', '60_days', '90_days']"
         :key="periodKey"
       >
-        <div class="flex items-center gap-2 text-xs font-semibold text-foreground mb-3">
-          <div class="h-6 w-6 rounded-md grid place-items-center text-[10px] font-bold"
-            :class="pi === 0 ? 'bg-blue-500/15 text-blue-400' : pi === 1 ? 'bg-amber-400/15 text-amber-400' : 'bg-success/15 text-success'"
-          >
-            {{ String(pi + 1) }}
-          </div>
-          {{ periodKey === '30_days' ? t('socialAudit.days30') : periodKey === '60_days' ? t('socialAudit.days60') : t('socialAudit.days90') }}
-        </div>
-        <div class="ms-8 grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <template v-if="successMetrics[periodKey] && typeof successMetrics[periodKey] === 'object'">
-            <div
-              v-for="(val, metricKey) in (successMetrics[periodKey] as Record<string, string>)"
-              :key="metricKey"
-              class="rounded-lg border border-border/20 bg-overlay-subtle p-3 space-y-1"
-            >
-              <div class="text-[10px] text-muted-foreground/50">{{ metricKey.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase()) }}</div>
-              <div class="text-xs text-foreground font-medium leading-relaxed">{{ val }}</div>
+        <div
+          v-if="successMetrics[periodKey] && typeof successMetrics[periodKey] === 'object'"
+          class="rounded-xl border bg-overlay-subtle overflow-hidden"
+          :class="periodColors[periodKey]?.border ?? 'border-border/30'"
+        >
+          <!-- Period header -->
+          <div class="px-4 py-3 flex items-center gap-2.5 border-b border-border/20">
+            <div class="h-7 w-7 rounded-lg grid place-items-center" :class="periodColors[periodKey]?.bg ?? 'bg-primary/10'">
+              <component :is="periodColors[periodKey]?.icon ?? Target" class="h-3.5 w-3.5" :class="periodColors[periodKey]?.text ?? 'text-primary'" />
             </div>
-          </template>
+            <span class="text-sm font-semibold" :class="periodColors[periodKey]?.text ?? 'text-foreground'">
+              {{ periodKey === '30_days' ? t('socialAudit.days30') : periodKey === '60_days' ? t('socialAudit.days60') : t('socialAudit.days90') }}
+            </span>
+          </div>
+
+          <!-- Metric cards -->
+          <div class="p-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div
+              v-for="(val, metricKey) in (successMetrics[periodKey] as Record<string, unknown>)"
+              :key="metricKey"
+              class="rounded-lg border border-border/20 bg-background/40 p-3 space-y-1.5"
+            >
+              <div class="flex items-center gap-1.5">
+                <component
+                  :is="Object.entries(metricIconMap).find(([k]) => metricKey.toLowerCase().includes(k))?.[1] ?? BarChart3"
+                  class="h-3 w-3 text-muted-foreground/50 shrink-0"
+                />
+                <span class="text-[10px] text-muted-foreground/60 font-medium">{{ formatMetricLabel(metricKey) }}</span>
+              </div>
+              <!-- Simple string value -->
+              <div v-if="!isMetricValueObject(val)" class="text-xs text-foreground font-semibold leading-relaxed ps-[18px]">
+                {{ formatMetricValue(val) }}
+              </div>
+              <!-- Object value with sub-items -->
+              <div v-else class="ps-[18px] space-y-1">
+                <div
+                  v-for="(subVal, subKey) in (val as Record<string, unknown>)"
+                  :key="subKey"
+                  class="flex items-start gap-1.5 text-xs"
+                >
+                  <span class="h-1 w-1 rounded-full bg-primary/50 mt-1.5 shrink-0" />
+                  <span class="text-muted-foreground/60">{{ formatMetricLabel(String(subKey)) }}:</span>
+                  <span class="text-foreground font-medium">{{ formatMetricValue(subVal) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

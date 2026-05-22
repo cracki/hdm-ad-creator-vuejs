@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import Topbar from '@/layout/Topbar.vue'
-import { useI18n } from '@/shared/utils/i18n'
+import { useI18n, LANGS, type Lang } from '@/shared/utils/i18n'
 import { useVisualSettings, type FontSizeLevel, type ContrastLevel } from '@/shared/composables/useVisualSettings'
-import { RotateCcw, Type, Eye, Sparkles, Minimize, Accessibility } from 'lucide-vue-next'
+import { useTheme, type ThemeMode } from '@/shared/composables/useTheme'
+import { RotateCcw, Type, Eye, Sparkles, Minimize, Accessibility, Sun, Moon, Globe, Palette } from 'lucide-vue-next'
 
-const { t } = useI18n()
+const { t, lang, setLang } = useI18n()
 const { settings, setFontSize, setContrast, setFocusMode, setReducedMotion, setDyslexiaFont, resetAll } = useVisualSettings()
+const { mode: themeMode, setMode: setThemeMode } = useTheme()
 
 const fontSizes = computed<{ value: FontSizeLevel; label: string; preview: string }[]>(() => [
   { value: 'small', label: t('vsettings.fontSize.small'), preview: 'A' },
@@ -19,6 +21,11 @@ const contrastLevels = computed<{ value: ContrastLevel; label: string }[]>(() =>
   { value: 'enhanced', label: t('vsettings.contrast.enhanced') },
   { value: 'maximum', label: t('vsettings.contrast.maximum') },
 ])
+
+const themeOptions: { value: ThemeMode; icon: any; label: string }[] = [
+  { value: 'dark', icon: Moon, label: 'Dark' },
+  { value: 'light', icon: Sun, label: 'Light' },
+]
 </script>
 
 <template>
@@ -27,6 +34,60 @@ const contrastLevels = computed<{ value: ContrastLevel; label: string }[]>(() =>
     <div class="max-w-2xl mx-auto space-y-6 animate-[fade-up_0.4s_ease-out]">
 
       <p class="text-sm text-muted-foreground">{{ t('vsettings.description') }}</p>
+
+      <!-- Appearance -->
+      <section class="surface-card p-4 sm:p-6 space-y-5">
+        <div class="flex items-center gap-2.5">
+          <div class="h-8 w-8 rounded-lg bg-primary/10 grid place-items-center">
+            <Palette class="h-4 w-4 text-primary" />
+          </div>
+          <h2 class="text-sm font-semibold">{{ t('vsettings.appearance') }}</h2>
+        </div>
+
+        <!-- Theme -->
+        <div class="space-y-2.5">
+          <span class="text-xs font-medium text-muted-foreground">{{ t('vsettings.theme') }}</span>
+          <div class="flex gap-1 sm:gap-1.5 p-1 rounded-lg bg-overlay-subtle border border-border/60">
+            <button
+              v-for="opt in themeOptions"
+              :key="opt.value"
+              :class="[
+                'flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-md text-xs font-medium transition focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-1',
+                themeMode === opt.value
+                  ? 'bg-overlay-medium text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground',
+              ]"
+              :data-loc="`settings.theme.${opt.value}`"
+              @click="setThemeMode(opt.value)"
+            >
+              <component :is="opt.icon" class="h-3.5 w-3.5" />
+              <span>{{ opt.label }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Language -->
+        <div class="space-y-2.5">
+          <span class="text-xs font-medium text-muted-foreground">{{ t('vsettings.language') }}</span>
+          <div class="flex gap-1 sm:gap-1.5 p-1 rounded-lg bg-overlay-subtle border border-border/60">
+            <button
+              v-for="l in LANGS"
+              :key="l.code"
+              :class="[
+                'flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-md text-xs font-medium transition focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-1',
+                lang === l.code
+                  ? 'bg-overlay-medium text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground',
+              ]"
+              :data-loc="`settings.lang.${l.code}`"
+              @click="setLang(l.code as Lang)"
+            >
+              <Globe class="h-3.5 w-3.5" />
+              <span>{{ l.native }}</span>
+            </button>
+          </div>
+        </div>
+      </section>
 
       <!-- Typography -->
       <section class="surface-card p-4 sm:p-6 space-y-5">

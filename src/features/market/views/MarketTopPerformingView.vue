@@ -4,12 +4,15 @@ import { TrendingUp, Loader2, AlertCircle, RefreshCw, MapPin, ShoppingBag, Downl
 import Topbar from '@/layout/Topbar.vue'
 import TopPerformingContentRenderer from '@/shared/components/renderers/TopPerformingContentRenderer.vue'
 import { useI18n } from '@/shared/utils/i18n'
+import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
+import { useConfetti } from '@/shared/composables/useConfetti'
 import { useGetTopPerformingContent } from '../queries'
 import { exportTopPerformingPDF, exportTopPerformingPPTX, exportTopPerformingXLSX } from '@/shared/utils/exportMarket'
 import type { TopPerformingContentResponse } from '../types'
 
 const { t } = useI18n()
 const topContentMutation = useGetTopPerformingContent()
+const confetti = useConfetti()
 
 const industry = ref('')
 const location = ref('')
@@ -28,6 +31,7 @@ async function handleExport(format: 'pdf' | 'pptx' | 'xlsx') {
     if (format === 'pdf') await exportTopPerformingPDF(topResult.value)
     else if (format === 'pptx') await exportTopPerformingPPTX(topResult.value)
     else await exportTopPerformingXLSX(topResult.value)
+    confetti.trigger()
   } finally { exporting.value = false }
 }
 
@@ -96,9 +100,7 @@ async function runTopPerforming() {
 
       <!-- Loading -->
       <div v-if="loading" class="surface-card p-8 text-center">
-        <Loader2 class="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-        <div class="text-sm font-medium mb-1">{{ t('market.analyzingTop') }}</div>
-        <div class="text-xs text-muted-foreground">{{ t('market.analyzingTopDesc') }}</div>
+        <AiLoadingAnimation :message="t('market.analyzingTop')" :description="t('market.analyzingTopDesc')" />
       </div>
 
       <!-- Error -->
@@ -126,7 +128,7 @@ async function runTopPerforming() {
                 <Download v-else class="h-3 w-3" />
                 {{ exporting ? t('market.exporting') : t('market.export') }}
               </button>
-              <div v-if="showExportMenu" class="absolute end-0 top-full mt-1 z-50 min-w-[180px] rounded-lg border border-border/40 bg-[#1E1B2E] shadow-lg shadow-black/30 py-1">
+              <div v-if="showExportMenu" class="absolute end-0 top-full mt-1 z-50 min-w-[180px] rounded-lg border border-border/40 bg-popover shadow-lg py-1">
                 <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition" @click="handleExport('pdf')">
                   <FileText class="h-3.5 w-3.5 text-red-400" /> {{ t('market.exportPDF') }}
                 </button>

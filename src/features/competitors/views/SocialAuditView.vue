@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import Topbar from '@/layout/Topbar.vue'
+import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import SocialAuditRenderer from '@/shared/components/renderers/SocialAuditRenderer.vue'
@@ -66,9 +67,8 @@ async function handleRunAudit() {
     </div>
 
     <!-- Loading -->
-    <div v-else-if="auditMutation.isPending.value" class="surface-card p-8 text-center space-y-4">
-      <Loader2 class="h-8 w-8 animate-spin text-primary mx-auto" />
-      <div class="text-sm text-muted-foreground">{{ t('socialAudit.running') }}</div>
+    <div v-else-if="auditMutation.isPending.value" class="surface-card p-8">
+      <AiLoadingAnimation :message="t('socialAudit.running')" />
     </div>
 
     <!-- Error -->

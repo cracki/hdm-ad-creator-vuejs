@@ -6,13 +6,16 @@ import {
 } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
+import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { useBrands } from '@/features/brands/queries'
 import { useAutoSelectBrand } from '@/shared/composables/useAutoSelectBrand'
+import { useConfetti } from '@/shared/composables/useConfetti'
 import { fullFunnelApi } from '../api'
 
 const { t } = useI18n()
 const { data: brands } = useBrands()
+const confetti = useConfetti()
 
 const selectedBrandUuid = ref('')
 useAutoSelectBrand(selectedBrandUuid)
@@ -140,6 +143,7 @@ function exportCSV() {
   a.download = `full-funnel-${Date.now()}.csv`
   a.click()
   URL.revokeObjectURL(url)
+  confetti.trigger()
 }
 </script>
 
@@ -149,8 +153,13 @@ function exportCSV() {
   <main class="flex-1 overflow-y-auto">
     <div class="max-w-6xl mx-auto p-4 sm:p-6 md:p-8 space-y-6">
 
+      <!-- Loading -->
+      <div v-if="loading" class="surface-card p-8">
+        <AiLoadingAnimation :message="t('funnelLauncher.generating')" :description="t('funnelLauncher.subtitle')" />
+      </div>
+
       <!-- Config Panel -->
-      <div v-if="!campaignData" class="surface-card p-6 space-y-6">
+      <div v-if="!campaignData && !loading" class="surface-card p-6 space-y-6">
         <!-- Brand Selection -->
         <div>
           <label class="text-xs font-medium text-muted-foreground block mb-2">{{ t('funnelLauncher.selectBrand') }}</label>

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { Brain, Loader2, AlertCircle, MapPin, ShoppingBag, RefreshCw, Check, BarChart3, Target, Layers, TrendingUp, Lightbulb } from 'lucide-vue-next'
+import { Brain, AlertCircle, MapPin, ShoppingBag, RefreshCw, Check, BarChart3, Target, Layers, TrendingUp, Lightbulb } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
+import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import ContentOpportunitiesRenderer from '@/shared/components/renderers/ContentOpportunitiesRenderer.vue'
 import ContentGapsRenderer from '@/shared/components/renderers/ContentGapsRenderer.vue'
 import ContentMatrixRenderer from '@/shared/components/renderers/ContentMatrixRenderer.vue'
@@ -152,10 +153,8 @@ async function runIntelligence() {
       </div>
 
       <!-- Loading -->
-      <div v-if="loading" class="surface-card p-8 text-center">
-        <Loader2 class="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-        <div class="text-sm font-medium mb-1">{{ t('market.analyzing') }}</div>
-        <div class="text-xs text-muted-foreground">{{ t('market.analyzingDesc') }}</div>
+      <div v-if="loading" class="surface-card p-8">
+        <AiLoadingAnimation :message="t('market.analyzing')" :description="t('market.analyzingDesc')" />
       </div>
 
       <!-- Error -->

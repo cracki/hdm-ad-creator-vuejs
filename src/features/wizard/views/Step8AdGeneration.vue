@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Sparkles, Loader2, AlertCircle, RefreshCw, Shield, Trash2, Copy } from 'lucide-vue-next'
+import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { useCampaignAds } from '@/features/campaigns/queries'
 import { campaignsApi } from '@/features/campaigns/api'
@@ -118,7 +119,9 @@ function getAdData(ad: any) {
       </button>
     </header>
 
-    <div v-if="adsLoading" class="flex justify-center py-12"><Loader2 class="h-6 w-6 animate-spin text-primary" /></div>
+    <div v-if="adsLoading" class="py-12">
+      <AiLoadingAnimation :message="t('adgen.title')" size="sm" />
+    </div>
 
     <div v-else-if="!isPrereqMet" class="surface-card p-8 text-center">
       <Shield class="h-8 w-8 text-muted-foreground mx-auto mb-3" />
@@ -173,10 +176,8 @@ function getAdData(ad: any) {
         </button>
       </div>
 
-      <div v-if="genLoading" class="surface-card p-8 text-center">
-        <Loader2 class="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-        <div class="text-sm font-medium mb-1">{{ t('adgen.generating') }}</div>
-        <div class="text-xs text-muted-foreground">{{ t('adgen.generatingDesc') }}</div>
+      <div v-if="genLoading" class="surface-card p-8">
+        <AiLoadingAnimation :message="t('adgen.generating')" :description="t('adgen.generatingDesc')" />
       </div>
 
       <div v-if="genError" class="surface-card p-4 flex items-center gap-3">

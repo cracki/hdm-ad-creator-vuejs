@@ -1,6 +1,6 @@
 import { ref, computed, watch } from 'vue'
 
-export type ThemeMode = 'auto' | 'light' | 'dark'
+export type ThemeMode = 'light' | 'dark'
 type ResolvedTheme = 'light' | 'dark'
 
 const STORAGE_KEY = 'hdm_theme'
@@ -8,15 +8,14 @@ const STORAGE_KEY = 'hdm_theme'
 function initMode(): ThemeMode {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored === 'auto' || stored === 'light' || stored === 'dark') return stored
+    // Clear legacy 'auto' value — force reset to dark for existing users
+    if (stored === 'auto') {
+      localStorage.setItem(STORAGE_KEY, 'dark')
+      return 'dark'
+    }
+    if (stored === 'light' || stored === 'dark') return stored
   } catch {}
-  return 'auto'
-}
-
-function resolveTheme(m: ThemeMode): ResolvedTheme {
-  if (m !== 'auto') return m
-  if (typeof window === 'undefined') return 'dark'
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  return 'dark'
 }
 
 function applyTheme(theme: ResolvedTheme) {
@@ -30,22 +29,9 @@ function applyTheme(theme: ResolvedTheme) {
 }
 
 const mode = ref<ThemeMode>(initMode())
-const resolved = ref<ResolvedTheme>(resolveTheme(mode.value))
-
-if (typeof window !== 'undefined') {
-  const mql = window.matchMedia('(prefers-color-scheme: dark)')
-  const handler = (e: MediaQueryListEvent) => {
-    if (mode.value === 'auto') {
-      resolved.value = e.matches ? 'dark' : 'light'
-      applyTheme(resolved.value)
-    }
-  }
-  mql.addEventListener('change', handler)
-}
 
 watch(mode, (m) => {
-  resolved.value = resolveTheme(m)
-  applyTheme(resolved.value)
+  applyTheme(m)
   try { localStorage.setItem(STORAGE_KEY, m) } catch {}
 }, { immediate: true })
 
@@ -54,21 +40,14 @@ export function useTheme() {
     mode.value = m
   }
   function toggle() {
-    if (mode.value === 'dark') mode.value = 'light'
-    else if (mode.value === 'light') mode.value = 'dark'
-    else mode.value = resolved.value === 'dark' ? 'light' : 'dark'
-  }
-  function cycle() {
-    const order: ThemeMode[] = ['auto', 'light', 'dark']
-    mode.value = order[(order.indexOf(mode.value) + 1) % order.length]
+    mode.value = mode.value === 'dark' ? 'light' : 'dark'
   }
 
   return {
     mode: computed(() => mode.value),
-    resolved: computed(() => resolved.value),
-    isDark: computed(() => resolved.value === 'dark'),
+    resolved: computed(() => mode.value),
+    isDark: computed(() => mode.value === 'dark'),
     setMode,
     toggle,
-    cycle,
   }
 }

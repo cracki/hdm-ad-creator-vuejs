@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Brain, ArrowLeft, ArrowRight, Loader2, AlertCircle, MapPin, ShoppingBag, RefreshCw, Check } from 'lucide-vue-next'
+import { Brain, ArrowLeft, ArrowRight, AlertCircle, MapPin, ShoppingBag, RefreshCw, Check } from 'lucide-vue-next'
 import SegmentDeepResearchRenderer from '@/shared/components/renderers/SegmentDeepResearchRenderer.vue'
 import StepExportButton from '@/shared/components/StepExportButton.vue'
+import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
+import { useConfetti } from '@/shared/composables/useConfetti'
 import { useCampaign } from '../queries'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { useNormalizeResponse } from '@/shared/composables/useNormalizeResponse'
@@ -23,6 +25,8 @@ const { data: campaign, isLoading: campaignLoading } = useCampaign(campaignUuid)
 
 const { setActions } = usePageActions()
 setActions([{ label: t('camp.backToCampaign'), icon: ArrowLeft, to: `/campaigns/${campaignUuid.value}` }])
+
+const confetti = useConfetti()
 
 const businessType = ref('')
 const location = ref('')
@@ -102,6 +106,7 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx') {
       campaignName: campaign.value?.name ?? 'Campaign',
       brandName: campaign.value?.brand?.company_name,
     })
+    confetti.trigger()
   } finally {
     exporting.value = false
   }
@@ -134,8 +139,8 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx') {
         </div>
       </header>
 
-      <div v-if="campaignLoading" class="flex justify-center py-12">
-        <Loader2 class="h-6 w-6 animate-spin text-primary" />
+      <div v-if="campaignLoading" class="py-12">
+        <AiLoadingAnimation :message="t('camp.loading')" size="sm" />
       </div>
 
       <template v-else>
@@ -178,10 +183,8 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx') {
         </div>
 
         <!-- Loading state -->
-        <div v-if="loading" class="surface-card p-8 text-center">
-          <Loader2 class="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <div class="text-sm font-medium mb-1">{{ t('seg.analyzing') }}</div>
-          <div class="text-xs text-muted-foreground">{{ t('seg.analyzingDesc') }}</div>
+        <div v-if="loading" class="surface-card p-8">
+          <AiLoadingAnimation :message="t('seg.analyzing')" :description="t('seg.analyzingDesc')" />
         </div>
 
         <!-- Already completed (no data from latest_steps either) -->

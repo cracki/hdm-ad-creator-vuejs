@@ -4,9 +4,11 @@ import { useRoute, useRouter } from 'vue-router'
 import { Settings2, ArrowLeft, ArrowRight, Loader2, AlertCircle, RefreshCw, Shield, Check, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import AdsStrategyRenderer from '@/shared/components/renderers/AdsStrategyRenderer.vue'
 import StepExportButton from '@/shared/components/StepExportButton.vue'
+import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
+import { useConfetti } from '@/shared/composables/useConfetti'
 import { useCampaign } from '../queries'
 import { campaignsApi } from '../api'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
@@ -26,6 +28,8 @@ const { data: campaign, isLoading } = useCampaign(campaignUuid)
 
 const { setActions } = usePageActions()
 setActions([{ label: t('camp.backToCampaign'), icon: ArrowLeft, to: `/campaigns/${campaignUuid.value}` }])
+
+const confetti = useConfetti()
 
 const selectedPlatforms = computed(() => {
   const ctx = campaign.value?.context_payload as any
@@ -118,6 +122,7 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx', platform: string) {
       campaignName: campaign.value?.name ?? 'Campaign',
       brandName: campaign.value?.brand?.company_name,
     })
+    confetti.trigger()
   } finally {
     exporting.value = false
   }
@@ -149,8 +154,8 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx', platform: string) {
         </div>
       </header>
 
-      <div v-if="isLoading" class="flex justify-center py-12">
-        <Loader2 class="h-6 w-6 animate-spin text-primary" />
+      <div v-if="isLoading" class="surface-card p-8">
+        <AiLoadingAnimation :message="t('strategy.title')" />
       </div>
 
       <div v-else-if="!isPrereqMet" class="surface-card p-8 text-center">

@@ -11,12 +11,14 @@ import {
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import Breadcrumb from '@/shared/components/Breadcrumb.vue'
+import { useConfetti } from '@/shared/composables/useConfetti'
 import { useCampaign } from '../queries'
 import { exportCampaignPDF, exportCampaignPPTX } from '@/shared/utils/exportCampaign'
 
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
+const confetti = useConfetti()
 
 const campaignUuid = computed(() => route.params.campaignUuid as string)
 const { data: campaign, isLoading } = useCampaign(campaignUuid)
@@ -38,6 +40,7 @@ async function handleExport(format: 'pdf' | 'pptx') {
     const steps = stepsData.value ?? []
     if (format === 'pdf') await exportCampaignPDF(campaign.value, steps)
     else await exportCampaignPPTX(campaign.value, steps)
+    confetti.trigger()
   } finally {
     exporting.value = false
   }
@@ -229,7 +232,7 @@ function getStepStatusLabel(step: StepDef, idx: number): string {
               </button>
               <div
                 v-if="showExportMenu"
-                class="absolute end-0 top-full mt-1.5 z-50 min-w-[180px] rounded-lg border border-border/40 bg-[#1E1B2E] shadow-lg shadow-black/30 py-1"
+                class="absolute end-0 top-full mt-1.5 z-50 min-w-[180px] rounded-lg border border-border/40 bg-popover shadow-lg py-1"
               >
                 <button
                   class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition"

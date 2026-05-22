@@ -6,8 +6,6 @@ import {
   MessageSquare, Grid3X3, Rocket, LogOut, User, X, Settings2,
 } from 'lucide-vue-next'
 import Logo from './Logo.vue'
-import LangSwitch from './LangSwitch.vue'
-import ThemeToggle from '@/shared/components/ThemeToggle.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { useAuthStore } from '@/features/auth/store'
 import { useMobileDrawer } from '@/shared/composables/useMobileDrawer'
@@ -265,8 +263,6 @@ function isActive(item: NavItem): boolean {
                 </div>
               </div>
             </div>
-            <ThemeToggle />
-            <LangSwitch />
             <button
               class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-overlay-light transition"
               data-loc="sidebar.mobile-profile"

@@ -17,6 +17,8 @@ import {
   Globe, Lightbulb, Brain, Heart, Target, ChevronLeft,
   CheckCircle2, XCircle, Clock, Sparkles, Download,
 } from 'lucide-vue-next'
+import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
+import { useConfetti } from '@/shared/composables/useConfetti'
 import { exportBrandAnalysisPDF } from '@/shared/utils/exportBrandAnalysis'
 
 const route = useRoute()
@@ -117,12 +119,14 @@ const competitiveAnalysis = computed(() => runData.value?.competitive_analysis ?
 const activeTab = ref<'overview' | 'audience' | 'competitors' | 'insights'>('overview')
 
 const isExporting = ref(false)
+const confetti = useConfetti()
 
 async function handleExport() {
   if (!runData.value || isExporting.value) return
   isExporting.value = true
   try {
     await exportBrandAnalysisPDF(runData.value, brand.value?.company_name ?? 'Brand')
+    confetti.trigger()
   } finally {
     isExporting.value = false
   }
@@ -195,14 +199,8 @@ setActions([
     </div>
 
     <!-- Running state -->
-    <div v-else-if="isRunning" class="max-w-2xl mx-auto text-center py-16 space-y-6">
-      <div class="relative h-20 w-20 rounded-2xl bg-[image:var(--gradient-brand)] grid place-items-center mx-auto shadow-[var(--shadow-glow)]">
-        <Loader2 class="h-8 w-8 text-primary-foreground animate-spin" />
-      </div>
-      <div>
-        <h2 class="text-xl font-semibold mb-2">{{ t('analysis.runningTitle') }}</h2>
-        <p class="text-sm text-muted-foreground">{{ currentStage }}</p>
-      </div>
+    <div v-else-if="isRunning" class="max-w-2xl mx-auto text-center py-16 space-y-4">
+      <AiLoadingAnimation :message="t('analysis.runningTitle')" :description="currentStage" />
       <div class="flex justify-center gap-1">
         <div v-for="i in 5" :key="i" class="h-1.5 w-1.5 rounded-full animate-pulse" :class="i <= progressDots ? 'bg-primary' : 'bg-overlay-strong'" :style="{ animationDelay: `${i * 150}ms` }" />
       </div>

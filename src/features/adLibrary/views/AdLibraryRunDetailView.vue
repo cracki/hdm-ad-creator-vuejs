@@ -2,10 +2,11 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
-  ChevronLeft, Loader2, AlertCircle, Library, Download,
+  ChevronLeft, AlertCircle, Library, Download,
   Globe, Clock, Hash, Users, Copy, Check,
 } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
+import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import { useToast } from '@/shared/composables/useToast'
@@ -203,8 +204,8 @@ function getAdField(ad: AdLibraryAd, field: string): string {
 
   <main class="flex-1 overflow-y-auto">
     <div class="max-w-6xl mx-auto p-4 sm:p-6 md:p-8 space-y-6">
-      <div v-if="isLoading" class="flex justify-center py-12">
-        <Loader2 class="h-6 w-6 animate-spin text-primary" />
+      <div v-if="isLoading" class="py-12">
+        <AiLoadingAnimation :message="t('adlib.runDetail')" size="sm" />
       </div>
 
       <div v-else-if="runError" class="surface-card p-5 flex items-center gap-3">

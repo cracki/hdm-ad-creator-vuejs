@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Image as ImageIcon, Loader2, AlertCircle, RefreshCw, Shield, Download } from 'lucide-vue-next'
+import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { useCampaignAds } from '@/features/campaigns/queries'
 import { campaignsApi } from '@/features/campaigns/api'
@@ -81,7 +82,9 @@ function adPlatformLabel(p: string) {
       </div>
     </header>
 
-    <div v-if="adsLoading" class="flex justify-center py-12"><Loader2 class="h-6 w-6 animate-spin text-primary" /></div>
+    <div v-if="adsLoading" class="py-12">
+      <AiLoadingAnimation :message="t('visual.title')" size="sm" />
+    </div>
 
     <div v-else-if="!isPrereqMet" class="surface-card p-8 text-center">
       <Shield class="h-8 w-8 text-muted-foreground mx-auto mb-3" />

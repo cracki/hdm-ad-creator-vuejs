@@ -7,7 +7,6 @@ import { useI18n } from '@/shared/utils/i18n'
 import { useGoogleAuth } from '@/shared/composables/useGoogleAuth'
 import Logo from '@/layout/Logo.vue'
 import LangSwitch from '@/layout/LangSwitch.vue'
-import ThemeToggle from '@/shared/components/ThemeToggle.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -63,7 +62,6 @@ async function handleGoogleRegister() {
       <div class="flex items-center justify-between">
         <Logo />
         <div class="flex items-center gap-2">
-          <ThemeToggle />
           <LangSwitch />
         </div>
       </div>

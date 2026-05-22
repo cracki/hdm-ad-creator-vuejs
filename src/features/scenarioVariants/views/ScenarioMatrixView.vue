@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
-  Grid3X3, Loader2, AlertCircle, RefreshCw,
+  Grid3X3, AlertCircle, RefreshCw,
   ArrowLeft, Download, Copy, Eye, Check,
 } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
@@ -11,6 +11,7 @@ import { usePageActions } from '@/shared/composables/usePageActions'
 import { useToast } from '@/shared/composables/useToast'
 import { useCampaign } from '@/features/campaigns/queries'
 import { useJobTracker } from '@/shared/composables/useJobTracker'
+import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import { scenarioVariantsApi } from '../api'
 import { parseScenarioVariants } from '../schemas'
 import ScenarioVariantCard from '../components/ScenarioVariantCard.vue'
@@ -177,9 +178,7 @@ function getAdCopy(v: any) {
 
       <!-- Loading / Polling -->
       <div v-if="isRunning" class="surface-card p-8 text-center">
-        <Loader2 class="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-        <div class="text-sm font-medium mb-1">{{ t('variant.matrixRunning') }}</div>
-        <div class="text-xs text-muted-foreground">{{ t('variant.matrixRunningDesc') }}</div>
+        <AiLoadingAnimation :message="t('variant.matrixRunning')" :description="t('variant.matrixRunningDesc')" />
       </div>
 
       <!-- Error -->

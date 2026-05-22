@@ -4,16 +4,19 @@ import {
   Sparkles, AlertCircle, RefreshCw, Plus, Trash2,
   Copy, Check, Filter, LayoutGrid, BarChart3, Lightbulb,
   Hash, MessageCircle, Zap, TrendingUp, Target, Flame, ArrowLeftRight,
-  Download, FileText,
+  Download, FileText, Loader2,
 } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
+import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import { useI18n } from '@/shared/utils/i18n'
+import { useConfetti } from '@/shared/composables/useConfetti'
 import { useGenerateAIHooks } from '../queries'
 import { exportHooksPDF, exportHooksPPTX, exportHooksXLSX } from '@/shared/utils/exportMarket'
 import type { AIHook, AIHookType, AIHookPlatform, AIHooksResponse } from '../types'
 
 const { t } = useI18n()
 const hooksMutation = useGenerateAIHooks()
+const confetti = useConfetti()
 
 const titles = ref<string[]>([''])
 const industry = ref('')
@@ -40,6 +43,7 @@ async function handleExport(format: 'pdf' | 'pptx' | 'xlsx') {
     if (format === 'pdf') await exportHooksPDF(hooksResult.value)
     else if (format === 'pptx') await exportHooksPPTX(hooksResult.value)
     else await exportHooksXLSX(hooksResult.value)
+    confetti.trigger()
   } finally { exporting.value = false }
 }
 
@@ -233,19 +237,8 @@ const platformLabels: Record<AIHookPlatform, string> = {
       </div>
 
       <!-- Loading -->
-      <div v-if="loading" class="surface-card p-8 sm:p-12 text-center">
-        <div class="relative inline-flex mb-6">
-          <div class="h-16 w-16 rounded-2xl bg-primary/10 grid place-items-center animate-pulse-glow">
-            <Sparkles class="h-7 w-7 text-primary" />
-          </div>
-        </div>
-        <div class="text-lg font-semibold mb-2">{{ t('market.generatingHooks') }}</div>
-        <div class="text-sm text-muted-foreground max-w-sm mx-auto">{{ t('market.generatingHooksDesc') }}</div>
-        <div class="mt-6 flex justify-center gap-1">
-          <div class="h-1.5 w-1.5 rounded-full bg-primary animate-[bounce_1s_ease-in-out_infinite]" />
-          <div class="h-1.5 w-1.5 rounded-full bg-primary animate-[bounce_1s_ease-in-out_0.15s_infinite]" />
-          <div class="h-1.5 w-1.5 rounded-full bg-primary animate-[bounce_1s_ease-in-out_0.3s_infinite]" />
-        </div>
+      <div v-if="loading" class="surface-card p-8 sm:p-12">
+        <AiLoadingAnimation :message="t('market.generatingHooks')" :description="t('market.generatingHooksDesc')" />
       </div>
 
       <!-- Error -->
@@ -288,7 +281,7 @@ const platformLabels: Record<AIHookPlatform, string> = {
                 <Download v-else class="h-3 w-3" />
                 {{ exporting ? t('market.exporting') : t('market.export') }}
               </button>
-              <div v-if="showExportMenu" class="absolute end-0 top-full mt-1 z-50 min-w-[180px] rounded-lg border border-border/40 bg-[#1E1B2E] shadow-lg shadow-black/30 py-1">
+              <div v-if="showExportMenu" class="absolute end-0 top-full mt-1 z-50 min-w-[180px] rounded-lg border border-border/40 bg-popover shadow-lg py-1">
                 <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition" @click="handleExport('pdf')"><FileText class="h-3.5 w-3.5 text-red-400" /> {{ t('market.exportPDF') }}</button>
                 <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition" @click="handleExport('pptx')"><LayoutGrid class="h-3.5 w-3.5 text-orange-400" /> {{ t('market.exportPPTX') }}</button>
                 <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition" @click="handleExport('xlsx')"><BarChart3 class="h-3.5 w-3.5 text-green-400" /> {{ t('market.exportXLSX') }}</button>

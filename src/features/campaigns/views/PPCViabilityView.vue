@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Target, ArrowLeft, ArrowRight, Loader2, AlertCircle, RefreshCw, Shield, TrendingUp, Check } from 'lucide-vue-next'
+import { Target, ArrowLeft, ArrowRight, AlertCircle, RefreshCw, Shield, TrendingUp, Check } from 'lucide-vue-next'
 import StepExportButton from '@/shared/components/StepExportButton.vue'
+import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
+import { useConfetti } from '@/shared/composables/useConfetti'
 import { useCampaign } from '../queries'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
@@ -20,6 +22,8 @@ const { data: campaign } = useCampaign(campaignUuid)
 
 const { setActions } = usePageActions()
 setActions([{ label: t('camp.backToCampaign'), icon: ArrowLeft, to: `/campaigns/${campaignUuid.value}` }])
+
+const confetti = useConfetti()
 
 const isPrereqMet = computed(() => campaign.value?.segmentation_completed ?? false)
 
@@ -78,6 +82,7 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx') {
       campaignName: campaign.value?.name ?? 'Campaign',
       brandName: campaign.value?.brand?.company_name,
     })
+    confetti.trigger()
   } finally {
     exporting.value = false
   }
@@ -159,10 +164,8 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx') {
         </div>
 
         <!-- Loading -->
-        <div v-if="loading" class="surface-card p-8 text-center">
-          <Loader2 class="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <div class="text-sm font-medium mb-1">{{ t('ppc.analyzing') }}</div>
-          <div class="text-xs text-muted-foreground">{{ t('ppc.analyzingDesc') }}</div>
+        <div v-if="loading" class="surface-card p-8">
+          <AiLoadingAnimation :message="t('ppc.analyzing')" :description="t('ppc.analyzingDesc')" />
         </div>
 
         <!-- Error -->

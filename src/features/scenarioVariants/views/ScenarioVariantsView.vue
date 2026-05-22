@@ -11,6 +11,8 @@ import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { exportCsv } from '@/shared/utils/csv'
 import { useBrands } from '@/features/brands/queries'
 import { useAutoSelectBrand } from '@/shared/composables/useAutoSelectBrand'
+import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
+import { useConfetti } from '@/shared/composables/useConfetti'
 import { useVariantOptions, useMetaFrameworks } from '../queries'
 import { scenarioVariantsApi } from '../api'
 import type { VariantOption, VariantFormatOption, MetaCreativeFramework } from '../types'
@@ -51,6 +53,7 @@ interface GenerateResult extends VariantResult {
 
 const { t } = useI18n()
 const { data: brands } = useBrands()
+const confetti = useConfetti()
 
 const brandUuid = ref('')
 useAutoSelectBrand(brandUuid)
@@ -200,6 +203,7 @@ function exportCSV() {
     { key: 'cta', header: 'CTA' },
     { key: 'visual_prompt', header: 'Visual Prompt' },
   ])
+  confetti.trigger()
 }
 
 const { setActions } = usePageActions()
@@ -405,6 +409,11 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
           <Sparkles v-else class="h-3.5 w-3.5" />
           {{ loading ? t('variant.generating') : t('variant.generate') }}
         </button>
+      </div>
+
+      <!-- Generating -->
+      <div v-if="loading" class="surface-card p-8">
+        <AiLoadingAnimation :message="t('variant.generating')" :description="t('variant.subtitle')" />
       </div>
 
       <!-- Error -->

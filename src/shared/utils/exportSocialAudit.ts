@@ -43,6 +43,27 @@ function obj(raw: unknown): Record<string, unknown> | null {
   return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : null
 }
 
+function fmt(v: unknown): string {
+  if (v == null) return ''
+  if (typeof v === 'string') return v
+  if (typeof v === 'number' || typeof v === 'boolean') return String(v)
+  if (Array.isArray(v)) return v.map(item => fmt(item)).join(', ')
+  if (typeof v === 'object') {
+    const entries = Object.entries(v as Record<string, unknown>)
+    return entries.map(([k, val]) => `${fmtLabel(k)}: ${fmt(val)}`).join('\n')
+  }
+  return String(v)
+}
+
+function fmtLabel(key: string): string {
+  const abbr: Record<string, string> = { dm: 'DM', roi: 'ROI', kpi: 'KPI', cta: 'CTA', ppc: 'PPC', seo: 'SEO', api: 'API' }
+  return key
+    .replace(/_/g, ' ')
+    .split(' ')
+    .map(w => { const l = w.toLowerCase(); return abbr[l] ?? (w.charAt(0).toUpperCase() + w.slice(1)) })
+    .join(' ')
+}
+
 // ── PDF Export ────────────────────────────────────────────
 
 export async function exportAuditPDF(
@@ -154,8 +175,8 @@ export async function exportAuditPDF(
     y += 4
 
     const benchRows: string[][] = []
-    if (benchmarks.average_posting_frequency) benchRows.push(['Posting Frequency', String(benchmarks.average_posting_frequency)])
-    if (benchmarks.average_engagement_rate) benchRows.push(['Engagement Rate', String(benchmarks.average_engagement_rate)])
+    if (benchmarks.average_posting_frequency) benchRows.push(['Posting Frequency', fmt(benchmarks.average_posting_frequency)])
+    if (benchmarks.average_engagement_rate) benchRows.push(['Engagement Rate', fmt(benchmarks.average_engagement_rate)])
 
     if (benchRows.length) {
       autoTable(doc, {
@@ -244,7 +265,7 @@ export async function exportAuditPDF(
         startY: y,
         margin: { left: margin, right: margin },
         head: [['Category', 'Amount']],
-        body: Object.entries(budget).map(([k, v]) => [k.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase()), String(v)]),
+        body: Object.entries(budget).map(([k, v]) => [fmtLabel(k), fmt(v)]),
         styles: { fontSize: 9, cellPadding: 2 },
         headStyles: { fillColor: [88, 28, 135], textColor: 255, fontStyle: 'bold' },
         columnStyles: { 0: { cellWidth: 60 }, 1: { cellWidth: 40 } },
@@ -307,8 +328,8 @@ export async function exportAuditPDF(
         for (const [k, v] of Object.entries(period)) {
           metricRows.push([
             periodKey === '30_days' ? '30 Days' : periodKey === '60_days' ? '60 Days' : '90 Days',
-            k.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase()),
-            String(v),
+            fmtLabel(k),
+            fmt(v),
           ])
         }
       }
@@ -486,12 +507,12 @@ export async function exportAuditPPTX(
     let by = 1.2
     if (benchmarks.average_posting_frequency) {
       slide.addText('Average Posting Frequency', { x: 0.8, y: by, w: 5, h: 0.3, fontSize: 12, color: white, bold: true })
-      slide.addText(String(benchmarks.average_posting_frequency), { x: 0.8, y: by + 0.35, w: 11, h: 0.6, fontSize: 10, color: gray, valign: 'top' })
+      slide.addText(fmt(benchmarks.average_posting_frequency), { x: 0.8, y: by + 0.35, w: 11, h: 0.6, fontSize: 10, color: gray, valign: 'top' })
       by += 1.1
     }
     if (benchmarks.average_engagement_rate) {
       slide.addText('Average Engagement Rate', { x: 0.8, y: by, w: 5, h: 0.3, fontSize: 12, color: white, bold: true })
-      slide.addText(String(benchmarks.average_engagement_rate), { x: 0.8, y: by + 0.35, w: 11, h: 0.6, fontSize: 10, color: gray, valign: 'top' })
+      slide.addText(fmt(benchmarks.average_engagement_rate), { x: 0.8, y: by + 0.35, w: 11, h: 0.6, fontSize: 10, color: gray, valign: 'top' })
       by += 1.1
     }
 
@@ -568,7 +589,7 @@ export async function exportAuditPPTX(
       const budget = obj(resourcePlan.monthly_budget_estimate)
       if (budget) {
         const budgetText = Object.entries(budget)
-          .map(([k, v]) => `${k.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase())}: ${v}`)
+          .map(([k, v]) => `${fmtLabel(k)}: ${fmt(v)}`)
           .join('   |   ')
         slide.addText(budgetText, { x: 0.8, y: 6.5, w: 11.5, h: 0.4, fontSize: 10, color: '22C55E', bold: true })
       }
@@ -634,8 +655,8 @@ export async function exportAuditPPTX(
       for (const [k, v] of Object.entries(period)) {
         metricRows.push([
           { text: label, options: { color: white } },
-          { text: k.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase()), options: { color: gray } },
-          { text: String(v), options: { color: '22C55E' } },
+          { text: fmtLabel(k), options: { color: gray } },
+          { text: fmt(v), options: { color: '22C55E' } },
         ])
       }
     }
@@ -748,11 +769,11 @@ export async function exportAuditXLSX(
     ws.getRow(1).eachCell(styleHeader)
 
     if (benchmarks.average_posting_frequency) {
-      const row = ws.addRow({ metric: 'Average Posting Frequency', value: String(benchmarks.average_posting_frequency) })
+      const row = ws.addRow({ metric: 'Average Posting Frequency', value: fmt(benchmarks.average_posting_frequency) })
       row.eachCell(styleCell)
     }
     if (benchmarks.average_engagement_rate) {
-      const row = ws.addRow({ metric: 'Average Engagement Rate', value: String(benchmarks.average_engagement_rate) })
+      const row = ws.addRow({ metric: 'Average Engagement Rate', value: fmt(benchmarks.average_engagement_rate) })
       row.eachCell(styleCell)
     }
 
@@ -808,7 +829,7 @@ export async function exportAuditXLSX(
       ]
       ws.getRow(1).eachCell(styleHeader)
       for (const [k, v] of Object.entries(budget)) {
-        const row = ws.addRow({ category: k.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase()), amount: String(v) })
+        const row = ws.addRow({ category: fmtLabel(k), amount: fmt(v) })
         row.eachCell(styleCell)
       }
     }
@@ -858,7 +879,7 @@ export async function exportAuditXLSX(
       if (!period) continue
       const label = periodKey === '30_days' ? '30 Days' : periodKey === '60_days' ? '60 Days' : '90 Days'
       for (const [k, v] of Object.entries(period)) {
-        const row = ws.addRow({ period: label, metric: k.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase()), target: String(v) })
+        const row = ws.addRow({ period: label, metric: fmtLabel(k), target: fmt(v) })
         row.eachCell(styleCell)
       }
     }

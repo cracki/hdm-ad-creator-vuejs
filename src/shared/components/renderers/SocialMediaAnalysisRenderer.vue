@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { exportCsv } from '@/shared/utils/csv'
+import { useConfetti } from '@/shared/composables/useConfetti'
 import {
   FileText, Users, Lightbulb, Target, Globe,
   Zap, TrendingUp, MessageSquare, Award,
@@ -10,6 +11,8 @@ import {
   PenTool, Layers, ListChecks, ChevronRight,
   Download, Clapperboard,
 } from 'lucide-vue-next'
+
+const confetti = useConfetti()
 
 const props = defineProps<{
   data: Record<string, unknown>
@@ -225,6 +228,7 @@ function exportIdeasCsv(sectionKey: string, items: Record<string, unknown>[]) {
   if (flatRows.length === 0) return
   const cols = Object.keys(flatRows[0]).map(k => ({ key: k as keyof typeof flatRows[number], header: k }))
   exportCsv(flatRows, `${sectionKey}-ideas`, cols)
+  confetti.trigger()
 }
 </script>
 

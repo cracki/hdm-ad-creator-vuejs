@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Search, Loader2, AlertCircle, RefreshCw, MapPin, ShoppingBag, Tag } from 'lucide-vue-next'
+import { Search, AlertCircle, RefreshCw, MapPin, ShoppingBag, Tag } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
+import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import ContentGapsRenderer from '@/shared/components/renderers/ContentGapsRenderer.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { useGetContentGaps } from '../queries'
@@ -90,10 +91,8 @@ async function runGaps() {
       </div>
 
       <!-- Loading -->
-      <div v-if="loading" class="surface-card p-8 text-center">
-        <Loader2 class="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-        <div class="text-sm font-medium mb-1">{{ t('market.analyzingGaps') }}</div>
-        <div class="text-xs text-muted-foreground">{{ t('market.analyzingGapsDesc') }}</div>
+      <div v-if="loading" class="surface-card p-8">
+        <AiLoadingAnimation :message="t('market.analyzingGaps')" :description="t('market.analyzingGapsDesc')" />
       </div>
 
       <!-- Error -->

@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Download, ArrowLeft, Loader2, Check } from 'lucide-vue-next'
 import StepExportButton from '@/shared/components/StepExportButton.vue'
+import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
@@ -105,8 +106,8 @@ async function handleReviewExport(format: 'csv' | 'pdf' | 'pptx') {
         <StepExportButton :disabled="!campaign || reviewExporting" @export="handleReviewExport" />
       </header>
 
-      <div v-if="isLoading" class="flex justify-center py-12">
-        <Loader2 class="h-6 w-6 animate-spin text-primary" />
+      <div v-if="isLoading" class="py-12">
+        <AiLoadingAnimation :message="t('camp.loading')" size="sm" />
       </div>
 
       <template v-else>

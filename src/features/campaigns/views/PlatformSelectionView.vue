@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { MonitorSmartphone, ArrowLeft, ArrowRight, Loader2, Shield, Check, X } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
+import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import { useCampaign } from '../queries'
@@ -145,8 +146,8 @@ function goNext() {
         </div>
       </header>
 
-      <div v-if="isLoading" class="flex justify-center py-12">
-        <Loader2 class="h-6 w-6 animate-spin text-primary" />
+      <div v-if="isLoading" class="py-12">
+        <AiLoadingAnimation :message="t('smart.s6')" size="sm" />
       </div>
 
       <div v-else-if="!isPrereqMet" class="surface-card p-8 text-center">

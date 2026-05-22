@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Library, Loader2, ChevronRight, Sparkles } from 'lucide-vue-next'
+import { Library, ChevronRight, Sparkles } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
+import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import { useCreativeAngles, useFunnelStages, usePlatformConfigs, useAdLibraryRuns } from '../queries'
@@ -55,8 +56,8 @@ const isLoading = computed(() => anglesLoading.value || stagesLoading.value || p
 
   <main class="flex-1 overflow-y-auto">
     <div class="max-w-6xl mx-auto p-4 sm:p-6 md:p-8">
-      <div v-if="isLoading" class="flex justify-center py-12">
-        <Loader2 class="h-6 w-6 animate-spin text-primary" />
+      <div v-if="isLoading" class="py-12">
+        <AiLoadingAnimation :message="t('adlib.title')" size="sm" />
       </div>
 
       <template v-else>
@@ -135,8 +136,8 @@ const isLoading = computed(() => anglesLoading.value || stagesLoading.value || p
         <!-- Past Runs -->
         <section>
           <h3 data-loc="adlib.browser.header-runs" class="text-sm font-semibold mb-3">{{ t('adlib.pastRuns') }}</h3>
-          <div v-if="runsLoading" class="flex justify-center py-6">
-            <Loader2 class="h-5 w-5 animate-spin text-primary" />
+          <div v-if="runsLoading" class="py-6">
+            <AiLoadingAnimation :message="t('adlib.pastRuns')" size="sm" />
           </div>
           <div v-else-if="!runs?.length" class="surface-card p-6 text-center">
             <Library class="h-8 w-8 text-muted-foreground mx-auto mb-3" />
