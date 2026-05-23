@@ -1,19 +1,55 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { DotLottieVue } from '@lottiefiles/dotlottie-vue'
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { useVisualSettings } from '@/shared/composables/useVisualSettings'
-import confettiSrc from '@/assets/Confetti-Effects.lottie?url'
+import lottie from 'lottie-web'
+import confettiData from '@/assets/Confetti-Effects.json'
 
 const { active, dismiss } = useConfetti()
 const { settings } = useVisualSettings()
 
 const reducedMotion = computed(() => settings.value.reducedMotion)
 const visible = computed(() => active.value && !reducedMotion.value)
+const containerRef = ref<HTMLDivElement>()
+
+let anim: ReturnType<typeof lottie.loadAnimation> | null = null
+
+function initAnimation() {
+  if (!containerRef.value) return
+  anim?.destroy()
+  anim = lottie.loadAnimation({
+    container: containerRef.value,
+    renderer: 'svg',
+    loop: false,
+    autoplay: true,
+    animationData: confettiData,
+  })
+  anim.addEventListener('complete', onComplete)
+}
+
+function cleanupAnimation() {
+  if (anim) {
+    anim.removeEventListener('complete', onComplete)
+    anim.destroy()
+    anim = null
+  }
+}
 
 function onComplete() {
+  cleanupAnimation()
   dismiss()
 }
+
+onMounted(() => {
+  if (visible.value) initAnimation()
+})
+
+watch(visible, (val) => {
+  if (val) initAnimation()
+  else cleanupAnimation()
+})
+
+onUnmounted(cleanupAnimation)
 </script>
 
 <template>
@@ -23,13 +59,9 @@ function onComplete() {
         v-if="visible"
         class="fixed inset-0 z-[99] pointer-events-none flex items-start justify-center pt-[10vh]"
       >
-        <DotLottieVue
-          autoplay
-          :loop="false"
-          :src="confettiSrc"
-          background-color="transparent"
+        <div
+          ref="containerRef"
           style="width: 100%; max-width: 600px; height: 60vh"
-          @complete="onComplete"
         />
       </div>
     </Transition>

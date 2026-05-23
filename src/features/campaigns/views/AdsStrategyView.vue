@@ -9,8 +9,9 @@ import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import { useConfetti } from '@/shared/composables/useConfetti'
-import { useCampaign } from '../queries'
+import { useCampaign, useAdsStrategy } from '../queries'
 import { campaignsApi } from '../api'
+import type { AdsStrategyRun } from '../types'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { useNormalizeResponse } from '@/shared/composables/useNormalizeResponse'
 import { operationManager } from '@/infrastructure/operations/operationManager'
@@ -41,17 +42,16 @@ const isPrereqMet = computed(() => {
   return selectedPlatforms.value.length > 0
 })
 
-const platformStepKey = (p: string) => `${p}_ads` as const
+const { data: strategyData } = useAdsStrategy(campaignUuid)
 
 const platformResults = computed(() => {
-  const map = new Map<string, { completed: boolean; data: any }>()
+  const map = new Map<string, { completed: boolean; data: AdsStrategyRun | null }>()
+  const strategies = strategyData.value?.strategies ?? []
   for (const platform of selectedPlatforms.value) {
-    const completedKey = `${platform}_ads_completed` as keyof typeof campaign.value
-    const isCompleted = !!campaign.value?.[completedKey]
-    const latest = (campaign.value as any)?.latest_steps?.[platformStepKey(platform)]
+    const run = strategies.find(s => s.platform === platform)
     map.set(platform, {
-      completed: isCompleted,
-      data: latest?.status === 'completed' ? latest : null,
+      completed: run?.status === 'completed',
+      data: run?.status === 'completed' ? run : null,
     })
   }
   return map
@@ -77,8 +77,10 @@ function getPlatformPayload(platform: string): Record<string, unknown> | null {
     const raw = stepResult.value.step.response_payload
     if (raw && typeof raw === 'object') return normalize(raw as Record<string, unknown>, 'ads-strategy')
   }
-  const saved = platformResults.value.get(platform)?.data?.response_payload
-  if (saved && typeof saved === 'object') return normalize(saved as Record<string, unknown>, 'ads-strategy')
+  const run = platformResults.value.get(platform)?.data
+  if (run?.response_payload && typeof run.response_payload === 'object') {
+    return normalize(run.response_payload as Record<string, unknown>, 'ads-strategy')
+  }
   return null
 }
 
@@ -96,6 +98,7 @@ async function runStrategy(platform: string) {
     })
     await queryClient.invalidateQueries({ queryKey: ['campaigns', campaignUuid] })
     await queryClient.invalidateQueries({ queryKey: ['campaigns', campaignUuid, 'steps'] })
+    await queryClient.invalidateQueries({ queryKey: ['campaigns', campaignUuid, 'ads-strategy'] })
   } finally {
     operationManager.finish(opKey.value)
   }
@@ -103,9 +106,9 @@ async function runStrategy(platform: string) {
 
 const platformLabel = (key: string) => {
   const map: Record<string, string> = {
-    meta: 'Meta (Facebook & Instagram)',
-    google: 'Google Ads',
-    linkedin: 'LinkedIn Ads',
+    meta: t('platform.meta'),
+    google: t('platform.google'),
+    linkedin: t('platform.linkedin'),
   }
   return map[key] ?? key
 }
@@ -143,14 +146,14 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx', platform: string) {
 
   <main class="flex-1 overflow-y-auto">
     <div class="max-w-5xl mx-auto p-4 sm:p-6 md:p-8">
-      <header class="flex items-start gap-4 mb-6">
-        <div class="h-12 w-12 rounded-xl bg-[image:var(--gradient-brand)] grid place-items-center shadow-[var(--shadow-glow)] shrink-0">
-          <Settings2 class="h-5 w-5 text-primary-foreground" />
+      <header class="flex items-start gap-3 sm:gap-4 mb-6">
+        <div class="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-[image:var(--gradient-brand)] grid place-items-center shadow-[var(--shadow-glow)] shrink-0">
+          <Settings2 class="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
         </div>
         <div class="min-w-0 flex-1">
           <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">{{ t('smart.stepOf') }} 6 / 9</div>
-          <h2 class="text-xl sm:text-2xl font-semibold tracking-tight mt-1">{{ t('strategy.title') }}</h2>
-          <p class="text-sm text-muted-foreground mt-1">{{ t('strategy.description') }}</p>
+          <h2 class="text-lg sm:text-2xl font-semibold tracking-tight mt-1">{{ t('strategy.title') }}</h2>
+          <p class="text-xs sm:text-sm text-muted-foreground mt-1">{{ t('strategy.description') }}</p>
         </div>
       </header>
 
@@ -179,19 +182,19 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx', platform: string) {
             class="surface-card overflow-hidden"
           >
             <!-- Card header -->
-            <div class="p-5 flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <div class="h-8 w-8 rounded-lg bg-overlay-light grid place-items-center">
+            <div class="p-3 sm:p-5 flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                <div class="h-8 w-8 rounded-lg bg-overlay-light grid place-items-center shrink-0">
                   <Settings2 class="h-4 w-4 text-muted-foreground" />
                 </div>
-                <div>
-                  <div class="text-sm font-semibold">{{ platformLabel(p) }}</div>
+                <div class="min-w-0">
+                  <div class="text-sm font-semibold truncate">{{ platformLabel(p) }}</div>
                   <div class="text-[11px] text-muted-foreground">
                     {{ platformResults.get(p)?.completed ? t('status.completed') : t('strategy.pending') }}
                   </div>
                 </div>
               </div>
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 shrink-0">
                 <button
                   v-if="!platformResults.get(p)?.completed"
                   :disabled="loading && currentPlatform === p"
@@ -218,13 +221,13 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx', platform: string) {
             </div>
 
             <!-- Running state -->
-            <div v-if="loading && currentPlatform === p" class="px-5 pb-4 flex items-center gap-2 text-xs text-muted-foreground">
+            <div v-if="loading && currentPlatform === p" class="px-3 sm:px-5 pb-4 flex items-center gap-2 text-xs text-muted-foreground">
               <Loader2 class="h-3 w-3 animate-spin" /> {{ t('strategy.runningDesc') }}
             </div>
 
             <!-- Expanded results -->
-            <div v-if="expandedPlatform === p && getPlatformPayload(p)" class="border-t border-border/30 p-5 bg-overlay-subtle/30">
-              <div class="flex items-center justify-between mb-3">
+            <div v-if="expandedPlatform === p && getPlatformPayload(p)" class="border-t border-border/30 p-3 sm:p-5 bg-overlay-subtle/30">
+              <div class="flex items-center justify-between mb-3 gap-2">
                 <div class="text-xs font-semibold">{{ t('strategy.result') }}</div>
                 <StepExportButton :disabled="exporting" @export="(f: 'csv' | 'pdf' | 'pptx') => handleExport(f, p)" />
               </div>
@@ -241,21 +244,22 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx', platform: string) {
           </button>
         </div>
 
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between gap-3">
           <button
-            class="h-10 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition flex items-center gap-1.5"
+            class="h-10 px-3 sm:px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition flex items-center gap-1.5 shrink-0"
             data-loc="campaigns.strategy.prev-btn"
             @click="router.push(`/campaigns/${campaignUuid}/platform`)"
           >
-            <ArrowLeft class="h-3.5 w-3.5" /> {{ t('smart.previous') }}
+            <ArrowLeft class="h-3.5 w-3.5" /> <span class="hidden sm:inline">{{ t('smart.previous') }}</span><span class="sm:hidden">{{ t('smart.previous') }}</span>
           </button>
           <button
             :disabled="!allDone"
-            class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5 disabled:opacity-50"
+            class="h-10 px-3 sm:px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5 disabled:opacity-50"
             data-loc="campaigns.strategy.continue-btn"
             @click="router.push(`/campaigns/${campaignUuid}/generate-ads`)"
           >
-            {{ t('smart.approveContinue') }} {{ t('smart.continue') }} <ArrowRight class="h-3.5 w-3.5" />
+            <span class="hidden sm:inline">{{ t('smart.approveContinue') }} {{ t('smart.continue') }}</span>
+            <span class="sm:hidden">{{ t('smart.continue') }}</span> <ArrowRight class="h-3.5 w-3.5" />
           </button>
         </div>
       </template>

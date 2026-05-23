@@ -5,6 +5,8 @@ import type {
   SegmentationRunPayload,
   StepResult,
   AdsStrategyPayload,
+  AdsStrategyListResponse,
+  CampaignAdPlatform,
   GenerateAdPayload,
   GenerateVisualsPayload,
   AdGenerateResult,
@@ -60,6 +62,15 @@ export const campaignsApi = {
 
   runAdsStrategy(uuid: string, payload: AdsStrategyPayload): Promise<{ data: StepResult }> {
     return apiClient.post(`${campaign(uuid)}ads-strategy/`, payload)
+  },
+
+  getAdsStrategy(
+    uuid: string,
+    platform?: CampaignAdPlatform,
+    config?: SignalConfig,
+  ): Promise<{ data: AdsStrategyListResponse }> {
+    const params = platform ? { platform } : {}
+    return apiClient.get(`${campaign(uuid)}ads-strategy/`, { ...config, params })
   },
 
   generateAd(uuid: string, payload: GenerateAdPayload): Promise<{ data: AdGenerateResult }> {

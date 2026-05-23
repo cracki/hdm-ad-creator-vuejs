@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, type Ref } from 'vue'
 import { campaignsApi } from './api'
-import type { CampaignCreatePayload, SegmentationRunPayload, AdsStrategyPayload, GenerateAdPayload, GenerateVisualsPayload } from './types'
+import type { CampaignCreatePayload, SegmentationRunPayload, AdsStrategyPayload, CampaignAdPlatform, GenerateAdPayload, GenerateVisualsPayload } from './types'
 
 export function useCampaigns() {
   return useQuery({
@@ -26,6 +26,7 @@ export function useCampaignAds(uuid: Ref<string>) {
     queryFn: ({ signal }) => campaignsApi.listAds(uuid.value, { signal }).then(r => r.data),
     enabled: computed(() => !!uuid.value),
     staleTime: 10_000,
+    retry: false,
   })
 }
 
@@ -102,7 +103,18 @@ export function useRunAdsStrategy(uuid: Ref<string>) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns', uuid] })
       queryClient.invalidateQueries({ queryKey: ['campaigns', uuid, 'steps'] })
+      queryClient.invalidateQueries({ queryKey: ['campaigns', uuid, 'ads-strategy'] })
     },
+  })
+}
+
+export function useAdsStrategy(uuid: Ref<string>, platform?: Ref<CampaignAdPlatform | undefined>) {
+  return useQuery({
+    queryKey: ['campaigns', uuid, 'ads-strategy', platform],
+    queryFn: ({ signal }) =>
+      campaignsApi.getAdsStrategy(uuid.value, platform?.value, { signal }).then(r => r.data),
+    enabled: computed(() => !!uuid.value),
+    staleTime: 10_000,
   })
 }
 

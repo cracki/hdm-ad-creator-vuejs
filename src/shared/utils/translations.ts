@@ -301,6 +301,11 @@ export const translations = {
   'strategy.allComplete': { en: 'All platform strategies complete', ar: 'تمت جميع استراتيجيات المنصات', fa: 'همه استراتژی‌های پلتفرم تکمیل شد' },
   'strategy.allCompleteDesc': { en: 'All selected platforms have their strategy. Continue to ad generation.', ar: 'جميع المنصات المختارة لها استراتيجية. تابع لتوليد الإعلانات.', fa: 'همه پلتفرم‌های انتخابی استراتژی دارند. ادامه به تولید آگهی.' },
 
+  // Platform labels
+  'platform.meta': { en: 'Meta (Facebook & Instagram)', ar: 'ميتا (فيسبوك وإنستغرام)', fa: 'متا (فیسبوک و اینستاگرام)' },
+  'platform.google': { en: 'Google Ads', ar: 'إعلانات جوجل', fa: 'گوگل ادز' },
+  'platform.linkedin': { en: 'LinkedIn Ads', ar: 'إعلانات لينكدإن', fa: 'لینکدین ادز' },
+
   // Ad Generation
   'adgen.title': { en: 'Ad Generation', ar: 'توليد الإعلانات', fa: 'تولید آگهی' },
   'adgen.description': { en: 'Generate ads by persona, funnel stage and platform.', ar: 'ولّد إعلانات حسب الشخصية ومرحلة القمع والمنصة.', fa: 'آگهی بر اساس پرسونا، مرحله قیف و پلتفرم تولید کن.' },
@@ -321,6 +326,7 @@ export const translations = {
   'adgen.clearAll': { en: 'Clear All', ar: 'مسح الكل', fa: 'پاک کردن همه' },
   'adgen.clearConfirm': { en: 'Delete all ads?', ar: 'حذف جميع الإعلانات؟', fa: 'همه آگهی‌ها حذف بشن؟' },
   'adgen.clearConfirmDesc': { en: 'This will permanently delete all generated ads. This cannot be undone.', ar: 'سيؤدي هذا إلى حذف جميع الإعلانات المولّدة نهائياً. لا يمكن التراجع.', fa: 'همه آگهی‌های تولیدشده برای همیشه حذف می‌شن. غیرقابل بازگشت.' },
+  'adgen.noPersona': { en: 'No persona available. Complete segmentation first.', ar: 'لا توجد شخصية متاحة. أكمل التجزئة أولاً.', fa: 'پرسونایی موجود نیست. اول بخش‌بندی را تکمیل کنید.' },
 
   // Visual Generation
   'visual.title': { en: 'Visual Generation', ar: 'توليد المرئيات', fa: 'تولید تصویر' },

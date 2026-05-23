@@ -132,6 +132,26 @@ export interface StepResult {
   step: CampaignStep
 }
 
+export interface AdsStrategyRun {
+  campaign_step_uuid: string
+  step_type: 'meta_ads' | 'google_ads' | 'linkedin_ads'
+  platform: CampaignAdPlatform
+  status: CampaignStepStatus
+  request_payload: Record<string, unknown>
+  response_payload: Record<string, unknown>
+  summary: Record<string, unknown>
+  started_at: string | null
+  completed_at: string | null
+  error_message: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface AdsStrategyListResponse {
+  success: boolean
+  strategies: AdsStrategyRun[]
+}
+
 export function getCampaignProgress(campaign: Campaign): number {
   const flags = [
     campaign.segmentation_completed,

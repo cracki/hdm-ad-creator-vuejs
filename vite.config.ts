@@ -65,8 +65,8 @@ export default defineConfig({
           if (id.includes('node_modules/exceljs')) {
             return 'vendor-export-xlsx'
           }
-          if (id.includes('node_modules/@lottiefiles/')) {
-            return 'vendor-lottie'
+          if (id.includes('node_modules/lottie-web/')) {
+            return 'vendor-ui'
           }
           if (id.includes('node_modules/')) {
             return 'vendor-other'
@@ -75,6 +75,6 @@ export default defineConfig({
       },
     },
     target: 'esnext',
-    sourcemap: false,
+    sourcemap: true,
   },
 })
