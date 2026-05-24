@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { Brain, AlertCircle, MapPin, ShoppingBag, RefreshCw, Check, BarChart3, Target, Layers, TrendingUp, Lightbulb } from 'lucide-vue-next'
+import { Brain, AlertCircle, MapPin, ShoppingBag, RefreshCw, Check, BarChart3, Target, Layers, TrendingUp, Lightbulb, Download, FileText, LayoutGrid, Loader2 } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import ContentOpportunitiesRenderer from '@/shared/components/renderers/ContentOpportunitiesRenderer.vue'
@@ -10,12 +10,15 @@ import TopPerformingContentRenderer from '@/shared/components/renderers/TopPerfo
 import { useI18n } from '@/shared/utils/i18n'
 import { useBrands } from '@/features/brands/queries'
 import { useAutoSelectBrand } from '@/shared/composables/useAutoSelectBrand'
+import { useConfetti } from '@/shared/composables/useConfetti'
+import { exportIntelligencePDF, exportIntelligencePPTX, exportIntelligenceXLSX } from '@/shared/utils/exportMarket'
 import { useRunContentIntelligence } from '../queries'
 import type { ContentIntelligenceRun, ContentIntelligenceResult } from '../types'
 
 const { t } = useI18n()
 const { data: brands } = useBrands()
 const runMutation = useRunContentIntelligence()
+const confetti = useConfetti()
 
 const selectedBrandUuid = ref('')
 useAutoSelectBrand(selectedBrandUuid)
@@ -27,6 +30,8 @@ const contentGoal = ref<'engagement' | 'leads' | 'awareness' | 'sales' | 'educat
 const result = ref<ContentIntelligenceRun | null>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)
+const showExportMenu = ref(false)
+const exporting = ref(false)
 
 const contentGoals = [
   { value: 'engagement' as const, label: 'Engagement' },
@@ -67,6 +72,18 @@ async function runIntelligence() {
   } finally {
     loading.value = false
   }
+}
+
+async function handleExport(format: 'pdf' | 'pptx' | 'xlsx') {
+  showExportMenu.value = false
+  if (!payload.value) return
+  exporting.value = true
+  try {
+    if (format === 'pdf') await exportIntelligencePDF(payload.value)
+    else if (format === 'pptx') await exportIntelligencePPTX(payload.value)
+    else await exportIntelligenceXLSX(payload.value)
+    confetti.trigger()
+  } finally { exporting.value = false }
 }
 </script>
 
@@ -176,9 +193,24 @@ async function runIntelligence() {
             <Check class="h-4 w-4 text-success" />
             <span class="text-xs text-muted-foreground">{{ t('market.completed') }}</span>
           </div>
-          <button data-loc="market.intel.re-run-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="result = null">
-            <RefreshCw class="h-3 w-3" /> {{ t('market.reRun') }}
-          </button>
+          <div class="flex items-center gap-2">
+            <div class="relative">
+              <button :disabled="exporting" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition disabled:opacity-50" @click="showExportMenu = !showExportMenu">
+                <Loader2 v-if="exporting" class="h-3 w-3 animate-spin" />
+                <Download v-else class="h-3 w-3" />
+                {{ exporting ? t('market.exporting') : t('market.export') }}
+              </button>
+              <div v-if="showExportMenu" class="absolute end-0 top-full mt-1 z-50 min-w-[180px] rounded-lg border border-border/40 bg-popover shadow-lg py-1">
+                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition" @click="handleExport('pdf')"><FileText class="h-3.5 w-3.5 text-red-400" /> {{ t('market.exportPDF') }}</button>
+                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition" @click="handleExport('pptx')"><LayoutGrid class="h-3.5 w-3.5 text-orange-400" /> {{ t('market.exportPPTX') }}</button>
+                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition" @click="handleExport('xlsx')"><BarChart3 class="h-3.5 w-3.5 text-green-400" /> {{ t('market.exportXLSX') }}</button>
+              </div>
+              <div v-if="showExportMenu" class="fixed inset-0 z-40" @click="showExportMenu = false" />
+            </div>
+            <button data-loc="market.intel.re-run-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="result = null">
+              <RefreshCw class="h-3 w-3" /> {{ t('market.reRun') }}
+            </button>
+          </div>
         </div>
 
         <!-- Tabs -->

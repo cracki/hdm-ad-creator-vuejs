@@ -4,6 +4,7 @@ import type {
   TopPerformingContentResponse,
   ContentMatrixResponse, ContentMatrixStageIdea,
   AIHooksResponse,
+  ContentIntelligenceResult,
 } from '@/features/market/types'
 
 // ── Shared helpers ────────────────────────────────────────
@@ -511,4 +512,506 @@ export async function exportHooksXLSX(data: AIHooksResponse): Promise<void> {
   }
 
   triggerDownload(new Blob([await wb.xlsx.writeBuffer()], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `hooks-${data.industry}.xlsx`)
+}
+
+// ════════════════════════════════════════════════════════════
+// CONTENT INTELLIGENCE (FULL REPORT)
+// ════════════════════════════════════════════════════════════
+
+export async function exportIntelligencePDF(data: ContentIntelligenceResult): Promise<void> {
+  const ctx = await initPDF()
+  const { doc, autoTable } = ctx
+  const margin = 15
+  const pw = doc.internal.pageSize.getWidth()
+  let y = 55
+
+  addPdfCoverTitle(ctx, `Market Intelligence Report — ${data.industry}`, `Location: ${data.location}`)
+
+  // ── Summary ──
+  doc.setFontSize(14)
+  doc.setFont('helvetica', 'bold')
+  doc.text('Executive Summary', margin, y)
+  y += 7
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(9)
+
+  const summary = data.summary
+  const summaryItems = [
+    `Total Opportunities: ${summary.total_opportunities}`,
+    `Content Gaps Found: ${summary.gaps_found}`,
+    `Content Ideas Generated: ${summary.content_ideas}`,
+    `Top Performers Analyzed: ${summary.top_performers_analyzed}`,
+  ]
+  for (const item of summaryItems) {
+    doc.text(`  •  ${item}`, margin, y)
+    y += 4.5
+  }
+  y += 4
+
+  // ── Competing Domains ──
+  const opp = data.content_opportunities
+  if (opp?.top_competing_domains?.length) {
+    if (y + 30 > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = margin }
+    doc.setFontSize(12)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Top Competing Domains', margin, y)
+    y += 4
+    autoTable(doc, {
+      startY: y,
+      margin: { left: margin, right: margin },
+      head: [['Domain', 'Content Count']],
+      body: opp.top_competing_domains.map(d => [d.domain, String(d.content_count)]),
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [88, 28, 135], textColor: 255, fontStyle: 'bold' },
+      columnStyles: { 0: { cellWidth: 80 }, 1: { cellWidth: 30 } },
+    })
+    y = (doc as any).lastAutoTable.finalY + 8
+  }
+
+  // ── Opportunities: Top Performing Content ──
+  if (opp?.top_performing_content?.length) {
+    if (y + 20 > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = margin }
+    doc.setFontSize(12)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Top Performing Content', margin, y)
+    y += 4
+    autoTable(doc, {
+      startY: y,
+      margin: { left: margin, right: margin },
+      head: [['#', 'Title', 'Query', 'Position', 'Domain']],
+      body: opp.top_performing_content.map((c, i) => [
+        String(i + 1), c.title, c.query, String(c.position), c.domain,
+      ]),
+      styles: { fontSize: 7, cellPadding: 2, overflow: 'linebreak' },
+      headStyles: { fillColor: [88, 28, 135], textColor: 255, fontStyle: 'bold' },
+      columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 55 }, 2: { cellWidth: 30 }, 3: { cellWidth: 15 }, 4: { cellWidth: 30 } },
+    })
+    y = (doc as any).lastAutoTable.finalY + 8
+  }
+
+  // ── Opportunities: Content by Type ──
+  if (opp?.content_by_type) {
+    for (const [typeKey, items] of Object.entries(opp.content_by_type)) {
+      if (!items?.length) continue
+      if (y + 20 > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = margin }
+      doc.setFontSize(12)
+      doc.setFont('helvetica', 'bold')
+      doc.text(`Content Type: ${typeKey.replace(/_/g, ' ')}`, margin, y)
+      y += 4
+      autoTable(doc, {
+        startY: y,
+        margin: { left: margin, right: margin },
+        head: [['#', 'Title', 'Query', 'Position', 'Domain']],
+        body: items.map((c: any, i: number) => [
+          String(i + 1), c.title, c.query, String(c.position), c.domain,
+        ]),
+        styles: { fontSize: 7, cellPadding: 2, overflow: 'linebreak' },
+        headStyles: { fillColor: [88, 28, 135], textColor: 255, fontStyle: 'bold' },
+        columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 55 }, 2: { cellWidth: 30 }, 3: { cellWidth: 15 }, 4: { cellWidth: 30 } },
+      })
+      y = (doc as any).lastAutoTable.finalY + 8
+    }
+  }
+
+  // ── Content Gaps ──
+  const gaps = data.content_gaps
+  if (gaps?.content_gaps?.length) {
+    if (y + 20 > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = margin }
+    doc.setFontSize(12)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Content Gaps', margin, y)
+    y += 4
+    autoTable(doc, {
+      startY: y,
+      margin: { left: margin, right: margin },
+      head: [['#', 'Topic', 'Score', 'Suggested Type', 'Reason']],
+      body: gaps.content_gaps.map((g, i) => [
+        String(i + 1), g.topic, String(g.opportunity_score), g.suggested_content_type, g.reason,
+      ]),
+      styles: { fontSize: 7, cellPadding: 2, overflow: 'linebreak' },
+      headStyles: { fillColor: [88, 28, 135], textColor: 255, fontStyle: 'bold' },
+      columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 30 }, 2: { cellWidth: 12 }, 3: { cellWidth: 25 }, 4: { cellWidth: 80 } },
+    })
+    y = (doc as any).lastAutoTable.finalY + 8
+  }
+  if (gaps?.recommendation) {
+    if (y + 10 > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = margin }
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'normal')
+    const lines = doc.splitTextToSize(`Recommendation: ${gaps.recommendation}`, pw - 30)
+    for (const line of lines) { doc.text(line, margin, y); y += 4.5 }
+    y += 4
+  }
+
+  // ── Content Matrix ──
+  const matrix = data.content_matrix
+  if (matrix?.content_matrix) {
+    const stageLabels: Record<string, string> = { TOFU: 'TOFU — Awareness', MOFU: 'MOFU — Consideration', BOFU: 'BOFU — Decision' }
+    const stages = matrix.content_matrix as Record<string, any>
+
+    for (const [key, stage] of Object.entries(stages)) {
+      if (!stage?.content_ideas?.length) continue
+      if (y + 20 > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = margin }
+      doc.setFontSize(12)
+      doc.setFont('helvetica', 'bold')
+      doc.text(stageLabels[key] ?? key, margin, y)
+      y += 2
+      doc.setFontSize(8)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(100, 100, 100)
+      doc.text(`Goal: ${stage.goal}  |  Formats: ${(stage.recommended_formats ?? []).join(', ')}`, margin, y + 3)
+      y += 7
+      doc.setTextColor(0, 0, 0)
+
+      autoTable(doc, {
+        startY: y,
+        margin: { left: margin, right: margin },
+        head: [['#', 'Suggested Title', 'Topic', 'Angle']],
+        body: stage.content_ideas.map((idea: ContentMatrixStageIdea, i: number) => [
+          String(i + 1), idea.suggested_title, idea.topic, idea.content_angle,
+        ]),
+        styles: { fontSize: 7.5, cellPadding: 2, overflow: 'linebreak' },
+        headStyles: { fillColor: [88, 28, 135], textColor: 255, fontStyle: 'bold' },
+        columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 55 }, 2: { cellWidth: 35 }, 3: { cellWidth: 60 } },
+      })
+      y = (doc as any).lastAutoTable.finalY + 8
+    }
+  }
+
+  // ── Top Performers ──
+  const tp = data.top_performers
+  if (tp?.common_patterns) {
+    if (y + 20 > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = margin }
+    doc.setFontSize(12)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Top Performers — Patterns', margin, y)
+    y += 5
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9)
+    if (tp.common_patterns.most_common_type) {
+      doc.text(`Most Common Type: ${tp.common_patterns.most_common_type[0]} (${tp.common_patterns.most_common_type[1]})`, margin, y)
+      y += 4.5
+    }
+    if (tp.common_patterns.dominant_domains?.length) {
+      doc.text(`Dominant Domains: ${tp.common_patterns.dominant_domains.join(', ')}`, margin, y)
+      y += 4.5
+    }
+    doc.text(`Average Position: ${tp.common_patterns.average_position}`, margin, y)
+    y += 8
+  }
+
+  if (tp?.top_performers?.length) {
+    if (y + 20 > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = margin }
+    doc.setFontSize(12)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Top Performers', margin, y)
+    y += 4
+    autoTable(doc, {
+      startY: y,
+      margin: { left: margin, right: margin },
+      head: [['#', 'Title', 'Type', 'Pos', 'Why It Ranks', 'Your Opportunity']],
+      body: tp.top_performers.map((p, i) => [
+        String(i + 1), p.title, p.content_type, String(p.position), p.why_it_ranks, p.your_opportunity,
+      ]),
+      styles: { fontSize: 7, cellPadding: 2, overflow: 'linebreak' },
+      headStyles: { fillColor: [88, 28, 135], textColor: 255, fontStyle: 'bold' },
+      columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 35 }, 2: { cellWidth: 14 }, 3: { cellWidth: 10 }, 4: { cellWidth: 45 }, 5: { cellWidth: 45 } },
+    })
+    y = (doc as any).lastAutoTable.finalY + 8
+  }
+
+  // ── Action Items ──
+  if (tp?.action_items?.length) {
+    if (y + 5 + tp.action_items.length * 5 > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = margin }
+    doc.setFontSize(12)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Action Items', margin, y)
+    y += 5
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9)
+    for (const item of tp.action_items) {
+      if (y > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = margin }
+      doc.text(`  • ${item}`, margin, y)
+      y += 4.5
+    }
+  }
+
+  addPdfFooter(ctx)
+  triggerDownload(doc.output('blob'), `market-intelligence-${data.industry}.pdf`)
+}
+
+export async function exportIntelligencePPTX(data: ContentIntelligenceResult): Promise<void> {
+  const { pptx, purple, white, gray, cardBg, addSlide } = await initPPTX()
+
+  // Title slide
+  const titleSlide = pptx.addSlide()
+  titleSlide.background = { fill: '1E1B2E' }
+  titleSlide.addImage({ data: hdmLogoBase64, x: 5.33, y: 1.5, w: 1.5, h: 1.5 })
+  titleSlide.addText('Market Intelligence Report', { x: 1, y: 3.2, w: 10.5, h: 0.8, fontSize: 28, color: white, bold: true, align: 'center' })
+  titleSlide.addText(`${data.industry}  •  ${data.location}`, { x: 1, y: 4, w: 10.5, h: 0.5, fontSize: 14, color: gray, align: 'center' })
+  titleSlide.addText(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }), { x: 1, y: 4.5, w: 10.5, h: 0.4, fontSize: 10, color: gray, align: 'center' })
+  titleSlide.addShape(pptx.shapes.RECTANGLE, { x: 3, y: 4.9, w: 6.5, h: 0.04, fill: { color: purple } })
+  titleSlide.addShape(pptx.shapes.RECTANGLE, { x: 0.5, y: 7.1, w: 12.4, h: 0.01, fill: { color: '3F3A5C' } })
+  titleSlide.addText('HDM Ad Creator', { x: 4, y: 7.15, w: 5.33, h: 0.3, fontSize: 8, color: gray, align: 'center' })
+
+  // Summary slide
+  const summarySlide = addSlide('Executive Summary')
+  const summaryRows: Array<Array<{ text: string; options?: Record<string, unknown> }>> = [
+    [{ text: 'Metric', options: { bold: true, color: white, fill: { color: purple } } }, { text: 'Value', options: { bold: true, color: white, fill: { color: purple } } }],
+    [{ text: 'Total Opportunities', options: { color: white } }, { text: String(data.summary.total_opportunities), options: { color: gray } }],
+    [{ text: 'Content Gaps', options: { color: white } }, { text: String(data.summary.gaps_found), options: { color: gray } }],
+    [{ text: 'Content Ideas', options: { color: white } }, { text: String(data.summary.content_ideas), options: { color: gray } }],
+    [{ text: 'Top Performers', options: { color: white } }, { text: String(data.summary.top_performers_analyzed), options: { color: gray } }],
+  ]
+  summarySlide.addTable(summaryRows, { x: 0.8, y: 1.1, w: 11.5, fontSize: 11, rowH: 0.45, border: { pt: 0.5, color: '3F3A5C' }, fill: { color: cardBg }, colW: [5, 6.5] })
+
+  // Competing Domains
+  const opp = data.content_opportunities
+  if (opp?.top_competing_domains?.length) {
+    const slide = addSlide('Top Competing Domains')
+    const rows: Array<Array<{ text: string; options?: Record<string, unknown> }>> = [
+      [{ text: 'Domain', options: { bold: true, color: white, fill: { color: purple } } }, { text: 'Content Count', options: { bold: true, color: white, fill: { color: purple } } }],
+      ...opp.top_competing_domains.map(d => [
+        { text: d.domain, options: { color: white, bold: true } },
+        { text: String(d.content_count), options: { color: gray } },
+      ]),
+    ]
+    slide.addTable(rows, { x: 0.8, y: 1.1, w: 11.5, fontSize: 10, rowH: 0.4, border: { pt: 0.5, color: '3F3A5C' }, fill: { color: cardBg }, colW: [9, 2.5] })
+  }
+
+  // Content by Type slides
+  if (opp?.content_by_type) {
+    for (const [typeKey, items] of Object.entries(opp.content_by_type)) {
+      if (!items?.length) continue
+      const slide = addSlide(`Content Type: ${typeKey.replace(/_/g, ' ')}`)
+      const rows: Array<Array<{ text: string; options?: Record<string, unknown> }>> = [
+        [{ text: '#', options: { bold: true, color: white, fill: { color: purple } } }, { text: 'Title', options: { bold: true, color: white, fill: { color: purple } } }, { text: 'Query', options: { bold: true, color: white, fill: { color: purple } } }, { text: 'Pos', options: { bold: true, color: white, fill: { color: purple } } }],
+        ...items.map((c: any, i: number) => [
+          { text: String(i + 1), options: { color: gray } },
+          { text: c.title, options: { color: white, bold: true, fontSize: 8 } },
+          { text: c.query, options: { color: gray, fontSize: 8 } },
+          { text: String(c.position), options: { color: gray } },
+        ]),
+      ]
+      slide.addTable(rows, { x: 0.8, y: 1.1, w: 11.5, fontSize: 9, rowH: 0.45, border: { pt: 0.5, color: '3F3A5C' }, fill: { color: cardBg }, colW: [0.5, 6.5, 3, 1.5], autoPage: true })
+    }
+  }
+
+  // Content Gaps
+  const gaps = data.content_gaps
+  if (gaps?.content_gaps?.length) {
+    const slide = addSlide('Content Gaps')
+    const rows: Array<Array<{ text: string; options?: Record<string, unknown> }>> = [
+      [{ text: '#', options: { bold: true, color: white, fill: { color: purple } } }, { text: 'Topic', options: { bold: true, color: white, fill: { color: purple } } }, { text: 'Score', options: { bold: true, color: white, fill: { color: purple } } }, { text: 'Type', options: { bold: true, color: white, fill: { color: purple } } }, { text: 'Reason', options: { bold: true, color: white, fill: { color: purple } } }],
+      ...gaps.content_gaps.map((g, i) => [
+        { text: String(i + 1), options: { color: gray } },
+        { text: g.topic, options: { color: white, bold: true, fontSize: 8 } },
+        { text: String(g.opportunity_score), options: { color: gray } },
+        { text: g.suggested_content_type, options: { color: '22C55E', fontSize: 8 } },
+        { text: g.reason, options: { color: gray, fontSize: 8 } },
+      ]),
+    ]
+    slide.addTable(rows, { x: 0.8, y: 1.1, w: 11.5, fontSize: 9, rowH: 0.5, border: { pt: 0.5, color: '3F3A5C' }, fill: { color: cardBg }, colW: [0.5, 2.5, 1, 2, 5.5], autoPage: true })
+  }
+
+  // Matrix slides
+  const matrix = data.content_matrix
+  if (matrix?.content_matrix) {
+    const stageLabels: Record<string, string> = { TOFU: 'TOFU — Awareness', MOFU: 'MOFU — Consideration', BOFU: 'BOFU — Decision' }
+    const stages = matrix.content_matrix as Record<string, any>
+    for (const [key, stage] of Object.entries(stages)) {
+      if (!stage?.content_ideas?.length) continue
+      const slide = addSlide(stageLabels[key] ?? key)
+      const rows: Array<Array<{ text: string; options?: Record<string, unknown> }>> = [
+        [{ text: '#', options: { bold: true, color: white, fill: { color: purple } } }, { text: 'Title', options: { bold: true, color: white, fill: { color: purple } } }, { text: 'Topic', options: { bold: true, color: white, fill: { color: purple } } }, { text: 'Angle', options: { bold: true, color: white, fill: { color: purple } } }],
+        ...stage.content_ideas.map((idea: ContentMatrixStageIdea, i: number) => [
+          { text: String(i + 1), options: { color: gray } },
+          { text: idea.suggested_title, options: { color: white, bold: true, fontSize: 8 } },
+          { text: idea.topic, options: { color: gray, fontSize: 8 } },
+          { text: idea.content_angle, options: { color: gray, fontSize: 8 } },
+        ]),
+      ]
+      slide.addTable(rows, { x: 0.8, y: 1.1, w: 11.5, fontSize: 9, rowH: 0.4, border: { pt: 0.5, color: '3F3A5C' }, fill: { color: cardBg }, colW: [0.5, 4, 3, 4], autoPage: true })
+    }
+  }
+
+  // Top Performers patterns
+  const tp = data.top_performers
+  if (tp?.common_patterns) {
+    const slide = addSlide('Top Performers — Patterns')
+    const rows: Array<Array<{ text: string; options?: Record<string, unknown> }>> = [
+      [{ text: 'Metric', options: { bold: true, color: white, fill: { color: purple } } }, { text: 'Value', options: { bold: true, color: white, fill: { color: purple } } }],
+    ]
+    if (tp.common_patterns.most_common_type) rows.push([{ text: 'Most Common Type', options: { color: white } }, { text: `${tp.common_patterns.most_common_type[0]} (${tp.common_patterns.most_common_type[1]})`, options: { color: gray } }])
+    rows.push([{ text: 'Avg Position', options: { color: white } }, { text: String(tp.common_patterns.average_position), options: { color: gray } }])
+    if (tp.common_patterns.dominant_domains?.length) rows.push([{ text: 'Dominant Domains', options: { color: white } }, { text: tp.common_patterns.dominant_domains.join(', '), options: { color: gray, fontSize: 9 } }])
+    slide.addTable(rows, { x: 0.8, y: 1.1, w: 11.5, fontSize: 10, rowH: 0.45, border: { pt: 0.5, color: '3F3A5C' }, fill: { color: cardBg }, colW: [3.5, 8] })
+  }
+
+  // Top performers table
+  if (tp?.top_performers?.length) {
+    const slide = addSlide('Top Performers')
+    const rows: Array<Array<{ text: string; options?: Record<string, unknown> }>> = [
+      [{ text: '#', options: { bold: true, color: white, fill: { color: purple } } }, { text: 'Title', options: { bold: true, color: white, fill: { color: purple } } }, { text: 'Type', options: { bold: true, color: white, fill: { color: purple } } }, { text: 'Pos', options: { bold: true, color: white, fill: { color: purple } } }, { text: 'Why It Ranks', options: { bold: true, color: white, fill: { color: purple } } }, { text: 'Opportunity', options: { bold: true, color: white, fill: { color: purple } } }],
+      ...tp.top_performers.map((p, i) => [
+        { text: String(i + 1), options: { color: gray } },
+        { text: p.title, options: { color: white, bold: true, fontSize: 8 } },
+        { text: p.content_type, options: { color: '22C55E', fontSize: 8 } },
+        { text: String(p.position), options: { color: gray } },
+        { text: p.why_it_ranks, options: { color: gray, fontSize: 8 } },
+        { text: p.your_opportunity, options: { color: gray, fontSize: 8 } },
+      ]),
+    ]
+    slide.addTable(rows, { x: 0.8, y: 1.1, w: 11.5, fontSize: 9, rowH: 0.5, border: { pt: 0.5, color: '3F3A5C' }, fill: { color: cardBg }, colW: [0.5, 2.5, 1.2, 0.6, 3.5, 3.2], autoPage: true })
+  }
+
+  // Action Items
+  if (tp?.action_items?.length) {
+    const slide = addSlide('Action Items')
+    slide.addText(tp.action_items.map(ai => ({ text: `• ${ai}\n`, options: { fontSize: 12, color: gray, lineSpacing: 24 } })), { x: 0.8, y: 1.1, w: 11.5, h: 5, valign: 'top' })
+  }
+
+  triggerDownload(await pptx.write({ outputType: 'blob' }) as Blob, `market-intelligence-${data.industry}.pptx`)
+}
+
+export async function exportIntelligenceXLSX(data: ContentIntelligenceResult): Promise<void> {
+  const ExcelJS = (await import('exceljs')).default
+  const wb: any = new ExcelJS.Workbook()
+  wb.creator = 'HDM Ad Creator'
+  wb.created = new Date()
+
+  const hFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF581C87' } }
+  const hFont = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 }
+  const cFont = { size: 10 }
+  const brd = { top: { style: 'thin', color: { argb: 'FF3F3A5C' } }, left: { style: 'thin', color: { argb: 'FF3F3A5C' } }, bottom: { style: 'thin', color: { argb: 'FF3F3A5C' } }, right: { style: 'thin', color: { argb: 'FF3F3A5C' } } }
+  const sh = (c: any) => { c.fill = hFill; c.font = hFont; c.border = brd; c.alignment = { horizontal: 'center', vertical: 'middle' } }
+  const sc = (c: any) => { c.font = cFont; c.border = brd; c.alignment = { vertical: 'top', wrapText: true } }
+
+  // Summary sheet
+  const sWs = wb.addWorksheet('Summary')
+  sWs.columns = [{ header: 'Metric', key: 'm', width: 30 }, { header: 'Value', key: 'v', width: 60 }]
+  sWs.getRow(1).eachCell(sh)
+  sWs.addRow({ m: 'Industry', v: data.industry }).eachCell(sc)
+  sWs.addRow({ m: 'Location', v: data.location }).eachCell(sc)
+  sWs.addRow({ m: 'Total Opportunities', v: String(data.summary.total_opportunities) }).eachCell(sc)
+  sWs.addRow({ m: 'Content Gaps', v: String(data.summary.gaps_found) }).eachCell(sc)
+  sWs.addRow({ m: 'Content Ideas', v: String(data.summary.content_ideas) }).eachCell(sc)
+  sWs.addRow({ m: 'Top Performers Analyzed', v: String(data.summary.top_performers_analyzed) }).eachCell(sc)
+
+  // Competing Domains in Summary
+  const opp = data.content_opportunities
+  if (opp?.top_competing_domains?.length) {
+    sWs.addRow({ m: '', v: '' }).eachCell(sc)
+    sWs.addRow({ m: 'Top Competing Domains', v: 'Content Count' }).eachCell(sh)
+    for (const d of opp.top_competing_domains) {
+      sWs.addRow({ m: d.domain, v: String(d.content_count) }).eachCell(sc)
+    }
+  }
+
+  // Opportunities sheet
+  if (opp?.top_performing_content?.length) {
+    const ws = wb.addWorksheet('Opportunities')
+    ws.columns = [
+      { header: '#', key: 'n', width: 5 }, { header: 'Title', key: 'title', width: 40 },
+      { header: 'Snippet', key: 'snip', width: 50 }, { header: 'URL', key: 'url', width: 35 },
+      { header: 'Position', key: 'pos', width: 10 }, { header: 'Query', key: 'query', width: 25 },
+      { header: 'Domain', key: 'dom', width: 20 },
+    ]
+    ws.getRow(1).eachCell(sh)
+    for (const [i, c] of opp.top_performing_content.entries()) {
+      ws.addRow({ n: i + 1, title: c.title, snip: c.snippet, url: c.url, pos: c.position, query: c.query, dom: c.domain }).eachCell(sc)
+    }
+  }
+
+  // Content by Type sheet
+  if (opp?.content_by_type) {
+    const ws = wb.addWorksheet('Content by Type')
+    ws.columns = [
+      { header: 'Type', key: 'type', width: 18 }, { header: '#', key: 'n', width: 5 },
+      { header: 'Title', key: 'title', width: 40 }, { header: 'Snippet', key: 'snip', width: 50 },
+      { header: 'Query', key: 'query', width: 25 }, { header: 'Position', key: 'pos', width: 10 },
+      { header: 'Domain', key: 'dom', width: 20 },
+    ]
+    ws.getRow(1).eachCell(sh)
+    for (const [typeKey, items] of Object.entries(opp.content_by_type)) {
+      for (const [i, c] of (items as any[]).entries()) {
+        ws.addRow({ type: typeKey.replace(/_/g, ' '), n: i + 1, title: c.title, snip: c.snippet, query: c.query, pos: c.position, dom: c.domain }).eachCell(sc)
+      }
+    }
+  }
+
+  // Content Gaps sheet
+  const gaps = data.content_gaps
+  if (gaps?.content_gaps?.length) {
+    const ws = wb.addWorksheet('Content Gaps')
+    ws.columns = [
+      { header: '#', key: 'n', width: 5 }, { header: 'Topic', key: 'topic', width: 30 },
+      { header: 'Opportunity Score', key: 'score', width: 15 }, { header: 'Suggested Type', key: 'type', width: 20 },
+      { header: 'Reason', key: 'reason', width: 60 },
+    ]
+    ws.getRow(1).eachCell(sh)
+    for (const [i, g] of gaps.content_gaps.entries()) {
+      ws.addRow({ n: i + 1, topic: g.topic, score: g.opportunity_score, type: g.suggested_content_type, reason: g.reason }).eachCell(sc)
+    }
+    if (gaps.recommendation) {
+      ws.addRow({ n: '', topic: '', score: '', type: 'Recommendation:', reason: gaps.recommendation }).eachCell(sc)
+    }
+  }
+
+  // Content Matrix sheets (TOFU, MOFU, BOFU)
+  const matrix = data.content_matrix
+  if (matrix?.content_matrix) {
+    const stages = matrix.content_matrix as Record<string, any>
+    for (const [key, stage] of Object.entries(stages)) {
+      if (!stage?.content_ideas?.length) continue
+      const ws = wb.addWorksheet(key)
+      ws.columns = [
+        { header: '#', key: 'n', width: 5 }, { header: 'Suggested Title', key: 'title', width: 40 },
+        { header: 'Topic', key: 'topic', width: 25 }, { header: 'Content Angle', key: 'angle', width: 40 },
+        { header: 'Title Inspiration', key: 'insp', width: 35 }, { header: 'Position', key: 'pos', width: 10 },
+      ]
+      ws.getRow(1).eachCell(sh)
+      for (const [i, idea] of (stage.content_ideas as ContentMatrixStageIdea[]).entries()) {
+        ws.addRow({ n: i + 1, title: idea.suggested_title, topic: idea.topic, angle: idea.content_angle, insp: idea.title_inspiration, pos: idea.position ?? '' }).eachCell(sc)
+      }
+    }
+  }
+
+  // Top Performers sheet
+  const tp = data.top_performers
+  if (tp?.top_performers?.length) {
+    const ws = wb.addWorksheet('Top Performers')
+    ws.columns = [
+      { header: '#', key: 'n', width: 5 }, { header: 'Title', key: 'title', width: 40 },
+      { header: 'Type', key: 'type', width: 15 }, { header: 'Position', key: 'pos', width: 10 },
+      { header: 'Domain', key: 'dom', width: 20 }, { header: 'Search Query', key: 'query', width: 25 },
+      { header: 'Why It Ranks', key: 'why', width: 50 }, { header: 'Your Opportunity', key: 'opp', width: 50 },
+    ]
+    ws.getRow(1).eachCell(sh)
+    for (const [i, p] of tp.top_performers.entries()) {
+      ws.addRow({ n: i + 1, title: p.title, type: p.content_type, pos: p.position, dom: p.domain, query: p.search_query, why: p.why_it_ranks, opp: p.your_opportunity }).eachCell(sc)
+    }
+  }
+
+  // Patterns sheet
+  if (tp?.common_patterns) {
+    const ws = wb.addWorksheet('Patterns')
+    ws.columns = [{ header: 'Metric', key: 'm', width: 25 }, { header: 'Value', key: 'v', width: 70 }]
+    ws.getRow(1).eachCell(sh)
+    if (tp.common_patterns.most_common_type) ws.addRow({ m: 'Most Common Type', v: `${tp.common_patterns.most_common_type[0]} (${tp.common_patterns.most_common_type[1]})` }).eachCell(sc)
+    ws.addRow({ m: 'Average Position', v: String(tp.common_patterns.average_position) }).eachCell(sc)
+    if (tp.common_patterns.dominant_domains?.length) ws.addRow({ m: 'Dominant Domains', v: tp.common_patterns.dominant_domains.join(', ') }).eachCell(sc)
+  }
+
+  // Action Items sheet
+  if (tp?.action_items?.length) {
+    const ws = wb.addWorksheet('Action Items')
+    ws.columns = [{ header: '#', key: 'n', width: 5 }, { header: 'Action', key: 'a', width: 80 }]
+    ws.getRow(1).eachCell(sh)
+    for (const [i, ai] of tp.action_items.entries()) {
+      ws.addRow({ n: i + 1, a: ai }).eachCell(sc)
+    }
+  }
+
+  triggerDownload(new Blob([await wb.xlsx.writeBuffer()], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `market-intelligence-${data.industry}.xlsx`)
 }
