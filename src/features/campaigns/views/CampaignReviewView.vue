@@ -10,6 +10,7 @@ import { usePageActions } from '@/shared/composables/usePageActions'
 import { useCampaign, useCampaignAds } from '../queries'
 import { useCompleteCampaign } from '../queries'
 import { operationManager } from '@/infrastructure/operations/operationManager'
+import { useConfetti } from '@/shared/composables/useConfetti'
 import { exportReview } from '@/shared/utils/exportStep'
 
 const route = useRoute()
@@ -23,6 +24,7 @@ const { setActions } = usePageActions()
 setActions([{ label: t('camp.backToCampaign'), icon: ArrowLeft, to: `/campaigns/${campaignUuid.value}` }])
 const { data: ads } = useCampaignAds(campaignUuid)
 const completeMutation = useCompleteCampaign(campaignUuid)
+const confetti = useConfetti()
 
 const adsList = computed(() => Array.isArray(ads.value) ? ads.value : [])
 
@@ -74,6 +76,7 @@ async function handleReviewExport(format: 'csv' | 'pdf' | 'pptx') {
       campaignName: campaign.value?.name ?? 'Campaign',
       brandName: campaign.value?.brand?.company_name,
     })
+    confetti.trigger()
   } finally {
     reviewExporting.value = false
   }
