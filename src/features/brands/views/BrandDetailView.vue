@@ -30,7 +30,6 @@ const activeTab = ref<'overview' | 'analysis'>('overview')
 const showDeleteDialog = ref(false)
 
 const competitorLink = computed(() => `/brands/${brandUuid.value}/competitors`)
-const socialLink = computed(() => `/brands/${brandUuid.value}/social`)
 
 const latestRun = computed(() => analysisRuns.value?.[0] ?? null)
 const hasAnalysis = computed(() => !!latestRun.value)
@@ -199,8 +198,8 @@ setActions([
         </div>
       </template>
 
-      <!-- Competitor & Social links -->
-      <div class="grid sm:grid-cols-2 gap-3 pt-2">
+      <!-- Competitor link -->
+      <div class="pt-2">
         <RouterLink
           :to="competitorLink"
           data-loc="brands.detail.competitors-link"
@@ -210,17 +209,6 @@ setActions([
           <div>
             <div class="font-medium text-sm">{{ t('nav.competitors') }}</div>
             <div class="text-xs text-muted-foreground">{{ t('competitors.subtitle') }}</div>
-          </div>
-        </RouterLink>
-        <RouterLink
-          :to="socialLink"
-          data-loc="brands.detail.social-link"
-          class="surface-card p-4 flex items-center gap-3 hover:border-primary/40 transition"
-        >
-          <Globe class="h-5 w-5 text-muted-foreground shrink-0" />
-          <div>
-            <div class="font-medium text-sm">{{ t('social.title') }}</div>
-            <div class="text-xs text-muted-foreground">{{ t('social.subtitle') }}</div>
           </div>
         </RouterLink>
       </div>

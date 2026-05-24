@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import Topbar from '@/layout/Topbar.vue'
 import AnalysisPayloadRenderer from '@/shared/components/renderers/AnalysisPayloadRenderer.vue'
 import CompetitiveAnalysisRenderer from '@/shared/components/renderers/CompetitiveAnalysisRenderer.vue'
-import SocialPresenceRenderer from '@/shared/components/renderers/SocialPresenceRenderer.vue'
+
 import { useBrand, useAnalysisRun, useStartAnalysis } from '@/features/brands/queries'
 import { useJobTracker } from '@/shared/composables/useJobTracker'
 import { brandsApi } from '@/features/brands/api'
@@ -14,7 +14,7 @@ import { usePageActions } from '@/shared/composables/usePageActions'
 import { TERMINAL_STATUSES } from '@/features/brands/schemas'
 import {
   Play, Loader2, RefreshCw, Users, BarChart3,
-  Globe, Lightbulb, Brain, Heart, Target, ChevronLeft,
+  Globe, Lightbulb, Heart, Target, ChevronLeft,
   CheckCircle2, XCircle, Clock, Sparkles, Download,
 } from 'lucide-vue-next'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
@@ -111,7 +111,7 @@ const progressDots = computed(() => Math.min(Math.floor(tracker.attempts.value /
 
 const brandProfile = computed(() => runData.value?.brand_profile ?? null)
 const audienceInsights = computed(() => runData.value?.audience_insights ?? null)
-const socialPresence = computed(() => runData.value?.social_presence ?? null)
+
 const recommendations = computed(() => runData.value?.recommendations ?? null)
 const emotionProfile = computed(() => runData.value?.emotion_profile ?? null)
 const competitiveAnalysis = computed(() => runData.value?.competitive_analysis ?? null)
@@ -182,10 +182,6 @@ setActions([
         <div class="flex items-center gap-3 text-sm">
           <BarChart3 class="h-4 w-4 text-primary shrink-0" />
           <span>{{ t('analysis.feature.competitors') }}</span>
-        </div>
-        <div class="flex items-center gap-3 text-sm">
-          <Brain class="h-4 w-4 text-primary shrink-0" />
-          <span>{{ t('analysis.feature.social') }}</span>
         </div>
       </div>
 
@@ -286,14 +282,6 @@ setActions([
             <Globe class="h-4 w-4 text-primary" /> {{ t('analysis.section.brandProfile') }}
           </div>
           <AnalysisPayloadRenderer :data="brandProfile" />
-        </div>
-
-        <!-- Social Presence -->
-        <div v-if="socialPresence" class="surface-card p-5 space-y-4">
-          <div class="flex items-center gap-2 text-sm font-semibold">
-            <Brain class="h-4 w-4 text-primary" /> {{ t('analysis.section.socialPresence') }}
-          </div>
-          <SocialPresenceRenderer :data="socialPresence" />
         </div>
 
         <!-- Emotion Profile -->

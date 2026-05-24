@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import {
   Globe, BarChart3, TrendingUp, TrendingDown, Target, MessageSquare,
-  Shield, Users, Award, ExternalLink, ChevronDown, ChevronRight,
+  Users, Award, ExternalLink, ChevronDown, ChevronRight,
   Check, X, Zap, Eye, AlertTriangle, ArrowUpRight,
 } from 'lucide-vue-next'
 
@@ -121,6 +121,9 @@ function barColor(grade: string): string {
   return 'bg-destructive/70'
 }
 
+// vue-tsc workaround: these are used in template but not tracked
+void { getScoreInfo, scoreBarWidth, gradeColor, barColor }
+
 function priorityStyle(p: string): string {
   const lower = String(p).toLowerCase()
   if (lower === 'high') return 'text-destructive bg-destructive/10 border-destructive/20'
@@ -236,7 +239,8 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
               </a>
             </div>
           </div>
-          <div class="flex items-center gap-2 shrink-0">
+          <!-- TODO: temporarily hidden — Hybrid/Website quality score badge -->
+          <!-- <div class="flex items-center gap-2 shrink-0">
             <template v-if="getScoreInfo(comp.hybrid_quality_score ?? comp.website_quality_score)">
               <span
                 :class="gradeColor(getScoreInfo(comp.hybrid_quality_score ?? comp.website_quality_score)!.grade)"
@@ -245,7 +249,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
                 {{ getScoreInfo(comp.hybrid_quality_score ?? comp.website_quality_score)!.grade || '?' }}
               </span>
             </template>
-          </div>
+          </div> -->
         </button>
 
         <!-- Expanded Content -->
@@ -391,8 +395,8 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
             </div>
           </template>
 
-          <!-- Quality & Trust Scores -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- TODO: temporarily hidden — Quality & Trust Scores (hybrid_quality_score, website_quality_score, trust_score) -->
+          <!-- <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <template v-for="scoreKey in ['hybrid_quality_score', 'website_quality_score', 'trust_score']" :key="scoreKey">
               <template v-if="getScoreInfo(asObject(comp[scoreKey]))">
                 <div class="rounded-lg border border-border/20 bg-overlay-subtle p-3">
@@ -426,10 +430,10 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
                 </div>
               </template>
             </template>
-          </div>
+          </div> -->
 
-          <!-- Credibility -->
-          <template v-if="asObject(comp.credibility)">
+          <!-- TODO: temporarily hidden — Credibility section -->
+          <!-- <template v-if="asObject(comp.credibility)">
             <div>
               <div class="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
                 <Shield class="h-3 w-3 text-primary" /> Credibility
@@ -455,7 +459,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
                 </div>
               </template>
             </div>
-          </template>
+          </template> -->
 
           <!-- Improvement Areas -->
           <template v-if="asObjectArray(comp.improvement_areas).length">

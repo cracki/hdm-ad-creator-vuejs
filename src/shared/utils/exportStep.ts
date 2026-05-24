@@ -888,3 +888,200 @@ export async function exportReview(format: ExportFormat, campaign: any, adsList:
 
   triggerDownload(await pptx.write({ outputType: 'blob' }) as Blob, `${safeName(ctx)}-review.pptx`)
 }
+
+// ── Full Funnel ────────────────────────────────────────────────
+
+interface FullFunnelAd {
+  funnel_stage?: string
+  platform?: string
+  headline?: string
+  body_text?: string
+  body?: string
+  cta_button?: string
+  cta_text?: string
+  persona?: string
+  score?: number
+}
+
+interface FullFunnelCtx extends StepCtx {
+  budget?: number
+  currency?: string
+  duration?: number
+  platforms?: string[]
+  targetingSpecs?: Record<string, any>
+}
+
+export async function exportFullFunnel(
+  format: ExportFormat,
+  _campaignData: Record<string, unknown>,
+  adsByStage: Record<string, FullFunnelAd[]>,
+  ctx: FullFunnelCtx,
+): Promise<void> {
+  const allAds = Object.values(adsByStage).flat()
+  const stageLabels: Record<string, string> = { tofu: 'TOFU', mofu: 'MOFU', bofu: 'BOFU' }
+
+  if (format === 'csv') {
+    const rows = allAds.map((ad) => ({
+      funnel_stage: stageLabels[ad.funnel_stage ?? ''] ?? ad.funnel_stage ?? '',
+      platform: str(ad.platform),
+      headline: ad.headline ?? '',
+      body: ad.body_text ?? ad.body ?? '',
+      cta: ad.cta_button ?? ad.cta_text ?? '',
+      persona: ad.persona ?? '',
+    }))
+    exportCsv(rows, `${safeName(ctx)}-full-funnel`, [
+      { key: 'funnel_stage', header: 'Funnel Stage' },
+      { key: 'platform', header: 'Platform' },
+      { key: 'headline', header: 'Headline' },
+      { key: 'body', header: 'Body Copy' },
+      { key: 'cta', header: 'CTA' },
+      { key: 'persona', header: 'Persona' },
+    ])
+    return
+  }
+
+  if (format === 'pdf') {
+    const { doc, autoTable } = await initPDF()
+    const margin = 15
+    let y = 60
+    addPdfCoverTitle({ doc, autoTable }, ctx.stepName, ctx.campaignName)
+    const pageH = () => doc.internal.pageSize.getHeight()
+
+    doc.setFontSize(13); doc.setFont('helvetica', 'bold'); doc.text('Overview', margin, y); y += 6
+    const overviewRows: string[][] = [
+      ['Total Ads', String(allAds.length)],
+      ['Platforms', (ctx.platforms ?? []).join(', ')],
+      ['Budget', `${ctx.currency ?? 'USD'} ${(ctx.budget ?? 0).toLocaleString()}`],
+      ['Duration', `${ctx.duration ?? 0} days`],
+    ]
+    autoTable(doc, {
+      startY: y, margin: { left: margin, right: margin },
+      head: [['Metric', 'Value']], body: overviewRows,
+      styles: { fontSize: 9, cellPadding: 2 },
+      headStyles: { fillColor: [88, 28, 135], textColor: 255, fontStyle: 'bold' },
+      columnStyles: { 0: { cellWidth: 50 }, 1: { cellWidth: 'auto' } },
+    })
+    y = (doc as any).lastAutoTable.finalY + 8
+
+    for (const [stage, ads] of Object.entries(adsByStage)) {
+      if (!ads.length) continue
+      if (y + 30 > pageH() - 20) { doc.addPage(); y = margin }
+      doc.setFontSize(12); doc.setFont('helvetica', 'bold')
+      doc.text(`${stageLabels[stage] ?? stage} — ${ads.length} ads`, margin, y); y += 5
+      const rows = ads.map((ad, i) => [
+        String(i + 1),
+        str(ad.platform),
+        ad.headline ?? '',
+        ad.body_text ?? ad.body ?? '',
+        ad.cta_button ?? ad.cta_text ?? '',
+      ])
+      autoTable(doc, {
+        startY: y, margin: { left: margin, right: margin },
+        head: [['#', 'Platform', 'Headline', 'Body', 'CTA']], body: rows,
+        styles: { fontSize: 7, cellPadding: 2, overflow: 'linebreak' },
+        headStyles: { fillColor: [88, 28, 135], textColor: 255, fontStyle: 'bold' },
+        columnStyles: { 0: { cellWidth: 7 }, 1: { cellWidth: 18 }, 2: { cellWidth: 35 }, 3: { cellWidth: 'auto' }, 4: { cellWidth: 22 } },
+      })
+      y = (doc as any).lastAutoTable.finalY + 8
+    }
+
+    const specs = ctx.targetingSpecs
+    if (specs && typeof specs === 'object') {
+      if (y + 30 > pageH() - 20) { doc.addPage(); y = margin }
+      doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.text('Targeting Specs', margin, y); y += 5
+      for (const [platform, spec] of Object.entries(specs)) {
+        if (y + 30 > pageH() - 20) { doc.addPage(); y = margin }
+        doc.setFontSize(10); doc.setFont('helvetica', 'bold')
+        doc.text(String(platform).toUpperCase(), margin, y); y += 4
+        const specRows: string[][] = []
+        const s = spec as Record<string, any>
+        if (s.demographics) {
+          const d = s.demographics
+          if (d.age_range) specRows.push(['Age Range', str(d.age_range)])
+          if (d.gender) specRows.push(['Gender', str(d.gender)])
+        }
+        if (s.interests && Array.isArray(s.interests)) specRows.push(['Interests', s.interests.slice(0, 10).join(', ')])
+        if (s.behaviors && Array.isArray(s.behaviors)) specRows.push(['Behaviors', s.behaviors.join(', ')])
+        if (s.locations && Array.isArray(s.locations)) specRows.push(['Locations', s.locations.join(', ')])
+        if (specRows.length) {
+          autoTable(doc, {
+            startY: y, margin: { left: margin, right: margin },
+            head: [['Attribute', 'Value']], body: specRows,
+            styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
+            headStyles: { fillColor: [88, 28, 135], textColor: 255, fontStyle: 'bold' },
+            columnStyles: { 0: { cellWidth: 35 }, 1: { cellWidth: 'auto' } },
+          })
+          y = (doc as any).lastAutoTable.finalY + 6
+        }
+      }
+    }
+
+    addPdfFooter({ doc, autoTable })
+    triggerDownload(doc.output('blob'), `${safeName(ctx)}-full-funnel.pdf`)
+    return
+  }
+
+  const { pptx, purple, white, gray, cardBg, addSlide } = await initPPTX()
+  const titleSlide = pptx.addSlide()
+  titleSlide.background = { fill: '1E1B2E' }
+  titleSlide.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 0, w: '100%', h: 1.2, fill: { color: purple } })
+  titleSlide.addImage({ data: hdmLogoBase64, x: 11.8, y: 0.15, w: 0.9, h: 0.9 })
+  titleSlide.addText(ctx.stepName, { x: 0.8, y: 0.25, w: 9, h: 0.6, fontSize: 32, color: white, bold: true })
+  titleSlide.addText(ctx.campaignName, { x: 0.8, y: 1.5, w: 9, h: 0.5, fontSize: 20, color: gray })
+
+  const overviewSlide = addSlide('Overview')
+  overviewSlide.addTable([
+    [
+      { text: 'Metric', options: { bold: true, color: white, fill: { color: purple } } },
+      { text: 'Value', options: { bold: true, color: white, fill: { color: purple } } },
+    ],
+    [{ text: 'Total Ads', options: { color: white } }, { text: String(allAds.length), options: { color: '22C55E', bold: true } }],
+    [{ text: 'Platforms', options: { color: white } }, { text: (ctx.platforms ?? []).join(', '), options: { color: gray } }],
+    [{ text: 'Budget', options: { color: white } }, { text: `${ctx.currency ?? 'USD'} ${(ctx.budget ?? 0).toLocaleString()}`, options: { color: '22C55E' } }],
+    [{ text: 'Duration', options: { color: white } }, { text: `${ctx.duration ?? 0} days`, options: { color: gray } }],
+  ], { x: 0.8, y: 1.1, w: 11.5, fontSize: 10, rowH: 0.4, border: { pt: 0.5, color: '3F3A5C' }, fill: { color: cardBg }, colW: [3.5, 8] })
+
+  for (const [stage, ads] of Object.entries(adsByStage)) {
+    if (!ads.length) continue
+    const slide = addSlide(`${stageLabels[stage] ?? stage} Ads`)
+    slide.addTable([
+      [
+        { text: '#', options: { bold: true, color: white, fill: { color: purple } } },
+        { text: 'Platform', options: { bold: true, color: white, fill: { color: purple } } },
+        { text: 'Headline', options: { bold: true, color: white, fill: { color: purple } } },
+        { text: 'Body', options: { bold: true, color: white, fill: { color: purple } } },
+        { text: 'CTA', options: { bold: true, color: white, fill: { color: purple } } },
+      ],
+      ...ads.map((ad, i) => [
+        { text: String(i + 1), options: { color: gray } },
+        { text: str(ad.platform), options: { color: white, bold: true } },
+        { text: ad.headline ?? '', options: { color: gray, fontSize: 9 } },
+        { text: (ad.body_text ?? ad.body ?? '').slice(0, 120), options: { color: gray, fontSize: 8 } },
+        { text: ad.cta_button ?? ad.cta_text ?? '', options: { color: 'F472B6' } },
+      ]),
+    ], { x: 0.8, y: 1.1, w: 11.5, fontSize: 10, rowH: 0.5, border: { pt: 0.5, color: '3F3A5C' }, fill: { color: cardBg }, colW: [0.5, 1.5, 3, 5, 2], autoPage: true })
+  }
+
+  const specs = ctx.targetingSpecs
+  if (specs && typeof specs === 'object') {
+    const slide = addSlide('Targeting Specs')
+    const specRows: any[][] = [[
+      { text: 'Platform', options: { bold: true, color: white, fill: { color: purple } } },
+      { text: 'Demographics', options: { bold: true, color: white, fill: { color: purple } } },
+      { text: 'Interests', options: { bold: true, color: white, fill: { color: purple } } },
+    ]]
+    for (const [platform, spec] of Object.entries(specs)) {
+      const s = spec as Record<string, any>
+      const demo = s.demographics ? `${str(s.demographics.age_range)} · ${str(s.demographics.gender)}` : '-'
+      const interests = Array.isArray(s.interests) ? s.interests.slice(0, 6).join(', ') : '-'
+      specRows.push([
+        { text: String(platform).toUpperCase(), options: { color: white, bold: true } },
+        { text: demo, options: { color: gray, fontSize: 9 } },
+        { text: interests, options: { color: '22C55E', fontSize: 8 } },
+      ])
+    }
+    slide.addTable(specRows, { x: 0.8, y: 1.1, w: 11.5, fontSize: 10, rowH: 0.5, border: { pt: 0.5, color: '3F3A5C' }, fill: { color: cardBg }, colW: [2, 3.5, 6] })
+  }
+
+  triggerDownload(await pptx.write({ outputType: 'blob' }) as Blob, `${safeName(ctx)}-full-funnel.pptx`)
+}
