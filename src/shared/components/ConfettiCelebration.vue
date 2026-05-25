@@ -3,7 +3,7 @@ import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { useVisualSettings } from '@/shared/composables/useVisualSettings'
 import lottie from 'lottie-web'
-import confettiData from '@/assets/Confetti-Effects.json'
+import confettiData from '@/assets/Confetti.json'
 
 const { active, dismiss } = useConfetti()
 const { settings } = useVisualSettings()

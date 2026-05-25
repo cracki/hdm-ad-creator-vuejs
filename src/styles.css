@@ -205,6 +205,7 @@ html.reduce-motion *::after {
 
 @layer base {
   * { border-color: var(--color-border); }
+  html, body { overflow-x: clip; }
   main { overflow-x: hidden; }
   html, body { background-color: var(--color-background); color: var(--color-foreground); }
   body {
@@ -301,8 +302,7 @@ html.rtl .grid-bg {
 /* RTL-safe logical properties — ensure forms, inputs and cards are aligned */
 html.rtl input::placeholder,
 html.rtl textarea::placeholder {
-  text-align: right;
-  direction: rtl;
+  text-align: start;
 }
 
 html.rtl table th,
@@ -313,6 +313,17 @@ html.rtl table td {
 /* RTL progress bars and gradient flows */
 html.rtl [class*="bg-gradient-to-r"] {
   --tw-gradient-to-position: to left;
+}
+
+/* RTL horizontal scroll containers: force LTR scroll direction
+   so initial scroll position starts at the correct edge */
+html.rtl [class*="overflow-x-auto"],
+html.rtl [class*="overflow-x-scroll"] {
+  direction: ltr;
+}
+html.rtl [class*="overflow-x-auto"] > *,
+html.rtl [class*="overflow-x-scroll"] > * {
+  direction: rtl;
 }
 
 /* RTL tooltip positioning fix */
