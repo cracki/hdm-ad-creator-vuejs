@@ -1,18 +1,19 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import {
   Sparkles, AlertCircle, RefreshCw, Plus, Trash2,
   Copy, Check, Filter, LayoutGrid, BarChart3, Lightbulb,
   Hash, MessageCircle, Zap, TrendingUp, Target, Flame, ArrowLeftRight,
-  Download, FileText, Loader2,
+  Download, FileText, Loader2, ArrowLeft,
 } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
+import MarketHistoryList from '../components/MarketHistoryList.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { useConfetti } from '@/shared/composables/useConfetti'
-import { useGenerateAIHooks } from '../queries'
+import { useGenerateAIHooks, useAIHooksHistory, useAIHooksRun } from '../queries'
 import { exportHooksPDF, exportHooksPPTX, exportHooksXLSX } from '@/shared/utils/exportMarket'
-import type { AIHook, AIHookType, AIHookPlatform, AIHooksResponse } from '../types'
+import type { AIHook, AIHookType, AIHookPlatform, AIHooksResponse, MarketRunSummary } from '../types'
 
 const { t } = useI18n()
 const hooksMutation = useGenerateAIHooks()
@@ -34,6 +35,21 @@ const showResults = ref(true)
 const showInsights = ref(false)
 const showExportMenu = ref(false)
 const exporting = ref(false)
+
+const historyPage = ref(1)
+const selectedHistoryUuid = ref<string | null>(null)
+
+const { data: historyData, isLoading: historyListLoading } = useAIHooksHistory(historyPage)
+const { data: selectedRun } = useAIHooksRun(selectedHistoryUuid)
+
+const showForm = computed(() => !hooksResult.value && !loading.value && !selectedHistoryUuid.value)
+const showHistoryDetailLoading = computed(() => !!selectedHistoryUuid.value && !hooksResult.value && !loading.value)
+
+watch(selectedRun, (detail) => {
+  if (detail?.result_payload) {
+    hooksResult.value = detail.result_payload
+  }
+})
 
 async function handleExport(format: 'pdf' | 'pptx' | 'xlsx') {
   showExportMenu.value = false
@@ -92,6 +108,7 @@ async function generateHooks() {
   hooksResult.value = null
   activeFilter.value = 'all'
   activePlatform.value = 'all'
+  selectedHistoryUuid.value = null
   try {
     const res = await hooksMutation.mutateAsync({
       titles: validTitles,
@@ -119,6 +136,19 @@ async function copyAllHooks() {
   await navigator.clipboard.writeText(text)
   copiedAll.value = true
   setTimeout(() => { copiedAll.value = false }, 1500)
+}
+
+function selectHistoryRun(run: MarketRunSummary) {
+  selectedHistoryUuid.value = run.run_uuid
+  error.value = null
+}
+
+function backToForm() {
+  hooksResult.value = null
+  selectedHistoryUuid.value = null
+  error.value = null
+  activeFilter.value = 'all'
+  activePlatform.value = 'all'
 }
 
 function getTypeColor(type: AIHookType): string {
@@ -185,7 +215,7 @@ const platformLabels: Record<AIHookPlatform, string> = {
     <div class="max-w-6xl mx-auto p-4 sm:p-6 md:p-8">
 
       <!-- Input form -->
-      <div v-if="!hooksResult && !loading" class="surface-card p-5 sm:p-7 mb-6">
+      <div v-if="showForm" class="surface-card p-5 sm:p-7 mb-6">
         <header class="flex items-start gap-4 mb-6">
           <div class="h-12 w-12 rounded-xl bg-[image:var(--gradient-brand)] grid place-items-center shadow-[var(--shadow-glow)] shrink-0">
             <Sparkles class="h-5 w-5 text-primary-foreground" />
@@ -236,9 +266,28 @@ const platformLabels: Record<AIHookPlatform, string> = {
         </div>
       </div>
 
-      <!-- Loading -->
+      <!-- Past Runs -->
+      <section v-if="showForm" class="mt-6">
+        <MarketHistoryList
+          :runs="historyData?.results ?? []"
+          :total="historyData?.total ?? 0"
+          :page="historyPage"
+          :page-size="10"
+          :loading="historyListLoading"
+          feature-key="market.hooks"
+          @select="selectHistoryRun"
+          @update:page="historyPage = $event"
+        />
+      </section>
+
+      <!-- Loading (POST) -->
       <div v-if="loading" class="surface-card p-8 sm:p-12">
         <AiLoadingAnimation :message="t('market.generatingHooks')" :description="t('market.generatingHooksDesc')" />
+      </div>
+
+      <!-- Loading (history detail) -->
+      <div v-if="showHistoryDetailLoading" class="surface-card p-8">
+        <AiLoadingAnimation :message="t('market.history.loadingDetail')" size="sm" />
       </div>
 
       <!-- Error -->
@@ -264,6 +313,10 @@ const platformLabels: Record<AIHookPlatform, string> = {
               <span>{{ t('market.hooksFound', { count: hooksResult.hooks?.length ?? 0 }) }}</span>
               <span class="hidden sm:inline">&middot;</span>
               <span>{{ t('market.sourceTitles') }}: {{ hooksResult.source_titles_count }}</span>
+              <template v-if="selectedHistoryUuid">
+                <span class="hidden sm:inline">&middot;</span>
+                <span>{{ t('market.history.runFrom', { date: new Date(selectedRun?.created_at ?? '').toLocaleDateString() }) }}</span>
+              </template>
             </div>
           </div>
           <div class="flex items-center gap-2 shrink-0">
@@ -288,8 +341,10 @@ const platformLabels: Record<AIHookPlatform, string> = {
               </div>
               <div v-if="showExportMenu" class="fixed inset-0 z-40" @click="showExportMenu = false" />
             </div>
-            <button data-loc="market.hooks.re-run-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="hooksResult = null">
-              <RefreshCw class="h-3 w-3" /> {{ t('market.reRun') }}
+            <button data-loc="market.hooks.back-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="backToForm">
+              <ArrowLeft v-if="selectedHistoryUuid" class="h-3 w-3" />
+              <RefreshCw v-else class="h-3 w-3" />
+              {{ selectedHistoryUuid ? t('market.history.backToList') : t('market.reRun') }}
             </button>
           </div>
         </div>

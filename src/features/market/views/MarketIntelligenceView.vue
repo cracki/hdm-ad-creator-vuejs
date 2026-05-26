@@ -1,19 +1,20 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { Brain, AlertCircle, MapPin, ShoppingBag, RefreshCw, Check, BarChart3, Target, Layers, TrendingUp, Lightbulb, Download, FileText, LayoutGrid, Loader2 } from 'lucide-vue-next'
+import { ref, computed, watch } from 'vue'
+import { Brain, AlertCircle, MapPin, ShoppingBag, RefreshCw, Check, BarChart3, Target, Layers, TrendingUp, Lightbulb, Download, FileText, LayoutGrid, Loader2, ArrowLeft } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import ContentOpportunitiesRenderer from '@/shared/components/renderers/ContentOpportunitiesRenderer.vue'
 import ContentGapsRenderer from '@/shared/components/renderers/ContentGapsRenderer.vue'
 import ContentMatrixRenderer from '@/shared/components/renderers/ContentMatrixRenderer.vue'
 import TopPerformingContentRenderer from '@/shared/components/renderers/TopPerformingContentRenderer.vue'
+import MarketHistoryList from '../components/MarketHistoryList.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { useBrands } from '@/features/brands/queries'
 import { useAutoSelectBrand } from '@/shared/composables/useAutoSelectBrand'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { exportIntelligencePDF, exportIntelligencePPTX, exportIntelligenceXLSX } from '@/shared/utils/exportMarket'
-import { useRunContentIntelligence } from '../queries'
-import type { ContentIntelligenceRun, ContentIntelligenceResult } from '../types'
+import { useRunContentIntelligence, useContentIntelligenceHistory, useContentIntelligenceRun } from '../queries'
+import type { ContentIntelligenceRun, ContentIntelligenceResult, MarketRunSummary } from '../types'
 
 const { t } = useI18n()
 const { data: brands } = useBrands()
@@ -32,6 +33,34 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const showExportMenu = ref(false)
 const exporting = ref(false)
+
+const historyPage = ref(1)
+const selectedHistoryUuid = ref<string | null>(null)
+
+const { data: historyData, isLoading: historyListLoading } = useContentIntelligenceHistory(historyPage)
+const { data: selectedRun } = useContentIntelligenceRun(selectedHistoryUuid)
+
+const showForm = computed(() => !result.value && !loading.value && !selectedHistoryUuid.value)
+const showHistoryDetailLoading = computed(() => !!selectedHistoryUuid.value && !result.value && !loading.value)
+
+watch(selectedRun, (detail) => {
+  if (detail?.result_payload) {
+    result.value = {
+      content_intelligence_run_uuid: detail.run_uuid,
+      brand: null,
+      run_type: 'full',
+      status: detail.status,
+      industry: detail.industry,
+      location: detail.location ?? '',
+      content_goal: '',
+      request_payload: {},
+      result_payload: detail.result_payload,
+      summary: detail.result_payload.summary,
+      created_at: detail.created_at,
+      updated_at: detail.updated_at,
+    }
+  }
+})
 
 const contentGoals = [
   { value: 'engagement' as const, label: 'Engagement' },
@@ -57,6 +86,7 @@ async function runIntelligence() {
   loading.value = true
   error.value = null
   result.value = null
+  selectedHistoryUuid.value = null
   activeTab.value = 'summary'
   try {
     const res = await runMutation.mutateAsync({
@@ -85,6 +115,18 @@ async function handleExport(format: 'pdf' | 'pptx' | 'xlsx') {
     confetti.trigger()
   } finally { exporting.value = false }
 }
+
+function selectHistoryRun(run: MarketRunSummary) {
+  selectedHistoryUuid.value = run.run_uuid
+  error.value = null
+  activeTab.value = 'summary'
+}
+
+function backToForm() {
+  result.value = null
+  selectedHistoryUuid.value = null
+  error.value = null
+}
 </script>
 
 <template>
@@ -103,7 +145,7 @@ async function handleExport(format: 'pdf' | 'pptx' | 'xlsx') {
       </header>
 
       <!-- Input form -->
-      <div v-if="!result && !loading" class="surface-card p-5 space-y-4 mb-6">
+      <div v-if="showForm" class="surface-card p-5 space-y-4 mb-6">
         <!-- Brand selection -->
         <div>
           <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.selectBrand') }}</label>
@@ -169,9 +211,28 @@ async function handleExport(format: 'pdf' | 'pptx' | 'xlsx') {
         </button>
       </div>
 
-      <!-- Loading -->
+      <!-- Past Runs -->
+      <section v-if="showForm" class="mt-6">
+        <MarketHistoryList
+          :runs="historyData?.results ?? []"
+          :total="historyData?.total ?? 0"
+          :page="historyPage"
+          :page-size="10"
+          :loading="historyListLoading"
+          feature-key="market.intel"
+          @select="selectHistoryRun"
+          @update:page="historyPage = $event"
+        />
+      </section>
+
+      <!-- Loading (POST) -->
       <div v-if="loading" class="surface-card p-8">
         <AiLoadingAnimation :message="t('market.analyzing')" :description="t('market.analyzingDesc')" />
+      </div>
+
+      <!-- Loading (history detail) -->
+      <div v-if="showHistoryDetailLoading" class="surface-card p-8">
+        <AiLoadingAnimation :message="t('market.history.loadingDetail')" size="sm" />
       </div>
 
       <!-- Error -->
@@ -191,7 +252,10 @@ async function handleExport(format: 'pdf' | 'pptx' | 'xlsx') {
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <Check class="h-4 w-4 text-success" />
-            <span class="text-xs text-muted-foreground">{{ t('market.completed') }}</span>
+            <span class="text-xs text-muted-foreground">
+              <span v-if="selectedHistoryUuid">{{ t('market.history.runFrom', { date: new Date(selectedRun?.created_at ?? '').toLocaleDateString() }) }}</span>
+              <span v-else>{{ t('market.completed') }}</span>
+            </span>
           </div>
           <div class="flex items-center gap-2">
             <div class="relative">
@@ -207,8 +271,10 @@ async function handleExport(format: 'pdf' | 'pptx' | 'xlsx') {
               </div>
               <div v-if="showExportMenu" class="fixed inset-0 z-40" @click="showExportMenu = false" />
             </div>
-            <button data-loc="market.intel.re-run-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="result = null">
-              <RefreshCw class="h-3 w-3" /> {{ t('market.reRun') }}
+            <button data-loc="market.intel.back-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="backToForm">
+              <ArrowLeft v-if="selectedHistoryUuid" class="h-3 w-3" />
+              <RefreshCw v-else class="h-3 w-3" />
+              {{ selectedHistoryUuid ? t('market.history.backToList') : t('market.reRun') }}
             </button>
           </div>
         </div>

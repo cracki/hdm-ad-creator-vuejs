@@ -82,3 +82,36 @@ export interface PublishingScheduleItem {
   headline_preview: string
   notes: string
 }
+
+export interface FullFunnelHistoryBrand {
+  brand_uuid: string
+  website_url: string
+  company_name: string
+  selected_industry: { industry_uuid: string; name: string }
+  created_at: string
+  updated_at: string
+}
+
+export interface FullFunnelHistoryItem {
+  full_funnel_compaign_uuid: string
+  brand: FullFunnelHistoryBrand
+  campaign_name: string
+  brand_name: string
+  objective: string
+  total_budget: number
+  currency: string
+  duration_days: number
+  start_date: string
+  funnel_strategies: FunnelStrategies
+  ad_copies: Record<string, unknown>[]
+  visual_concepts: VisualConcept[]
+  targeting_specs: Record<string, PlatformTargeting>
+  publishing_schedule: PublishingScheduleItem[]
+  total_ads: number
+  platforms: string[]
+  estimated_reach: string
+  key_metrics: string[]
+  status: string
+  created_at: string
+  updated_at: string
+}

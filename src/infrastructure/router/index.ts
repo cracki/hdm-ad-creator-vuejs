@@ -79,6 +79,16 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/features/fullFunnel/views/FullFunnelLauncherView.vue'),
       },
       {
+        path: 'campaigns/full-funnel/history',
+        name: 'full-funnel-history',
+        component: () => import('@/features/fullFunnel/views/FullFunnelHistoryView.vue'),
+      },
+      {
+        path: 'campaigns/full-funnel/history/:campaignUuid',
+        name: 'full-funnel-history-detail',
+        component: () => import('@/features/fullFunnel/views/FullFunnelHistoryDetailView.vue'),
+      },
+      {
         path: 'campaigns/:campaignUuid',
         name: 'campaign-detail',
         component: () => import('@/features/campaigns/views/CampaignDetailView.vue'),

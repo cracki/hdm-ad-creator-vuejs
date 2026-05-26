@@ -1,15 +1,19 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { Search, AlertCircle, RefreshCw, MapPin, ShoppingBag, Tag } from 'lucide-vue-next'
+import { ref, computed, watch } from 'vue'
+import { Search, AlertCircle, RefreshCw, MapPin, ShoppingBag, Tag, Download, FileText, LayoutGrid, BarChart3, Loader2, ArrowLeft } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import ContentGapsRenderer from '@/shared/components/renderers/ContentGapsRenderer.vue'
+import MarketHistoryList from '../components/MarketHistoryList.vue'
 import { useI18n } from '@/shared/utils/i18n'
-import { useGetContentGaps } from '../queries'
-import type { ContentGapsResponse } from '../types'
+import { useConfetti } from '@/shared/composables/useConfetti'
+import { useGetContentGaps, useContentGapsHistory, useContentGapsRun } from '../queries'
+import { exportContentGapsPDF, exportContentGapsPPTX, exportContentGapsXLSX } from '@/shared/utils/exportMarket'
+import type { ContentGapsResponse, MarketRunSummary } from '../types'
 
 const { t } = useI18n()
 const gapsMutation = useGetContentGaps()
+const confetti = useConfetti()
 
 const industry = ref('')
 const location = ref('')
@@ -19,11 +23,30 @@ const gapsResult = ref<ContentGapsResponse | null>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)
 
+const historyPage = ref(1)
+const selectedHistoryUuid = ref<string | null>(null)
+
+const { data: historyData, isLoading: historyListLoading } = useContentGapsHistory(historyPage)
+const { data: selectedRun } = useContentGapsRun(selectedHistoryUuid)
+
+const showForm = computed(() => !gapsResult.value && !loading.value && !selectedHistoryUuid.value)
+const showHistoryDetailLoading = computed(() => !!selectedHistoryUuid.value && !gapsResult.value && !loading.value)
+
+const showExportMenu = ref(false)
+const exporting = ref(false)
+
+watch(selectedRun, (detail) => {
+  if (detail?.result_payload) {
+    gapsResult.value = detail.result_payload
+  }
+})
+
 async function runGaps() {
   if (!industry.value || !location.value) return
   loading.value = true
   error.value = null
   gapsResult.value = null
+  selectedHistoryUuid.value = null
   try {
     const res = await gapsMutation.mutateAsync({
       industry: industry.value,
@@ -36,6 +59,29 @@ async function runGaps() {
   } finally {
     loading.value = false
   }
+}
+
+function selectHistoryRun(run: MarketRunSummary) {
+  selectedHistoryUuid.value = run.run_uuid
+  error.value = null
+}
+
+function backToForm() {
+  gapsResult.value = null
+  selectedHistoryUuid.value = null
+  error.value = null
+}
+
+async function handleExport(format: 'pdf' | 'pptx' | 'xlsx') {
+  showExportMenu.value = false
+  if (!gapsResult.value) return
+  exporting.value = true
+  try {
+    if (format === 'pdf') await exportContentGapsPDF(gapsResult.value)
+    else if (format === 'pptx') await exportContentGapsPPTX(gapsResult.value)
+    else await exportContentGapsXLSX(gapsResult.value)
+    confetti.trigger()
+  } finally { exporting.value = false }
 }
 </script>
 
@@ -55,7 +101,7 @@ async function runGaps() {
       </header>
 
       <!-- Input form -->
-      <div v-if="!gapsResult && !loading" class="surface-card p-5 space-y-4 mb-6">
+      <div v-if="showForm" class="surface-card p-5 space-y-4 mb-6">
         <div class="grid sm:grid-cols-2 gap-4">
           <div>
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.industry') }}</label>
@@ -90,9 +136,28 @@ async function runGaps() {
         </button>
       </div>
 
-      <!-- Loading -->
+      <!-- Past Runs -->
+      <section v-if="showForm" class="mt-6">
+        <MarketHistoryList
+          :runs="historyData?.results ?? []"
+          :total="historyData?.total ?? 0"
+          :page="historyPage"
+          :page-size="10"
+          :loading="historyListLoading"
+          feature-key="market.gaps"
+          @select="selectHistoryRun"
+          @update:page="historyPage = $event"
+        />
+      </section>
+
+      <!-- Loading (POST) -->
       <div v-if="loading" class="surface-card p-8">
         <AiLoadingAnimation :message="t('market.analyzingGaps')" :description="t('market.analyzingGapsDesc')" />
+      </div>
+
+      <!-- Loading (history detail) -->
+      <div v-if="showHistoryDetailLoading" class="surface-card p-8">
+        <AiLoadingAnimation :message="t('market.history.loadingDetail')" size="sm" />
       </div>
 
       <!-- Error -->
@@ -104,13 +169,34 @@ async function runGaps() {
         </button>
       </div>
 
-      <!-- Results -->
+      <!-- Results (POST or history detail) -->
       <div v-if="gapsResult && !loading">
         <div class="flex items-center justify-between mb-4">
-          <div class="text-xs text-muted-foreground">{{ t('market.analysisComplete') }}</div>
-          <button data-loc="market.gaps.re-run-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="gapsResult = null">
-            <RefreshCw class="h-3 w-3" /> {{ t('market.reRun') }}
-          </button>
+          <div class="text-xs text-muted-foreground">
+            <span v-if="selectedHistoryUuid">{{ t('market.history.runFrom', { date: new Date(selectedRun?.created_at ?? '').toLocaleDateString() }) }}</span>
+            <span v-else>{{ t('market.analysisComplete') }}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <!-- Export dropdown -->
+            <div class="relative">
+              <button :disabled="exporting" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition disabled:opacity-50" @click="showExportMenu = !showExportMenu">
+                <Loader2 v-if="exporting" class="h-3 w-3 animate-spin" />
+                <Download v-else class="h-3 w-3" />
+                {{ exporting ? t('market.exporting') : t('market.export') }}
+              </button>
+              <div v-if="showExportMenu" class="absolute end-0 top-full mt-1 z-50 min-w-[180px] rounded-lg border border-border/40 bg-popover shadow-lg py-1">
+                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition" @click="handleExport('pdf')"><FileText class="h-3.5 w-3.5 text-red-400" /> {{ t('market.exportPDF') }}</button>
+                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition" @click="handleExport('pptx')"><LayoutGrid class="h-3.5 w-3.5 text-orange-400" /> {{ t('market.exportPPTX') }}</button>
+                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition" @click="handleExport('xlsx')"><BarChart3 class="h-3.5 w-3.5 text-green-400" /> {{ t('market.exportXLSX') }}</button>
+              </div>
+              <div v-if="showExportMenu" class="fixed inset-0 z-40" @click="showExportMenu = false" />
+            </div>
+            <button data-loc="market.gaps.back-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="backToForm">
+              <ArrowLeft v-if="selectedHistoryUuid" class="h-3 w-3" />
+              <RefreshCw v-else class="h-3 w-3" />
+              {{ selectedHistoryUuid ? t('market.history.backToList') : t('market.reRun') }}
+            </button>
+          </div>
         </div>
 
         <div class="surface-card p-5">

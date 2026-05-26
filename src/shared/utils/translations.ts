@@ -746,6 +746,22 @@ export const translations = {
   'funnelLauncher.headlinePreview': { en: 'Headline Preview', ar: 'معاينة العنوان', fa: 'پیش‌نمایش تیتر' },
   'funnelLauncher.notes': { en: 'Notes', ar: 'ملاحظات', fa: 'یادداشت' },
   'funnelLauncher.hoursSummary': { en: 'Daily posting times', ar: 'أوقات النشر اليومية', fa: 'ساعات انتشار روزانه' },
+  'funnelLauncher.viewHistory': { en: 'History', ar: 'السجل', fa: 'سوابق' },
+
+  // ---------- Full Funnel History ----------
+  'fullFunnelHistory.title': { en: 'Campaign History', ar: 'سجل الحملات', fa: 'سوابق کمپین‌ها' },
+  'fullFunnelHistory.subtitle': { en: 'View your past full-funnel campaigns', ar: 'عرض حملات القمع الكامل السابقة', fa: 'مشاهده کمپین‌های قیف کامل قبلی' },
+  'fullFunnelHistory.backToLauncher': { en: 'New Campaign', ar: 'حملة جديدة', fa: 'کمپین جدید' },
+  'fullFunnelHistory.filterByBrand': { en: 'Filter by brand', ar: 'تصفية حسب العلامة', fa: 'فیلتر بر اساس برند' },
+  'fullFunnelHistory.allBrands': { en: 'All Brands', ar: 'كل العلامات', fa: 'همه برندها' },
+  'fullFunnelHistory.days': { en: 'days', ar: 'أيام', fa: 'روز' },
+  'fullFunnelHistory.ads': { en: 'ads', ar: 'إعلانات', fa: 'آگهی' },
+  'fullFunnelHistory.emptyTitle': { en: 'No campaigns yet', ar: 'لا توجد حملات بعد', fa: 'هنوز کمپینی نیست' },
+  'fullFunnelHistory.emptyDesc': { en: 'Launch your first full-funnel campaign to see results here.', ar: 'أطلق أول حملة قمع كامل لرؤية النتائج هنا.', fa: 'اولین کمپین قیف کامل خود را راه‌اندازی کنید تا نتایج اینجا نمایش داده شود.' },
+  'fullFunnelHistory.goLauncher': { en: 'Launch Campaign', ar: 'أطلق حملة', fa: 'راه‌اندازی کمپین' },
+  'fullFunnelHistory.detailTitle': { en: 'Campaign Details', ar: 'تفاصيل الحملة', fa: 'جزئیات کمپین' },
+  'fullFunnelHistory.backToHistory': { en: 'Back to History', ar: 'العودة إلى السجل', fa: 'بازگشت به سوابق' },
+  'fullFunnelHistory.loadError': { en: 'Failed to load campaign details', ar: 'فشل تحميل تفاصيل الحملة', fa: 'بارگذاری جزئیات کمپین ناموفق بود' },
 
   // ---------- Competitors (Phase 8) ----------
   'competitors.title': { en: 'Competitor Analysis', ar: 'تحليل المنافسين', fa: 'تحلیل رقبا' },
@@ -844,6 +860,22 @@ export const translations = {
   'market.exportPPTX': { en: 'Download PowerPoint', ar: 'تحميل PowerPoint', fa: 'دانلود PowerPoint' },
   'market.exportXLSX': { en: 'Download Excel', ar: 'تحميل Excel', fa: 'دانلود Excel' },
   'market.exporting': { en: 'Generating…', ar: 'جارٍ الإنشاء…', fa: 'در حال تولید…' },
+
+  // ---------- Market History ----------
+  'market.history.title': { en: 'Past Runs', ar: 'العمليات السابقة', fa: 'اجراهای قبلی' },
+  'market.history.empty': { en: 'No past analysis runs yet. Run an analysis to see results here.', ar: 'لم يتم تشغيل أي تحليل بعد. قم بتشغيل تحليل لرؤية النتائج هنا.', fa: 'هنوز تحلیلی اجرا نشده. یک تحلیل اجرا کنید تا نتایج اینجا نمایش داده شود.' },
+  'market.history.previous': { en: 'Previous', ar: 'السابق', fa: 'قبلی' },
+  'market.history.next': { en: 'Next', ar: 'التالي', fa: 'بعدی' },
+  'market.history.pageInfo': { en: 'Page {current} of {total}', ar: 'صفحة {current} من {total}', fa: 'صفحه {current} از {total}' },
+  'market.history.backToList': { en: 'Back to list', ar: 'العودة للقائمة', fa: 'بازگشت به لیست' },
+  'market.history.backToForm': { en: 'New analysis', ar: 'تحليل جديد', fa: 'تحلیل جدید' },
+  'market.history.runFrom': { en: 'Run from {date}', ar: 'عملية من {date}', fa: 'اجرا شده در {date}' },
+  'market.history.loadingDetail': { en: 'Loading run details…', ar: 'جارٍ تحميل التفاصيل…', fa: 'بارگذاری جزئیات اجرا…' },
+  'market.history.gapsSummary': { en: '{count} gaps found', ar: '{count} فجوات موجودة', fa: '{count} شکاف یافت شد' },
+  'market.history.hooksSummary': { en: '{count} hooks generated', ar: '{count} خطافات تم إنشاؤها', fa: '{count} هوک تولید شد' },
+  'market.history.matrixSummary': { en: '{count} content ideas', ar: '{count} أفكار محتوى', fa: '{count} ایده محتوایی' },
+  'market.history.topSummary': { en: '{count} performers analyzed', ar: '{count} تم تحليلها', fa: '{count} مورد تحلیل شد' },
+  'market.history.intelSummary': { en: 'Full intelligence report', ar: 'تقرير ذكاء كامل', fa: 'گزارش کامل هوش بازار' },
 
   // ---------- Phase 9: Shared Components ----------
   'common.loading': { en: 'Loading…', ar: 'جارٍ التحميل…', fa: 'در حال بارگذاری…' },

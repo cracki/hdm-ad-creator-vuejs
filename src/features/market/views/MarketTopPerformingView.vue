@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { TrendingUp, Loader2, AlertCircle, RefreshCw, MapPin, ShoppingBag, Download, FileText, LayoutGrid, BarChart3 } from 'lucide-vue-next'
+import { ref, computed, watch } from 'vue'
+import { TrendingUp, Loader2, AlertCircle, RefreshCw, MapPin, ShoppingBag, Download, FileText, LayoutGrid, BarChart3, ArrowLeft } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import TopPerformingContentRenderer from '@/shared/components/renderers/TopPerformingContentRenderer.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import { useConfetti } from '@/shared/composables/useConfetti'
-import { useGetTopPerformingContent } from '../queries'
+import MarketHistoryList from '../components/MarketHistoryList.vue'
+import { useGetTopPerformingContent, useTopPerformingHistory, useTopPerformingRun } from '../queries'
 import { exportTopPerformingPDF, exportTopPerformingPPTX, exportTopPerformingXLSX } from '@/shared/utils/exportMarket'
-import type { TopPerformingContentResponse } from '../types'
+import type { TopPerformingContentResponse, MarketRunSummary } from '../types'
 
 const { t } = useI18n()
 const topContentMutation = useGetTopPerformingContent()
@@ -22,6 +23,21 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const showExportMenu = ref(false)
 const exporting = ref(false)
+
+const historyPage = ref(1)
+const selectedHistoryUuid = ref<string | null>(null)
+
+const { data: historyData, isLoading: historyListLoading } = useTopPerformingHistory(historyPage)
+const { data: selectedRun } = useTopPerformingRun(selectedHistoryUuid)
+
+const showForm = computed(() => !topResult.value && !loading.value && !selectedHistoryUuid.value)
+const showHistoryDetailLoading = computed(() => !!selectedHistoryUuid.value && !topResult.value && !loading.value)
+
+watch(selectedRun, (detail) => {
+  if (detail?.result_payload) {
+    topResult.value = detail.result_payload
+  }
+})
 
 async function handleExport(format: 'pdf' | 'pptx' | 'xlsx') {
   showExportMenu.value = false
@@ -40,6 +56,7 @@ async function runTopPerforming() {
   loading.value = true
   error.value = null
   topResult.value = null
+  selectedHistoryUuid.value = null
   try {
     const res = await topContentMutation.mutateAsync({
       industry: industry.value,
@@ -51,6 +68,17 @@ async function runTopPerforming() {
   } finally {
     loading.value = false
   }
+}
+
+function selectHistoryRun(run: MarketRunSummary) {
+  selectedHistoryUuid.value = run.run_uuid
+  error.value = null
+}
+
+function backToForm() {
+  topResult.value = null
+  selectedHistoryUuid.value = null
+  error.value = null
 }
 </script>
 
@@ -70,7 +98,7 @@ async function runTopPerforming() {
       </header>
 
       <!-- Input form -->
-      <div v-if="!topResult && !loading" class="surface-card p-5 space-y-4 mb-6">
+      <div v-if="showForm" class="surface-card p-5 space-y-4 mb-6">
         <div class="grid sm:grid-cols-2 gap-4">
           <div>
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.industry') }}</label>
@@ -98,9 +126,28 @@ async function runTopPerforming() {
         </button>
       </div>
 
-      <!-- Loading -->
+      <!-- Past Runs -->
+      <section v-if="showForm" class="mt-6">
+        <MarketHistoryList
+          :runs="historyData?.results ?? []"
+          :total="historyData?.total ?? 0"
+          :page="historyPage"
+          :page-size="10"
+          :loading="historyListLoading"
+          feature-key="market.top"
+          @select="selectHistoryRun"
+          @update:page="historyPage = $event"
+        />
+      </section>
+
+      <!-- Loading (POST) -->
       <div v-if="loading" class="surface-card p-8 text-center">
         <AiLoadingAnimation :message="t('market.analyzingTop')" :description="t('market.analyzingTopDesc')" />
+      </div>
+
+      <!-- Loading (history detail) -->
+      <div v-if="showHistoryDetailLoading" class="surface-card p-8">
+        <AiLoadingAnimation :message="t('market.history.loadingDetail')" size="sm" />
       </div>
 
       <!-- Error -->
@@ -115,9 +162,11 @@ async function runTopPerforming() {
       <!-- Results -->
       <div v-if="topResult && !loading">
         <div class="flex items-center justify-between mb-4">
-          <div class="text-xs text-muted-foreground">{{ t('market.analysisComplete') }}</div>
+          <div class="text-xs text-muted-foreground">
+            <span v-if="selectedHistoryUuid">{{ t('market.history.runFrom', { date: new Date(selectedRun?.created_at ?? '').toLocaleDateString() }) }}</span>
+            <span v-else>{{ t('market.analysisComplete') }}</span>
+          </div>
           <div class="flex items-center gap-2">
-            <!-- Export dropdown -->
             <div class="relative">
               <button
                 :disabled="exporting"
@@ -141,8 +190,10 @@ async function runTopPerforming() {
               </div>
               <div v-if="showExportMenu" class="fixed inset-0 z-40" @click="showExportMenu = false" />
             </div>
-            <button data-loc="market.top.re-run-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="topResult = null">
-              <RefreshCw class="h-3 w-3" /> {{ t('market.reRun') }}
+            <button data-loc="market.top.back-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="backToForm">
+              <ArrowLeft v-if="selectedHistoryUuid" class="h-3 w-3" />
+              <RefreshCw v-else class="h-3 w-3" />
+              {{ selectedHistoryUuid ? t('market.history.backToList') : t('market.reRun') }}
             </button>
           </div>
         </div>

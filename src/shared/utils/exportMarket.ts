@@ -3,6 +3,7 @@ import { hdmLogoBase64 } from '@/shared/assets/hdm-logo-base64'
 import type {
   TopPerformingContentResponse,
   ContentMatrixResponse, ContentMatrixStageIdea,
+  ContentGapsResponse,
   AIHooksResponse,
   ContentIntelligenceResult,
 } from '@/features/market/types'
@@ -377,6 +378,121 @@ export async function exportContentMatrixXLSX(data: ContentMatrixResponse): Prom
   }
 
   triggerDownload(new Blob([await wb.xlsx.writeBuffer()], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `content-matrix-${data.industry}.xlsx`)
+}
+
+// ════════════════════════════════════════════════════════════
+// CONTENT GAPS
+// ════════════════════════════════════════════════════════════
+
+export async function exportContentGapsPDF(data: ContentGapsResponse): Promise<void> {
+  const ctx = await initPDF()
+  const { doc, autoTable } = ctx
+  const margin = 15
+  let y = 55
+
+  addPdfCoverTitle(ctx, 'Content Gaps Analysis', data.industry)
+
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'bold')
+  doc.text(`Total Gaps Found: ${data.total_gaps_found}`, margin, y)
+  y += 8
+
+  if (data.content_gaps?.length) {
+    if (y + 20 > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = margin }
+    doc.setFontSize(12)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Content Gaps', margin, y)
+    y += 4
+    autoTable(doc, {
+      startY: y,
+      margin: { left: margin, right: margin },
+      head: [['#', 'Topic', 'Score', 'Suggested Type', 'Reason']],
+      body: data.content_gaps.map((g, i) => [
+        String(i + 1), g.topic, String(g.opportunity_score), g.suggested_content_type, g.reason,
+      ]),
+      styles: { fontSize: 7, cellPadding: 2, overflow: 'linebreak' },
+      headStyles: { fillColor: [88, 28, 135], textColor: 255, fontStyle: 'bold' },
+      columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 30 }, 2: { cellWidth: 12 }, 3: { cellWidth: 25 }, 4: { cellWidth: 80 } },
+    })
+    y = (doc as any).lastAutoTable.finalY + 8
+  }
+
+  if (data.recommendation) {
+    if (y + 10 > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = margin }
+    doc.setFontSize(12)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Recommendation', margin, y)
+    y += 5
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9)
+    const lines = doc.splitTextToSize(data.recommendation, doc.internal.pageSize.getWidth() - 30)
+    for (const line of lines) { doc.text(line, margin, y); y += 4.5 }
+  }
+
+  addPdfFooter(ctx)
+  triggerDownload(doc.output('blob'), `content-gaps-${data.industry}.pdf`)
+}
+
+export async function exportContentGapsPPTX(data: ContentGapsResponse): Promise<void> {
+  const { pptx, purple, white, gray, cardBg, addSlide } = await initPPTX()
+
+  const slide = addSlide('Content Gaps')
+  const rows: Array<Array<{ text: string; options?: Record<string, unknown> }>> = [
+    [
+      { text: '#', options: { bold: true, color: white, fill: { color: purple } } },
+      { text: 'Topic', options: { bold: true, color: white, fill: { color: purple } } },
+      { text: 'Score', options: { bold: true, color: white, fill: { color: purple } } },
+      { text: 'Type', options: { bold: true, color: white, fill: { color: purple } } },
+      { text: 'Reason', options: { bold: true, color: white, fill: { color: purple } } },
+    ],
+    ...data.content_gaps.map((g, i) => [
+      { text: String(i + 1), options: { color: gray } },
+      { text: g.topic, options: { color: white, bold: true, fontSize: 8 } },
+      { text: String(g.opportunity_score), options: { color: gray } },
+      { text: g.suggested_content_type, options: { color: '22C55E', fontSize: 8 } },
+      { text: g.reason, options: { color: gray, fontSize: 8 } },
+    ]),
+  ]
+  slide.addTable(rows, { x: 0.8, y: 1.1, w: 11.5, fontSize: 9, rowH: 0.5, border: { pt: 0.5, color: '3F3A5C' }, fill: { color: cardBg }, colW: [0.5, 2.5, 1, 2, 5.5], autoPage: true })
+
+  if (data.recommendation) {
+    const recSlide = addSlide('Recommendation')
+    recSlide.addText(data.recommendation, { x: 0.8, y: 1.1, w: 11.5, h: 5, fontSize: 12, color: gray, valign: 'top' })
+  }
+
+  triggerDownload(await pptx.write({ outputType: 'blob' }) as Blob, `content-gaps-${data.industry}.pptx`)
+}
+
+export async function exportContentGapsXLSX(data: ContentGapsResponse): Promise<void> {
+  const ExcelJS = (await import('exceljs')).default
+  const wb: any = new ExcelJS.Workbook()
+  wb.creator = 'HDM Ad Creator'
+  wb.created = new Date()
+
+  const hFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF581C87' } }
+  const hFont = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 }
+  const cFont = { size: 10 }
+  const brd = { top: { style: 'thin', color: { argb: 'FF3F3A5C' } }, left: { style: 'thin', color: { argb: 'FF3F3A5C' } }, bottom: { style: 'thin', color: { argb: 'FF3F3A5C' } }, right: { style: 'thin', color: { argb: 'FF3F3A5C' } } }
+  const sh = (c: any) => { c.fill = hFill; c.font = hFont; c.border = brd; c.alignment = { horizontal: 'center', vertical: 'middle' } }
+  const sc = (c: any) => { c.font = cFont; c.border = brd; c.alignment = { vertical: 'top', wrapText: true } }
+
+  if (data.content_gaps?.length) {
+    const ws = wb.addWorksheet('Content Gaps')
+    ws.columns = [
+      { header: '#', key: 'n', width: 5 }, { header: 'Topic', key: 'topic', width: 30 },
+      { header: 'Opportunity Score', key: 'score', width: 15 }, { header: 'Suggested Type', key: 'type', width: 20 },
+      { header: 'Reason', key: 'reason', width: 60 },
+    ]
+    ws.getRow(1).eachCell(sh)
+    for (const [i, g] of data.content_gaps.entries()) {
+      ws.addRow({ n: i + 1, topic: g.topic, score: g.opportunity_score, type: g.suggested_content_type, reason: g.reason }).eachCell(sc)
+    }
+    if (data.recommendation) {
+      ws.addRow({ n: '', topic: '', score: '', type: 'Recommendation:', reason: data.recommendation }).eachCell(sc)
+    }
+  }
+
+  triggerDownload(new Blob([await wb.xlsx.writeBuffer()], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `content-gaps-${data.industry}.xlsx`)
 }
 
 // ════════════════════════════════════════════════════════════
