@@ -190,34 +190,5 @@ export interface AIHooksResponse {
 }
 
 // --- History / GET Response Types ---
-
-export type MarketRunStatus = 'pending' | 'running' | 'completed' | 'failed'
-
-export interface MarketRunSummary {
-  run_uuid: string
-  status: MarketRunStatus
-  industry: string
-  location?: string
-  brand_name?: string
-  created_at: string
-  updated_at: string
-  summary_text?: string
-}
-
-export interface PaginatedMarketRuns {
-  results: MarketRunSummary[]
-  total: number
-  page: number
-  page_size: number
-}
-
-export interface MarketRunDetail<T> {
-  run_uuid: string
-  status: MarketRunStatus
-  industry: string
-  location?: string
-  brand_name?: string
-  created_at: string
-  updated_at: string
-  result_payload: T
-}
+// The backend returns ContentIntelligenceRun[] for all 5 GET list endpoints.
+// No separate detail endpoint needed — result_payload is included in list items.

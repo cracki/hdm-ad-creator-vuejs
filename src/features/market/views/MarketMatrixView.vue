@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { Grid3X3, Loader2, AlertCircle, RefreshCw, MapPin, ShoppingBag, Users, Download, FileText, LayoutGrid, BarChart3, ArrowLeft } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import ContentMatrixRenderer from '@/shared/components/renderers/ContentMatrixRenderer.vue'
@@ -7,9 +7,9 @@ import { useI18n } from '@/shared/utils/i18n'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import MarketHistoryList from '../components/MarketHistoryList.vue'
-import { useGetContentMatrix, useContentMatrixHistory, useContentMatrixRun } from '../queries'
+import { useGetContentMatrix, useContentMatrixHistory } from '../queries'
 import { exportContentMatrixPDF, exportContentMatrixPPTX, exportContentMatrixXLSX } from '@/shared/utils/exportMarket'
-import type { ContentMatrixResponse, MarketRunSummary } from '../types'
+import type { ContentMatrixResponse, ContentIntelligenceRun } from '../types'
 
 const { t } = useI18n()
 const matrixMutation = useGetContentMatrix()
@@ -25,20 +25,12 @@ const error = ref<string | null>(null)
 const showExportMenu = ref(false)
 const exporting = ref(false)
 
-const historyPage = ref(1)
 const selectedHistoryUuid = ref<string | null>(null)
+const selectedHistoryDate = ref<string | null>(null)
 
-const { data: historyData, isLoading: historyListLoading } = useContentMatrixHistory(historyPage)
-const { data: selectedRun } = useContentMatrixRun(selectedHistoryUuid)
+const { data: historyRuns, isLoading: historyListLoading } = useContentMatrixHistory()
 
 const showForm = computed(() => !matrixResult.value && !loading.value && !selectedHistoryUuid.value)
-const showHistoryDetailLoading = computed(() => !!selectedHistoryUuid.value && !matrixResult.value && !loading.value)
-
-watch(selectedRun, (detail) => {
-  if (detail?.result_payload) {
-    matrixResult.value = detail.result_payload
-  }
-})
 
 async function handleExport(format: 'pdf' | 'pptx' | 'xlsx') {
   showExportMenu.value = false
@@ -72,14 +64,17 @@ async function runMatrix() {
   }
 }
 
-function selectHistoryRun(run: MarketRunSummary) {
-  selectedHistoryUuid.value = run.run_uuid
+function selectHistoryRun(run: ContentIntelligenceRun) {
+  selectedHistoryUuid.value = run.content_intelligence_run_uuid
+  selectedHistoryDate.value = run.created_at
+  matrixResult.value = run.result_payload as unknown as ContentMatrixResponse
   error.value = null
 }
 
 function backToForm() {
   matrixResult.value = null
   selectedHistoryUuid.value = null
+  selectedHistoryDate.value = null
   error.value = null
 }
 </script>
@@ -99,7 +94,6 @@ function backToForm() {
         </div>
       </header>
 
-      <!-- Input form -->
       <div v-if="showForm" class="surface-card p-5 space-y-4 mb-6">
         <div class="grid sm:grid-cols-2 gap-4">
           <div>
@@ -124,7 +118,6 @@ function backToForm() {
             <input v-model="personas" :placeholder="t('market.personasHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
           </div>
         </div>
-
         <button
           data-loc="market.matrix.run-btn"
           class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5"
@@ -135,31 +128,19 @@ function backToForm() {
         </button>
       </div>
 
-      <!-- Past Runs -->
       <section v-if="showForm" class="mt-6">
         <MarketHistoryList
-          :runs="historyData?.results ?? []"
-          :total="historyData?.total ?? 0"
-          :page="historyPage"
-          :page-size="10"
+          :runs="historyRuns ?? []"
           :loading="historyListLoading"
           feature-key="market.matrix"
           @select="selectHistoryRun"
-          @update:page="historyPage = $event"
         />
       </section>
 
-      <!-- Loading (POST) -->
       <div v-if="loading" class="surface-card p-8 text-center">
         <AiLoadingAnimation :message="t('market.analyzingMatrix')" :description="t('market.analyzingMatrixDesc')" />
       </div>
 
-      <!-- Loading (history detail) -->
-      <div v-if="showHistoryDetailLoading" class="surface-card p-8">
-        <AiLoadingAnimation :message="t('market.history.loadingDetail')" size="sm" />
-      </div>
-
-      <!-- Error -->
       <div v-if="error" class="surface-card p-5 flex items-center gap-3 mb-6">
         <AlertCircle class="h-5 w-5 text-destructive shrink-0" />
         <div class="flex-1 text-sm font-medium text-destructive">{{ error }}</div>
@@ -168,11 +149,10 @@ function backToForm() {
         </button>
       </div>
 
-      <!-- Results -->
       <div v-if="matrixResult && !loading">
         <div class="flex items-center justify-between mb-4">
           <div class="text-xs text-muted-foreground">
-            <span v-if="selectedHistoryUuid">{{ t('market.history.runFrom', { date: new Date(selectedRun?.created_at ?? '').toLocaleDateString() }) }}</span>
+            <span v-if="selectedHistoryUuid">{{ t('market.history.runFrom', { date: new Date(selectedHistoryDate ?? '').toLocaleDateString() }) }}</span>
             <span v-else>{{ t('market.analysisComplete') }}</span>
           </div>
           <div class="flex items-center gap-2">
@@ -196,7 +176,6 @@ function backToForm() {
             </button>
           </div>
         </div>
-
         <div class="surface-card p-5">
           <ContentMatrixRenderer :data="(matrixResult as any)" />
         </div>

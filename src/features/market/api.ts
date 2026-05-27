@@ -7,12 +7,6 @@ import type {
   ContentGapsRequest,
   ContentMatrixRequest,
   TopPerformingContentRequest,
-  PaginatedMarketRuns,
-  MarketRunDetail,
-  ContentIntelligenceResult,
-  ContentGapsResponse,
-  ContentMatrixResponse,
-  TopPerformingContentResponse,
 } from './types'
 
 export const marketApi = {
@@ -42,39 +36,21 @@ export const marketApi = {
     return { data: res.data.result_payload }
   },
 
-  // ── GET (history listing) ──
+  // ── GET (history listing — returns ContentIntelligenceRun[]) ──
 
-  listContentIntelligenceRuns(params?: { page?: number; page_size?: number }): Promise<{ data: PaginatedMarketRuns }> {
+  listContentIntelligenceRuns(params?: { page?: number; page_size?: number }): Promise<{ data: ContentIntelligenceRun[] }> {
     return apiClient.get('/market/content-intelligence/', { params })
   },
-  listAIHooksRuns(params?: { page?: number; page_size?: number }): Promise<{ data: PaginatedMarketRuns }> {
+  listAIHooksRuns(params?: { page?: number; page_size?: number }): Promise<{ data: ContentIntelligenceRun[] }> {
     return apiClient.get('/market/generate-ai-hooks/', { params })
   },
-  listContentGapsRuns(params?: { page?: number; page_size?: number }): Promise<{ data: PaginatedMarketRuns }> {
+  listContentGapsRuns(params?: { page?: number; page_size?: number }): Promise<{ data: ContentIntelligenceRun[] }> {
     return apiClient.get('/market/content-gaps/', { params })
   },
-  listContentMatrixRuns(params?: { page?: number; page_size?: number }): Promise<{ data: PaginatedMarketRuns }> {
+  listContentMatrixRuns(params?: { page?: number; page_size?: number }): Promise<{ data: ContentIntelligenceRun[] }> {
     return apiClient.get('/market/content-matrix/', { params })
   },
-  listTopPerformingRuns(params?: { page?: number; page_size?: number }): Promise<{ data: PaginatedMarketRuns }> {
+  listTopPerformingRuns(params?: { page?: number; page_size?: number }): Promise<{ data: ContentIntelligenceRun[] }> {
     return apiClient.get('/market/top-performing-content/', { params })
-  },
-
-  // ── GET (history detail) ──
-
-  getContentIntelligenceRun(uuid: string): Promise<{ data: MarketRunDetail<ContentIntelligenceResult> }> {
-    return apiClient.get(`/market/content-intelligence/${uuid}/`)
-  },
-  getAIHooksRun(uuid: string): Promise<{ data: MarketRunDetail<AIHooksResponse> }> {
-    return apiClient.get(`/market/generate-ai-hooks/${uuid}/`)
-  },
-  getContentGapsRun(uuid: string): Promise<{ data: MarketRunDetail<ContentGapsResponse> }> {
-    return apiClient.get(`/market/content-gaps/${uuid}/`)
-  },
-  getContentMatrixRun(uuid: string): Promise<{ data: MarketRunDetail<ContentMatrixResponse> }> {
-    return apiClient.get(`/market/content-matrix/${uuid}/`)
-  },
-  getTopPerformingRun(uuid: string): Promise<{ data: MarketRunDetail<TopPerformingContentResponse> }> {
-    return apiClient.get(`/market/top-performing-content/${uuid}/`)
   },
 }

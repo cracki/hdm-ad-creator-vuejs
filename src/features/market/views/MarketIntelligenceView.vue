@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { Brain, AlertCircle, MapPin, ShoppingBag, RefreshCw, Check, BarChart3, Target, Layers, TrendingUp, Lightbulb, Download, FileText, LayoutGrid, Loader2, ArrowLeft } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
@@ -13,7 +13,7 @@ import { useBrands } from '@/features/brands/queries'
 import { useAutoSelectBrand } from '@/shared/composables/useAutoSelectBrand'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { exportIntelligencePDF, exportIntelligencePPTX, exportIntelligenceXLSX } from '@/shared/utils/exportMarket'
-import { useRunContentIntelligence, useContentIntelligenceHistory, useContentIntelligenceRun } from '../queries'
+import { useRunContentIntelligence, useContentIntelligenceHistory } from '../queries'
 import type { ContentIntelligenceRun, ContentIntelligenceResult, MarketRunSummary } from '../types'
 
 const { t } = useI18n()
@@ -34,33 +34,12 @@ const error = ref<string | null>(null)
 const showExportMenu = ref(false)
 const exporting = ref(false)
 
-const historyPage = ref(1)
 const selectedHistoryUuid = ref<string | null>(null)
+const selectedHistoryDate = ref<string | null>(null)
 
-const { data: historyData, isLoading: historyListLoading } = useContentIntelligenceHistory(historyPage)
-const { data: selectedRun } = useContentIntelligenceRun(selectedHistoryUuid)
+const { data: historyRuns, isLoading: historyListLoading } = useContentIntelligenceHistory()
 
 const showForm = computed(() => !result.value && !loading.value && !selectedHistoryUuid.value)
-const showHistoryDetailLoading = computed(() => !!selectedHistoryUuid.value && !result.value && !loading.value)
-
-watch(selectedRun, (detail) => {
-  if (detail?.result_payload) {
-    result.value = {
-      content_intelligence_run_uuid: detail.run_uuid,
-      brand: null,
-      run_type: 'full',
-      status: detail.status,
-      industry: detail.industry,
-      location: detail.location ?? '',
-      content_goal: '',
-      request_payload: {},
-      result_payload: detail.result_payload,
-      summary: detail.result_payload.summary,
-      created_at: detail.created_at,
-      updated_at: detail.updated_at,
-    }
-  }
-})
 
 const contentGoals = [
   { value: 'engagement' as const, label: 'Engagement' },
@@ -116,8 +95,10 @@ async function handleExport(format: 'pdf' | 'pptx' | 'xlsx') {
   } finally { exporting.value = false }
 }
 
-function selectHistoryRun(run: MarketRunSummary) {
-  selectedHistoryUuid.value = run.run_uuid
+function selectHistoryRun(run: ContentIntelligenceRun) {
+  selectedHistoryUuid.value = run.content_intelligence_run_uuid
+  selectedHistoryDate.value = run.created_at
+  result.value = run
   error.value = null
   activeTab.value = 'summary'
 }
@@ -125,6 +106,7 @@ function selectHistoryRun(run: MarketRunSummary) {
 function backToForm() {
   result.value = null
   selectedHistoryUuid.value = null
+  selectedHistoryDate.value = null
   error.value = null
 }
 </script>
@@ -146,21 +128,13 @@ function backToForm() {
 
       <!-- Input form -->
       <div v-if="showForm" class="surface-card p-5 space-y-4 mb-6">
-        <!-- Brand selection -->
         <div>
           <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.selectBrand') }}</label>
-          <select
-            v-model="selectedBrandUuid"
-            data-loc="market.intel.brand-select"
-            class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none focus:ring-1 focus:ring-primary/50"
-          >
+          <select v-model="selectedBrandUuid" data-loc="market.intel.brand-select" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none focus:ring-1 focus:ring-primary/50">
             <option value="" disabled>{{ t('market.chooseBrand') }}</option>
-            <option v-for="b in (brands ?? [])" :key="b.brand_uuid" :value="b.brand_uuid">
-              {{ b.company_name }}
-            </option>
+            <option v-for="b in (brands ?? [])" :key="b.brand_uuid" :value="b.brand_uuid">{{ b.company_name }}</option>
           </select>
         </div>
-
         <div class="grid sm:grid-cols-2 gap-4">
           <div>
             <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.industry') }}</label>
@@ -184,29 +158,10 @@ function backToForm() {
         <div>
           <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.contentGoal') }}</label>
           <div class="flex flex-wrap gap-2">
-            <button
-              v-for="goal in contentGoals"
-              :key="goal.value"
-              data-loc="market.intel.goal-btn"
-              :class="[
-                'h-8 px-3 rounded-lg text-xs font-medium border transition',
-                contentGoal === goal.value
-                  ? 'bg-[image:var(--gradient-brand)] text-primary-foreground border-transparent'
-                  : 'bg-overlay-subtle border-border/60 text-muted-foreground hover:text-foreground',
-              ]"
-              @click="contentGoal = goal.value"
-            >
-              {{ goal.label }}
-            </button>
+            <button v-for="goal in contentGoals" :key="goal.value" data-loc="market.intel.goal-btn" :class="['h-8 px-3 rounded-lg text-xs font-medium border transition', contentGoal === goal.value ? 'bg-[image:var(--gradient-brand)] text-primary-foreground border-transparent' : 'bg-overlay-subtle border-border/60 text-muted-foreground hover:text-foreground']" @click="contentGoal = goal.value">{{ goal.label }}</button>
           </div>
         </div>
-
-        <button
-          data-loc="market.intel.run-btn"
-          class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5"
-          :disabled="!selectedBrandUuid || !industry || !location"
-          @click="runIntelligence"
-        >
+        <button data-loc="market.intel.run-btn" class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5" :disabled="!selectedBrandUuid || !industry || !location" @click="runIntelligence">
           <Brain class="h-3.5 w-3.5" /> {{ t('market.runIntelligence') }}
         </button>
       </div>
@@ -214,14 +169,10 @@ function backToForm() {
       <!-- Past Runs -->
       <section v-if="showForm" class="mt-6">
         <MarketHistoryList
-          :runs="historyData?.results ?? []"
-          :total="historyData?.total ?? 0"
-          :page="historyPage"
-          :page-size="10"
+          :runs="historyRuns ?? []"
           :loading="historyListLoading"
           feature-key="market.intel"
           @select="selectHistoryRun"
-          @update:page="historyPage = $event"
         />
       </section>
 
@@ -230,17 +181,10 @@ function backToForm() {
         <AiLoadingAnimation :message="t('market.analyzing')" :description="t('market.analyzingDesc')" />
       </div>
 
-      <!-- Loading (history detail) -->
-      <div v-if="showHistoryDetailLoading" class="surface-card p-8">
-        <AiLoadingAnimation :message="t('market.history.loadingDetail')" size="sm" />
-      </div>
-
       <!-- Error -->
       <div v-if="error" class="surface-card p-5 flex items-center gap-3 mb-6">
         <AlertCircle class="h-5 w-5 text-destructive shrink-0" />
-        <div class="flex-1">
-          <div class="text-sm font-medium text-destructive">{{ error }}</div>
-        </div>
+        <div class="flex-1"><div class="text-sm font-medium text-destructive">{{ error }}</div></div>
         <button data-loc="market.intel.retry-btn" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5" @click="runIntelligence">
           <RefreshCw class="h-3 w-3" /> {{ t('market.retry') }}
         </button>
@@ -248,12 +192,11 @@ function backToForm() {
 
       <!-- Results -->
       <div v-if="result && !loading" class="space-y-4">
-        <!-- Header -->
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <Check class="h-4 w-4 text-success" />
             <span class="text-xs text-muted-foreground">
-              <span v-if="selectedHistoryUuid">{{ t('market.history.runFrom', { date: new Date(selectedRun?.created_at ?? '').toLocaleDateString() }) }}</span>
+              <span v-if="selectedHistoryUuid">{{ t('market.history.runFrom', { date: new Date(selectedHistoryDate ?? '').toLocaleDateString() }) }}</span>
               <span v-else>{{ t('market.completed') }}</span>
             </span>
           </div>
@@ -281,24 +224,14 @@ function backToForm() {
 
         <!-- Tabs -->
         <div class="flex gap-1.5 overflow-x-auto pb-1">
-          <button
-            v-for="tab in tabs"
-            :key="tab.key"
-            :class="[
-              'h-8 px-3 rounded-lg text-xs font-medium border transition whitespace-nowrap flex items-center gap-1.5',
-              activeTab === tab.key
-                ? 'border-primary/60 bg-primary/10 text-primary'
-                : 'border-border/40 bg-overlay-subtle text-muted-foreground hover:text-foreground',
-            ]"
-            @click="activeTab = tab.key"
-          >
+          <button v-for="tab in tabs" :key="tab.key" :class="['h-8 px-3 rounded-lg text-xs font-medium border transition whitespace-nowrap flex items-center gap-1.5', activeTab === tab.key ? 'border-primary/60 bg-primary/10 text-primary' : 'border-border/40 bg-overlay-subtle text-muted-foreground hover:text-foreground']" @click="activeTab = tab.key">
             <component :is="tab.icon" class="h-3 w-3" />
             {{ tab.label }}
             <span v-if="tab.count" class="text-[10px] opacity-60">({{ tab.count }})</span>
           </button>
         </div>
 
-        <!-- Summary Tab -->
+        <!-- Summary -->
         <div v-if="activeTab === 'summary'" class="space-y-4">
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div class="rounded-lg border border-border/30 bg-overlay-subtle p-3 text-center space-y-1">
@@ -322,43 +255,28 @@ function backToForm() {
               <div class="text-[10px] text-muted-foreground">{{ t('intelSummary.topAnalyzed') }}</div>
             </div>
           </div>
-
-          <!-- Quick overview cards -->
           <div v-if="payload.content_opportunities?.top_competing_domains?.length" class="surface-card p-4 space-y-2.5">
             <div class="text-xs font-semibold">{{ t('intel.quickDomains') }}</div>
             <div class="flex flex-wrap gap-2">
-              <div
-                v-for="d in payload.content_opportunities.top_competing_domains.slice(0, 6)"
-                :key="d.domain"
-                class="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border border-border/30 bg-overlay-subtle"
-              >
+              <div v-for="d in payload.content_opportunities.top_competing_domains.slice(0, 6)" :key="d.domain" class="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border border-border/30 bg-overlay-subtle">
                 <span class="font-medium text-foreground">{{ d.domain }}</span>
                 <span class="text-muted-foreground">({{ d.content_count }})</span>
               </div>
             </div>
           </div>
-
           <div v-if="payload.content_matrix?.priority_recommendation" class="surface-card p-3.5 flex items-start gap-2.5">
             <Lightbulb class="h-4 w-4 text-primary shrink-0 mt-0.5" />
             <div class="text-xs text-muted-foreground leading-relaxed">{{ payload.content_matrix.priority_recommendation }}</div>
           </div>
-
           <div v-if="payload.content_gaps?.recommendation" class="surface-card p-3.5 flex items-start gap-2.5">
             <Target class="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
             <div class="text-xs text-muted-foreground leading-relaxed">{{ payload.content_gaps.recommendation }}</div>
           </div>
         </div>
 
-        <!-- Opportunities Tab -->
         <ContentOpportunitiesRenderer v-if="activeTab === 'opportunities'" :data="(payload.content_opportunities ?? {}) as any" />
-
-        <!-- Content Gaps Tab -->
         <ContentGapsRenderer v-if="activeTab === 'gaps'" :data="(payload.content_gaps ?? {}) as any" />
-
-        <!-- Content Matrix Tab -->
         <ContentMatrixRenderer v-if="activeTab === 'matrix'" :data="(payload.content_matrix ?? {}) as any" />
-
-        <!-- Top Performers Tab -->
         <TopPerformingContentRenderer v-if="activeTab === 'top'" :data="(payload.top_performers ?? {}) as any" />
       </div>
     </div>

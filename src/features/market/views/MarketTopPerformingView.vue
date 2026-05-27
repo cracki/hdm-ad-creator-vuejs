@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { TrendingUp, Loader2, AlertCircle, RefreshCw, MapPin, ShoppingBag, Download, FileText, LayoutGrid, BarChart3, ArrowLeft } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import TopPerformingContentRenderer from '@/shared/components/renderers/TopPerformingContentRenderer.vue'
@@ -7,9 +7,9 @@ import { useI18n } from '@/shared/utils/i18n'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import MarketHistoryList from '../components/MarketHistoryList.vue'
-import { useGetTopPerformingContent, useTopPerformingHistory, useTopPerformingRun } from '../queries'
+import { useGetTopPerformingContent, useTopPerformingHistory } from '../queries'
 import { exportTopPerformingPDF, exportTopPerformingPPTX, exportTopPerformingXLSX } from '@/shared/utils/exportMarket'
-import type { TopPerformingContentResponse, MarketRunSummary } from '../types'
+import type { TopPerformingContentResponse, ContentIntelligenceRun } from '../types'
 
 const { t } = useI18n()
 const topContentMutation = useGetTopPerformingContent()
@@ -24,20 +24,12 @@ const error = ref<string | null>(null)
 const showExportMenu = ref(false)
 const exporting = ref(false)
 
-const historyPage = ref(1)
 const selectedHistoryUuid = ref<string | null>(null)
+const selectedHistoryDate = ref<string | null>(null)
 
-const { data: historyData, isLoading: historyListLoading } = useTopPerformingHistory(historyPage)
-const { data: selectedRun } = useTopPerformingRun(selectedHistoryUuid)
+const { data: historyRuns, isLoading: historyListLoading } = useTopPerformingHistory()
 
 const showForm = computed(() => !topResult.value && !loading.value && !selectedHistoryUuid.value)
-const showHistoryDetailLoading = computed(() => !!selectedHistoryUuid.value && !topResult.value && !loading.value)
-
-watch(selectedRun, (detail) => {
-  if (detail?.result_payload) {
-    topResult.value = detail.result_payload
-  }
-})
 
 async function handleExport(format: 'pdf' | 'pptx' | 'xlsx') {
   showExportMenu.value = false
@@ -70,14 +62,17 @@ async function runTopPerforming() {
   }
 }
 
-function selectHistoryRun(run: MarketRunSummary) {
-  selectedHistoryUuid.value = run.run_uuid
+function selectHistoryRun(run: ContentIntelligenceRun) {
+  selectedHistoryUuid.value = run.content_intelligence_run_uuid
+  selectedHistoryDate.value = run.created_at
+  topResult.value = run.result_payload as unknown as TopPerformingContentResponse
   error.value = null
 }
 
 function backToForm() {
   topResult.value = null
   selectedHistoryUuid.value = null
+  selectedHistoryDate.value = null
   error.value = null
 }
 </script>
@@ -97,7 +92,6 @@ function backToForm() {
         </div>
       </header>
 
-      <!-- Input form -->
       <div v-if="showForm" class="surface-card p-5 space-y-4 mb-6">
         <div class="grid sm:grid-cols-2 gap-4">
           <div>
@@ -115,7 +109,6 @@ function backToForm() {
             </div>
           </div>
         </div>
-
         <button
           data-loc="market.top.run-btn"
           class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5"
@@ -126,31 +119,19 @@ function backToForm() {
         </button>
       </div>
 
-      <!-- Past Runs -->
       <section v-if="showForm" class="mt-6">
         <MarketHistoryList
-          :runs="historyData?.results ?? []"
-          :total="historyData?.total ?? 0"
-          :page="historyPage"
-          :page-size="10"
+          :runs="historyRuns ?? []"
           :loading="historyListLoading"
           feature-key="market.top"
           @select="selectHistoryRun"
-          @update:page="historyPage = $event"
         />
       </section>
 
-      <!-- Loading (POST) -->
       <div v-if="loading" class="surface-card p-8 text-center">
         <AiLoadingAnimation :message="t('market.analyzingTop')" :description="t('market.analyzingTopDesc')" />
       </div>
 
-      <!-- Loading (history detail) -->
-      <div v-if="showHistoryDetailLoading" class="surface-card p-8">
-        <AiLoadingAnimation :message="t('market.history.loadingDetail')" size="sm" />
-      </div>
-
-      <!-- Error -->
       <div v-if="error" class="surface-card p-5 flex items-center gap-3 mb-6">
         <AlertCircle class="h-5 w-5 text-destructive shrink-0" />
         <div class="flex-1 text-sm font-medium text-destructive">{{ error }}</div>
@@ -159,34 +140,23 @@ function backToForm() {
         </button>
       </div>
 
-      <!-- Results -->
       <div v-if="topResult && !loading">
         <div class="flex items-center justify-between mb-4">
           <div class="text-xs text-muted-foreground">
-            <span v-if="selectedHistoryUuid">{{ t('market.history.runFrom', { date: new Date(selectedRun?.created_at ?? '').toLocaleDateString() }) }}</span>
+            <span v-if="selectedHistoryUuid">{{ t('market.history.runFrom', { date: new Date(selectedHistoryDate ?? '').toLocaleDateString() }) }}</span>
             <span v-else>{{ t('market.analysisComplete') }}</span>
           </div>
           <div class="flex items-center gap-2">
             <div class="relative">
-              <button
-                :disabled="exporting"
-                class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition disabled:opacity-50"
-                @click="showExportMenu = !showExportMenu"
-              >
+              <button :disabled="exporting" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition disabled:opacity-50" @click="showExportMenu = !showExportMenu">
                 <Loader2 v-if="exporting" class="h-3 w-3 animate-spin" />
                 <Download v-else class="h-3 w-3" />
                 {{ exporting ? t('market.exporting') : t('market.export') }}
               </button>
               <div v-if="showExportMenu" class="absolute end-0 top-full mt-1 z-50 min-w-[180px] rounded-lg border border-border/40 bg-popover shadow-lg py-1">
-                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition" @click="handleExport('pdf')">
-                  <FileText class="h-3.5 w-3.5 text-red-400" /> {{ t('market.exportPDF') }}
-                </button>
-                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition" @click="handleExport('pptx')">
-                  <LayoutGrid class="h-3.5 w-3.5 text-orange-400" /> {{ t('market.exportPPTX') }}
-                </button>
-                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition" @click="handleExport('xlsx')">
-                  <BarChart3 class="h-3.5 w-3.5 text-green-400" /> {{ t('market.exportXLSX') }}
-                </button>
+                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition" @click="handleExport('pdf')"><FileText class="h-3.5 w-3.5 text-red-400" /> {{ t('market.exportPDF') }}</button>
+                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition" @click="handleExport('pptx')"><LayoutGrid class="h-3.5 w-3.5 text-orange-400" /> {{ t('market.exportPPTX') }}</button>
+                <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition" @click="handleExport('xlsx')"><BarChart3 class="h-3.5 w-3.5 text-green-400" /> {{ t('market.exportXLSX') }}</button>
               </div>
               <div v-if="showExportMenu" class="fixed inset-0 z-40" @click="showExportMenu = false" />
             </div>
@@ -197,7 +167,6 @@ function backToForm() {
             </button>
           </div>
         </div>
-
         <div class="surface-card p-5">
           <TopPerformingContentRenderer :data="(topResult as any)" />
         </div>

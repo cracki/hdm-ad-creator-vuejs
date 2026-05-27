@@ -66,91 +66,44 @@ export function useGetTopPerformingContent() {
   })
 }
 
-// ── GET queries (history listing) ──
+// ── GET queries (history listing — returns ContentIntelligenceRun[]) ──
 
-export function useContentIntelligenceHistory(page: Ref<number>) {
+export function useContentIntelligenceHistory() {
   return useQuery({
-    queryKey: computed(() => ['market', 'content-intelligence', 'history', page.value]),
-    queryFn: () => marketApi.listContentIntelligenceRuns({ page: page.value, page_size: 10 }).then(r => r.data),
+    queryKey: ['market', 'content-intelligence', 'history'],
+    queryFn: () => marketApi.listContentIntelligenceRuns().then(r => r.data),
     staleTime: 10_000,
   })
 }
 
-export function useAIHooksHistory(page: Ref<number>) {
+export function useAIHooksHistory() {
   return useQuery({
-    queryKey: computed(() => ['market', 'ai-hooks', 'history', page.value]),
-    queryFn: () => marketApi.listAIHooksRuns({ page: page.value, page_size: 10 }).then(r => r.data),
+    queryKey: ['market', 'ai-hooks', 'history'],
+    queryFn: () => marketApi.listAIHooksRuns().then(r => r.data),
     staleTime: 10_000,
   })
 }
 
-export function useContentGapsHistory(page: Ref<number>) {
+export function useContentGapsHistory() {
   return useQuery({
-    queryKey: computed(() => ['market', 'content-gaps', 'history', page.value]),
-    queryFn: () => marketApi.listContentGapsRuns({ page: page.value, page_size: 10 }).then(r => r.data),
+    queryKey: ['market', 'content-gaps', 'history'],
+    queryFn: () => marketApi.listContentGapsRuns().then(r => r.data),
     staleTime: 10_000,
   })
 }
 
-export function useContentMatrixHistory(page: Ref<number>) {
+export function useContentMatrixHistory() {
   return useQuery({
-    queryKey: computed(() => ['market', 'content-matrix', 'history', page.value]),
-    queryFn: () => marketApi.listContentMatrixRuns({ page: page.value, page_size: 10 }).then(r => r.data),
+    queryKey: ['market', 'content-matrix', 'history'],
+    queryFn: () => marketApi.listContentMatrixRuns().then(r => r.data),
     staleTime: 10_000,
   })
 }
 
-export function useTopPerformingHistory(page: Ref<number>) {
+export function useTopPerformingHistory() {
   return useQuery({
-    queryKey: computed(() => ['market', 'top-performing', 'history', page.value]),
-    queryFn: () => marketApi.listTopPerformingRuns({ page: page.value, page_size: 10 }).then(r => r.data),
+    queryKey: ['market', 'top-performing', 'history'],
+    queryFn: () => marketApi.listTopPerformingRuns().then(r => r.data),
     staleTime: 10_000,
-  })
-}
-
-// ── GET queries (history detail) ──
-
-export function useContentIntelligenceRun(uuid: Ref<string | null>) {
-  return useQuery({
-    queryKey: computed(() => ['market', 'content-intelligence', 'run', uuid.value]),
-    queryFn: () => marketApi.getContentIntelligenceRun(uuid.value!).then(r => r.data),
-    enabled: computed(() => !!uuid.value),
-    staleTime: 5_000,
-  })
-}
-
-export function useAIHooksRun(uuid: Ref<string | null>) {
-  return useQuery({
-    queryKey: computed(() => ['market', 'ai-hooks', 'run', uuid.value]),
-    queryFn: () => marketApi.getAIHooksRun(uuid.value!).then(r => r.data),
-    enabled: computed(() => !!uuid.value),
-    staleTime: 5_000,
-  })
-}
-
-export function useContentGapsRun(uuid: Ref<string | null>) {
-  return useQuery({
-    queryKey: computed(() => ['market', 'content-gaps', 'run', uuid.value]),
-    queryFn: () => marketApi.getContentGapsRun(uuid.value!).then(r => r.data),
-    enabled: computed(() => !!uuid.value),
-    staleTime: 5_000,
-  })
-}
-
-export function useContentMatrixRun(uuid: Ref<string | null>) {
-  return useQuery({
-    queryKey: computed(() => ['market', 'content-matrix', 'run', uuid.value]),
-    queryFn: () => marketApi.getContentMatrixRun(uuid.value!).then(r => r.data),
-    enabled: computed(() => !!uuid.value),
-    staleTime: 5_000,
-  })
-}
-
-export function useTopPerformingRun(uuid: Ref<string | null>) {
-  return useQuery({
-    queryKey: computed(() => ['market', 'top-performing', 'run', uuid.value]),
-    queryFn: () => marketApi.getTopPerformingRun(uuid.value!).then(r => r.data),
-    enabled: computed(() => !!uuid.value),
-    staleTime: 5_000,
   })
 }

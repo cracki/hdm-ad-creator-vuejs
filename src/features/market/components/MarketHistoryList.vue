@@ -1,39 +1,30 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { ChevronLeft, ChevronRight, History } from 'lucide-vue-next'
+import { ChevronRight, History } from 'lucide-vue-next'
 import SkeletonLoader from '@/shared/components/SkeletonLoader.vue'
 import { useI18n } from '@/shared/utils/i18n'
-import type { MarketRunSummary, MarketRunStatus } from '../types'
+import type { ContentIntelligenceRun } from '../types'
 
 const props = withDefaults(defineProps<{
-  runs: MarketRunSummary[]
-  total: number
-  page: number
-  pageSize: number
+  runs: ContentIntelligenceRun[]
   loading: boolean
   featureKey: string
 }>(), {
   runs: () => [],
-  total: 0,
-  page: 1,
-  pageSize: 10,
 })
 
 defineEmits<{
-  select: [run: MarketRunSummary]
-  'update:page': [page: number]
+  select: [run: ContentIntelligenceRun]
 }>()
 
 const { t } = useI18n()
-
-const totalPages = computed(() => Math.ceil(props.total / props.pageSize))
 
 function formatDate(dateStr: string | undefined): string {
   if (!dateStr) return ''
   return new Date(dateStr).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
-function statusBadgeClass(status: MarketRunStatus): string {
+function statusBadgeClass(status: string): string {
   switch (status) {
     case 'completed': return 'text-[11px] font-medium px-2 py-1 rounded-md bg-success/10 text-success'
     case 'failed': return 'text-[11px] font-medium px-2 py-1 rounded-md bg-destructive/10 text-destructive'
@@ -42,8 +33,19 @@ function statusBadgeClass(status: MarketRunStatus): string {
   }
 }
 
-function isClickable(run: MarketRunSummary): boolean {
+function isClickable(run: ContentIntelligenceRun): boolean {
   return run.status === 'completed'
+}
+
+function runSummary(run: ContentIntelligenceRun): string {
+  const s = run.summary
+  if (!s || typeof s !== 'object') return ''
+  const parts: string[] = []
+  if (s.gaps_found) parts.push(t('market.history.gapsSummary', { count: s.gaps_found }))
+  if (s.content_ideas) parts.push(t('market.history.matrixSummary', { count: s.content_ideas }))
+  if (s.top_performers_analyzed) parts.push(t('market.history.topSummary', { count: s.top_performers_analyzed }))
+  if (s.total_opportunities) parts.push(t('market.history.intelSummary'))
+  return parts.join(' · ')
 }
 </script>
 
@@ -64,7 +66,7 @@ function isClickable(run: MarketRunSummary): boolean {
     <div v-else class="space-y-2">
       <div
         v-for="run in runs"
-        :key="run.run_uuid"
+        :key="run.content_intelligence_run_uuid"
         :data-loc="`${featureKey}.history-item`"
         class="surface-card p-4 flex items-center gap-3 sm:gap-4 transition"
         :class="isClickable(run) ? 'cursor-pointer hover:border-primary/40' : 'opacity-50 pointer-events-none'"
@@ -79,36 +81,12 @@ function isClickable(run: MarketRunSummary): boolean {
           </div>
           <div class="text-[11px] text-muted-foreground mt-0.5">
             {{ formatDate(run.created_at) }}
-            <span v-if="run.summary_text"> · {{ run.summary_text }}</span>
+            <span v-if="runSummary(run)"> · {{ runSummary(run) }}</span>
           </div>
         </div>
 
         <ChevronRight class="h-4 w-4 text-muted-foreground shrink-0" />
       </div>
-    </div>
-
-    <div v-if="totalPages > 1" class="flex items-center justify-between mt-4">
-      <button
-        :data-loc="`${featureKey}.history-prev`"
-        :disabled="page <= 1"
-        :aria-label="t('market.history.previous')"
-        class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 disabled:opacity-40 hover:bg-overlay-subtle transition"
-        @click="$emit('update:page', page - 1)"
-      >
-        <ChevronLeft class="h-3 w-3" /> {{ t('market.history.previous') }}
-      </button>
-      <span class="text-xs text-muted-foreground tabular-nums">
-        {{ t('market.history.pageInfo', { current: page, total: totalPages }) }}
-      </span>
-      <button
-        :data-loc="`${featureKey}.history-next`"
-        :disabled="page >= totalPages"
-        :aria-label="t('market.history.next')"
-        class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 disabled:opacity-40 hover:bg-overlay-subtle transition"
-        @click="$emit('update:page', page + 1)"
-      >
-        {{ t('market.history.next') }} <ChevronRight class="h-3 w-3" />
-      </button>
     </div>
   </section>
 </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { Search, AlertCircle, RefreshCw, MapPin, ShoppingBag, Tag, Download, FileText, LayoutGrid, BarChart3, Loader2, ArrowLeft } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
@@ -7,9 +7,9 @@ import ContentGapsRenderer from '@/shared/components/renderers/ContentGapsRender
 import MarketHistoryList from '../components/MarketHistoryList.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { useConfetti } from '@/shared/composables/useConfetti'
-import { useGetContentGaps, useContentGapsHistory, useContentGapsRun } from '../queries'
+import { useGetContentGaps, useContentGapsHistory } from '../queries'
 import { exportContentGapsPDF, exportContentGapsPPTX, exportContentGapsXLSX } from '@/shared/utils/exportMarket'
-import type { ContentGapsResponse, MarketRunSummary } from '../types'
+import type { ContentGapsResponse, ContentIntelligenceRun } from '../types'
 
 const { t } = useI18n()
 const gapsMutation = useGetContentGaps()
@@ -23,23 +23,15 @@ const gapsResult = ref<ContentGapsResponse | null>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)
 
-const historyPage = ref(1)
 const selectedHistoryUuid = ref<string | null>(null)
+const selectedHistoryDate = ref<string | null>(null)
 
-const { data: historyData, isLoading: historyListLoading } = useContentGapsHistory(historyPage)
-const { data: selectedRun } = useContentGapsRun(selectedHistoryUuid)
+const { data: historyRuns, isLoading: historyListLoading } = useContentGapsHistory()
 
 const showForm = computed(() => !gapsResult.value && !loading.value && !selectedHistoryUuid.value)
-const showHistoryDetailLoading = computed(() => !!selectedHistoryUuid.value && !gapsResult.value && !loading.value)
 
 const showExportMenu = ref(false)
 const exporting = ref(false)
-
-watch(selectedRun, (detail) => {
-  if (detail?.result_payload) {
-    gapsResult.value = detail.result_payload
-  }
-})
 
 async function runGaps() {
   if (!industry.value || !location.value) return
@@ -61,14 +53,17 @@ async function runGaps() {
   }
 }
 
-function selectHistoryRun(run: MarketRunSummary) {
-  selectedHistoryUuid.value = run.run_uuid
+function selectHistoryRun(run: ContentIntelligenceRun) {
+  selectedHistoryUuid.value = run.content_intelligence_run_uuid
+  selectedHistoryDate.value = run.created_at
+  gapsResult.value = run.result_payload as unknown as ContentGapsResponse
   error.value = null
 }
 
 function backToForm() {
   gapsResult.value = null
   selectedHistoryUuid.value = null
+  selectedHistoryDate.value = null
   error.value = null
 }
 
@@ -139,25 +134,16 @@ async function handleExport(format: 'pdf' | 'pptx' | 'xlsx') {
       <!-- Past Runs -->
       <section v-if="showForm" class="mt-6">
         <MarketHistoryList
-          :runs="historyData?.results ?? []"
-          :total="historyData?.total ?? 0"
-          :page="historyPage"
-          :page-size="10"
+          :runs="historyRuns ?? []"
           :loading="historyListLoading"
           feature-key="market.gaps"
           @select="selectHistoryRun"
-          @update:page="historyPage = $event"
         />
       </section>
 
       <!-- Loading (POST) -->
       <div v-if="loading" class="surface-card p-8">
         <AiLoadingAnimation :message="t('market.analyzingGaps')" :description="t('market.analyzingGapsDesc')" />
-      </div>
-
-      <!-- Loading (history detail) -->
-      <div v-if="showHistoryDetailLoading" class="surface-card p-8">
-        <AiLoadingAnimation :message="t('market.history.loadingDetail')" size="sm" />
       </div>
 
       <!-- Error -->
@@ -169,15 +155,14 @@ async function handleExport(format: 'pdf' | 'pptx' | 'xlsx') {
         </button>
       </div>
 
-      <!-- Results (POST or history detail) -->
+      <!-- Results (POST or history) -->
       <div v-if="gapsResult && !loading">
         <div class="flex items-center justify-between mb-4">
           <div class="text-xs text-muted-foreground">
-            <span v-if="selectedHistoryUuid">{{ t('market.history.runFrom', { date: new Date(selectedRun?.created_at ?? '').toLocaleDateString() }) }}</span>
+            <span v-if="selectedHistoryUuid">{{ t('market.history.runFrom', { date: new Date(selectedHistoryDate ?? '').toLocaleDateString() }) }}</span>
             <span v-else>{{ t('market.analysisComplete') }}</span>
           </div>
           <div class="flex items-center gap-2">
-            <!-- Export dropdown -->
             <div class="relative">
               <button :disabled="exporting" class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition disabled:opacity-50" @click="showExportMenu = !showExportMenu">
                 <Loader2 v-if="exporting" class="h-3 w-3 animate-spin" />
