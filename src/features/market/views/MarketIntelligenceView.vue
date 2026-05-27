@@ -14,7 +14,7 @@ import { useAutoSelectBrand } from '@/shared/composables/useAutoSelectBrand'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { exportIntelligencePDF, exportIntelligencePPTX, exportIntelligenceXLSX } from '@/shared/utils/exportMarket'
 import { useRunContentIntelligence, useContentIntelligenceHistory } from '../queries'
-import type { ContentIntelligenceRun, ContentIntelligenceResult, MarketRunSummary } from '../types'
+import type { ContentIntelligenceRun, ContentIntelligenceResult } from '../types'
 
 const { t } = useI18n()
 const { data: brands } = useBrands()

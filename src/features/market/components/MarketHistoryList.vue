@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { ChevronRight, History } from 'lucide-vue-next'
 import SkeletonLoader from '@/shared/components/SkeletonLoader.vue'
 import { useI18n } from '@/shared/utils/i18n'
