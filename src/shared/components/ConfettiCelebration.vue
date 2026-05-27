@@ -47,7 +47,7 @@ onMounted(() => {
 watch(visible, (val) => {
   if (val) initAnimation()
   else cleanupAnimation()
-})
+}, { flush: 'post' })
 
 onUnmounted(cleanupAnimation)
 </script>
