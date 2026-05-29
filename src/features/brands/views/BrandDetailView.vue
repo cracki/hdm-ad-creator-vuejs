@@ -114,12 +114,12 @@ setActions([
       <!-- Overview Tab -->
       <template v-if="activeTab === 'overview'">
         <div class="surface-card p-6">
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4">
-            <div class="col-span-2 sm:col-span-1">
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
+            <div class="sm:col-span-1">
               <div class="text-xs text-muted-foreground mb-1">{{ t('newbrand.row.company') }}</div>
               <div class="font-semibold">{{ brand.company_name }}</div>
             </div>
-            <div class="col-span-2 sm:col-span-1 min-w-0">
+            <div class="sm:col-span-1 min-w-0">
               <div class="text-xs text-muted-foreground mb-1">{{ t('newbrand.row.website') }}</div>
               <div class="flex items-center gap-2 min-w-0">
                 <Globe class="h-3.5 w-3.5 text-muted-foreground shrink-0" />

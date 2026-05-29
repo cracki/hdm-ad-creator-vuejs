@@ -61,7 +61,7 @@ const ctaClass = computed(() => ctaColors[props.ad.cta] ?? ctaColors.default)
     </div>
 
     <!-- Meta Feed Preview -->
-    <div v-if="activePlatform === 'meta'" class="surface-card max-w-[480px] overflow-hidden">
+    <div v-if="activePlatform === 'meta'" class="surface-card max-w-full sm:max-w-[480px] overflow-hidden">
       <div class="p-4 flex items-center gap-3">
         <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-accent-magenta grid place-items-center text-xs font-bold text-white">
           {{ (ad.brand_name ?? 'B').charAt(0).toUpperCase() }}
@@ -88,7 +88,7 @@ const ctaClass = computed(() => ctaColors[props.ad.cta] ?? ctaColors.default)
     </div>
 
     <!-- Google Search Preview -->
-    <div v-if="activePlatform === 'google'" class="surface-card max-w-[600px] p-5">
+    <div v-if="activePlatform === 'google'" class="surface-card max-w-full sm:max-w-[600px] p-4 sm:p-5">
       <div class="flex items-start gap-1 mb-1">
         <span class="text-[11px] text-muted-foreground">Ad ·</span>
         <span class="text-[11px] text-muted-foreground">{{ ad.display_url ?? 'https://example.com' }}</span>
@@ -104,7 +104,7 @@ const ctaClass = computed(() => ctaColors[props.ad.cta] ?? ctaColors.default)
     </div>
 
     <!-- LinkedIn Preview -->
-    <div v-if="activePlatform === 'linkedin'" class="surface-card max-w-[480px] overflow-hidden">
+    <div v-if="activePlatform === 'linkedin'" class="surface-card max-w-full sm:max-w-[480px] overflow-hidden">
       <div class="p-4 flex items-center gap-3">
         <div class="h-10 w-10 rounded bg-gradient-to-br from-primary to-accent-cyan grid place-items-center text-xs font-bold text-white">
           {{ (ad.brand_name ?? 'B').charAt(0).toUpperCase() }}

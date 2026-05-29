@@ -71,7 +71,9 @@ const hasData = computed(() => props.data.personas.length > 0 && props.data.funn
     </div>
 
     <!-- Persona × Funnel Matrix -->
-    <div v-else class="surface-card p-4 overflow-x-auto">
+    <div v-else class="surface-card p-4">
+      <!-- Desktop table -->
+      <div class="hidden sm:block overflow-x-auto">
       <table class="w-full text-xs border-collapse min-w-[600px]">
         <thead>
           <tr>
@@ -116,6 +118,39 @@ const hasData = computed(() => props.data.personas.length > 0 && props.data.funn
           </tr>
         </tbody>
       </table>
+      </div>
+
+      <!-- Mobile card layout -->
+      <div class="sm:hidden space-y-3">
+        <div
+          v-for="(persona, pi) in data.personas"
+          :key="persona"
+          class="rounded-lg border border-border/40 p-3 space-y-2"
+        >
+          <span :class="['text-[11px] px-2 py-1 rounded-full border', PERSONA_COLORS[pi % PERSONA_COLORS.length]]">
+            {{ persona }}
+          </span>
+          <div
+            v-for="stage in data.funnelStages"
+            :key="stage"
+            class="flex items-center gap-2 p-2 rounded-lg border"
+            :class="heatClasses[getHeatLevel(persona, stage, 'meta')]"
+          >
+            <span :class="['text-[11px] px-2 py-1 rounded-full border shrink-0', STAGE_COLORS[stage] ?? 'border-border/60 text-muted-foreground']">
+              {{ stage }}
+            </span>
+            <span class="text-[11px] text-muted-foreground">Content ideas</span>
+            <div class="flex gap-1 ms-auto">
+              <span
+                v-for="platform in data.platforms"
+                :key="platform"
+                :class="['inline-block h-2 w-2 rounded-full', PLATFORM_COLORS[platform]?.split(' ')[0] ?? 'bg-muted']"
+                :title="platform"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- Legend -->
       <div class="flex flex-wrap items-center gap-4 mt-4 pt-3 border-t border-border/40">

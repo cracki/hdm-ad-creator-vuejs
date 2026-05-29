@@ -201,7 +201,7 @@ const totalAds = computed(() => Object.values(adsByStage.value).flat().length)
           <div class="text-xl font-bold">{{ duration }} {{ t('funnelLauncher.days') }}</div>
         </div>
       </div>
-      <div v-if="funnelStrategies" class="grid grid-cols-3 gap-3 mt-4">
+      <div v-if="funnelStrategies" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
         <div v-for="stageId in ['tofu', 'mofu', 'bofu']" :key="stageId" class="p-3 rounded-lg border border-border/40">
           <div class="flex items-center justify-between mb-1">
             <span class="text-xs font-semibold uppercase" :class="stageColors[stageId]">{{ stageId }}</span>

@@ -142,7 +142,7 @@ function copyFullAdCopy() {
           <!-- Metadata -->
           <section>
             <h4 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">{{ t('variant.metadata') }}</h4>
-            <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
               <div v-if="variant.platform" class="flex items-center gap-2 p-2.5 rounded-lg bg-overlay-subtle border border-border/30">
                 <span class="text-muted-foreground">{{ t('variant.platformLabel') }}:</span>
                 <span class="font-medium">{{ variant.platform }}</span>

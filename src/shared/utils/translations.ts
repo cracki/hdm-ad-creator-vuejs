@@ -1146,6 +1146,97 @@ export const translations = {
   'vsettings.appearance': { en: 'Appearance', ar: 'المظهر', fa: 'ظاهر' },
   'vsettings.theme': { en: 'Theme', ar: 'السمة', fa: 'تم' },
   'vsettings.language': { en: 'Language', ar: 'اللغة', fa: 'زبان' },
+
+  // ---------- Guided Actions ----------
+  'guided.dismissTip': { en: 'Dismiss tip', ar: 'إغلاق النصيحة', fa: 'بستن راهنما' },
+  'guided.goToPrerequisite': { en: 'Go to next step', ar: 'انتقل إلى الخطوة التالية', fa: 'رفتن به مرحله بعد' },
+  'guided.backToCampaign': { en: 'Back to campaign', ar: 'العودة للحملة', fa: 'بازگشت به کمپین' },
+
+  // -- Brands guided --
+  'guided.brands.title': { en: 'Add your first brand', ar: 'أضف علامتك الأولى', fa: 'اولین برند خود را اضافه کنید' },
+  'guided.brands.desc': { en: 'Every great campaign starts with a brand. Let\'s set yours up.', ar: 'كل حملة عظيمة تبدأ بعلامة. دعنا نُعدّ علامتك.', fa: 'هر کمپین عالی با یک برند شروع می‌شود. بیایید برند شما را تنظیم کنیم.' },
+  'guided.brands.why': { en: 'Your brand profile powers all AI analysis — competitor insights, audience segments, and tailored ad copy.', ar: 'ملف علامتك يُشغّل كل تحليلات الذكاء الاصطناعي — رؤى المنافسين وشرائح الجمهور والنصوص المخصصة.', fa: 'پروفایل برند شما تمام تحلیل‌های هوش مصنوعی را تغذیه می‌کند — بینش رقبا، بخش‌های مخاطب و متن آگهی سفارشی.' },
+  'guided.brands.addBrand': { en: 'Add Brand', ar: 'أضف علامة', fa: 'افزودن برند' },
+  'guided.brands.useDemo': { en: 'Try Demo', ar: 'جرّب العرض', fa: 'تست دمو' },
+  'guided.brands.step1': { en: 'Add your brand details', ar: 'أضف تفاصيل علامتك', fa: 'اطلاعات برند را وارد کنید' },
+  'guided.brands.step1Desc': { en: 'Website, industry, and product info', ar: 'الموقع والصناعة ومعلومات المنتج', fa: 'وبسایت، صنعت و اطلاعات محصول' },
+  'guided.brands.step2': { en: 'Run brand analysis', ar: 'شغّل تحليل العلامة', fa: 'اجرای تحلیل برند' },
+  'guided.brands.step2Desc': { en: 'AI scans your brand and competitors', ar: 'الذكاء الاصطناعي يفحص علامتك والمنافسين', fa: 'هوش مصنوعی برند و رقبای شما را بررسی می‌کند' },
+  'guided.brands.step3': { en: 'Explore insights', ar: 'استكشف الرؤى', fa: 'بررسی بینش‌ها' },
+  'guided.brands.step3Desc': { en: 'Competitors, audience, and market gaps', ar: 'المنافسون والجمهور وفجوات السوق', fa: 'رقبا، مخاطب و شکاف‌های بازار' },
+  'guided.brands.tip': { en: 'Upload your logo and product images for more accurate visual recommendations.', ar: 'ارفع شعارك وصور منتجك للحصول على توصيات بصرية أكثر دقة.', fa: 'لوگو و تصاویر محصول را آپلود کنید تا توصیه‌های بصری دقیق‌تری دریافت کنید.' },
+
+  // -- Campaigns guided --
+  'guided.campaigns.title': { en: 'Launch your first campaign', ar: 'أطلق حملتك الأولى', fa: 'اولین کمپین خود را راه‌اندازی کنید' },
+  'guided.campaigns.desc': { en: 'Campaigns orchestrate your entire ad workflow from audience discovery to creative generation.', ar: 'الحملات تُنسّق سير عمل إعلانك بالكامل من اكتشاف الجمهور إلى إنشاء الإعلانات.', fa: 'کمپین‌ها تمام فرآیند تبلیغاتی شما را از کشف مخاطب تا تولید خلاقانه هماهنگ می‌کنند.' },
+  'guided.campaigns.why': { en: 'Go from brand analysis to production-ready ads in minutes, not days.', ar: 'انتقل من تحليل العلامة إلى إعلانات جاهزة للإنتاج في دقائق وليس أيام.', fa: 'از تحلیل برند تا آگهی آماده تولید در چند دقیقه، نه چند روز.' },
+  'guided.campaigns.launch': { en: 'Launch Campaign', ar: 'إطلاق حملة', fa: 'راه‌اندازی کمپین' },
+  'guided.campaigns.fullFunnel': { en: 'Full Funnel', ar: 'قمع كامل', fa: 'قیف کامل' },
+  'guided.campaigns.step1': { en: 'Define your audience', ar: 'حدّد جمهورك', fa: 'مخاطب خود را مشخص کنید' },
+  'guided.campaigns.step1Desc': { en: 'AI segments your market into personas', ar: 'الذكاء الاصطناعي يقسم سوقك إلى شخصيات', fa: 'هوش مصنوعی بازار شما را به پرسونا تقسیم می‌کند' },
+  'guided.campaigns.step2': { en: 'Build content strategy', ar: 'ابنِ استراتيجية محتوى', fa: 'استراتژی محتوا بسازید' },
+  'guided.campaigns.step2Desc': { en: 'Tailored messaging for each segment', ar: 'رسائل مخصصة لكل شريحة', fa: 'پیام سفارشی برای هر بخش' },
+  'guided.campaigns.step3': { en: 'Generate ad creatives', ar: 'أنشئ إعلانات إبداعية', fa: 'تولید خلاقیت آگهی' },
+  'guided.campaigns.step3Desc': { en: 'Ready-to-use copy and visuals', ar: 'نصوص وصور جاهزة للاستخدام', fa: 'متن و تصویر آماده استفاده' },
+
+  // -- Ad Library guided --
+  'guided.adlib.title': { en: 'Generate your first ads', ar: 'أنشئ أول إعلاناتك', fa: 'اولین آگهی‌های خود را تولید کنید' },
+  'guided.adlib.desc': { en: 'Create ad variations for any brand — no campaign needed.', ar: 'أنشئ تنويعات إعلانية لأي علامة — بدون حاجة لحملة.', fa: 'تولید تنوع آگهی برای هر برند — بدون نیاز به کمپین.' },
+  'guided.adlib.why': { en: 'Quickly test different headlines, copy, and CTAs to find what converts.', ar: 'اختبر عناوين ونصوص ودعوات مختلفة سريعاً لمعرفة ما يحوّل.', fa: 'سریعاً عنوان‌ها، متن و CTAهای مختلف را تست کنید و بهترین را پیدا کنید.' },
+  'guided.adlib.generate': { en: 'Generate Ads', ar: 'إنشاء إعلانات', fa: 'تولید آگهی' },
+  'guided.adlib.tip': { en: 'You can generate ads for any brand without creating a campaign first.', ar: 'يمكنك إنشاء إعلانات لأي علامة بدون إنشاء حملة أولاً.', fa: 'می‌توانید بدون ایجاد کمپین، برای هر برند آگهی تولید کنید.' },
+
+  // -- Competitors guided --
+  'guided.competitors.title': { en: 'Discover your competitors', ar: 'اكتشف منافسيك', fa: 'رقبای خود را کشف کنید' },
+  'guided.competitors.desc': { en: 'Find and analyze the brands competing for your audience.', ar: 'ابحث وحلّل العلامات التي تنافس على جمهورك.', fa: 'برندهایی که برای مخاطب شما رقابت می‌کنند را پیدا و تحلیل کنید.' },
+  'guided.competitors.autoDiscover': { en: 'Auto Discover', ar: 'اكتشاف تلقائي', fa: 'کشف خودکار' },
+  'guided.competitors.addManual': { en: 'Add Manually', ar: 'أضف يدوياً', fa: 'افزودن دستی' },
+  'guided.competitors.step1': { en: 'Discover competitors', ar: 'اكتشف المنافسين', fa: 'کشف رقبا' },
+  'guided.competitors.step1Desc': { en: 'AI finds brands in your space', ar: 'الذكاء الاصطناعي يجد علامات في مجالك', fa: 'هوش مصنوعی برندهای حوزه شما را پیدا می‌کند' },
+  'guided.competitors.step2': { en: 'Analyze each competitor', ar: 'حلّل كل منافس', fa: 'تحلیل هر رقیب' },
+  'guided.competitors.step2Desc': { en: 'Social media, ads, and positioning', ar: 'وسائل التواصل والإعلانات والتموضع', fa: 'شبکه اجتماعی، آگهی و جایگاه‌یابی' },
+  'guided.competitors.step3': { en: 'Get strategic insights', ar: 'احصل على رؤى استراتيجية', fa: 'دریافت بینش استراتژیک' },
+  'guided.competitors.step3Desc': { en: 'Opportunities and market gaps', ar: 'الفرص وفجوات السوق', fa: 'فرصت‌ها و شکاف‌های بازار' },
+  'guided.competitors.tip': { en: 'Auto-discover works best when your brand has a website with clear industry signals.', ar: 'الاكتشاف التلقائي يعمل بشكل أفضل عندما يكون لعلامتك موقع واضح الصناعة.', fa: 'کشف خودکار وقتی بهتر کار می‌کند که برند شما وبسایت با نشانه‌های صنعتی واضح داشته باشد.' },
+
+  // -- Market Intelligence guided --
+  'guided.market.title': { en: 'Unlock market intelligence', ar: 'افتح ذكاء السوق', fa: 'هوش بازار را فعال کنید' },
+  'guided.market.desc': { en: 'Find trending content, audience hooks, and gaps in your industry.', ar: 'ابحث عن المحتوى الرائج وخطافات الجمهور والفجوات في صناعتك.', fa: 'محتوای ترند، قلاب‌های مخاطب و شکاف‌های صنعت خود را پیدا کنید.' },
+  'guided.market.why': { en: 'Know what works before you create — data-driven content strategy.', ar: 'اعرف ما ينجح قبل أن تنشئ — استراتيجية محتوى مبنية على البيانات.', fa: 'قبل از تولید بدانید چه چیزی کار می‌کند — استراتژی محتوا داده‌محور.' },
+  'guided.market.tip': { en: 'Fill in the form below and hit Analyze to get started.', ar: 'املأ النموذج أدناه واضغط تحليل للبدء.', fa: 'فرم زیر را پر کنید و تحلیل را بزنید.' },
+
+  // -- Scenario Variants guided --
+  'guided.variants.title': { en: 'Create scenario variants', ar: 'أنشئ تنويعات السيناريو', fa: 'تنوع سناریو بسازید' },
+  'guided.variants.desc': { en: 'Test different audience × style × format combinations at scale.', ar: 'اختبر مجموعات مختلفة من الجمهور × الأسلوب × التنسيق.', fa: 'ترکیب‌های مختلف مخاطب × سبک × فرمت را در مقیاس تست کنید.' },
+  'guided.variants.why': { en: 'Find the winning combination before spending your ad budget.', ar: 'اعثر على التركيبة الرابحة قبل إنفاق ميزانيتك الإعلانية.', fa: 'قبل از خرج بودجه آگهی، ترکیب برنده را پیدا کنید.' },
+  'guided.variants.tip': { en: 'Select at least one audience, style, and format above to preview your matrix.', ar: 'اختر جمهوراً وأسلوباً وتنسيقاً واحداً على الأقل أعلاه لمعاينة المصفوفة.', fa: 'حداقل یک مخاطب، سبک و فرمت بالا را انتخاب کنید تا پیش‌نمایش ماتریس را ببینید.' },
+
+  // -- Brand Analysis guided --
+  'guided.brandAnalysis.title': { en: 'Run brand analysis', ar: 'شغّل تحليل العلامة', fa: 'اجرای تحلیل برند' },
+  'guided.brandAnalysis.desc': { en: 'Let AI deeply analyze your brand, competitors, and market position.', ar: 'دع الذكاء الاصطناعي يحلل علامتك ومنافسيك وموقعك في السوق بعمق.', fa: 'اجازه دهید هوش مصنوعی برند، رقبا و جایگاه بازار شما را عمیقاً تحلیل کند.' },
+  'guided.brandAnalysis.why': { en: 'Analysis unlocks audience segmentation, competitor mapping, and content strategy.', ar: 'التحليل يفتح تقسيم الجمهور ورسم المنافسين واستراتيجية المحتوى.', fa: 'تحلیل، بخش‌بندی مخاطب، نقشه رقبا و استراتژی محتوا را فعال می‌کند.' },
+  'guided.brandAnalysis.run': { en: 'Run Analysis', ar: 'شغّل التحليل', fa: 'اجرای تحلیل' },
+  'guided.brandAnalysis.addAssets': { en: 'Add Assets First', ar: 'أضف الأصول أولاً', fa: 'ابتدا دارایی‌ها را اضافه کنید' },
+  'guided.brandAnalysis.step1': { en: 'Upload brand assets', ar: 'ارفع أصول العلامة', fa: 'آپلود دارایی‌های برند' },
+  'guided.brandAnalysis.step1Desc': { en: 'Logos, product images, brand guidelines', ar: 'الشعارات وصور المنتج وإرشادات العلامة', fa: 'لوگو، تصاویر محصول و راهنمای برند' },
+  'guided.brandAnalysis.step2': { en: 'Run full analysis', ar: 'شغّل التحليل الكامل', fa: 'اجرای تحلیل کامل' },
+  'guided.brandAnalysis.step2Desc': { en: 'AI processes your brand data', ar: 'الذكاء الاصطناعي يعالج بيانات علامتك', fa: 'هوش مصنوعی داده‌های برند شما را پردازش می‌کند' },
+  'guided.brandAnalysis.step3': { en: 'Explore competitor insights', ar: 'استكشف رؤى المنافسين', fa: 'بررسی بینش رقبا' },
+  'guided.brandAnalysis.step3Desc': { en: 'See how you compare in the market', ar: 'شاهد كيف تقارن في السوق', fa: 'ببینید در بازار چگونه مقایسه می‌شوید' },
+  'guided.brandAnalysis.tip': { en: 'Upload product images and logos before analysis for more accurate visual recommendations.', ar: 'ارفع صور المنتج والشعارات قبل التحليل للحصول على توصيات بصرية أكثر دقة.', fa: 'قبل از تحلیل تصاویر محصول و لوگو را آپلود کنید تا توصیه‌های بصری دقیق‌تری دریافت کنید.' },
+
+  // -- Dashboard guided --
+  'guided.dashboard.title': { en: 'Welcome — let\'s get started', ar: 'مرحباً — لنبدأ', fa: 'خوش آمدید — شروع کنیم' },
+  'guided.dashboard.desc': { en: 'Three steps to your first AI-generated ad campaign.', ar: 'ثلاث خطوات لأول حملة إعلانية أنشأها الذكاء الاصطناعي.', fa: 'سه مرحله تا اولین کمپین تبلیغاتی تولیدشده با هوش مصنوعی.' },
+  'guided.dashboard.why': { en: 'The platform uses AI to analyze your brand, find your audience, and generate ads that convert — all in minutes.', ar: 'المنصة تستخدم الذكاء الاصطناعي لتحليل علامتك وإيجاد جمهورك وإنشاء إعلانات تحوّل — كل ذلك في دقائق.', fa: 'این پلتفرم با هوش مصنوعی برند شما را تحلیل می‌کند، مخاطبتان را پیدا و آگهی‌های تبدیل‌کننده تولید می‌کند — همه در چند دقیقه.' },
+  'guided.dashboard.addBrand': { en: 'Add Your Brand', ar: 'أضف علامتك', fa: 'برند خود را اضافه کنید' },
+  'guided.dashboard.tour': { en: 'Take the Tour', ar: 'جولة تعريفية', fa: 'تور معرفی' },
+  'guided.dashboard.step1': { en: 'Create your first brand', ar: 'أنشئ علامتك الأولى', fa: 'اولین برند خود را بسازید' },
+  'guided.dashboard.step1Desc': { en: 'Tell us about your business', ar: 'أخبرنا عن عملك', fa: 'درباره کسب‌وکارتان بگویید' },
+  'guided.dashboard.step2': { en: 'Launch a campaign', ar: 'أطلق حملة', fa: 'راه‌اندازی کمپین' },
+  'guided.dashboard.step2Desc': { en: 'AI guides you through each step', ar: 'الذكاء الاصطناعي يرشدك في كل خطوة', fa: 'هوش مصنوعی شما را در هر مرحله راهنمایی می‌کند' },
+  'guided.dashboard.step3': { en: 'Generate your first ad', ar: 'أنشئ أول إعلان', fa: 'اولین آگهی خود را تولید کنید' },
+  'guided.dashboard.step3Desc': { en: 'Production-ready creatives in seconds', ar: 'إعلانات جاهزة للإنتاج في ثوانٍ', fa: 'خلاقیت آماده تولید در چند ثانیه' },
 } as const
 
 export type TKey = keyof typeof translations

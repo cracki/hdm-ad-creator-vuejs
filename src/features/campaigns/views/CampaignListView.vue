@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Sparkles, Plus, Trash2, Search } from 'lucide-vue-next'
+import { Sparkles, Plus, Trash2, Search, Rocket } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { useToast } from '@/shared/composables/useToast'
 import SkeletonLoader from '@/shared/components/SkeletonLoader.vue'
-import EmptyState from '@/shared/components/EmptyState.vue'
+import GuidedAction from '@/shared/components/guided-actions/GuidedAction.vue'
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
 import { useCampaigns, useDeleteCampaign } from '../queries'
 import { getCampaignProgress } from '../types'
@@ -93,14 +93,25 @@ async function confirmDelete() {
     </div>
 
     <!-- Empty -->
-    <EmptyState
+    <GuidedAction
       v-else-if="filteredCampaigns.length === 0"
+      id="campaigns-first"
+      variant="empty"
+      feature="campaigns"
       :icon="Sparkles"
-      :title="t('camp.empty')"
-      :description="t('camp.emptyDesc')"
-      :show-action="true"
-      :action-label="t('camp.launch')"
-      @action="router.push('/campaigns/new')"
+      :title="t('guided.campaigns.title')"
+      :description="t('guided.campaigns.desc')"
+      :why="t('guided.campaigns.why')"
+      :actions="[
+        { labelKey: t('guided.campaigns.launch'), icon: Plus, to: '/campaigns/new', variant: 'primary' },
+        { labelKey: t('guided.campaigns.fullFunnel'), icon: Rocket, to: '/campaigns/full-funnel', variant: 'secondary' },
+      ]"
+      :steps="[
+        { id: 'define', title: t('guided.campaigns.step1'), description: t('guided.campaigns.step1Desc') },
+        { id: 'strategy', title: t('guided.campaigns.step2'), description: t('guided.campaigns.step2Desc') },
+        { id: 'generate', title: t('guided.campaigns.step3'), description: t('guided.campaigns.step3Desc') },
+      ]"
+      :show-progress="true"
     />
 
     <!-- Grid -->

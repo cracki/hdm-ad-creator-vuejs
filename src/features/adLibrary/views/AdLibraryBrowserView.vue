@@ -91,7 +91,7 @@ const isLoading = computed(() => anglesLoading.value || stagesLoading.value || p
         <!-- Funnel Stages -->
         <section class="mb-8">
           <h3 data-loc="adlib.browser.header-stages" class="text-sm font-semibold mb-3">{{ t('adlib.funnelStages') }}</h3>
-          <div class="grid grid-cols-3 gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div
               v-for="stage in stages"
               :key="stage.key"

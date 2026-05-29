@@ -85,7 +85,7 @@ function handleKeydown(e: KeyboardEvent) {
     <Transition name="dialog">
       <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" :aria-label="title">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="handleCancel" />
-        <div ref="dialogRef" class="relative surface-card w-full max-w-sm p-5 space-y-4 animate-scale-in" @keydown="handleKeydown">
+        <div ref="dialogRef" class="relative surface-card w-full max-w-sm p-5 space-y-4 max-h-[90vh] overflow-y-auto animate-scale-in" @keydown="handleKeydown">
           <button
             data-loc="confirm-dialog.close-btn"
             class="absolute top-3 end-3 h-10 w-10 grid place-items-center rounded-md hover:bg-overlay-medium text-muted-foreground"

@@ -232,7 +232,7 @@ function getStepStatusLabel(step: StepDef, idx: number): string {
               </button>
               <div
                 v-if="showExportMenu"
-                class="absolute end-0 top-full mt-1.5 z-50 min-w-[180px] rounded-lg border border-border/40 bg-popover shadow-lg py-1"
+                class="absolute end-0 top-full mt-1.5 z-50 min-w-[180px] max-w-[calc(100vw-2rem)] rounded-lg border border-border/40 bg-popover shadow-lg py-1"
               >
                 <button
                   class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition"
@@ -289,7 +289,7 @@ function getStepStatusLabel(step: StepDef, idx: number): string {
         </div>
 
         <!-- Platform Ad Status -->
-        <div v-if="selectedPlatforms.length > 0" class="mt-3 grid grid-cols-3 gap-2">
+        <div v-if="selectedPlatforms.length > 0" class="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
           <div
             v-for="p in platformAdsStatus.filter(ps => selectedPlatforms.includes(ps.key))"
             :key="p.key"
@@ -534,7 +534,7 @@ function getStepStatusLabel(step: StepDef, idx: number): string {
             <component :is="expandedSections.segmentation ? ChevronUp : ChevronDown" class="h-4 w-4 text-muted-foreground" />
           </button>
           <div v-if="expandedSections.segmentation" class="px-4 pb-4 border-t border-border/30">
-            <div class="mt-3 grid grid-cols-2 gap-3 text-xs">
+            <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               <div>
                 <div class="text-muted-foreground mb-0.5">{{ t('cd.location' as any) }}</div>
                 <div class="font-medium">{{ segmentationSummary.location }}</div>

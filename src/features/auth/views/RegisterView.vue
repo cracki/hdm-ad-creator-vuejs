@@ -84,7 +84,7 @@ async function handleGoogleRegister() {
           </div>
 
           <form @submit.prevent="handleRegister" class="space-y-4">
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <label class="block">
                 <span class="text-xs font-medium text-muted-foreground mb-1.5 block">{{ t('auth.firstName') }}</span>
                 <div class="relative">

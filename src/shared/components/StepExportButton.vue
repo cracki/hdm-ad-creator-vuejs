@@ -26,7 +26,7 @@ function pick(format: 'csv' | 'pdf' | 'pptx') {
     <div v-if="open" class="fixed inset-0 z-40" @click="open = false" />
     <div
       v-if="open"
-      class="absolute end-0 top-full mt-1 z-50 min-w-[180px] rounded-lg border border-border/40 bg-popover shadow-lg py-1"
+      class="absolute end-0 top-full mt-1 z-50 min-w-[180px] max-w-[calc(100vw-2rem)] rounded-lg border border-border/40 bg-popover shadow-lg py-1"
     >
       <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-light transition" @click="pick('pdf')">
         <FileText class="w-3.5 h-3.5 text-red-400" />

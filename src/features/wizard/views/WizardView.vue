@@ -140,20 +140,21 @@ const stepComponent = computed(() => {
   </div>
 
   <!-- Mobile stepper -->
-  <div class="lg:hidden border-b border-border/60 bg-surface/30 overflow-x-auto">
-    <div class="flex items-center gap-1.5 px-4 py-2 min-w-max">
+  <div class="lg:hidden border-b border-border/60 bg-surface/30">
+    <div class="flex items-center justify-between px-4 py-2 gap-1">
       <button
         v-for="step in WIZARD_STEPS"
         :key="step.n"
         data-loc="wizard.mobile-step"
         :class="[
-          'flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] sm:text-[11px] font-medium whitespace-nowrap transition',
+          'h-8 flex-1 rounded-md flex items-center justify-center transition text-xs font-medium',
           wizard.currentStep.value === step.n ? 'bg-[image:var(--gradient-brand)] text-primary-foreground' :
           wizard.stepCompletion.value[step.n] ? 'bg-success/15 text-success' : 'bg-overlay-subtle text-muted-foreground',
         ]"
         @click="goToStep(step.n)"
       >
-        {{ step.n }}. {{ t(step.labelKey as any) }}
+        <Check v-if="wizard.stepCompletion.value[step.n]" class="h-3.5 w-3.5" />
+        <template v-else>{{ step.n }}</template>
       </button>
     </div>
   </div>
