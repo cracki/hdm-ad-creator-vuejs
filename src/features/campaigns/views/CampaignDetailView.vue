@@ -14,6 +14,10 @@ import Breadcrumb from '@/shared/components/Breadcrumb.vue'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { useCampaign } from '../queries'
 import { exportCampaignPDF, exportCampaignPPTX } from '@/shared/utils/exportCampaign'
+import { useTourRegistration } from '@/shared/composables/useTourRegistration'
+import { campaignDetailTour } from '../tours'
+
+useTourRegistration(campaignDetailTour)
 
 const route = useRoute()
 const router = useRouter()
@@ -83,7 +87,8 @@ function isStepDone(step: StepDef): boolean {
     return platforms.every((p: string) => c?.[`${p}_ads_completed`])
   }
   if (step.flag === '_ads_generated' || step.flag === '_visuals_generated') {
-    return false
+    const idx = STEPS.indexOf(step)
+    return idx > 0 ? STEPS.slice(0, idx).every((s) => isStepDone(s)) : false
   }
   if (step.flag === '_review') {
     return c?.status === 'completed'
@@ -188,7 +193,7 @@ function getStepStatusLabel(step: StepDef, idx: number): string {
 
     <template v-else-if="campaign">
       <!-- Campaign Header -->
-      <section class="mt-4 surface-card p-5 sm:p-6" data-loc="campaigns.detail.header">
+      <section class="mt-4 surface-card p-5 sm:p-6" data-loc="campaigns.detail.header" data-tour="campaigns.detail.header">
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div class="flex-1 min-w-0">
             <h1 class="text-xl sm:text-2xl font-bold text-foreground truncate">{{ campaign.name }}</h1>
@@ -563,7 +568,7 @@ function getStepStatusLabel(step: StepDef, idx: number): string {
       </div>
 
       <!-- Steps Navigation -->
-      <div class="mt-4" data-loc="campaigns.detail.steps">
+      <div class="mt-4" data-loc="campaigns.detail.steps" data-tour="campaigns.detail.steps">
         <h2 class="text-sm font-medium text-muted-foreground mb-2">{{ t('camp.steps' as any) }}</h2>
         <div class="space-y-1.5">
           <div

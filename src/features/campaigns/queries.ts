@@ -20,16 +20,6 @@ export function useCampaign(uuid: Ref<string>) {
   })
 }
 
-export function useCampaignAds(uuid: Ref<string>) {
-  return useQuery({
-    queryKey: ['campaigns', uuid, 'ads'],
-    queryFn: ({ signal }) => campaignsApi.listAds(uuid.value, { signal }).then(r => r.data),
-    enabled: computed(() => !!uuid.value),
-    staleTime: 10_000,
-    retry: false,
-  })
-}
-
 export function useCreateCampaign() {
   const queryClient = useQueryClient()
   return useMutation({

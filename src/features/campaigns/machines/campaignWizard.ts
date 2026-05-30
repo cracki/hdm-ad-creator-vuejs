@@ -22,7 +22,7 @@ export const WIZARD_STEPS: StepDef[] = [
   { n: 10, labelKey: 'smart.s10', iconKey: 'Download' },
 ]
 
-function isStepCompleted(campaign: Campaign, step: number, adsCount?: number): boolean {
+function isStepCompleted(campaign: Campaign, step: number): boolean {
   const ctx = campaign.context_payload as any
   switch (step) {
     case 1: return true // Brand intelligence always available
@@ -35,22 +35,22 @@ function isStepCompleted(campaign: Campaign, step: number, adsCount?: number): b
       const platforms: string[] = ctx?.selected_platforms ?? []
       return platforms.length > 0 && platforms.every(p => campaign[`${p}_ads_completed` as keyof Campaign] as boolean)
     }
-    case 8: return (adsCount ?? 0) > 0
-    case 9: return campaign.status === 'completed' || (adsCount ?? 0) > 0
+    case 8: return isStepCompleted(campaign, 7)
+    case 9: return isStepCompleted(campaign, 8)
     case 10: return campaign.status === 'completed'
     default: return false
   }
 }
 
-export function getFirstIncompleteStep(campaign: Campaign | null, adsCount?: number): number {
+export function getFirstIncompleteStep(campaign: Campaign | null): number {
   if (!campaign) return 1
   for (let i = 1; i <= 10; i++) {
-    if (!isStepCompleted(campaign, i, adsCount)) return i
+    if (!isStepCompleted(campaign, i)) return i
   }
   return 10
 }
 
-export function useCampaignWizard(campaign: Ref<Campaign | null>, adsCount?: Ref<number | undefined>) {
+export function useCampaignWizard(campaign: Ref<Campaign | null>) {
   const state = reactive({
     currentStep: 1,
     stepStates: {} as Record<number, StepState>,
@@ -60,7 +60,7 @@ export function useCampaignWizard(campaign: Ref<Campaign | null>, adsCount?: Ref
     const result: Record<number, boolean> = {}
     if (!campaign.value) return result
     for (let i = 1; i <= 10; i++) {
-      result[i] = isStepCompleted(campaign.value, i, adsCount?.value)
+      result[i] = isStepCompleted(campaign.value, i)
     }
     return result
   })
@@ -130,7 +130,7 @@ export function useCampaignWizard(campaign: Ref<Campaign | null>, adsCount?: Ref
     // Only auto-redirect if current step hasn't been explicitly set yet
     // and is beyond what's available
     if (!canNavigateTo.value[state.currentStep]) {
-      state.currentStep = getFirstIncompleteStep(c, adsCount?.value)
+      state.currentStep = getFirstIncompleteStep(c)
     }
   }, { immediate: true })
 

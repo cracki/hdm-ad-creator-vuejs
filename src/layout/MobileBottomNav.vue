@@ -12,14 +12,15 @@ interface BottomNavItem {
   labelKey: TKey
   icon: any
   loc: string
+  tourId: string
 }
 
 const items: BottomNavItem[] = [
-  { to: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, loc: 'bottom-nav.dashboard' },
-  { to: '/brands', labelKey: 'nav.brands', icon: Building2, loc: 'bottom-nav.brands' },
-  { to: '/campaigns', labelKey: 'nav.campaigns', icon: Megaphone, loc: 'bottom-nav.campaigns' },
-  { to: '/market/intelligence', labelKey: 'nav.marketIntel', icon: TrendingUp, loc: 'bottom-nav.market-intelligence' },
-  { to: '/ad-library', labelKey: 'nav.adLibrary', icon: Library, loc: 'bottom-nav.ad-library' },
+  { to: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, loc: 'bottom-nav.dashboard', tourId: 'bottom-nav-dashboard' },
+  { to: '/brands', labelKey: 'nav.brands', icon: Building2, loc: 'bottom-nav.brands', tourId: 'bottom-nav-brands' },
+  { to: '/campaigns', labelKey: 'nav.campaigns', icon: Megaphone, loc: 'bottom-nav.campaigns', tourId: 'bottom-nav-campaigns' },
+  { to: '/market/intelligence', labelKey: 'nav.marketIntel', icon: TrendingUp, loc: 'bottom-nav.market-intelligence', tourId: 'bottom-nav-market' },
+  { to: '/ad-library', labelKey: 'nav.adLibrary', icon: Library, loc: 'bottom-nav.ad-library', tourId: 'bottom-nav-ad-library' },
 ]
 
 function isActive(to: string): boolean {
@@ -36,6 +37,7 @@ function isActive(to: string): boolean {
         :key="item.to"
         :to="item.to"
         :data-loc="item.loc"
+        :data-tour="item.tourId"
         :class="[
           'flex flex-col items-center justify-center gap-0.5 h-full flex-1 transition',
           isActive(item.to) ? 'text-primary' : 'text-muted-foreground',

@@ -8,11 +8,18 @@ import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import { useConfetti } from '@/shared/composables/useConfetti'
-import { useCampaignAds, useCampaign } from '../queries'
+import { useCampaign } from '../queries'
 import { campaignsApi } from '../api'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
 import { exportVisuals } from '@/shared/utils/exportStep'
+
+interface AdMeta {
+  uuid: string
+  platform: string
+  funnel_stage: string | null
+  persona: string | null
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -25,13 +32,20 @@ const { setActions } = usePageActions()
 setActions([{ label: t('camp.backToCampaign'), icon: ArrowLeft, to: `/campaigns/${campaignUuid.value}` }])
 
 const confetti = useConfetti()
-const { data: ads, isLoading: adsLoading } = useCampaignAds(campaignUuid)
 
-const adsList = computed(() => Array.isArray(ads.value) ? ads.value : [])
+function loadAdsFromStorage(): AdMeta[] {
+  try {
+    const raw = sessionStorage.getItem(`campaign-ads:${campaignUuid.value}`)
+    if (raw) return JSON.parse(raw)
+  } catch {}
+  return []
+}
 
-const aspectRatio = ref<'1:1' | '9:16' | '16:9' | '4:5'>('1:1')
-const quality = ref<'standard' | 'hd'>('standard')
-const style = ref<'natural' | 'vivid'>('natural')
+const adsList = computed<AdMeta[]>(() => {
+  const state = history.state as { adMeta?: AdMeta[] } | null
+  if (Array.isArray(state?.adMeta) && state.adMeta.length) return state.adMeta
+  return loadAdsFromStorage()
+})
 
 const selectedAdUuids = ref<Set<string>>(new Set())
 
@@ -43,9 +57,18 @@ function toggleAd(uuid: string) {
 const selectAll = computed({
   get: () => adsList.value.length > 0 && selectedAdUuids.value.size === adsList.value.length,
   set: (v: boolean) => {
-    selectedAdUuids.value = new Set(v ? adsList.value.map((a: any) => a.campaign_ad_uuid) : [])
+    selectedAdUuids.value = new Set(v ? adsList.value.map(a => a.uuid) : [])
   },
 })
+
+function adPlatformLabel(p: string) {
+  const map: Record<string, string> = { meta: 'Meta', google: 'Google', linkedin: 'LinkedIn' }
+  return map[p] ?? p
+}
+
+const aspectRatio = ref<'1:1' | '9:16' | '16:9' | '4:5'>('1:1')
+const quality = ref<'standard' | 'hd'>('standard')
+const style = ref<'natural' | 'vivid'>('natural')
 
 const opKey = computed(() => `${campaignUuid.value}:generate-visuals`)
 const { data: visualResult, loading, error, run } = useAsyncOperation<any>()
@@ -71,13 +94,6 @@ async function generateVisuals() {
     operationManager.finish(opKey.value)
   }
 }
-
-function adPlatformLabel(p: string) {
-  const map: Record<string, string> = { meta: 'Meta', google: 'Google', linkedin: 'LinkedIn' }
-  return map[p] ?? p
-}
-
-const isPrereqMet = computed(() => adsList.value.length > 0)
 
 const visExporting = ref(false)
 async function handleVisualExport(format: 'csv' | 'pdf' | 'pptx') {
@@ -121,11 +137,8 @@ async function handleVisualExport(format: 'csv' | 'pdf' | 'pptx') {
         </div>
       </header>
 
-      <div v-if="adsLoading" class="surface-card p-8">
-        <AiLoadingAnimation :message="t('visual.title')" />
-      </div>
-
-      <div v-else-if="!isPrereqMet" class="surface-card p-8 text-center">
+      <!-- No ads available -->
+      <div v-if="adsList.length === 0" class="surface-card p-8 text-center">
         <Shield class="h-8 w-8 text-muted-foreground mx-auto mb-3" />
         <div class="text-sm font-medium mb-1">{{ t('visual.prereqTitle') }}</div>
         <div class="text-xs text-muted-foreground mb-4">{{ t('visual.prereqDesc') }}</div>
@@ -138,73 +151,84 @@ async function handleVisualExport(format: 'csv' | 'pdf' | 'pptx') {
       </div>
 
       <template v-else>
-        <!-- Settings -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-          <div>
-            <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('visual.aspectRatio') }}</label>
-            <select v-model="aspectRatio" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none" data-loc="campaigns.visual.setting-aspect-ratio">
-              <option value="1:1">1:1</option>
-              <option value="9:16">9:16</option>
-              <option value="16:9">16:9</option>
-              <option value="4:5">4:5</option>
-            </select>
-          </div>
-          <div>
-            <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('visual.quality') }}</label>
-            <select v-model="quality" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none" data-loc="campaigns.visual.setting-quality">
-              <option value="standard">{{ t('visual.standard') }}</option>
-              <option value="hd">HD</option>
-            </select>
-          </div>
-          <div>
-            <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('visual.style') }}</label>
-            <select v-model="style" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none" data-loc="campaigns.visual.setting-style">
-              <option value="natural">{{ t('visual.natural') }}</option>
-              <option value="vivid">{{ t('visual.vivid') }}</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Ad selection -->
-        <div class="surface-card p-4 mb-6">
-          <div class="flex items-center justify-between mb-3">
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" v-model="selectAll" class="rounded border-border/60" data-loc="campaigns.visual.select-all" />
-              <span class="text-xs font-medium">{{ t('visual.selectAll') }}</span>
-            </label>
-            <span class="text-[11px] text-muted-foreground">{{ selectedAdUuids.size }} / {{ adsList.length }}</span>
-          </div>
-          <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            <div
-              v-for="ad in adsList"
-              :key="ad.campaign_ad_uuid"
-              :class="[
-                'p-3 rounded-lg border cursor-pointer transition text-xs',
-                selectedAdUuids.has(ad.campaign_ad_uuid) ? 'border-primary/60 bg-primary/5' : 'border-border/40 hover:border-primary/30',
-              ]"
-              data-loc="campaigns.visual.ad-card"
-              @click="toggleAd(ad.campaign_ad_uuid)"
-            >
-              <div class="flex items-center gap-2 mb-1">
-                <span class="font-semibold px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-300 text-[11px]">{{ adPlatformLabel(ad.platform) }}</span>
-                <span class="text-[11px] text-muted-foreground">{{ ad.funnel_stage }}</span>
+        <!-- Settings + Ad selection card -->
+        <div class="surface-card p-5 sm:p-7 mb-6">
+          <div class="space-y-5">
+            <!-- Settings -->
+            <div class="grid sm:grid-cols-3 gap-4">
+              <div>
+                <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('visual.aspectRatio') }}</label>
+                <select v-model="aspectRatio" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none focus:border-primary/40 transition" data-loc="campaigns.visual.setting-aspect-ratio">
+                  <option value="1:1">1:1</option>
+                  <option value="9:16">9:16</option>
+                  <option value="16:9">16:9</option>
+                  <option value="4:5">4:5</option>
+                </select>
               </div>
-              <div class="text-[11px] text-muted-foreground truncate">{{ ad.persona || '—' }}</div>
+              <div>
+                <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('visual.quality') }}</label>
+                <select v-model="quality" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none focus:border-primary/40 transition" data-loc="campaigns.visual.setting-quality">
+                  <option value="standard">{{ t('visual.standard') }}</option>
+                  <option value="hd">HD</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('visual.style') }}</label>
+                <select v-model="style" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none focus:border-primary/40 transition" data-loc="campaigns.visual.setting-style">
+                  <option value="natural">{{ t('visual.natural') }}</option>
+                  <option value="vivid">{{ t('visual.vivid') }}</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Ad selection -->
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" v-model="selectAll" class="rounded border-border/60" data-loc="campaigns.visual.select-all" />
+                  <span class="text-xs font-medium">{{ t('visual.selectAll') }}</span>
+                </label>
+                <span class="text-[11px] text-muted-foreground">{{ selectedAdUuids.size }} / {{ adsList.length }}</span>
+              </div>
+              <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                <div
+                  v-for="ad in adsList"
+                  :key="ad.uuid"
+                  :class="[
+                    'p-3 rounded-lg border cursor-pointer transition text-xs',
+                    selectedAdUuids.has(ad.uuid) ? 'border-primary/60 bg-primary/5' : 'border-border/40 hover:border-primary/30',
+                  ]"
+                  data-loc="campaigns.visual.ad-card"
+                  @click="toggleAd(ad.uuid)"
+                >
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="font-semibold px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-300 text-[11px]">{{ adPlatformLabel(ad.platform) }}</span>
+                    <span class="text-[11px] text-muted-foreground">{{ ad.funnel_stage }}</span>
+                  </div>
+                  <div class="text-[11px] text-muted-foreground truncate">{{ ad.persona || '—' }}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Generate button -->
+            <div class="flex items-center justify-center">
+              <button
+                :disabled="selectedAdUuids.size === 0 || loading"
+                class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5 disabled:opacity-50"
+                data-loc="campaigns.visual.generate-btn"
+                @click="generateVisuals"
+              >
+                <Loader2 v-if="loading" class="h-3.5 w-3.5 animate-spin" />
+                <ImageIcon v-else class="h-3.5 w-3.5" />
+                {{ loading ? t('visual.generating') : t('visual.generate') }}
+              </button>
             </div>
           </div>
         </div>
 
-        <div class="flex items-center justify-center mb-6">
-          <button
-            :disabled="selectedAdUuids.size === 0 || loading"
-            class="h-10 px-6 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5 disabled:opacity-50"
-            data-loc="campaigns.visual.generate-btn"
-            @click="generateVisuals"
-          >
-            <Loader2 v-if="loading" class="h-3.5 w-3.5 animate-spin" />
-            <ImageIcon v-else class="h-3.5 w-3.5" />
-            {{ loading ? t('visual.generating') : t('visual.generate') }}
-          </button>
+        <!-- Loading animation -->
+        <div v-if="loading" class="surface-card p-8 mb-6">
+          <AiLoadingAnimation :message="t('visual.generating')" />
         </div>
 
         <div v-if="error" class="surface-card p-4 flex items-center gap-3 mb-4">

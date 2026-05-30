@@ -15,7 +15,7 @@ const dismissed = ref(false)
     <span class="flex-1 leading-relaxed">{{ text }}</span>
     <button
       class="shrink-0 hover:text-foreground transition mt-0.5"
-      :aria-label="String($t?.('guided.dismissTip') ?? 'Dismiss tip')"
+      aria-label="Dismiss tip"
       @click="dismissed = true"
     >
       <X class="h-3 w-3" />

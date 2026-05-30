@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import {
   Building2, Megaphone, Sparkles, Brain,
-  Plus, ArrowRight, TrendingUp, BarChart3,
+  Plus, ArrowRight, TrendingUp, BarChart3, HelpCircle,
 } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
@@ -11,11 +11,14 @@ import { useAuthStore } from '@/features/auth/store'
 import { useBrands } from '@/features/brands/queries'
 import { useCampaigns } from '@/features/campaigns/queries'
 import SkeletonLoader from '@/shared/components/SkeletonLoader.vue'
+import GuidedAction from '@/shared/components/guided-actions/GuidedAction.vue'
+import { useProductTour } from '@/shared/composables/useProductTour'
 
 const { t } = useI18n()
 const auth = useAuthStore()
 const { data: brands, isLoading: brandsLoading } = useBrands()
 const { data: campaigns, isLoading: campaignsLoading } = useCampaigns()
+const { startTour } = useProductTour()
 
 const isLoading = computed(() => brandsLoading.value || campaignsLoading.value)
 
@@ -100,6 +103,29 @@ const recentBrands = computed(() => {
         <div class="text-2xl font-semibold">{{ stats.campaigns }}</div>
       </div>
     </div>
+
+    <!-- Welcome guided action (shown when no brands or campaigns exist) -->
+    <GuidedAction
+      v-if="!isLoading && stats.brands === 0 && stats.campaigns === 0"
+      id="dashboard-welcome"
+      variant="welcome"
+      feature="dashboard"
+      :icon="Sparkles"
+      :title="t('guided.dashboard.title')"
+      :description="t('guided.dashboard.desc')"
+      :why="t('guided.dashboard.why')"
+      :actions="[
+        { labelKey: t('guided.dashboard.addBrand'), icon: Plus, to: '/brands/new', variant: 'primary' as const },
+        { labelKey: t('guided.dashboard.tour'), icon: HelpCircle, variant: 'secondary' as const, handler: () => startTour('welcome') },
+      ]"
+      :steps="[
+        { id: 'brand', title: t('guided.dashboard.step1'), description: t('guided.dashboard.step1Desc') },
+        { id: 'campaign', title: t('guided.dashboard.step2'), description: t('guided.dashboard.step2Desc') },
+        { id: 'ads', title: t('guided.dashboard.step3'), description: t('guided.dashboard.step3Desc') },
+      ]"
+      :show-progress="true"
+      class="mb-8"
+    />
 
     <!-- Quick Actions -->
     <div class="mb-8">

@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { Brain, AlertCircle, MapPin, ShoppingBag, RefreshCw, Check, BarChart3, Target, Layers, TrendingUp, Lightbulb, Download, FileText, LayoutGrid, Loader2, ArrowLeft } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
+import GuidedAction from '@/shared/components/guided-actions/GuidedAction.vue'
 import ContentOpportunitiesRenderer from '@/shared/components/renderers/ContentOpportunitiesRenderer.vue'
 import ContentGapsRenderer from '@/shared/components/renderers/ContentGapsRenderer.vue'
 import ContentMatrixRenderer from '@/shared/components/renderers/ContentMatrixRenderer.vue'
@@ -13,6 +14,10 @@ import { useBrands } from '@/features/brands/queries'
 import { useAutoSelectBrand } from '@/shared/composables/useAutoSelectBrand'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { exportIntelligencePDF, exportIntelligencePPTX, exportIntelligenceXLSX } from '@/shared/utils/exportMarket'
+import { useTourRegistration } from '@/shared/composables/useTourRegistration'
+import { marketIntelligenceTour } from '../tours'
+
+useTourRegistration(marketIntelligenceTour)
 import { useRunContentIntelligence, useContentIntelligenceHistory } from '../queries'
 import type { ContentIntelligenceRun, ContentIntelligenceResult } from '../types'
 
@@ -126,11 +131,27 @@ function backToForm() {
         </div>
       </header>
 
+      <!-- Guided action banner (before first run) -->
+      <GuidedAction
+        v-if="showForm"
+        id="market-first"
+        variant="empty"
+        feature="market"
+        :icon="Brain"
+        :title="t('guided.market.title')"
+        :description="t('guided.market.desc')"
+        :why="t('guided.market.why')"
+        :tip="t('guided.market.tip')"
+        max-width="full"
+        :show-illustration="false"
+        class="mb-6"
+      />
+
       <!-- Input form -->
-      <div v-if="showForm" class="surface-card p-5 space-y-4 mb-6">
+      <div v-if="showForm" class="surface-card p-5 space-y-4 mb-6" data-tour="market.intel.form">
         <div>
           <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.selectBrand') }}</label>
-          <select v-model="selectedBrandUuid" data-loc="market.intel.brand-select" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none focus:ring-1 focus:ring-primary/50">
+          <select v-model="selectedBrandUuid" data-loc="market.intel.brand-select" data-tour="market.intel.brand-select" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none focus:ring-1 focus:ring-primary/50">
             <option value="" disabled>{{ t('market.chooseBrand') }}</option>
             <option v-for="b in (brands ?? [])" :key="b.brand_uuid" :value="b.brand_uuid">{{ b.company_name }}</option>
           </select>
@@ -161,7 +182,7 @@ function backToForm() {
             <button v-for="goal in contentGoals" :key="goal.value" data-loc="market.intel.goal-btn" :class="['h-8 px-3 rounded-lg text-xs font-medium border transition', contentGoal === goal.value ? 'bg-[image:var(--gradient-brand)] text-primary-foreground border-transparent' : 'bg-overlay-subtle border-border/60 text-muted-foreground hover:text-foreground']" @click="contentGoal = goal.value">{{ goal.label }}</button>
           </div>
         </div>
-        <button data-loc="market.intel.run-btn" class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5" :disabled="!selectedBrandUuid || !industry || !location" @click="runIntelligence">
+        <button data-loc="market.intel.run-btn" data-tour="market.intel.run-btn" class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5" :disabled="!selectedBrandUuid || !industry || !location" @click="runIntelligence">
           <Brain class="h-3.5 w-3.5" /> {{ t('market.runIntelligence') }}
         </button>
       </div>
@@ -191,7 +212,7 @@ function backToForm() {
       </div>
 
       <!-- Results -->
-      <div v-if="result && !loading" class="space-y-4">
+      <div v-if="result && !loading" class="space-y-4" data-tour="market.intel.results">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <Check class="h-4 w-4 text-success" />

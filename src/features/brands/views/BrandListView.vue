@@ -10,13 +10,20 @@ import { usePageActions } from '@/shared/composables/usePageActions'
 import SkeletonLoader from '@/shared/components/SkeletonLoader.vue'
 import {
   Search, Plus, SlidersHorizontal, MoreHorizontal, Sparkles,
-  Globe, Eye, Pencil, Trash2,
+  Globe, Eye, Pencil, Trash2, Building2,
 } from 'lucide-vue-next'
+import GuidedAction from '@/shared/components/guided-actions/GuidedAction.vue'
+import { useDemoMode } from '@/shared/composables/useDemoMode'
+import { useTourRegistration } from '@/shared/composables/useTourRegistration'
+import { brandsListTour } from '../tours'
+
+useTourRegistration(brandsListTour)
 
 const { data: brands, isLoading } = useBrands()
 const { t } = useI18n()
 const route = useRoute()
 const { setActions } = usePageActions()
+const { enable: enableDemo } = useDemoMode()
 
 const searchQuery = ref((route.query.search as string) ?? '')
 const selectedIndustry = ref<string | null>(null)
@@ -114,6 +121,7 @@ setActions([
       <RouterLink
         to="/brands/new"
         data-loc="brands.list.new-brand-btn"
+        data-tour="brands.list.new-brand-btn"
         class="hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] hover:opacity-95 transition"
       >
         <Plus class="h-3.5 w-3.5" /> {{ t('brands.new') }}
@@ -129,6 +137,7 @@ setActions([
           v-model="searchQuery"
           :placeholder="t('brands.searchPlaceholder')"
           data-loc="brands.list.search"
+          data-tour="brands.list.search-input"
           class="flex-1 min-w-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
         />
       </div>
@@ -173,7 +182,7 @@ setActions([
     <SkeletonLoader v-if="isLoading" variant="grid" :count="6" height="230px" />
 
     <!-- Brand grid -->
-    <div v-else class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+    <div v-else-if="filteredBrands.length" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4" data-tour="brands.list.brands-grid">
       <RouterLink
         v-for="(brand, index) in filteredBrands"
         :key="brand.brand_uuid"
@@ -190,7 +199,6 @@ setActions([
             <button @click="toggleMenu(brand.brand_uuid, $event)" data-loc="brands.list.card-menu-toggle" class="h-10 w-10 grid place-items-center rounded-md hover:bg-overlay-medium text-muted-foreground">
               <MoreHorizontal class="h-4 w-4" />
             </button>
-            <!-- Dropdown menu -->
             <div
               v-if="openMenuUuid === brand.brand_uuid"
               class="absolute end-0 top-full mt-1 z-20 w-40 rounded-lg border border-border/60 bg-surface shadow-lg py-1"
@@ -261,5 +269,28 @@ setActions([
         </div>
       </RouterLink>
     </div>
+
+    <!-- Empty: Guided action for first brand -->
+    <GuidedAction
+      v-else
+      id="brands-first"
+      variant="welcome"
+      feature="brands"
+      :icon="Building2"
+      :title="t('guided.brands.title')"
+      :description="t('guided.brands.desc')"
+      :why="t('guided.brands.why')"
+      :actions="[
+        { labelKey: t('guided.brands.addBrand'), icon: Plus, to: '/brands/new', variant: 'primary' as const },
+        { labelKey: t('guided.brands.useDemo'), icon: Eye, variant: 'secondary' as const, handler: enableDemo },
+      ]"
+      :steps="[
+        { id: 'add', title: t('guided.brands.step1'), description: t('guided.brands.step1Desc') },
+        { id: 'analyze', title: t('guided.brands.step2'), description: t('guided.brands.step2Desc') },
+        { id: 'insights', title: t('guided.brands.step3'), description: t('guided.brands.step3Desc') },
+      ]"
+      :tip="t('guided.brands.tip')"
+      :show-progress="true"
+    />
   </main>
 </template>

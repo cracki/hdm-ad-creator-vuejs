@@ -3,17 +3,16 @@ import { computed, ref } from 'vue'
 import { Sparkles, Loader2, AlertCircle, RefreshCw, Shield, Trash2, Copy } from 'lucide-vue-next'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import { useI18n } from '@/shared/utils/i18n'
-import { useCampaignAds } from '@/features/campaigns/queries'
 import { campaignsApi } from '@/features/campaigns/api'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
-import type { Campaign, CampaignAdPlatform, FunnelStage } from '@/features/campaigns/types'
+import type { Campaign, CampaignAd, CampaignAdPlatform, FunnelStage } from '@/features/campaigns/types'
 
 const props = defineProps<{ campaign: Campaign; campaignUuid: string }>()
 const emit = defineEmits<{ (e: 'completed'): void }>()
 const { t } = useI18n()
 
-const { data: ads, isLoading: adsLoading, refetch: refetchAds } = useCampaignAds(computed(() => props.campaignUuid))
+const localAds = ref<CampaignAd[]>([])
 
 const selectedPlatforms = computed(() => (props.campaign.context_payload as any)?.selected_platforms ?? [])
 const isPrereqMet = computed(() => {
@@ -57,9 +56,11 @@ async function generateAds() {
         platform: selectedPlatform.value,
         quantity: quantity.value,
       })
+      if (res.data?.ads?.length) {
+        localAds.value = [...res.data.ads, ...localAds.value]
+      }
       return res.data
     })
-    refetchAds()
     emit('completed')
   } finally {
     operationManager.finish(genOpKey.value)
@@ -72,7 +73,7 @@ async function clearAllAds() {
   showClearConfirm.value = false
   try {
     await clearRun(async () => (await campaignsApi.clearAllAds(props.campaignUuid)).data)
-    refetchAds()
+    localAds.value = []
   } finally {
     operationManager.finish(clearOpKey.value)
   }
@@ -87,7 +88,7 @@ function copyToClipboard(text: string) {
   navigator.clipboard.writeText(text)
 }
 
-const adsList = computed(() => Array.isArray(ads.value) ? ads.value : [])
+const adsList = computed(() => localAds.value)
 
 function getAdData(ad: any) {
   const d = ad.data ?? {}
@@ -119,11 +120,7 @@ function getAdData(ad: any) {
       </button>
     </header>
 
-    <div v-if="adsLoading" class="py-12">
-      <AiLoadingAnimation :message="t('adgen.title')" size="sm" />
-    </div>
-
-    <div v-else-if="!isPrereqMet" class="surface-card p-8 text-center">
+    <div v-if="!isPrereqMet" class="surface-card p-8 text-center">
       <Shield class="h-8 w-8 text-muted-foreground mx-auto mb-3" />
       <div class="text-sm font-medium mb-1">{{ t('adgen.prereqTitle') }}</div>
       <div class="text-xs text-muted-foreground">{{ t('adgen.prereqDesc') }}</div>

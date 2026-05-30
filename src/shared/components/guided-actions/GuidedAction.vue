@@ -8,6 +8,8 @@ import GuidedActionIllustration from './GuidedActionIllustration.vue'
 import GuidedActionStep from './GuidedActionStep.vue'
 import GuidedActionTip from './GuidedActionTip.vue'
 
+const WIDTH_MAP = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg', full: 'max-w-full' } as const
+
 const props = withDefaults(defineProps<{
   id: string
   variant: GuidedActionVariant
@@ -33,8 +35,6 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{
   action: [pathIndex: number]
-  completed: []
-  dismissed: []
 }>()
 
 const router = useRouter()
@@ -42,11 +42,6 @@ const guided = useGuidedActions()
 
 onMounted(() => {
   guided.markSeen(props.id)
-})
-
-const widthClass = computed(() => {
-  const map = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg', full: 'max-w-full' }
-  return map[props.maxWidth]
 })
 
 function handleAction(path: ActionPath, index: number) {
@@ -59,15 +54,14 @@ function handleAction(path: ActionPath, index: number) {
 }
 
 const completedSteps = computed(() => {
-  const state = guided.getState(props.id)
-  return state?.completedSteps ?? []
+  return guided.getState(props.id).completedSteps
 })
 </script>
 
 <template>
   <div
     class="mx-auto text-center surface-card p-6 sm:p-10 mt-8 animate-[slide-up_0.4s_ease-out_both]"
-    :class="widthClass"
+    :class="WIDTH_MAP[maxWidth]"
   >
     <!-- Illustration -->
     <GuidedActionIllustration
@@ -95,9 +89,9 @@ const completedSteps = computed(() => {
     <!-- Steps -->
     <div v-if="steps.length" class="text-start max-w-xs mx-auto mb-5 space-y-0.5">
       <GuidedActionStep
-        v-for="(step, i) in steps"
+        v-for="(step, idx) in steps"
         :key="step.id"
-        :index="i + 1"
+        :index="idx + 1"
         :title="step.title"
         :description="step.description"
         :completed="step.completed || completedSteps.includes(step.id)"
@@ -106,20 +100,20 @@ const completedSteps = computed(() => {
 
     <!-- Action buttons -->
     <div v-if="actions.length" class="flex justify-center gap-2 flex-wrap">
-      <template v-for="(action, i) in actions" :key="i">
+      <template v-for="(action, idx) in actions" :key="idx">
         <button
           v-if="action.variant !== 'secondary' && action.variant !== 'outline'"
           class="inline-flex items-center gap-1.5 h-9 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] hover:opacity-95 transition"
-          @click="handleAction(action, i)"
+          @click="handleAction(action, idx)"
         >
           <component :is="action.icon" v-if="action.icon" class="h-3.5 w-3.5" />
           {{ action.labelKey }}
         </button>
         <RouterLink
-          v-else-if="action.to && (action.variant === 'secondary' || action.variant === 'outline')"
+          v-else-if="action.to"
           :to="action.to"
           class="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition"
-          @click="emit('action', i)"
+          @click="emit('action', idx)"
         >
           <component :is="action.icon" v-if="action.icon" class="h-3.5 w-3.5" />
           {{ action.labelKey }}
@@ -127,7 +121,7 @@ const completedSteps = computed(() => {
         <button
           v-else
           class="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition"
-          @click="handleAction(action, i)"
+          @click="handleAction(action, idx)"
         >
           <component :is="action.icon" v-if="action.icon" class="h-3.5 w-3.5" />
           {{ action.labelKey }}
@@ -139,9 +133,9 @@ const completedSteps = computed(() => {
     <div v-if="variant === 'blocked' && blockedActionTo" class="mt-3">
       <button
         class="inline-flex items-center gap-1.5 h-9 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] hover:opacity-95 transition"
-        @click="router.push(blockedActionTo)"
+        @click="router.push(blockedActionTo!)"
       >
-        {{ $t('guided.goToPrerequisite') }}
+        <slot name="blocked-label">Go to next step</slot>
         <ArrowRight class="h-3.5 w-3.5" />
       </button>
     </div>
@@ -154,7 +148,7 @@ const completedSteps = computed(() => {
     <!-- Progress dots -->
     <div v-if="showProgress && steps.length" class="flex justify-center gap-1.5 mt-5">
       <div
-        v-for="(step, i) in steps"
+        v-for="step in steps"
         :key="step.id"
         class="h-1.5 rounded-full transition-all duration-300"
         :class="(step.completed || completedSteps.includes(step.id))

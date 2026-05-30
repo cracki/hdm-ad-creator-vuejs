@@ -7,7 +7,7 @@ import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
-import { useCampaign, useCampaignAds } from '../queries'
+import { useCampaign } from '../queries'
 import { useCompleteCampaign } from '../queries'
 import { operationManager } from '@/infrastructure/operations/operationManager'
 import { useConfetti } from '@/shared/composables/useConfetti'
@@ -22,11 +22,8 @@ const { data: campaign, isLoading } = useCampaign(campaignUuid)
 
 const { setActions } = usePageActions()
 setActions([{ label: t('camp.backToCampaign'), icon: ArrowLeft, to: `/campaigns/${campaignUuid.value}` }])
-const { data: ads } = useCampaignAds(campaignUuid)
 const completeMutation = useCompleteCampaign(campaignUuid)
 const confetti = useConfetti()
-
-const adsList = computed(() => Array.isArray(ads.value) ? ads.value : [])
 
 const completionFlags = computed(() => [
   { key: 'segmentation', label: t('smart.s1'), done: campaign.value?.segmentation_completed ?? false },
@@ -61,17 +58,12 @@ async function completeCampaign() {
   }
 }
 
-function adPlatformLabel(p: string) {
-  const map: Record<string, string> = { meta: 'Meta', google: 'Google', linkedin: 'LinkedIn' }
-  return map[p] ?? p
-}
-
 const reviewExporting = ref(false)
 async function handleReviewExport(format: 'csv' | 'pdf' | 'pptx') {
   if (!campaign.value) return
   reviewExporting.value = true
   try {
-    await exportReview(format, campaign.value, adsList.value, {
+    await exportReview(format, campaign.value, [], {
       stepName: 'Campaign Review',
       campaignName: campaign.value?.name ?? 'Campaign',
       brandName: campaign.value?.brand?.company_name,
@@ -133,25 +125,6 @@ async function handleReviewExport(format: 'csv' | 'pdf' | 'pptx') {
                 <Check v-if="flag.done" class="h-3 w-3" />
               </div>
               <span :class="flag.done ? '' : 'text-muted-foreground'">{{ flag.label }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Ads summary -->
-        <div v-if="adsList.length > 0" class="surface-card p-5 mb-6">
-          <div class="flex items-center justify-between mb-3">
-            <div class="text-sm font-semibold">{{ t('review.adsSummary') }}</div>
-            <div class="text-xs text-muted-foreground">{{ t('adgen.adsFound', { count: adsList.length }) }}</div>
-          </div>
-          <div class="grid sm:grid-cols-3 gap-3">
-            <div
-              v-for="platform in (['meta', 'google', 'linkedin'] as const)"
-              :key="platform"
-              class="p-3 rounded-lg bg-overlay-subtle border border-border/40"
-            >
-              <div class="text-xs font-semibold mb-1">{{ adPlatformLabel(platform) }}</div>
-              <div class="text-2xl font-bold">{{ adsList.filter((a: any) => a.platform === platform).length }}</div>
-              <div class="text-[11px] text-muted-foreground">{{ t('review.ads') }}</div>
             </div>
           </div>
         </div>

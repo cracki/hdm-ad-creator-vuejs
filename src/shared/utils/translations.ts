@@ -344,6 +344,7 @@ export const translations = {
   'visual.generating': { en: 'Generating visuals…', ar: 'جارٍ توليد المرئيات…', fa: 'در حال تولید تصویر…' },
   'visual.generated': { en: '{count} visuals generated', ar: '{count} مرئيات تم توليدها', fa: '{count} تصویر تولید شد' },
   'visual.failed': { en: 'Visual generation failed', ar: 'فشل توليد المرئيات', fa: 'تولید تصویر شکست خورد' },
+  'visual.adsCount': { en: '{count} ads selected', ar: '{count} إعلانات محددة', fa: '{count} آگهی انتخاب شده' },
 
   // Review
   'review.title': { en: 'Review & Complete', ar: 'مراجعة وإكمال', fa: 'مرور و تکمیل' },
@@ -932,16 +933,94 @@ export const translations = {
   'tour.prev': { en: 'Previous', ar: 'السابق', fa: 'قبلی' },
   'tour.next': { en: 'Next', ar: 'التالي', fa: 'بعدی' },
   'tour.finish': { en: 'Got it!', ar: 'فهمت!', fa: 'فهمیدم!' },
-  'tour.brandsTitle': { en: 'Brands', ar: 'العلامات', fa: 'برندها' },
-  'tour.brandsDesc': { en: 'Add and manage your brands here. Each brand gets its own analysis, competitors and campaigns.', ar: 'أضف وأدر علاماتك هنا. كل علامة لها تحليلها ومنافسوها وحملاتها.', fa: 'برندهایت رو اینجا اضافه و مدیریت کن. هر برند تحلیل، رقبا و کمپین‌های خودش رو داره.' },
-  'tour.campaignsTitle': { en: 'Campaigns', ar: 'الحملات', fa: 'کمپین‌ها' },
-  'tour.campaignsDesc': { en: 'Create AI-powered ad campaigns with a 10-step wizard from brand analysis to export.', ar: 'أنشئ حملات إعلانية ذكية بمعالج من 10 خطوات.', fa: 'کمپین‌های آگهی هوشمند بساز با ویزارد ۱۰ مرحله‌ای.' },
-  'tour.intelTitle': { en: 'Market Intelligence', ar: 'ذكاء السوق', fa: 'هوش بازار' },
-  'tour.intelDesc': { en: 'Content intelligence, AI hooks, gap analysis and ad library — all powered by AI.', ar: 'ذكاء المحتوى، خطافات ذكية، تحليل الفجوات ومكتبة الإعلانات.', fa: 'هوش محتوا، هوک‌های AI، تحلیل شکاف و کتابخانه آگهی.' },
-  'tour.creditsTitle': { en: 'AI Credits', ar: 'رصيد الذكاء', fa: 'اعتبار AI' },
-  'tour.creditsDesc': { en: 'Track your AI credit usage here. Each analysis and generation consumes credits.', ar: 'تتبع استخدام رصيد الذكاء هنا. كل تحليل وتوليد يستهلك رصيداً.', fa: 'مصرف اعتبار AI رو اینجا دنبال کن.' },
-  'tour.searchTitle': { en: 'Quick Search', ar: 'بحث سريع', fa: 'جستجوی سریع' },
-  'tour.searchDesc': { en: 'Search across brands, campaigns and content instantly.', ar: 'ابحث في العلامات والحملات والمحتوى فوراً.', fa: 'در برندها، کمپین‌ها و محتوا فوراً جستجو کن.' },
+  'tour.startTour': { en: 'Start tour', ar: 'بدء الجولة', fa: 'شروع تور' },
+
+  // Welcome tour (desktop sidebar)
+  'tour.welcome.brandsTitle': { en: 'Brands', ar: 'العلامات', fa: 'برندها' },
+  'tour.welcome.brandsDesc': { en: 'Add and manage your brands here. Each brand gets its own analysis, competitors and campaigns.', ar: 'أضف وأدر علاماتك هنا. كل علامة لها تحليلها ومنافسوها وحملاتها.', fa: 'برندهایت رو اینجا اضافه و مدیریت کن. هر برند تحلیل، رقبا و کمپین‌های خودش رو داره.' },
+  'tour.welcome.campaignsTitle': { en: 'Campaigns', ar: 'الحملات', fa: 'کمپین‌ها' },
+  'tour.welcome.campaignsDesc': { en: 'Create AI-powered ad campaigns with a 10-step wizard from brand analysis to export.', ar: 'أنشئ حملات إعلانية ذكية بمعالج من 10 خطوات.', fa: 'کمپین‌های آگهی هوشمند بساز با ویزارد ۱۰ مرحله‌ای.' },
+  'tour.welcome.intelTitle': { en: 'Market Intelligence', ar: 'ذكاء السوق', fa: 'هوش بازار' },
+  'tour.welcome.intelDesc': { en: 'Content intelligence, AI hooks, gap analysis and ad library — all powered by AI.', ar: 'ذكاء المحتوى، خطافات ذكية، تحليل الفجوات ومكتبة الإعلانات.', fa: 'هوش محتوا، هوک‌های AI، تحلیل شکاف و کتابخانه آگهی.' },
+  'tour.welcome.creditsTitle': { en: 'AI Credits', ar: 'رصيد الذكاء', fa: 'اعتبار AI' },
+  'tour.welcome.creditsDesc': { en: 'Track your AI credit usage here. Each analysis and generation consumes credits.', ar: 'تتبع استخدام رصيد الذكاء هنا. كل تحليل وتوليد يستهلك رصيداً.', fa: 'مصرف اعتبار AI رو اینجا دنبال کن.' },
+  'tour.welcome.searchTitle': { en: 'Quick Search', ar: 'بحث سريع', fa: 'جستجوی سریع' },
+  'tour.welcome.searchDesc': { en: 'Search across brands, campaigns and content instantly.', ar: 'ابحث في العلامات والحملات والمحتوى فوراً.', fa: 'در برندها، کمپین‌ها و محتوا فوراً جستجو کن.' },
+
+  // Welcome tour (mobile bottom nav)
+  'tour.welcome.dashboardTitle': { en: 'Dashboard', ar: 'لوحة التحكم', fa: 'داشبورد' },
+  'tour.welcome.dashboardDesc': { en: 'Your home base — see an overview of everything at a glance.', ar: 'قاعدتك الرئيسية — اطلع على نظرة عامة على كل شيء.', fa: 'خانه اصلی — یه نما کلی از همه‌چیز ببین.' },
+  'tour.welcome.brandsMobileDesc': { en: 'Manage your brands — each one gets full AI analysis and campaigns.', ar: 'أدر علاماتك — كل واحدة تحصل على تحليل وحملات ذكية.', fa: 'برندهات رو مدیریت کن — هر کدوم تحلیل و کمپین AI اختصاصی داره.' },
+  'tour.welcome.campaignsMobileDesc': { en: 'Build complete ad campaigns with our 10-step AI wizard.', ar: 'ابنِ حملات إعلانية كاملة بمعالجنا الذكي من 10 خطوات.', fa: 'کمپین‌های آگهی کامل با ویزارد ۱۰ مرحله‌ای AI بساز.' },
+  'tour.welcome.intelMobileDesc': { en: 'AI-powered content intelligence, hooks, gaps and more.', ar: 'ذكاء محتوى بالذكاء الاصطناعي، خطافات، فجوات والمزيد.', fa: 'هوش محتوای AI، هوک‌ها، شکاف‌ها و بیشتر.' },
+  'tour.welcome.adLibTitle': { en: 'Ad Library', ar: 'مكتبة الإعلانات', fa: 'کتابخانه آگهی' },
+  'tour.welcome.adLibDesc': { en: 'Browse and generate AI-powered ads organized by angle and platform.', ar: 'تصفح وأنشئ إعلانات ذكية منظمة حسب الزاوية والمنصة.', fa: 'آگهی‌های AI رو مرور و تولید کن — بر اساس زاویه و پلتفرم.' },
+
+  // Brands list tour
+  'tour.brandsList.searchTitle': { en: 'Search Brands', ar: 'البحث عن العلامات', fa: 'جستجوی برند' },
+  'tour.brandsList.searchDesc': { en: 'Find brands by name, website, or industry quickly.', ar: 'ابحث عن العلامات بالاسم أو الموقع أو المجال بسرعة.', fa: 'برندها رو با نام، وبسایت یا صنعت سریع پیدا کن.' },
+  'tour.brandsList.newBrandTitle': { en: 'Add Brand', ar: 'إضافة علامة', fa: 'افزودن برند' },
+  'tour.brandsList.newBrandDesc': { en: 'Create a new brand to start analysis and build campaigns.', ar: 'أنشئ علامة جديدة لبدء التحليل وبناء الحملات.', fa: 'یه برند جدید بساز تا تحلیل و کمپین‌سازی شروع بشه.' },
+  'tour.brandsList.gridTitle': { en: 'Your Brands', ar: 'علاماتك', fa: 'برندهای تو' },
+  'tour.brandsList.gridDesc': { en: 'Click any brand card to see its details, run analysis, and manage assets.', ar: 'اضغط على أي بطاقة علامة للاطلاع على التفاصيل وتشغيل التحليل.', fa: 'روی هر کارت برند بزن تا جزئیات، تحلیل و دارایی‌هاش رو ببینی.' },
+
+  // Brand detail tour
+  'tour.brandDetail.headerTitle': { en: 'Brand Overview', ar: 'نظرة عامة على العلامة', fa: 'نمای کلی برند' },
+  'tour.brandDetail.headerDesc': { en: 'See your brand info, edit details or delete the brand from here.', ar: 'اطلع على معلومات علامتك، عدّل التفاصيل أو احذفها من هنا.', fa: 'اطلاعات برندت رو ببین، ویرایش کن یا حذفش کن.' },
+  'tour.brandDetail.analysisTitle': { en: 'Run Analysis', ar: 'تشغيل التحليل', fa: 'اجرای تحلیل' },
+  'tour.brandDetail.analysisDesc': { en: 'Start a full AI analysis of your brand — audience, competitors, and insights.', ar: 'ابدأ تحليلاً ذكياً كاملاً لعلامتك — الجمهور والمنافسين والرؤى.', fa: 'یه تحلیل کامل AI از برندت شروع کن — مخاطب، رقبا و بینش.' },
+
+  // Brand analysis tour
+  'tour.brandAnalysis.typeTitle': { en: 'Analysis Tabs', ar: 'تبويبات التحليل', fa: 'تب‌های تحلیل' },
+  'tour.brandAnalysis.typeDesc': { en: 'Switch between overview, audience, competitors and insights.', ar: 'بدّل بين النظرة العامة والجمهور والمنافسين والرؤى.', fa: 'بین نمای کلی، مخاطب، رقبا و بینش جابجا شو.' },
+  'tour.brandAnalysis.runTitle': { en: 'Start Analysis', ar: 'بدء التحليل', fa: 'شروع تحلیل' },
+  'tour.brandAnalysis.runDesc': { en: 'Click to run a deep AI analysis of your brand.', ar: 'اضغط لتشغيل تحليل ذكي عميق لعلامتك.', fa: 'بزن تا تحلیل عمیق AI برندت اجرا بشه.' },
+  'tour.brandAnalysis.resultsTitle': { en: 'Analysis Results', ar: 'نتائج التحليل', fa: 'نتایج تحلیل' },
+  'tour.brandAnalysis.resultsDesc': { en: 'Results appear here after analysis completes — brand profile, audience segments, and actionable insights.', ar: 'تظهر النتائج هنا بعد اكتمال التحليل.', fa: 'نتایج بعد از تموم شدن تحلیل اینجا نمایش داده میشه.' },
+
+  // Campaigns list tour
+  'tour.campaignsList.searchTitle': { en: 'Search Campaigns', ar: 'البحث عن الحملات', fa: 'جستجوی کمپین' },
+  'tour.campaignsList.searchDesc': { en: 'Find campaigns by name quickly.', ar: 'ابحث عن الحملات بالاسم بسرعة.', fa: 'کمپین‌ها رو با نام سریع پیدا کن.' },
+  'tour.campaignsList.newCampaignTitle': { en: 'New Campaign', ar: 'حملة جديدة', fa: 'کمپین جدید' },
+  'tour.campaignsList.newCampaignDesc': { en: 'Start a new AI-powered ad campaign with our guided wizard.', ar: 'ابدأ حملة إعلانية ذكية جديدة بمعالجنا الموجه.', fa: 'یه کمپین آگهی جدید AI با ویزارد راهنما شروع کن.' },
+  'tour.campaignsList.gridTitle': { en: 'Your Campaigns', ar: 'حملاتك', fa: 'کمپین‌های تو' },
+  'tour.campaignsList.gridDesc': { en: 'Click any campaign to continue working on it or review results.', ar: 'اضغط على أي حملة لمتابعة العمل عليها أو مراجعة النتائج.', fa: 'روی هر کمپین بزن تا ادامه‌ش بدی یا نتایجش رو ببینی.' },
+
+  // Campaign detail tour
+  'tour.campaignDetail.overviewTitle': { en: 'Campaign Overview', ar: 'نظرة عامة على الحملة', fa: 'نمای کلی کمپین' },
+  'tour.campaignDetail.overviewDesc': { en: 'See your campaign name, selected platforms, and current progress at a glance.', ar: 'اطلع على اسم حملتك والمنصات المختارة والتقدم الحالي.', fa: 'نام کمپین، پلتفرم‌های انتخاب‌شده و پیشرفت فعلی رو یه نگاه ببین.' },
+  'tour.campaignDetail.stepsTitle': { en: 'Campaign Steps', ar: 'خطوات الحملة', fa: 'مراحل کمپین' },
+  'tour.campaignDetail.stepsDesc': { en: 'Each step builds on the previous one — from segmentation to final export.', ar: 'كل خطوة تبني على السابقة — من التقسيم إلى التصدير النهائي.', fa: 'هر مرحله روی قبلی ساخته میشه — از دسته‌بندی تا خروجی نهایی.' },
+  'tour.campaignDetail.continueTitle': { en: 'Continue', ar: 'متابعة', fa: 'ادامه' },
+  'tour.campaignDetail.continueDesc': { en: 'Jump to the next incomplete step in your campaign workflow.', ar: 'انتقل إلى الخطوة التالية غير المكتملة في سير عمل حملتك.', fa: 'برو به مرحله بعدی ناتمام کمپینت.' },
+
+  // Wizard tour
+  'tour.wizard.progressTitle': { en: 'Wizard Progress', ar: 'تقدم المعالج', fa: 'پیشرفت ویزارد' },
+  'tour.wizard.progressDesc': { en: 'Track your progress through all 10 campaign steps.', ar: 'تتبع تقدمك عبر جميع خطوات الحملة العشر.', fa: 'پیشرفتت رو در هر ۱۰ مرحله کمپین دنبال کن.' },
+  'tour.wizard.contentTitle': { en: 'Step Content', ar: 'محتوى الخطوة', fa: 'محتوای مرحله' },
+  'tour.wizard.contentDesc': { en: 'Each step shows its results and lets you approve before moving on.', ar: 'كل خطوة تعرض نتائجها وتتيح لك الموافقة قبل المتابعة.', fa: 'هر مرحله نتایجش رو نشون میده و قبل از رفتن به بعدی تأیید میخواد.' },
+  'tour.wizard.navTitle': { en: 'Navigation', ar: 'التنقل', fa: 'ناوبری' },
+  'tour.wizard.navDesc': { en: 'Go back to revise or continue to the next step.', ar: 'ارجع للتعديل أو تابع إلى الخطوة التالية.', fa: 'برگرد برای اصلاح یا برو به مرحله بعدی.' },
+
+  // Market Intelligence tour
+  'tour.marketIntel.brandTitle': { en: 'Select Brand', ar: 'اختر العلامة', fa: 'انتخاب برند' },
+  'tour.marketIntel.brandDesc': { en: 'Choose which brand to run market intelligence for.', ar: 'اختر العلامة لتشغيل ذكاء السوق لها.', fa: 'برندت رو برای اجرای هوش بازار انتخاب کن.' },
+  'tour.marketIntel.formTitle': { en: 'Intelligence Form', ar: 'نموذج الذكاء', fa: 'فرم هوش' },
+  'tour.marketIntel.formDesc': { en: 'Fill in industry and location to get the most relevant insights.', ar: 'املأ المجال والموقع للحصول على أكثر الرؤى صلة.', fa: 'صنعت و موقعیت رو وارد کن تا مرتبط‌ترین بینش‌ها رو بگیری.' },
+  'tour.marketIntel.runTitle': { en: 'Run Intelligence', ar: 'تشغيل الذكاء', fa: 'اجرای هوش' },
+  'tour.marketIntel.runDesc': { en: 'Start the AI analysis to discover hooks, gaps, and top content.', ar: 'ابدأ التحليل الذكي لاكتشاف الخطافات والفجوات والمحتوى الأفضل.', fa: 'تحلیل AI رو شروع کن تا هوک‌ها، شکاف‌ها و بهترین محتوا کشف بشه.' },
+  'tour.marketIntel.resultsTitle': { en: 'Results', ar: 'النتائج', fa: 'نتایج' },
+  'tour.marketIntel.resultsDesc': { en: 'Results appear here — content opportunities, gaps, matrix and top performing content.', ar: 'تظهر النتائج هنا — فرص المحتوى والفجوات والمصفوفة وأفضل المحتوى.', fa: 'نتایج اینجا نمایش داده میشه — فرصت‌ها، شکاف‌ها، ماتریکس و بهترین محتوا.' },
+
+  // Ad Library tour
+  'tour.adLibrary.anglesTitle': { en: 'Creative Angles', ar: 'الزوايا الإبداعية', fa: 'زاویه‌های خلاقانه' },
+  'tour.adLibrary.anglesDesc': { en: 'Browse ads by creative angle — from emotional to logical approaches.', ar: 'تصفح الإعلانات حسب الزاوية الإبداعية.', fa: 'آگهی‌ها رو بر اساس زاویه خلاقانه مرور کن.' },
+  'tour.adLibrary.platformsTitle': { en: 'Platforms', ar: 'المنصات', fa: 'پلتفرم‌ها' },
+  'tour.adLibrary.platformsDesc': { en: 'Filter and view ads by platform — Instagram, Google, Facebook and more.', ar: 'صفِّ وشاهد الإعلانات حسب المنصة.', fa: 'آگهی‌ها رو بر اساس پلتفرم فیلتر و ببین.' },
+  'tour.adLibrary.generateTitle': { en: 'Generate Ads', ar: 'إنشاء إعلانات', fa: 'تولید آگهی' },
+  'tour.adLibrary.generateDesc': { en: 'Create new AI-powered ad generations with a single click.', ar: 'أنشئ أجيال إعلانية ذكية جديدة بنقرة واحدة.', fa: 'با یه کلیک آگهی‌های AI جدید تولید کن.' },
+  'tour.adLibrary.resultsTitle': { en: 'Past Runs', ar: 'التشغيلات السابقة', fa: 'اجراهای قبلی' },
+  'tour.adLibrary.resultsDesc': { en: 'View your previous ad generation runs and their results.', ar: 'اطلع على تشغيلات إنشاء الإعلانات السابقة ونتائجها.', fa: 'اجراهای قبلی تولید آگهی و نتایجشون رو ببین.' },
 
   // ---------- Demo Mode ----------
   'demo.banner': { en: 'Demo Mode — exploring with sample data', ar: 'وضع تجريبي — استكشاف ببيانات نموذجية', fa: 'حالت دمو — بررسی با داده‌های نمونه' },
@@ -957,6 +1036,117 @@ export const translations = {
   'dashboard.activeCampaigns': { en: 'Active Campaigns', ar: 'الحملات النشطة', fa: 'کمپین‌های فعال' },
   'dashboard.adsGenerated': { en: 'Ads Generated', ar: 'إعلانات مولّدة', fa: 'آگهی‌های تولیدشده' },
   'dashboard.analysesCompleted': { en: 'Analyses Completed', ar: 'تحليلات مكتملة', fa: 'تحلیل‌های تکمیل‌شده' },
+  'dashboard.goodMorning': { en: 'Good morning', ar: 'صباح الخير', fa: 'صبح بخیر' },
+  'dashboard.goodAfternoon': { en: 'Good afternoon', ar: 'مساء الخير', fa: 'عصر بخیر' },
+  'dashboard.goodEvening': { en: 'Good evening', ar: 'مساء النور', fa: 'عصر بخیر' },
+  'dashboard.thisWeek': { en: 'this week', ar: 'هذا الأسبوع', fa: 'این هفته' },
+  'dashboard.total': { en: 'total', ar: 'الإجمالي', fa: 'کل' },
+  'dashboard.completedCampaigns': { en: 'Completed', ar: 'مكتملة', fa: 'تکمیل‌شده' },
+  'dashboard.weeklyGrowth': { en: 'Weekly Growth', ar: 'النمو الأسبوعي', fa: 'رشد هفتگی' },
+  'dashboard.hideSection': { en: 'Hide section', ar: 'إخفاء القسم', fa: 'مخفی کردن بخش' },
+  'dashboard.hiddenSections': { en: 'hidden sections', ar: 'أقسام مخفية', fa: 'بخش‌های مخفی' },
+  'dashboard.customize': { en: 'Customize', ar: 'تخصيص', fa: 'شخصی‌سازی' },
+  'dashboard.resetLayout': { en: 'Reset', ar: 'إعادة تعيين', fa: 'بازنشانی' },
+  'dashboard.resetSuccess': { en: 'Dashboard reset to default', ar: 'تم إعادة تعيين اللوحة', fa: 'داشبورد به حالت پیش‌فرض بازنشانی شد' },
+
+  // Dashboard Sections
+  'dashboard.sections.campaignPerformance': { en: 'Campaign Performance', ar: 'أداء الحملات', fa: 'عملکرد کمپین‌ها' },
+  'dashboard.sections.brandHealth': { en: 'Brand Health', ar: 'صحة العلامة', fa: 'سلامت برند' },
+  'dashboard.sections.contentIntelligence': { en: 'Content Intelligence', ar: 'ذكاء المحتوى', fa: 'هوش محتوایی' },
+  'dashboard.sections.adGeneration': { en: 'Ad Generation', ar: 'توليد الإعلانات', fa: 'تولید آگهی' },
+  'dashboard.sections.competitiveMap': { en: 'Competitive Map', ar: 'خريطة تنافسية', fa: 'نقشه رقابتی' },
+  'dashboard.sections.activityTimeline': { en: 'Recent Activity', ar: 'النشاط الأخير', fa: 'فعالیت اخیر' },
+  'dashboard.sections.quickActions': { en: 'Quick Actions', ar: 'إجراءات سريعة', fa: 'اقدامات سریع' },
+
+  // Dashboard Insights
+  'dashboard.insights.noBrands': { en: 'Start by adding your first brand to unlock AI analysis', ar: 'ابدأ بإضافة علامتك الأولى لفتح التحليل', fa: 'اولین برند خود را اضافه کنید تا تحلیل هوشمند فعال شود' },
+  'dashboard.insights.noCampaigns': { en: 'Your brands are ready! Create a campaign to start generating ads', ar: 'علاماتك جاهزة! أنشئ حملة لبدء توليد الإعلانات', fa: 'برندهای شما آماده‌اند! یک کمپین بسازید تا تولید آگهی شروع شود' },
+  'dashboard.insights.incompleteCampaigns': { en: 'You have campaigns in progress — focus on completing them', ar: 'لديك حملات قيد التقدم — ركز على إكمالها', fa: 'کمپین‌های در جریان دارید — روی تکمیل آن‌ها تمرکز کنید' },
+  'dashboard.insights.fewBrands': { en: 'Add more brands to get comprehensive market insights', ar: 'أضف المزيد من العلامات للحصول على رؤى شاملة', fa: 'برندهای بیشتری اضافه کنید تا تحلیل جامع‌تری از بازار داشته باشید' },
+  'dashboard.insights.allGood': { en: 'Everything looks great! Keep creating amazing campaigns', ar: 'كل شيء رائع! استمر في إنشاء حملات مذهلة', fa: 'همه‌چیز عالیه! به ساخت کمپین‌های جذاب ادامه بده' },
+
+  // Dashboard Campaign Performance
+  'dashboard.campaigns.statusDonut': { en: 'Campaign Status', ar: 'حالة الحملات', fa: 'وضعیت کمپین‌ها' },
+  'dashboard.campaigns.stepCompletion': { en: 'Step Completion Rate', ar: 'معدل إكمال الخطوات', fa: 'نرخ تکمیل مراحل' },
+  'dashboard.campaigns.progress': { en: 'Active Campaign Progress', ar: 'تقدم الحملات النشطة', fa: 'پیشرفت کمپین‌های فعال' },
+  'dashboard.campaigns.platformDist': { en: 'Platform Distribution', ar: 'توزيع المنصات', fa: 'توزیع پلتفرم‌ها' },
+  'dashboard.campaigns.noData': { en: 'No campaigns yet', ar: 'لا توجد حملات بعد', fa: 'هنوز کمپینی نیست' },
+  'dashboard.campaigns.inProgress': { en: 'In Progress', ar: 'قيد التقدم', fa: 'در جریان' },
+  'dashboard.campaigns.completed': { en: 'Completed', ar: 'مكتمل', fa: 'تکمیل‌شده' },
+  'dashboard.campaigns.draft': { en: 'Draft', ar: 'مسودة', fa: 'پیش‌نویس' },
+  'dashboard.campaigns.archived': { en: 'Archived', ar: 'مؤرشفة', fa: 'بایگانی' },
+  'dashboard.campaigns.statusInProgress': { en: 'In Progress', ar: 'قيد التقدم', fa: 'در جریان' },
+  'dashboard.campaigns.statusCompleted': { en: 'Completed', ar: 'مكتمل', fa: 'تکمیل‌شده' },
+  'dashboard.campaigns.statusDraft': { en: 'Draft', ar: 'مسودة', fa: 'پیش‌نویس' },
+  'dashboard.campaigns.statusArchived': { en: 'Archived', ar: 'مؤرشفة', fa: 'بایگانی' },
+  'dashboard.campaigns.noActiveCampaigns': { en: 'No active campaigns', ar: 'لا توجد حملات نشطة', fa: 'کمپین فعالی نیست' },
+  'dashboard.campaigns.loading': { en: 'Loading...', ar: 'جاري التحميل...', fa: 'در حال بارگذاری...' },
+  'dashboard.campaigns.stepSegmentation': { en: 'Segmentation', ar: 'التقسيم', fa: 'بخش‌بندی' },
+  'dashboard.campaigns.stepPPC': { en: 'PPC Viability', ar: 'جدوى PPC', fa: 'امکان‌سنجی PPC' },
+  'dashboard.campaigns.stepFunnel': { en: 'Funnel', ar: 'قمع', fa: 'قیف' },
+  'dashboard.campaigns.stepContent': { en: 'Content', ar: 'المحتوى', fa: 'محتوا' },
+  'dashboard.campaigns.stepMetaAds': { en: 'Meta Ads', ar: 'إعلانات Meta', fa: 'آگهی متا' },
+  'dashboard.campaigns.stepGoogleAds': { en: 'Google Ads', ar: 'إعلانات Google', fa: 'آگهی گوگل' },
+  'dashboard.campaigns.stepLinkedInAds': { en: 'LinkedIn Ads', ar: 'إعلانات LinkedIn', fa: 'آگهی لینکدین' },
+  'dashboard.campaigns.tofu': { en: 'TOFU', ar: 'TOFU', fa: 'TOFU' },
+  'dashboard.campaigns.mofu': { en: 'MOFU', ar: 'MOFU', fa: 'MOFU' },
+  'dashboard.campaigns.bofu': { en: 'BOFU', ar: 'BOFU', fa: 'BOFU' },
+  'dashboard.campaigns.totalCampaigns': { en: 'Total', ar: 'الإجمالي', fa: 'کل' },
+
+  // Dashboard Brand Health
+  'dashboard.brandHealth.noBrands': { en: 'No brands to analyze', ar: 'لا توجد علامات للتحليل', fa: 'برندی برای تحلیل نیست' },
+  'dashboard.brandHealth.analysis': { en: 'Analysis', ar: 'التحليل', fa: 'تحلیل' },
+  'dashboard.brandHealth.competitors': { en: 'Competitors', ar: 'المنافسون', fa: 'رقبا' },
+  'dashboard.brandHealth.social': { en: 'Social', ar: 'التواصل', fa: 'اجتماعی' },
+  'dashboard.brandHealth.assets': { en: 'Assets', ar: 'الأصول', fa: 'دارایی‌ها' },
+
+  // Dashboard Content Intelligence
+  'dashboard.contentIntelligence.noData': { en: 'No intelligence runs yet', ar: 'لا توجد تحليلات بعد', fa: 'هنوز تحلیل هوشمندی انجام نشده' },
+  'dashboard.contentIntelligence.activity': { en: 'Intelligence Activity', ar: 'نشاط التحليل', fa: 'فعالیت تحلیلی' },
+  'dashboard.contentIntelligence.empty': { en: 'Run your first content intelligence analysis to see insights here', ar: 'قم بتشغيل أول تحليل محتوى لرؤية الرؤى هنا', fa: 'اولین تحلیل هوش محتوایی را اجرا کنید تا بینش‌ها نمایش داده شوند' },
+
+  // Dashboard Ad Generation
+  'dashboard.adGeneration.noData': { en: 'No ads generated yet', ar: 'لم يتم توليد إعلانات بعد', fa: 'هنوز آگهی‌ای تولید نشده' },
+  'dashboard.adGeneration.byPlatform': { en: 'Ads by Platform', ar: 'الإعلانات حسب المنصة', fa: 'آگهی‌ها بر اساس پلتفرم' },
+  'dashboard.adGeneration.totalRuns': { en: 'Total Runs', ar: 'إجمالي العمليات', fa: 'کل اجراها' },
+  'dashboard.adGeneration.empty': { en: 'Generate your first ads to see analytics here', ar: 'أنشئ أول إعلان لرؤية التحليلات هنا', fa: 'اولین آگهی را تولید کنید تا تحلیل‌ها نمایش داده شوند' },
+  'dashboard.adGeneration.meta': { en: 'Meta', ar: 'Meta', fa: 'متا' },
+  'dashboard.adGeneration.google': { en: 'Google', ar: 'Google', fa: 'گوگل' },
+  'dashboard.adGeneration.linkedin': { en: 'LinkedIn', ar: 'LinkedIn', fa: 'لینکدین' },
+  'dashboard.adGeneration.last7d': { en: 'Last 7 days', ar: 'آخر ٧ أيام', fa: '۷ روز اخیر' },
+
+  // Dashboard Competitive Map
+  'dashboard.competitiveMap.noData': { en: 'Add brands to see competitive positioning', ar: 'أضف علامات لرؤية الموقع التنافسي', fa: 'برند اضافه کنید تا موقعیت رقابتی نمایش داده شود' },
+  'dashboard.competitiveMap.strongVisible': { en: 'Strong & Visible', ar: 'قوي ومرئي', fa: 'قوی و قابل‌مشاهده' },
+  'dashboard.competitiveMap.hiddenGems': { en: 'Hidden Gems', ar: 'جواهر مخفية', fa: 'الماس‌های پنهان' },
+  'dashboard.competitiveMap.weak': { en: 'Weak Position', ar: 'موقف ضعيف', fa: 'موقعیت ضعیف' },
+  'dashboard.competitiveMap.empty': { en: 'Add brands to see competitive positioning', ar: 'أضف علامات لرؤية الموقع التنافسي', fa: 'برند اضافه کنید تا موقعیت رقابتی نمایش داده شود' },
+  'dashboard.competitiveMap.reach': { en: 'Reach', ar: 'الوصول', fa: 'دسترسی' },
+  'dashboard.competitiveMap.engagement': { en: 'Engagement', ar: 'التفاعل', fa: 'تعامل' },
+  'dashboard.competitiveMap.leaders': { en: 'Leaders', ar: 'القادة', fa: 'رهبران' },
+  'dashboard.competitiveMap.challengers': { en: 'Challengers', ar: 'المتحديون', fa: 'چالشگران' },
+  'dashboard.competitiveMap.niche': { en: 'Niche', ar: 'متخصص', fa: 'نیشه' },
+  'dashboard.competitiveMap.selectBrand': { en: 'Select a brand to see detailed competitive map', ar: 'اختر علامة لرؤية خريطة تنافسية مفصلة', fa: 'برندی را انتخاب کنید تا نقشه رقابتی دقیق نمایش داده شود' },
+
+  // Dashboard Activity
+  'dashboard.activity.noActivity': { en: 'No activity yet', ar: 'لا يوجد نشاط بعد', fa: 'هنوز فعالیتی نیست' },
+  'dashboard.activity.empty': { en: 'Start creating brands and campaigns to see activity here', ar: 'ابدأ بإنشاء علامات وحملات لرؤية النشاط هنا', fa: 'شروع به ساخت برند و کمپین کنید تا فعالیت نمایش داده شود' },
+  'dashboard.activity.brand': { en: 'Brand', ar: 'علامة', fa: 'برند' },
+  'dashboard.activity.campaign': { en: 'Campaign', ar: 'حملة', fa: 'کمپین' },
+  'dashboard.activity.intelligence': { en: 'Intelligence', ar: 'تحليل', fa: 'تحلیل' },
+  'dashboard.activity.funnel': { en: 'Funnel', ar: 'قمع', fa: 'قیف' },
+
+  // Dashboard Quick Actions
+  'dashboard.quick.marketIntelligence': { en: 'Market Intelligence', ar: 'ذكاء السوق', fa: 'هوش بازار' },
+  'dashboard.quick.adLibrary': { en: 'Ad Library', ar: 'مكتبة الإعلانات', fa: 'کتابخانه آگهی' },
+  'dashboard.quick.scenarioVariants': { en: 'Scenario Variants', ar: 'متغيرات السيناريو', fa: 'سناریوهای متنوع' },
+  'dashboard.quick.marketIntelligenceDesc': { en: 'Discover content gaps and opportunities', ar: 'اكتشف فجوات المحتوى والفرص', fa: 'شکاف‌های محتوایی و فرصت‌ها را کشف کنید' },
+  'dashboard.quick.adLibraryDesc': { en: 'Browse and generate ad variations', ar: 'تصفح وتوليد متغيرات الإعلانات', fa: 'تنوع آگهی‌ها را مرور و تولید کنید' },
+  'dashboard.quick.scenarioVariantsDesc': { en: 'Test different ad scenarios', ar: 'اختبر سيناريوهات إعلانية مختلفة', fa: 'سناریوهای مختلف آگهی را آزمایش کنید' },
+  'dashboard.quickActions.brandSubtitle': { en: 'Add a new brand to your workspace', ar: 'أضف علامة جديدة لمساحة عملك', fa: 'برند جدیدی به فضای کار اضافه کنید' },
+  'dashboard.quickActions.marketSubtitle': { en: 'Discover content gaps and hooks', ar: 'اكتشف فجوات المحتوى والخطافات', fa: 'شکاف‌های محتوایی و قلاب‌ها را کشف کنید' },
+  'dashboard.quickActions.adLibrarySubtitle': { en: 'Browse and generate ad variations', ar: 'تصفح وتوليد متغيرات الإعلانات', fa: 'تنوع آگهی‌ها را مرور و تولید کنید' },
+  'dashboard.quickActions.scenarioSubtitle': { en: 'Test different ad scenarios', ar: 'اختبر سيناريوهات إعلانية مختلفة', fa: 'سناریوهای مختلف آگهی را آزمایش کنید' },
 
   // ---------- Brand Score ----------
   'score.title': { en: 'Brand Score', ar: 'درجة العلامة', fa: 'امتیاز برند' },

@@ -9,6 +9,11 @@ import { usePageActions } from '@/shared/composables/usePageActions'
 import Breadcrumb from '@/shared/components/Breadcrumb.vue'
 import { Globe, Trash2, Pencil, Sparkles, Clock, CheckCircle2, XCircle, Loader2, BarChart3, ChevronLeft } from 'lucide-vue-next'
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
+import GuidedAction from '@/shared/components/guided-actions/GuidedAction.vue'
+import { useTourRegistration } from '@/shared/composables/useTourRegistration'
+import { brandDetailTour } from '../tours'
+
+useTourRegistration(brandDetailTour)
 
 const route = useRoute()
 const router = useRouter()
@@ -69,6 +74,7 @@ setActions([
   <Topbar
     :title="brand?.company_name ?? 'Loading…'"
     :subtitle="brand?.website_url ?? ''"
+    data-tour="brands.detail.header"
   >
     <template #actions>
       <RouterLink
@@ -166,6 +172,7 @@ setActions([
             <RouterLink
               :to="`/brands/${brandUuid}/analysis`"
               data-loc="brands.detail.new-analysis-btn"
+              data-tour="brands.detail.analysis-btn"
               class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] hover:opacity-95 transition"
             >
               <Sparkles class="h-3.5 w-3.5" /> {{ t('analysis.newAnalysis') }}
@@ -181,21 +188,26 @@ setActions([
         </div>
 
         <!-- No analysis yet -->
-        <div v-else class="surface-card p-8 text-center space-y-4">
-          <div class="h-14 w-14 rounded-2xl bg-[image:var(--gradient-brand)] grid place-items-center mx-auto shadow-[var(--shadow-glow)]">
-            <Sparkles class="h-6 w-6 text-primary-foreground" />
-          </div>
-          <div>
-            <div class="font-semibold mb-1">{{ t('analysis.noAnalysisTitle') }}</div>
-            <div class="text-sm text-muted-foreground">{{ t('analysis.noAnalysisDesc') }}</div>
-          </div>
-          <RouterLink
-            :to="`/brands/${brandUuid}/analysis`"
-            class="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] hover:opacity-95 transition"
-          >
-            <Sparkles class="h-3.5 w-3.5" /> {{ t('analysis.startAnalysis') }}
-          </RouterLink>
-        </div>
+        <GuidedAction
+          v-else
+          id="brand-analysis"
+          variant="empty"
+          feature="brandDetail"
+          :icon="Sparkles"
+          :title="t('guided.brandAnalysis.title')"
+          :description="t('guided.brandAnalysis.desc')"
+          :why="t('guided.brandAnalysis.why')"
+          :actions="[
+            { labelKey: t('guided.brandAnalysis.run'), icon: Sparkles, to: `/brands/${brandUuid}/analysis`, variant: 'primary' as const },
+            { labelKey: t('guided.brandAnalysis.addAssets'), to: `/brands/${brandUuid}/assets`, variant: 'secondary' as const },
+          ]"
+          :steps="[
+            { id: 'assets', title: t('guided.brandAnalysis.step1'), description: t('guided.brandAnalysis.step1Desc') },
+            { id: 'analyze', title: t('guided.brandAnalysis.step2'), description: t('guided.brandAnalysis.step2Desc') },
+            { id: 'competitors', title: t('guided.brandAnalysis.step3'), description: t('guided.brandAnalysis.step3Desc') },
+          ]"
+          :tip="t('guided.brandAnalysis.tip')"
+        />
       </template>
 
       <!-- Competitor link -->

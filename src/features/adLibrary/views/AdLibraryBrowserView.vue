@@ -4,9 +4,14 @@ import { useRouter } from 'vue-router'
 import { Library, ChevronRight, Sparkles } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
+import GuidedAction from '@/shared/components/guided-actions/GuidedAction.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import { useCreativeAngles, useFunnelStages, usePlatformConfigs, useAdLibraryRuns } from '../queries'
+import { useTourRegistration } from '@/shared/composables/useTourRegistration'
+import { adLibraryBrowserTour } from '../tours'
+
+useTourRegistration(adLibraryBrowserTour)
 import type { FunnelStage, PlatformConfig } from '../types'
 
 const { t } = useI18n()
@@ -46,6 +51,7 @@ const isLoading = computed(() => anglesLoading.value || stagesLoading.value || p
     <template #actions>
       <button
         data-loc="adlib.browser.new-gen-btn"
+        data-tour="adlib.browser.new-gen-btn"
         class="h-9 px-3.5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5"
         @click="router.push('/ad-library/generate')"
       >
@@ -62,7 +68,7 @@ const isLoading = computed(() => anglesLoading.value || stagesLoading.value || p
 
       <template v-else>
         <!-- Creative Angles -->
-        <section class="mb-8">
+        <section class="mb-8" data-tour="adlib.browser.angles">
           <h3 data-loc="adlib.browser.header-angles" class="text-sm font-semibold mb-3">{{ t('adlib.creativeAngles') }}</h3>
           <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <div
@@ -110,7 +116,7 @@ const isLoading = computed(() => anglesLoading.value || stagesLoading.value || p
         </section>
 
         <!-- Platforms -->
-        <section class="mb-8">
+        <section class="mb-8" data-tour="adlib.browser.platforms">
           <h3 data-loc="adlib.browser.header-platforms" class="text-sm font-semibold mb-3">{{ t('adlib.platforms') }}</h3>
           <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <div
@@ -134,14 +140,27 @@ const isLoading = computed(() => anglesLoading.value || stagesLoading.value || p
         </section>
 
         <!-- Past Runs -->
-        <section>
+        <section data-tour="adlib.browser.results">
           <h3 data-loc="adlib.browser.header-runs" class="text-sm font-semibold mb-3">{{ t('adlib.pastRuns') }}</h3>
           <div v-if="runsLoading" class="py-6">
             <AiLoadingAnimation :message="t('adlib.pastRuns')" size="sm" />
           </div>
-          <div v-else-if="!runs?.length" class="surface-card p-6 text-center">
-            <Library class="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-            <div class="text-sm text-muted-foreground">{{ t('adlib.noRuns') }}</div>
+          <div v-else-if="!runs?.length">
+            <GuidedAction
+              id="ad-library-first"
+              variant="empty"
+              feature="adLibrary"
+              :icon="Library"
+              :title="t('guided.adlib.title')"
+              :description="t('guided.adlib.desc')"
+              :why="t('guided.adlib.why')"
+              :actions="[
+                { labelKey: t('guided.adlib.generate'), icon: Sparkles, to: '/ad-library/generate', variant: 'primary' as const },
+              ]"
+              :tip="t('guided.adlib.tip')"
+              max-width="full"
+              :show-illustration="false"
+            />
           </div>
           <div v-else class="space-y-2">
             <div

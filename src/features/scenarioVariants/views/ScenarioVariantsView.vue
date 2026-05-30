@@ -12,6 +12,7 @@ import { exportCsv } from '@/shared/utils/csv'
 import { useBrands } from '@/features/brands/queries'
 import { useAutoSelectBrand } from '@/shared/composables/useAutoSelectBrand'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
+import GuidedAction from '@/shared/components/guided-actions/GuidedAction.vue'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { useVariantOptions, useMetaFrameworks } from '../queries'
 import { scenarioVariantsApi } from '../api'
@@ -532,11 +533,19 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
       </div>
 
       <!-- Empty State -->
-      <div v-if="!result && !loading && variants.length === 0" class="surface-card p-12 text-center">
-        <Grid3X3 class="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />
-        <div class="text-sm font-medium text-muted-foreground mb-1">{{ t('variant.emptyTitle') }}</div>
-        <div class="text-xs text-muted-foreground/70">{{ t('variant.emptyDesc') }}</div>
-      </div>
+      <GuidedAction
+        v-if="!result && !loading && variants.length === 0"
+        id="variants-first"
+        variant="empty"
+        feature="scenarioVariants"
+        :icon="Grid3X3"
+        :title="t('guided.variants.title')"
+        :description="t('guided.variants.desc')"
+        :why="t('guided.variants.why')"
+        :tip="t('guided.variants.tip')"
+        max-width="full"
+        :show-illustration="false"
+      />
     </div>
   </main>
 </template>

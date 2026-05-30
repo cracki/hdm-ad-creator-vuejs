@@ -12,7 +12,6 @@ import type {
   AdGenerateResult,
   VisualGenerateResult,
   ClearAdsResult,
-  CampaignAd,
 } from './types'
 
 type SignalConfig = { signal?: AbortSignal }
@@ -75,10 +74,6 @@ export const campaignsApi = {
 
   generateAd(uuid: string, payload: GenerateAdPayload): Promise<{ data: AdGenerateResult }> {
     return apiClient.post(`${campaign(uuid)}generate-ad/`, payload)
-  },
-
-  listAds(uuid: string, config?: SignalConfig): Promise<{ data: CampaignAd[] }> {
-    return apiClient.get(`${campaign(uuid)}ads/`, config)
   },
 
   clearAllAds(uuid: string): Promise<{ data: ClearAdsResult }> {

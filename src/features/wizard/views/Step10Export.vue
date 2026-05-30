@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Download, Loader2, Check } from 'lucide-vue-next'
 import { useI18n } from '@/shared/utils/i18n'
-import { useCampaignAds, useCompleteCampaign } from '@/features/campaigns/queries'
+import { useCompleteCampaign } from '@/features/campaigns/queries'
 import { operationManager } from '@/infrastructure/operations/operationManager'
 import type { Campaign } from '@/features/campaigns/types'
 
@@ -12,10 +12,7 @@ const emit = defineEmits<{ (e: 'completed'): void }>()
 const { t } = useI18n()
 const router = useRouter()
 
-const { data: ads } = useCampaignAds(computed(() => props.campaignUuid))
 const completeMutation = useCompleteCampaign(computed(() => props.campaignUuid))
-
-const adsList = computed(() => Array.isArray(ads.value) ? ads.value : [])
 
 const completionFlags = computed(() => [
   { key: 'segmentation', label: t('smart.s2'), done: props.campaign.segmentation_completed },
@@ -49,10 +46,6 @@ async function completeCampaign() {
   }
 }
 
-function adPlatformLabel(p: string) {
-  const map: Record<string, string> = { meta: 'Meta', google: 'Google', linkedin: 'LinkedIn' }
-  return map[p] ?? p
-}
 </script>
 
 <template>
@@ -83,21 +76,6 @@ function adPlatformLabel(p: string) {
             <Check v-if="flag.done" class="h-3 w-3" />
           </div>
           <span :class="flag.done ? '' : 'text-muted-foreground'">{{ flag.label }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Ads summary -->
-    <div v-if="adsList.length > 0" class="surface-card p-5">
-      <div class="flex items-center justify-between mb-3">
-        <div class="text-sm font-semibold">{{ t('review.adsSummary') }}</div>
-        <div class="text-xs text-muted-foreground">{{ t('adgen.adsFound', { count: adsList.length }) }}</div>
-      </div>
-      <div class="grid sm:grid-cols-3 gap-3">
-        <div v-for="platform in (['meta', 'google', 'linkedin'] as const)" :key="platform" class="p-3 rounded-lg bg-overlay-subtle border border-border/40">
-          <div class="text-xs font-semibold mb-1">{{ adPlatformLabel(platform) }}</div>
-          <div class="text-2xl font-bold">{{ adsList.filter((a: any) => a.platform === platform).length }}</div>
-          <div class="text-[11px] text-muted-foreground">{{ t('review.ads') }}</div>
         </div>
       </div>
     </div>

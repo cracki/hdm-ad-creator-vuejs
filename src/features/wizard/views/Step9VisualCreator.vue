@@ -1,25 +1,24 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Image as ImageIcon, Loader2, AlertCircle, RefreshCw, Shield, Download } from 'lucide-vue-next'
-import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
+import { Image as ImageIcon, Loader2, AlertCircle, RefreshCw, Download } from 'lucide-vue-next'
 import { useI18n } from '@/shared/utils/i18n'
-import { useCampaignAds } from '@/features/campaigns/queries'
 import { campaignsApi } from '@/features/campaigns/api'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
 import type { Campaign } from '@/features/campaigns/types'
 
-const props = defineProps<{ campaign: Campaign; campaignUuid: string }>()
+interface AdMeta {
+  uuid: string
+  platform: string
+  funnel_stage: string | null
+  persona: string | null
+}
+
+const props = defineProps<{ campaign: Campaign; campaignUuid: string; adMeta?: AdMeta[] }>()
 const emit = defineEmits<{ (e: 'completed'): void }>()
 const { t } = useI18n()
 
-const { data: ads, isLoading: adsLoading } = useCampaignAds(computed(() => props.campaignUuid))
-
-const adsList = computed(() => Array.isArray(ads.value) ? ads.value : [])
-
-const aspectRatio = ref<'1:1' | '9:16' | '16:9' | '4:5'>('1:1')
-const quality = ref<'standard' | 'hd'>('standard')
-const style = ref<'natural' | 'vivid'>('natural')
+const adsList = computed<AdMeta[]>(() => props.adMeta ?? [])
 
 const selectedAdUuids = ref<Set<string>>(new Set())
 
@@ -31,17 +30,19 @@ function toggleAd(uuid: string) {
 const selectAll = computed({
   get: () => adsList.value.length > 0 && selectedAdUuids.value.size === adsList.value.length,
   set: (v: boolean) => {
-    selectedAdUuids.value = new Set(v ? adsList.value.map((a: any) => a.campaign_ad_uuid) : [])
+    selectedAdUuids.value = new Set(v ? adsList.value.map(a => a.uuid) : [])
   },
 })
+
+const aspectRatio = ref<'1:1' | '9:16' | '16:9' | '4:5'>('1:1')
+const quality = ref<'standard' | 'hd'>('standard')
+const style = ref<'natural' | 'vivid'>('natural')
 
 const opKey = computed(() => `${props.campaignUuid}:generate-visuals`)
 const { data: visualResult, loading, error, run } = useAsyncOperation<any>()
 
 const results = computed(() => visualResult.value?.results ?? [])
 const generatedCount = computed(() => visualResult.value?.generated_count ?? 0)
-
-const isPrereqMet = computed(() => adsList.value.length > 0)
 
 async function generateVisuals() {
   if (selectedAdUuids.value.size === 0) return
@@ -82,17 +83,7 @@ function adPlatformLabel(p: string) {
       </div>
     </header>
 
-    <div v-if="adsLoading" class="py-12">
-      <AiLoadingAnimation :message="t('visual.title')" size="sm" />
-    </div>
-
-    <div v-else-if="!isPrereqMet" class="surface-card p-8 text-center">
-      <Shield class="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-      <div class="text-sm font-medium mb-1">{{ t('visual.prereqTitle') }}</div>
-      <div class="text-xs text-muted-foreground">{{ t('visual.prereqDesc') }}</div>
-    </div>
-
-    <template v-else>
+    <template v-if="adsList.length > 0">
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
           <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('visual.aspectRatio') }}</label>
@@ -114,6 +105,7 @@ function adPlatformLabel(p: string) {
         </div>
       </div>
 
+      <!-- Ad selection -->
       <div class="surface-card p-4">
         <div class="flex items-center justify-between mb-3">
           <label class="flex items-center gap-2 cursor-pointer">
@@ -125,9 +117,9 @@ function adPlatformLabel(p: string) {
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
           <div
             v-for="ad in adsList"
-            :key="ad.campaign_ad_uuid"
-            :class="['p-3 rounded-lg border cursor-pointer transition text-xs', selectedAdUuids.has(ad.campaign_ad_uuid) ? 'border-primary/60 bg-primary/5' : 'border-border/40 hover:border-primary/30']"
-            @click="toggleAd(ad.campaign_ad_uuid)"
+            :key="ad.uuid"
+            :class="['p-3 rounded-lg border cursor-pointer transition text-xs', selectedAdUuids.has(ad.uuid) ? 'border-primary/60 bg-primary/5' : 'border-border/40 hover:border-primary/30']"
+            @click="toggleAd(ad.uuid)"
           >
             <div class="flex items-center gap-2 mb-1">
               <span class="font-semibold px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-300 text-[11px]">{{ adPlatformLabel(ad.platform) }}</span>
@@ -145,39 +137,39 @@ function adPlatformLabel(p: string) {
           {{ loading ? t('visual.generating') : t('visual.generate') }}
         </button>
       </div>
+    </template>
 
-      <div v-if="error" class="surface-card p-4 flex items-center gap-3">
-        <AlertCircle class="h-5 w-5 text-destructive shrink-0" />
-        <div class="flex-1 text-sm text-destructive">{{ error }}</div>
-        <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5" @click="generateVisuals"><RefreshCw class="h-3 w-3" /> {{ t('seg.retry') }}</button>
-      </div>
+    <div v-if="error" class="surface-card p-4 flex items-center gap-3">
+      <AlertCircle class="h-5 w-5 text-destructive shrink-0" />
+      <div class="flex-1 text-sm text-destructive">{{ error }}</div>
+      <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5" @click="generateVisuals"><RefreshCw class="h-3 w-3" /> {{ t('seg.retry') }}</button>
+    </div>
 
-      <div v-if="results.length > 0" class="space-y-4">
-        <div class="text-xs text-muted-foreground">{{ t('visual.generated', { count: generatedCount }) }}</div>
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          <div v-for="v in results" :key="v.campaign_ad_uuid" class="surface-card overflow-hidden">
-            <div v-if="v.success && v.image_url" class="relative">
-              <img :src="v.image_url" :alt="v.visual_summary" class="w-full aspect-video object-cover" />
-              <a :href="v.image_url" download class="absolute top-2 end-2 h-7 w-7 rounded-md bg-black/50 grid place-items-center hover:bg-black/70 transition">
-                <Download class="h-3.5 w-3.5 text-white" />
-              </a>
+    <div v-if="results.length > 0" class="space-y-4">
+      <div class="text-xs text-muted-foreground">{{ t('visual.generated', { count: generatedCount }) }}</div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div v-for="v in results" :key="v.campaign_ad_uuid" class="surface-card overflow-hidden">
+          <div v-if="v.success && v.image_url" class="relative">
+            <img :src="v.image_url" :alt="v.visual_summary" class="w-full aspect-video object-cover" />
+            <a :href="v.image_url" download class="absolute top-2 end-2 h-7 w-7 rounded-md bg-black/50 grid place-items-center hover:bg-black/70 transition">
+              <Download class="h-3.5 w-3.5 text-white" />
+            </a>
+          </div>
+          <div v-else class="aspect-video bg-destructive/10 grid place-items-center">
+            <div class="text-center p-3">
+              <AlertCircle class="h-5 w-5 text-destructive mx-auto mb-1" />
+              <div class="text-[11px] text-destructive">{{ v.error || t('visual.failed') }}</div>
             </div>
-            <div v-else class="aspect-video bg-destructive/10 grid place-items-center">
-              <div class="text-center p-3">
-                <AlertCircle class="h-5 w-5 text-destructive mx-auto mb-1" />
-                <div class="text-[11px] text-destructive">{{ v.error || t('visual.failed') }}</div>
-              </div>
+          </div>
+          <div class="p-3">
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="text-[11px] font-semibold px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-300">{{ adPlatformLabel(v.platform ?? '') }}</span>
+              <span class="text-[11px] text-muted-foreground">{{ v.funnel_stage }}</span>
             </div>
-            <div class="p-3">
-              <div class="flex items-center gap-1.5 mb-1">
-                <span class="text-[11px] font-semibold px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-300">{{ adPlatformLabel(v.platform ?? '') }}</span>
-                <span class="text-[11px] text-muted-foreground">{{ v.funnel_stage }}</span>
-              </div>
-              <div v-if="v.visual_summary" class="text-[11px] text-muted-foreground line-clamp-2">{{ v.visual_summary }}</div>
-            </div>
+            <div v-if="v.visual_summary" class="text-[11px] text-muted-foreground line-clamp-2">{{ v.visual_summary }}</div>
           </div>
         </div>
       </div>
-    </template>
+    </div>
   </div>
 </template>

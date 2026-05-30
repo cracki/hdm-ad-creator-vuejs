@@ -10,7 +10,7 @@ import { usePageActions } from '@/shared/composables/usePageActions'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { exportCsv } from '@/shared/utils/csv'
 import StepExportButton from '@/shared/components/StepExportButton.vue'
-import { useCampaign, useCampaignAds } from '../queries'
+import { useCampaign } from '../queries'
 import { campaignsApi } from '../api'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
@@ -25,9 +25,32 @@ const confetti = useConfetti()
 
 const campaignUuid = computed(() => route.params.campaignUuid as string)
 const { data: campaign, isLoading: campaignLoading } = useCampaign(campaignUuid)
-const { data: ads, refetch: refetchAds } = useCampaignAds(campaignUuid)
 
 const localAds = ref<CampaignAd[]>([])
+
+const adsStorageKey = computed(() => `campaign-ads:${campaignUuid.value}`)
+
+function saveAdsToStorage() {
+  const meta = localAds.value.map(a => ({
+    uuid: a.campaign_ad_uuid,
+    platform: a.platform,
+    funnel_stage: a.funnel_stage,
+    persona: a.persona,
+  }))
+  try { sessionStorage.setItem(adsStorageKey.value, JSON.stringify(meta)) } catch {}
+}
+
+function loadAdsFromStorage() {
+  try {
+    const raw = sessionStorage.getItem(adsStorageKey.value)
+    if (raw) return JSON.parse(raw)
+  } catch {}
+  return []
+}
+
+// Restore ads from sessionStorage on mount
+const stored = loadAdsFromStorage()
+if (stored.length) localAds.value = stored as any
 
 const { setActions } = usePageActions()
 setActions([{ label: t('camp.backToCampaign'), icon: ArrowLeft, to: `/campaigns/${campaignUuid.value}` }])
@@ -58,16 +81,7 @@ const personaObjects = computed(() => {
   return []
 })
 
-const adsList = computed(() => {
-  const fromQuery = Array.isArray(ads.value) ? ads.value : []
-  const all = [...localAds.value, ...fromQuery]
-  const seen = new Set<string>()
-  return all.filter(ad => {
-    if (seen.has(ad.campaign_ad_uuid)) return false
-    seen.add(ad.campaign_ad_uuid)
-    return true
-  })
-})
+const adsList = computed(() => localAds.value)
 
 const personaLabels = computed(() => {
   const names = personaObjects.value.map((s: any) => s.persona_name || s.name).filter(Boolean)
@@ -115,10 +129,10 @@ async function generateAds() {
       })
       if (res.data?.ads?.length) {
         localAds.value = [...res.data.ads, ...localAds.value]
+        saveAdsToStorage()
       }
       return res.data
     })
-    refetchAds().catch(() => {})
   } finally {
     operationManager.finish(opKey.value)
   }
@@ -133,7 +147,7 @@ async function clearAllAds() {
       return (await campaignsApi.clearAllAds(campaignUuid.value)).data
     })
     localAds.value = []
-    refetchAds().catch(() => {})
+    try { sessionStorage.removeItem(adsStorageKey.value) } catch {}
   } finally {
     operationManager.finish(clearOpKey.value)
   }
@@ -410,7 +424,7 @@ async function handleAdExport(format: 'csv' | 'pdf' | 'pptx') {
           <button
             :disabled="adsList.length === 0"
             class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center justify-center gap-1.5 disabled:opacity-50"
-            @click="router.push(`/campaigns/${campaignUuid}/visuals`)"
+            @click="router.push({ path: `/campaigns/${campaignUuid}/visuals`, state: { adUuids: adsList.map(a => a.campaign_ad_uuid), adMeta: adsList.map(a => ({ uuid: a.campaign_ad_uuid, platform: a.platform, funnel_stage: a.funnel_stage, persona: a.persona })) } })"
           >
             {{ t('smart.approveContinue') }} {{ t('smart.continue') }} <ArrowRight class="h-3.5 w-3.5" />
           </button>

@@ -18,6 +18,10 @@ import {
   CheckCircle2, XCircle, Clock, Sparkles, Download,
 } from 'lucide-vue-next'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
+import { useTourRegistration } from '@/shared/composables/useTourRegistration'
+import { brandAnalysisTour } from '../tours'
+
+useTourRegistration(brandAnalysisTour)
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { exportBrandAnalysisPDF } from '@/shared/utils/exportBrandAnalysis'
 
@@ -188,6 +192,7 @@ setActions([
       <button
         @click="startAnalysis"
         data-loc="brands.analysis.start-btn"
+        data-tour="brands.analysis.start-btn"
         class="inline-flex items-center gap-2 h-11 px-6 rounded-xl bg-[image:var(--gradient-brand)] text-primary-foreground text-sm font-semibold shadow-[var(--shadow-glow)] hover:opacity-95 transition"
       >
         <Play class="h-4 w-4" /> {{ t('analysis.startBtn') }}
@@ -257,7 +262,7 @@ setActions([
       </div>
 
       <!-- Tabs -->
-      <div class="flex gap-1 p-1 rounded-lg bg-overlay-subtle border border-border/40 w-full sm:w-fit overflow-x-auto">
+      <div class="flex gap-1 p-1 rounded-lg bg-overlay-subtle border border-border/40 w-full sm:w-fit overflow-x-auto" data-tour="brands.analysis.type-selector">
         <button
           v-for="tab in (['overview', 'audience', 'competitors', 'insights'] as const)"
           :key="tab"
@@ -275,7 +280,7 @@ setActions([
       </div>
 
       <!-- Overview Tab -->
-      <div v-if="activeTab === 'overview'" class="grid md:grid-cols-2 gap-4">
+      <div v-if="activeTab === 'overview'" class="grid md:grid-cols-2 gap-4" data-tour="brands.analysis.results">
         <!-- Brand Profile -->
         <div v-if="brandProfile" class="surface-card p-5 space-y-4">
           <div class="flex items-center gap-2 text-sm font-semibold">

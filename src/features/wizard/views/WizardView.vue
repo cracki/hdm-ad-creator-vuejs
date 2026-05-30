@@ -9,9 +9,13 @@ import {
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
-import { useCampaign, useCampaignAds } from '@/features/campaigns/queries'
+import { useCampaign } from '@/features/campaigns/queries'
 import { useCampaignWizard, WIZARD_STEPS, getFirstIncompleteStep } from '@/features/campaigns/machines/campaignWizard'
 import { useQueryClient } from '@tanstack/vue-query'
+import { useTourRegistration } from '@/shared/composables/useTourRegistration'
+import { wizardTour } from '../tours'
+
+useTourRegistration(wizardTour)
 
 const Step1BrandIntelligence = defineAsyncComponent(() => import('./Step1BrandIntelligence.vue'))
 const Step2AudienceStrategy = defineAsyncComponent(() => import('./Step2AudienceStrategy.vue'))
@@ -31,13 +35,9 @@ const queryClient = useQueryClient()
 
 const campaignUuid = computed(() => route.params.campaignUuid as string)
 const { data: campaign, isLoading: campaignLoading } = useCampaign(campaignUuid)
-const { data: ads } = useCampaignAds(campaignUuid)
-
-const adsCount = computed(() => Array.isArray(ads.value) ? ads.value.length : 0)
 
 const wizard = useCampaignWizard(
   computed(() => campaign.value ?? null),
-  adsCount,
 )
 
 const ICONS: Record<string, any> = {
@@ -69,7 +69,7 @@ watch(() => wizard.currentStep.value, (step) => {
 watch(campaign, (c) => {
   if (!c) return
   if (!stepFromRoute.value) {
-    const first = getFirstIncompleteStep(c, adsCount.value)
+    const first = getFirstIncompleteStep(c)
     wizard.initStep(first)
   }
 }, { immediate: true })
@@ -130,7 +130,7 @@ const stepComponent = computed(() => {
   <div class="px-4 sm:px-6 py-3 border-b border-border/60 bg-background/40 backdrop-blur-xl">
     <div class="flex items-center gap-3">
       <span class="text-xs font-medium whitespace-nowrap">{{ t('smart.stepOf') }} {{ wizard.currentStep.value }}/10</span>
-      <div data-loc="wizard.progress-bar" class="flex-1 h-1.5 rounded-full bg-overlay-subtle overflow-hidden">
+      <div data-loc="wizard.progress-bar" data-tour="wizard.progress-bar" class="flex-1 h-1.5 rounded-full bg-overlay-subtle overflow-hidden">
         <div class="h-full rounded-full bg-[image:var(--gradient-brand)] relative transition-all duration-500" :style="{ width: `${wizard.progress.value}%` }">
           <div class="absolute inset-0 shimmer" />
         </div>
@@ -201,7 +201,7 @@ const stepComponent = computed(() => {
 
     <!-- Step content -->
     <section class="overflow-y-auto">
-      <div class="max-w-5xl mx-auto p-4 sm:p-6 md:p-8 space-y-5 sm:space-y-6 animate-[fade-up_0.4s_ease-out]">
+      <div class="max-w-5xl mx-auto p-4 sm:p-6 md:p-8 space-y-5 sm:space-y-6 animate-[fade-up_0.4s_ease-out]" data-tour="wizard.content">
         <div v-if="campaignLoading" class="flex justify-center py-20">
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
         </div>
@@ -228,6 +228,7 @@ const stepComponent = computed(() => {
             <button
               v-if="wizard.currentStep.value < 10"
               data-loc="wizard.continue-btn"
+              data-tour="wizard.continue-btn"
               :disabled="!wizard.canGoNext.value"
               class="h-10 px-4 sm:px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5 disabled:opacity-50"
               @click="goNext"

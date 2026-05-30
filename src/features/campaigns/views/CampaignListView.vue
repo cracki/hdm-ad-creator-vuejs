@@ -10,6 +10,10 @@ import GuidedAction from '@/shared/components/guided-actions/GuidedAction.vue'
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
 import { useCampaigns, useDeleteCampaign } from '../queries'
 import { getCampaignProgress } from '../types'
+import { useTourRegistration } from '@/shared/composables/useTourRegistration'
+import { campaignsListTour } from '../tours'
+
+useTourRegistration(campaignsListTour)
 
 const router = useRouter()
 const { t } = useI18n()
@@ -70,11 +74,13 @@ async function confirmDelete() {
           :placeholder="t('camp.search')"
           class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
           data-loc="campaigns.list.search"
+          data-tour="campaigns.list.search-input"
         />
       </div>
       <button
         class="h-10 px-4 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5"
         data-loc="campaigns.list.new-campaign-btn"
+        data-tour="campaigns.list.new-campaign-btn"
         @click="router.push('/campaigns/new')"
       >
         <Plus class="h-3.5 w-3.5" /> {{ t('camp.newCampaign') }}
@@ -115,7 +121,7 @@ async function confirmDelete() {
     />
 
     <!-- Grid -->
-    <div v-else class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div v-else class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" data-tour="campaigns.list.campaigns-grid">
       <div
         v-for="campaign in filteredCampaigns"
         :key="campaign.campaign_uuid"

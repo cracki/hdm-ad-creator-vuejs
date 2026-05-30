@@ -19,6 +19,7 @@ import {
   Plus, Trash2, Globe, Loader2, Sparkles, ChevronDown,
   CheckCircle2, Crosshair, Lightbulb, Shield, Target, ArrowUpRight,
 } from 'lucide-vue-next'
+import GuidedAction from '@/shared/components/guided-actions/GuidedAction.vue'
 
 const route = useRoute()
 const { t } = useI18n()
@@ -207,32 +208,25 @@ setActions([
     </div>
 
     <!-- Empty state -->
-    <div v-else-if="!competitors?.length" class="surface-card p-8 text-center space-y-4">
-      <div class="h-14 w-14 rounded-2xl bg-[image:var(--gradient-brand)] grid place-items-center mx-auto shadow-[var(--shadow-glow)]">
-        <Crosshair class="h-6 w-6 text-primary-foreground" />
-      </div>
-      <div>
-        <div class="font-semibold mb-1">{{ t('competitors.emptyTitle') }}</div>
-        <div class="text-sm text-muted-foreground">{{ t('competitors.emptyDesc') }}</div>
-      </div>
-      <div class="flex justify-center gap-2">
-        <button
-          @click="handleIdentify"
-          :disabled="identifyMutation.isPending.value"
-          class="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] hover:opacity-95 transition disabled:opacity-50"
-        >
-          <Crosshair v-if="!identifyMutation.isPending.value" class="h-3.5 w-3.5" />
-          <Loader2 v-else class="h-3.5 w-3.5 animate-spin" />
-          {{ t('competitors.autoDiscover') }}
-        </button>
-        <button
-          @click="showAddForm = true"
-          class="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition"
-        >
-          <Plus class="h-3.5 w-3.5" /> {{ t('competitors.addManual') }}
-        </button>
-      </div>
-    </div>
+    <GuidedAction
+      v-else-if="!competitors?.length"
+      id="competitors-first"
+      variant="empty"
+      feature="competitors"
+      :icon="Crosshair"
+      :title="t('guided.competitors.title')"
+      :description="t('guided.competitors.desc')"
+      :actions="[
+        { labelKey: t('guided.competitors.autoDiscover'), icon: Crosshair, variant: 'primary' as const, handler: handleIdentify },
+        { labelKey: t('guided.competitors.addManual'), icon: Plus, variant: 'secondary' as const, handler: () => { showAddForm = true } },
+      ]"
+      :steps="[
+        { id: 'discover', title: t('guided.competitors.step1'), description: t('guided.competitors.step1Desc') },
+        { id: 'analyze', title: t('guided.competitors.step2'), description: t('guided.competitors.step2Desc') },
+        { id: 'insights', title: t('guided.competitors.step3'), description: t('guided.competitors.step3Desc') },
+      ]"
+      :tip="t('guided.competitors.tip')"
+    />
 
     <!-- Competitor list -->
     <div v-else>
