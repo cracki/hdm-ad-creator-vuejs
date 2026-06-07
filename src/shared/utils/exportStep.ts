@@ -754,7 +754,6 @@ export async function exportVisuals(format: ExportFormat, payload: R, ctx: StepC
       persona: str(v.persona),
       visual_summary: str(v.visual_summary ?? v.summary ?? v.description),
       aspect_ratio: str(v.aspect_ratio),
-      style: str(v.style),
       image_url: str(v.image_url ?? v.url),
     }))
     exportCsv(rows, `${safeName(ctx)}-visuals`, [
@@ -763,10 +762,23 @@ export async function exportVisuals(format: ExportFormat, payload: R, ctx: StepC
       { key: 'persona', header: 'Persona' },
       { key: 'visual_summary', header: 'Visual Summary' },
       { key: 'aspect_ratio', header: 'Aspect Ratio' },
-      { key: 'style', header: 'Style' },
       { key: 'image_url', header: 'Image URL' },
     ])
     return
+  }
+
+  async function fetchImageAsBase64(url: string): Promise<string | null> {
+    try {
+      const resp = await fetch(url, { mode: 'cors' })
+      if (!resp.ok) return null
+      const blob = await resp.blob()
+      return new Promise<string>((resolve) => {
+        const reader = new FileReader()
+        reader.onloadend = () => resolve(reader.result as string)
+        reader.onerror = () => resolve('')
+        reader.readAsDataURL(blob)
+      })
+    } catch { return null }
   }
 
   if (format === 'pdf') {
@@ -774,23 +786,88 @@ export async function exportVisuals(format: ExportFormat, payload: R, ctx: StepC
     const margin = 15
     let y = 60
     addPdfCoverTitle({ doc, autoTable }, ctx.stepName, ctx.campaignName)
+    const pageW = doc.internal.pageSize.getWidth()
+    const pageH = () => doc.internal.pageSize.getHeight()
+    const imgMaxW = pageW - margin * 2
+    const imgMaxH = 80
 
-    doc.setFontSize(13); doc.setFont('helvetica', 'bold'); doc.text('Generated Visuals', margin, y); y += 4
-    const rows = results.map((v, i) => [
-      String(i + 1),
-      str(v.platform),
-      str(v.funnel_stage ?? v.stage),
-      str(v.visual_summary ?? v.summary ?? v.description),
-      str(v.image_url ?? v.url),
-    ])
-    autoTable(doc, { startY: y, margin: { left: margin, right: margin }, head: [['#', 'Platform', 'Stage', 'Summary', 'URL']], body: rows, styles: { fontSize: 7, cellPadding: 2, overflow: 'linebreak' }, headStyles: { fillColor: [88, 28, 135], textColor: 255, fontStyle: 'bold' }, columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 18 }, 2: { cellWidth: 15 }, 3: { cellWidth: 'auto' }, 4: { cellWidth: 40 } } })
+    // Overview table
+    doc.setFontSize(13); doc.setFont('helvetica', 'bold'); doc.text('Generated Visuals', margin, y); y += 6
+    const overviewRows: string[][] = [
+      ['Total Visuals', String(results.length)],
+      ['Successful', String(results.filter((v) => v.success).length)],
+      ['Failed', String(results.filter((v) => !v.success).length)],
+    ]
+    autoTable(doc, { startY: y, margin: { left: margin, right: margin }, head: [['Metric', 'Value']], body: overviewRows, styles: { fontSize: 9, cellPadding: 2 }, headStyles: { fillColor: [88, 28, 135], textColor: 255, fontStyle: 'bold' }, columnStyles: { 0: { cellWidth: 50 }, 1: { cellWidth: 'auto' } } })
+    y = (doc as any).lastAutoTable.finalY + 10
+
+    for (let i = 0; i < results.length; i++) {
+      const v = results[i]
+      const imgUrl = str(v.image_url ?? v.url)
+      const summary = str(v.visual_summary ?? v.summary ?? v.description)
+
+      if (y + 40 > pageH() - 25) { doc.addPage(); y = margin }
+
+      // Section header
+      doc.setFontSize(11); doc.setFont('helvetica', 'bold')
+      doc.setTextColor(88, 28, 135)
+      doc.text(`Visual ${i + 1}`, margin, y); y += 5
+
+      // Metadata
+      doc.setTextColor(0, 0, 0)
+      doc.setFontSize(8); doc.setFont('helvetica', 'normal')
+      const meta = `Platform: ${str(v.platform)}  |  Stage: ${str(v.funnel_stage ?? v.stage)}  |  Ratio: ${str(v.aspect_ratio)}  |  Quality: ${str(v.quality)}`
+      doc.text(meta, margin, y); y += 4
+
+      // Embed image if available
+      if (v.success && imgUrl) {
+        const base64 = await fetchImageAsBase64(imgUrl)
+        if (base64) {
+          // Calculate dimensions keeping aspect ratio
+          const ratio = str(v.aspect_ratio)
+          let imgW = imgMaxW
+          let imgH = imgMaxH
+          const [rw, rh] = ratio.split(':').map(Number)
+          if (rw && rh) {
+            const aspectRatio = rw / rh
+            if (aspectRatio >= 1) {
+              imgW = Math.min(imgMaxW, imgMaxH * aspectRatio)
+              imgH = imgW / aspectRatio
+            } else {
+              imgH = Math.min(imgMaxH, imgMaxW / aspectRatio)
+              imgW = imgH * aspectRatio
+            }
+          }
+          const xOffset = margin + (imgMaxW - imgW) / 2
+
+          if (y + imgH + 10 > pageH() - 25) { doc.addPage(); y = margin }
+          doc.addImage(base64, 'JPEG', xOffset, y, imgW, imgH)
+          y += imgH + 4
+        } else {
+          doc.setFontSize(7); doc.setTextColor(100, 100, 100)
+          doc.text(`Image: ${imgUrl}`, margin, y); y += 4
+        }
+      }
+
+      // Summary text
+      if (summary) {
+        if (y + 10 > pageH() - 25) { doc.addPage(); y = margin }
+        doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(80, 80, 80)
+        const lines = doc.splitTextToSize(summary, imgMaxW)
+        for (const line of lines) {
+          if (y > pageH() - 20) { doc.addPage(); y = margin }
+          doc.text(line, margin, y); y += 3.5
+        }
+      }
+      y += 8
+    }
 
     addPdfFooter({ doc, autoTable })
     triggerDownload(doc.output('blob'), `${safeName(ctx)}-visuals.pdf`)
     return
   }
 
-  const { pptx, purple, white, gray, cardBg, addSlide } = await initPPTX()
+  const { pptx, purple, white, gray, addSlide } = await initPPTX()
   const titleSlide = pptx.addSlide()
   titleSlide.background = { fill: '1E1B2E' }
   titleSlide.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 0, w: '100%', h: 1.2, fill: { color: purple } })
@@ -798,17 +875,49 @@ export async function exportVisuals(format: ExportFormat, payload: R, ctx: StepC
   titleSlide.addText(ctx.stepName, { x: 0.8, y: 0.25, w: 9, h: 0.6, fontSize: 32, color: white, bold: true })
   titleSlide.addText(ctx.campaignName, { x: 0.8, y: 1.5, w: 9, h: 0.5, fontSize: 20, color: gray })
 
-  const slide = addSlide('Generated Visuals')
-  slide.addTable([
-    [{ text: '#', options: { bold: true, color: white, fill: { color: purple } } }, { text: 'Platform', options: { bold: true, color: white, fill: { color: purple } } }, { text: 'Stage', options: { bold: true, color: white, fill: { color: purple } } }, { text: 'Summary', options: { bold: true, color: white, fill: { color: purple } } }, { text: 'URL', options: { bold: true, color: white, fill: { color: purple } } }],
-    ...results.map((v, i) => [
-      { text: String(i + 1), options: { color: gray } },
-      { text: str(v.platform), options: { color: white } },
-      { text: str(v.funnel_stage ?? v.stage), options: { color: '22C55E' } },
-      { text: str(v.visual_summary ?? v.summary ?? v.description), options: { color: gray, fontSize: 8 } },
-      { text: str(v.image_url ?? v.url), options: { color: '60A5FA', fontSize: 7 } },
-    ]),
-  ], { x: 0.8, y: 1.1, w: 11.5, fontSize: 10, rowH: 0.5, border: { pt: 0.5, color: '3F3A5C' }, fill: { color: cardBg }, colW: [0.5, 1.5, 1.2, 5, 4.3], autoPage: true })
+  // One slide per visual with embedded image
+  for (let i = 0; i < results.length; i++) {
+    const v = results[i]
+    const imgUrl = str(v.image_url ?? v.url)
+    const summary = str(v.visual_summary ?? v.summary ?? v.description)
+    const slide = addSlide(`Visual ${i + 1}`)
+
+    // Embed image if available
+    if (v.success && imgUrl) {
+      const ratio = str(v.aspect_ratio)
+      const [rw, rh] = ratio.split(':').map(Number)
+      let imgW = 5
+      let imgH = 3.5
+      if (rw && rh) {
+        const aspectRatio = rw / rh
+        if (aspectRatio >= 1) {
+          imgW = 5
+          imgH = imgW / aspectRatio
+        } else {
+          imgH = 4.5
+          imgW = imgH * aspectRatio
+        }
+      }
+      slide.addImage({ path: imgUrl, x: 0.8, y: 1.2, w: imgW, h: imgH })
+
+      // Metadata beside or below image
+      const metaX = 0.8 + imgW + 0.5
+      const metaW = 12.4 - metaX
+      if (metaW > 2) {
+        slide.addText([
+          { text: `${str(v.platform)}  •  ${str(v.funnel_stage ?? v.stage)}`, options: { fontSize: 10, color: '60A5FA', bold: true } },
+        ], { x: metaX, y: 1.2, w: metaW, h: 0.4 })
+        if (summary) {
+          slide.addText(summary, { x: metaX, y: 1.7, w: metaW, h: 2.5, fontSize: 9, color: gray, valign: 'top' })
+        }
+        slide.addText(`Ratio: ${ratio}  |  Quality: ${str(v.quality)}`, { x: metaX, y: 4.3, w: metaW, h: 0.3, fontSize: 8, color: '60A5FA' })
+      }
+    } else {
+      // No image — show error / metadata only
+      slide.addText('Image unavailable', { x: 0.8, y: 1.5, w: 11, h: 0.5, fontSize: 14, color: 'F472B6', bold: true })
+      slide.addText(str(v.error ?? ''), { x: 0.8, y: 2.2, w: 11, h: 0.5, fontSize: 10, color: gray })
+    }
+  }
 
   triggerDownload(await pptx.write({ outputType: 'blob' }) as Blob, `${safeName(ctx)}-visuals.pptx`)
 }

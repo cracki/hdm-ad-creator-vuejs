@@ -79,9 +79,8 @@ export interface GenerateAdPayload {
 
 export interface GenerateVisualsPayload {
   ad_uuids: string[]
-  aspect_ratio?: '1:1' | '9:16' | '16:9' | '4:5'
-  quality?: 'standard' | 'hd'
-  style?: 'natural' | 'vivid'
+  aspect_ratio?: '1:1' | '2:3' | '3:2' | '4:7' | '7:4'
+  quality?: 'auto' | 'low' | 'medium' | 'high'
 }
 
 export interface GeneratedVisual {
@@ -92,7 +91,6 @@ export interface GeneratedVisual {
   aspect_ratio: string
   size: string
   quality: string
-  style: string
   visual_summary: string
   prompt: string
   success: boolean

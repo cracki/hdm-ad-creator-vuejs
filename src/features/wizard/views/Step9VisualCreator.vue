@@ -34,9 +34,8 @@ const selectAll = computed({
   },
 })
 
-const aspectRatio = ref<'1:1' | '9:16' | '16:9' | '4:5'>('1:1')
-const quality = ref<'standard' | 'hd'>('standard')
-const style = ref<'natural' | 'vivid'>('natural')
+const aspectRatio = ref<'1:1' | '2:3' | '3:2' | '4:7' | '7:4'>('1:1')
+const quality = ref<'auto' | 'low' | 'medium' | 'high'>('auto')
 
 const opKey = computed(() => `${props.campaignUuid}:generate-visuals`)
 const { data: visualResult, loading, error, run } = useAsyncOperation<any>()
@@ -54,7 +53,6 @@ async function generateVisuals() {
         ad_uuids: Array.from(selectedAdUuids.value),
         aspect_ratio: aspectRatio.value,
         quality: quality.value,
-        style: style.value,
       })
       return res.data
     })
@@ -84,23 +82,17 @@ function adPlatformLabel(p: string) {
     </header>
 
     <template v-if="adsList.length > 0">
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('visual.aspectRatio') }}</label>
           <select v-model="aspectRatio" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none">
-            <option value="1:1">1:1</option><option value="9:16">9:16</option><option value="16:9">16:9</option><option value="4:5">4:5</option>
+            <option value="1:1">1:1</option><option value="2:3">2:3</option><option value="3:2">3:2</option><option value="4:7">4:7</option><option value="7:4">7:4</option>
           </select>
         </div>
         <div>
           <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('visual.quality') }}</label>
           <select v-model="quality" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none">
-            <option value="standard">{{ t('visual.standard') }}</option><option value="hd">HD</option>
-          </select>
-        </div>
-        <div>
-          <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('visual.style') }}</label>
-          <select v-model="style" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none">
-            <option value="natural">{{ t('visual.natural') }}</option><option value="vivid">{{ t('visual.vivid') }}</option>
+            <option value="auto">{{ t('visual.qualityAuto') }}</option><option value="low">{{ t('visual.qualityLow') }}</option><option value="medium">{{ t('visual.qualityMedium') }}</option><option value="high">{{ t('visual.qualityHigh') }}</option>
           </select>
         </div>
       </div>
