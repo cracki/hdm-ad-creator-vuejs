@@ -13,7 +13,6 @@ import {
   Globe, Eye, Pencil, Trash2, Building2,
 } from 'lucide-vue-next'
 import GuidedAction from '@/shared/components/guided-actions/GuidedAction.vue'
-import { useDemoMode } from '@/shared/composables/useDemoMode'
 import { useTourRegistration } from '@/shared/composables/useTourRegistration'
 import { brandsListTour } from '../tours'
 
@@ -23,7 +22,6 @@ const { data: brands, isLoading } = useBrands()
 const { t } = useI18n()
 const route = useRoute()
 const { setActions } = usePageActions()
-const { enable: enableDemo } = useDemoMode()
 
 const searchQuery = ref((route.query.search as string) ?? '')
 const selectedIndustry = ref<string | null>(null)
@@ -282,7 +280,6 @@ setActions([
       :why="t('guided.brands.why')"
       :actions="[
         { labelKey: t('guided.brands.addBrand'), icon: Plus, to: '/brands/new', variant: 'primary' as const },
-        { labelKey: t('guided.brands.useDemo'), icon: Eye, variant: 'secondary' as const, handler: enableDemo },
       ]"
       :steps="[
         { id: 'add', title: t('guided.brands.step1'), description: t('guided.brands.step1Desc') },
