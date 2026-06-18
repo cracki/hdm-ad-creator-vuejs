@@ -649,6 +649,8 @@ export const translations = {
   'variant.regular': { en: 'Regular', ar: 'عادي', fa: 'عادی' },
   'variant.emptyTitle': { en: 'No variants generated yet', ar: 'لم يتم توليد متغيرات بعد', fa: 'هنوز تنوعی تولید نشده' },
   'variant.emptyDesc': { en: 'Select audiences, styles, and formats to generate your variant matrix', ar: 'اختر الجمهور والأنماط والصيغ لتوليد مصفوفتك', fa: 'مخاطبان، سبک‌ها و فرمت‌ها را انتخاب کن تا ماتریس تنوعت تولید شود' },
+  'variant.emptyResultTitle': { en: 'Generation produced no variants', ar: 'لم يُنتج التوليد أي متغيرات', fa: 'تولید هیچ تنوعی نداد' },
+  'variant.emptyResultDesc': { en: 'The selected audience may not be available for this brand’s industry. Try selecting a different audience, or switching the brand.', ar: 'قد لا يكون الجمهور المحدد متاحًا لصناعة هذه العلامة التجارية. جرّب اختيار جمهور آخر أو تغيير العلامة التجارية.', fa: 'مخاطب انتخاب‌شده ممکن است برای صنعت این برند در دسترس نباشد. یک مخاطب دیگر انتخاب کن یا برند را عوض کن.' },
   'variant.metaVariants': { en: '{count} Meta Creative Variants', ar: '{count} متغيرات ميتا الإبداعية', fa: '{count} تنوع خلاقانه متا' },
   'variant.matrixTitle': { en: 'Campaign Scenario Matrix', ar: 'مصفوفة سيناريو الحملة', fa: 'ماتریس سناریو کمپین' },
   'variant.matrixDesc': { en: 'Generate scenario variant matrix for this campaign', ar: 'ولّد مصفوفة متغيرات السيناريو لهذه الحملة', fa: 'ماتریس تنوع سناریو برای این کمپین تولید کن' },

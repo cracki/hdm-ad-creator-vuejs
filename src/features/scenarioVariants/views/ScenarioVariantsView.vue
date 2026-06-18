@@ -71,8 +71,17 @@ const viewMode = ref<'cards' | 'table'>('cards')
 
 const { data: result, loading, error, run } = useAsyncOperation<GenerateResult>()
 
-const emptyIndustry = ref('')
-const { data: optionsData, isPending: optionsLoading } = useVariantOptions(emptyIndustry)
+// Resolve the selected brand's industry so the displayed audience options match
+// what the backend actually accepts for generation. The backend's `_select_audiences`
+// branches on industry (e.g. "health & wellness" → beauty_spa audiences), and the
+// standalone run uses the brand's industry — not the empty default we'd otherwise
+// fetch. Fetching default audiences here caused 0-variant runs when the selected
+// audience wasn't valid for the brand's industry.
+const selectedIndustry = computed(() => {
+  const brand = (brands.value ?? []).find(b => b.brand_uuid === brandUuid.value)
+  return brand?.selected_industry?.name ?? ''
+})
+const { data: optionsData, isPending: optionsLoading } = useVariantOptions(selectedIndustry)
 const { data: frameworksData } = useMetaFrameworks()
 
 const audienceOptions = computed<VariantOption[]>(() => {
@@ -530,6 +539,26 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Empty result warning (generation ran but produced no variants) -->
+      <div
+        v-if="result && !loading && variants.length === 0 && metaVariants.length === 0"
+        data-loc="variant.main.empty-result"
+        class="surface-card p-4 flex items-center gap-3 border-s-2 border-s-accent-amber"
+      >
+        <AlertCircle class="h-5 w-5 text-accent-amber shrink-0" />
+        <div class="flex-1">
+          <div class="text-sm font-medium text-foreground">{{ t('variant.emptyResultTitle') }}</div>
+          <div class="text-xs text-muted-foreground mt-0.5">{{ t('variant.emptyResultDesc') }}</div>
+        </div>
+        <button
+          data-loc="variant.main.retry-btn"
+          class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition"
+          @click="generate"
+        >
+          <RefreshCw class="h-3 w-3" /> {{ t('seg.retry') }}
+        </button>
       </div>
 
       <!-- Empty State -->
