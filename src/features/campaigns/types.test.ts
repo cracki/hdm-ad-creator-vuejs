@@ -48,6 +48,51 @@ describe('getCampaignProgress', () => {
       ),
     ).toBe(100)
   })
+
+  it('returns 100 for a partial-platform campaign whose selected platforms are all done', () => {
+    expect(
+      getCampaignProgress(
+        buildCampaign({
+          segmentation_completed: true,
+          ppc_viability_completed: true,
+          funnel_completed: true,
+          content_strategy_completed: true,
+          context_payload: { selected_platforms: ['meta'] },
+          meta_ads_completed: true,
+        }),
+      ),
+    ).toBe(100)
+  })
+
+  it('caps below 100 when a selected platform ad is not completed', () => {
+    const result = getCampaignProgress(
+      buildCampaign({
+        segmentation_completed: true,
+        ppc_viability_completed: true,
+        funnel_completed: true,
+        content_strategy_completed: true,
+        context_payload: { selected_platforms: ['meta', 'google'] },
+        meta_ads_completed: true,
+        google_ads_completed: false,
+      }),
+    )
+    // 5 of 6 required steps (4 base + meta) done
+    expect(result).toBe(83)
+  })
+
+  it('falls back to all platform flags when none are selected', () => {
+    expect(
+      getCampaignProgress(
+        buildCampaign({
+          segmentation_completed: true,
+          ppc_viability_completed: true,
+          funnel_completed: true,
+          content_strategy_completed: true,
+          meta_ads_completed: true,
+        }),
+      ),
+    ).toBe(71) // 5 of 7
+  })
 })
 
 describe('areAllPlatformAdsComplete', () => {

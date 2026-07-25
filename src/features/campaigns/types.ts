@@ -151,15 +151,25 @@ export interface AdsStrategyListResponse {
 }
 
 export function getCampaignProgress(campaign: Campaign): number {
-  const flags = [
+  const baseFlags = [
     campaign.segmentation_completed,
     campaign.ppc_viability_completed,
     campaign.funnel_completed,
     campaign.content_strategy_completed,
-    campaign.meta_ads_completed,
-    campaign.google_ads_completed,
-    campaign.linkedin_ads_completed,
   ]
+  const ctx = campaign.context_payload as { selected_platforms?: string[] } | undefined
+  const selectedPlatforms = ctx?.selected_platforms ?? []
+  // Only count the platforms the user actually selected. If platform selection
+  // hasn't happened yet, fall back to all platform flags so early-campaign
+  // progress is unchanged (a partial-platform campaign can now reach 100%).
+  const platformFlags = selectedPlatforms.length
+    ? selectedPlatforms.map((p) => campaign[`${p}_ads_completed` as keyof Campaign])
+    : [
+        campaign.meta_ads_completed,
+        campaign.google_ads_completed,
+        campaign.linkedin_ads_completed,
+      ]
+  const flags = [...baseFlags, ...platformFlags]
   const completed = flags.filter(Boolean).length
   return Math.round((completed / flags.length) * 100)
 }

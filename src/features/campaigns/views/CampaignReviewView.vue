@@ -25,19 +25,44 @@ setActions([{ label: t('camp.backToCampaign'), icon: ArrowLeft, to: `/campaigns/
 const completeMutation = useCompleteCampaign(campaignUuid)
 const confetti = useConfetti()
 
-const completionFlags = computed(() => [
-  { key: 'segmentation', label: t('smart.s1'), done: campaign.value?.segmentation_completed ?? false },
-  { key: 'ppc_viability', label: t('smart.s3'), done: campaign.value?.ppc_viability_completed ?? false },
-  { key: 'funnel', label: t('smart.s4'), done: campaign.value?.funnel_completed ?? false },
-  { key: 'content_strategy', label: t('smart.s5'), done: campaign.value?.content_strategy_completed ?? false },
-  { key: 'meta_ads', label: 'Meta Ads', done: campaign.value?.meta_ads_completed ?? false },
-  { key: 'google_ads', label: 'Google Ads', done: campaign.value?.google_ads_completed ?? false },
-  { key: 'linkedin_ads', label: 'LinkedIn Ads', done: campaign.value?.linkedin_ads_completed ?? false },
-])
+const selectedPlatforms = computed<string[]>(() => {
+  const ctx = campaign.value?.context_payload as { selected_platforms?: string[] } | undefined
+  return ctx?.selected_platforms ?? []
+})
+
+const PLATFORM_LABELS: Record<string, string> = {
+  meta: 'Meta Ads',
+  google: 'Google Ads',
+  linkedin: 'LinkedIn Ads',
+}
+
+const completionFlags = computed(() => {
+  const base = [
+    { key: 'segmentation', label: t('smart.s1'), done: campaign.value?.segmentation_completed ?? false },
+    { key: 'ppc_viability', label: t('smart.s3'), done: campaign.value?.ppc_viability_completed ?? false },
+    { key: 'funnel', label: t('smart.s4'), done: campaign.value?.funnel_completed ?? false },
+    { key: 'content_strategy', label: t('smart.s5'), done: campaign.value?.content_strategy_completed ?? false },
+  ]
+  // Only list the platforms the user actually selected — a campaign that runs
+  // on Meta only should not show Google/LinkedIn as "incomplete" (MOM bug #6).
+  const platformFlags = selectedPlatforms.value.map((p) => ({
+    key: `${p}_ads`,
+    label: PLATFORM_LABELS[p] ?? `${p} Ads`,
+    done: Boolean(campaign.value && campaign.value[`${p}_ads_completed` as keyof typeof campaign.value]),
+  }))
+  return [...base, ...platformFlags]
+})
 
 const completedCount = computed(() => completionFlags.value.filter((f) => f.done).length)
-const progress = computed(() => Math.round((completedCount.value / completionFlags.value.length) * 100))
-const allDone = computed(() => completionFlags.value.every((f) => f.done))
+const progress = computed(() =>
+  completionFlags.value.length ? Math.round((completedCount.value / completionFlags.value.length) * 100) : 0,
+)
+// Complete = every required step (base + the selected platforms) done AND at
+// least one platform chosen. Previously this was gated on all 7 hardcoded
+// flags, so a partial-platform campaign could never be completed.
+const allDone = computed(
+  () => selectedPlatforms.value.length > 0 && completionFlags.value.every((f) => f.done),
+)
 
 const completing = ref(false)
 
