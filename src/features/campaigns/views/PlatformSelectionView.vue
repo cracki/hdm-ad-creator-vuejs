@@ -80,6 +80,12 @@ async function savePlatforms() {
       },
     })
     queryClient.invalidateQueries({ queryKey: ['campaigns', campaignUuid] })
+    // Advance to the next step on a successful save — matches the
+    // "Save & Continue" button label. Without this the view stayed on the
+    // selection screen (selected was never cleared, so the "Already saved →
+    // Continue" card never rendered) and the user was stuck until a reload.
+    selected.value.clear()
+    goNext()
   } catch (e: any) {
     error.value = e?.response?.data?.detail ?? e?.message ?? 'Failed to save'
   } finally {
