@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Settings2, ArrowLeft, ArrowRight, Loader2, AlertCircle, RefreshCw, Shield, Check, ChevronDown, ChevronUp } from 'lucide-vue-next'
+import { Settings2, ArrowLeft, ArrowRight, Loader2, Shield, Check, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import AdsStrategyRenderer from '@/shared/components/renderers/AdsStrategyRenderer.vue'
 import StepExportButton from '@/shared/components/StepExportButton.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
+import ErrorState from '@/shared/components/ErrorState.vue'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
@@ -236,13 +237,7 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx', platform: string) {
           </div>
         </div>
 
-        <div v-if="error" class="surface-card p-4 flex items-center gap-3 mb-4">
-          <AlertCircle class="h-5 w-5 text-destructive shrink-0" />
-          <div class="flex-1 text-sm text-destructive">{{ error }}</div>
-          <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5" @click="currentPlatform && runStrategy(currentPlatform)">
-            <RefreshCw class="h-3 w-3" /> {{ t('seg.retry') }}
-          </button>
-        </div>
+        <ErrorState v-if="error" :message="error" :retry-label="t('seg.retry')" class="mb-4" @retry="currentPlatform && runStrategy(currentPlatform)" />
 
         <div class="flex items-center justify-between gap-3">
           <button

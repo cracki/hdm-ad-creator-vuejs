@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Target, ArrowLeft, ArrowRight, AlertCircle, RefreshCw, Shield, TrendingUp, Check } from 'lucide-vue-next'
+import { Target, ArrowLeft, ArrowRight, RefreshCw, Shield, TrendingUp, Check } from 'lucide-vue-next'
 import StepExportButton from '@/shared/components/StepExportButton.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
+import ErrorState from '@/shared/components/ErrorState.vue'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
@@ -169,13 +170,7 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx') {
         </div>
 
         <!-- Error -->
-        <div v-if="error" class="surface-card p-5 flex items-center gap-3 mb-6">
-          <AlertCircle class="h-5 w-5 text-destructive shrink-0" />
-          <div class="flex-1 text-sm text-destructive">{{ error }}</div>
-          <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5" @click="runPPC">
-            <RefreshCw class="h-3 w-3" /> {{ t('seg.retry') }}
-          </button>
-        </div>
+        <ErrorState v-if="error" :message="error" :retry-label="t('seg.retry')" class="mb-6" @retry="runPPC" />
 
         <!-- Results -->
         <div v-if="stepData && !loading">

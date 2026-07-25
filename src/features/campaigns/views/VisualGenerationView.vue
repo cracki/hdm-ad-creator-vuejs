@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { Image as ImageIcon, ArrowLeft, ArrowRight, Loader2, AlertCircle, RefreshCw, Shield, Download } from 'lucide-vue-next'
 import StepExportButton from '@/shared/components/StepExportButton.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
+import ErrorState from '@/shared/components/ErrorState.vue'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
@@ -257,13 +258,7 @@ async function handleVisualExport(format: 'csv' | 'pdf' | 'pptx') {
           <AiLoadingAnimation :message="t('visual.generating')" />
         </div>
 
-        <div v-if="error" class="surface-card p-4 flex items-center gap-3 mb-4">
-          <AlertCircle class="h-5 w-5 text-destructive shrink-0" />
-          <div class="flex-1 text-sm text-destructive">{{ error }}</div>
-          <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5" @click="generateVisuals">
-            <RefreshCw class="h-3 w-3" /> {{ t('seg.retry') }}
-          </button>
-        </div>
+        <ErrorState v-if="error" :message="error" :retry-label="t('seg.retry')" class="mb-4" @retry="generateVisuals" />
 
         <!-- Visual results -->
         <div v-if="results.length > 0" class="space-y-4 mb-6">

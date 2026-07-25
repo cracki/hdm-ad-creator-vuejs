@@ -5,6 +5,7 @@ import Topbar from '@/layout/Topbar.vue'
 import AnalysisPayloadRenderer from '@/shared/components/renderers/AnalysisPayloadRenderer.vue'
 import CompetitiveAnalysisRenderer from '@/shared/components/renderers/CompetitiveAnalysisRenderer.vue'
 import SocialPresenceRenderer from '@/shared/components/renderers/SocialPresenceRenderer.vue'
+import ProgressIndicator from '@/shared/components/ProgressIndicator.vue'
 
 import { useBrand, useAnalysisRun, useStartAnalysis } from '@/features/brands/queries'
 import { useJobTracker } from '@/shared/composables/useJobTracker'
@@ -49,6 +50,13 @@ const tracker = useJobTracker({
   getUuid: (data: any) => data.analysis_run_uuid,
   isTerminal: (status: string) => TERMINAL_STATUSES.has(status),
   interval: 2000,
+  messages: {
+    failed: t('jobTracker.failed'),
+    timeout: t('jobTracker.timeout'),
+    startFailed: t('jobTracker.startFailed'),
+    resumeFailed: t('jobTracker.resumeFailed'),
+    pollError: t('jobTracker.pollError'),
+  },
 })
 
 const runData = computed(() => existingRun.value ?? tracker.data.value)
@@ -93,26 +101,21 @@ onMounted(() => {
   }
 })
 
-const progressMessages = computed(() => {
-  if (!isRunning.value) return []
-  return [
-    t('analysis.stage.scraping'),
-    t('analysis.stage.analyzing'),
-    t('analysis.stage.personas'),
-    t('analysis.stage.competitors'),
-    t('analysis.stage.insights'),
-  ]
-})
+const progressMessages = computed(() => [
+  t('analysis.stage.scraping'),
+  t('analysis.stage.analyzing'),
+  t('analysis.stage.personas'),
+  t('analysis.stage.competitors'),
+  t('analysis.stage.insights'),
+])
 
-const currentStage = computed(() => {
-  const attempts = tracker.attempts.value
+const progressStepIndex = computed(() => {
   const stages = progressMessages.value
-  if (!stages.length) return ''
-  const idx = Math.min(Math.floor(attempts / 8), stages.length - 1)
-  return stages[idx]
+  if (!stages.length) return 0
+  return Math.min(Math.floor(tracker.attempts.value / 8), stages.length - 1)
 })
 
-const progressDots = computed(() => Math.min(Math.floor(tracker.attempts.value / 8) + 1, 5))
+const currentStage = computed(() => progressMessages.value[progressStepIndex.value] ?? '')
 
 const brandProfile = computed(() => runData.value?.brand_profile ?? null)
 const audienceInsights = computed(() => runData.value?.audience_insights ?? null)
@@ -209,9 +212,7 @@ setActions([
     <!-- Running state -->
     <div v-else-if="isRunning" class="max-w-2xl mx-auto text-center py-16 space-y-4">
       <AiLoadingAnimation :message="t('analysis.runningTitle')" :description="currentStage" />
-      <div class="flex justify-center gap-1">
-        <div v-for="i in 5" :key="i" class="h-1.5 w-1.5 rounded-full animate-pulse" :class="i <= progressDots ? 'bg-primary' : 'bg-overlay-strong'" :style="{ animationDelay: `${i * 150}ms` }" />
-      </div>
+      <ProgressIndicator :stages="progressMessages" :current-index="progressStepIndex" status="running" class="justify-center" />
       <p class="text-xs text-muted-foreground">{{ t('analysis.runningHint') }}</p>
     </div>
 
@@ -224,6 +225,7 @@ setActions([
         <h2 class="text-xl font-semibold mb-2">{{ t('analysis.failedTitle') }}</h2>
         <p class="text-sm text-muted-foreground">{{ runData?.error_message ?? tracker.error.value ?? t('analysis.failedDesc') }}</p>
       </div>
+      <ProgressIndicator :stages="progressMessages" :current-index="progressStepIndex" status="failed" class="justify-center" />
       <button
         @click="retryAnalysis"
         data-loc="brands.analysis.retry-btn"
