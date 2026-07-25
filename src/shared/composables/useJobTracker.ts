@@ -1,5 +1,13 @@
 import { ref, onUnmounted, type Ref } from 'vue'
 
+export interface JobTrackerMessages {
+  failed: string
+  timeout: string
+  startFailed: string
+  resumeFailed: string
+  pollError: string
+}
+
 export interface JobTrackerConfig<T = any> {
   startFn: () => Promise<T>
   statusFn: (uuid: string) => Promise<T>
@@ -8,6 +16,8 @@ export interface JobTrackerConfig<T = any> {
   isTerminal: (status: string) => boolean
   interval?: number
   maxAttempts?: number
+  /** Override the user-facing error strings (e.g. with localized text). */
+  messages?: Partial<JobTrackerMessages>
 }
 
 export function useJobTracker<T = any>(config: JobTrackerConfig<T>) {
@@ -19,6 +29,14 @@ export function useJobTracker<T = any>(config: JobTrackerConfig<T>) {
   let timer: ReturnType<typeof setTimeout> | null = null
   const maxAttempts = config.maxAttempts ?? 300
   let currentInterval = config.interval ?? 2000
+  const messages: JobTrackerMessages = {
+    failed: 'Analysis failed',
+    timeout: 'Polling timed out',
+    startFailed: 'Failed to start job',
+    resumeFailed: 'Failed to resume job',
+    pollError: 'Polling error',
+    ...config.messages,
+  }
 
   function stopPolling() {
     if (timer) {
@@ -39,7 +57,7 @@ export function useJobTracker<T = any>(config: JobTrackerConfig<T>) {
   async function poll(runUuid: string) {
     if (attempts.value >= maxAttempts) {
       status.value = 'failed'
-      error.value = 'Polling timed out'
+      error.value = messages.timeout
       return
     }
 
@@ -51,7 +69,7 @@ export function useJobTracker<T = any>(config: JobTrackerConfig<T>) {
       if (config.isTerminal(runStatus)) {
         status.value = runStatus === 'failed' ? 'failed' : 'completed'
         if (runStatus === 'failed') {
-          error.value = 'Analysis failed'
+          error.value = messages.failed
         }
         return
       }
@@ -60,7 +78,7 @@ export function useJobTracker<T = any>(config: JobTrackerConfig<T>) {
       currentInterval = Math.min(currentInterval * 1.1, 10_000)
       timer = setTimeout(() => poll(runUuid), currentInterval)
     } catch (e: any) {
-      error.value = e?.message ?? 'Polling error'
+      error.value = e?.message ?? messages.pollError
       status.value = 'failed'
     }
   }
@@ -83,7 +101,7 @@ export function useJobTracker<T = any>(config: JobTrackerConfig<T>) {
       status.value = 'polling'
       await poll(runUuid)
     } catch (e: any) {
-      error.value = e?.message ?? 'Failed to start job'
+      error.value = e?.message ?? messages.startFailed
       status.value = 'failed'
     }
   }
@@ -100,14 +118,14 @@ export function useJobTracker<T = any>(config: JobTrackerConfig<T>) {
       if (config.isTerminal(runStatus)) {
         status.value = runStatus === 'failed' ? 'failed' : 'completed'
         if (runStatus === 'failed') {
-          error.value = 'Analysis failed'
+          error.value = messages.failed
         }
         return
       }
 
       await poll(runUuid)
     } catch (e: any) {
-      error.value = e?.message ?? 'Failed to resume job'
+      error.value = e?.message ?? messages.resumeFailed
       status.value = 'failed'
     }
   }
