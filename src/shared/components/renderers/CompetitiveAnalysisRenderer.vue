@@ -187,12 +187,6 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
         >
           <div class="flex items-center justify-between">
             <span class="text-sm font-medium text-foreground">{{ r.name }}</span>
-            <span
-              :class="r.status === 'success' ? 'text-success bg-success/10' : 'text-destructive bg-destructive/10'"
-              class="text-[10px] px-1.5 py-0.5 rounded font-medium"
-            >
-              {{ r.status }}
-            </span>
           </div>
           <a
             v-if="r.website_url"

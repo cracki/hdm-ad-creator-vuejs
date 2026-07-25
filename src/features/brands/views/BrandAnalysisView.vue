@@ -15,7 +15,7 @@ import { usePageActions } from '@/shared/composables/usePageActions'
 import { TERMINAL_STATUSES } from '@/features/brands/schemas'
 import {
   Play, Loader2, RefreshCw, Users, BarChart3,
-  Globe, Lightbulb, Brain, Heart, Target, ChevronLeft,
+  Globe, Lightbulb, Brain, Heart, ChevronLeft,
   CheckCircle2, XCircle, Clock, Sparkles, Download,
 } from 'lucide-vue-next'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
@@ -310,14 +310,6 @@ setActions([
             <Heart class="h-4 w-4 text-primary" /> {{ t('analysis.section.emotionProfile') }}
           </div>
           <AnalysisPayloadRenderer :data="emotionProfile" />
-        </div>
-
-        <!-- Quality Report -->
-        <div v-if="runData.quality_report" class="surface-card p-5 space-y-4">
-          <div class="flex items-center gap-2 text-sm font-semibold">
-            <Target class="h-4 w-4 text-primary" /> {{ t('analysis.section.quality') }}
-          </div>
-          <AnalysisPayloadRenderer :data="runData.quality_report" />
         </div>
       </div>
 
