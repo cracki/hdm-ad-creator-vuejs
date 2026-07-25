@@ -419,6 +419,7 @@ export const translations = {
   'analysis.tab.insights': { en: 'Insights', ar: 'رؤى', fa: 'بینش‌ها' },
   'analysis.tab.analysis': { en: 'Analysis', ar: 'تحليل', fa: 'تحلیل' },
   'analysis.section.brandProfile': { en: 'Brand Profile', ar: 'ملف العلامة', fa: 'پروفایل برند' },
+  'analysis.hint.brandProfile': { en: 'Who the brand is — identity, voice and personality at a glance.', ar: 'من هي العلامة — الهوية والصوت والشخصية بنظرة سريعة.', fa: 'برند کیست — هویت، لحن و شخصیت در یک نگاه.' },
   'analysis.section.socialPresence': { en: 'Social Presence', ar: 'التواجد الاجتماعي', fa: 'حضور اجتماعی' },
   'analysis.section.emotionProfile': { en: 'Emotion Profile', ar: 'الملف العاطفي', fa: 'پروفایل احساسی' },
   'analysis.section.quality': { en: 'Quality Report', ar: 'تقرير الجودة', fa: 'گزارش کیفیت' },

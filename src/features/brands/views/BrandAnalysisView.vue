@@ -6,6 +6,7 @@ import AnalysisPayloadRenderer from '@/shared/components/renderers/AnalysisPaylo
 import CompetitiveAnalysisRenderer from '@/shared/components/renderers/CompetitiveAnalysisRenderer.vue'
 import SocialPresenceRenderer from '@/shared/components/renderers/SocialPresenceRenderer.vue'
 import ProgressIndicator from '@/shared/components/ProgressIndicator.vue'
+import InfoTooltip from '@/shared/components/InfoTooltip.vue'
 
 import { useBrand, useAnalysisRun, useStartAnalysis } from '@/features/brands/queries'
 import { useJobTracker } from '@/shared/composables/useJobTracker'
@@ -293,7 +294,7 @@ setActions([
         <!-- Brand Profile -->
         <div v-if="brandProfile" class="surface-card p-5 space-y-4">
           <div class="flex items-center gap-2 text-sm font-semibold">
-            <Globe class="h-4 w-4 text-primary" /> {{ t('analysis.section.brandProfile') }}
+            <Globe class="h-4 w-4 text-primary" /> {{ t('analysis.section.brandProfile') }} <InfoTooltip :text="t('analysis.hint.brandProfile')" />
           </div>
           <AnalysisPayloadRenderer :data="brandProfile" />
         </div>
