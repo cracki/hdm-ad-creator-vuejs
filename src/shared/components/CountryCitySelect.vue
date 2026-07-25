@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { COUNTRIES } from '@/shared/data/countries'
+import { useI18n } from '@/shared/utils/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{ modelValue: { country: string; city: string } }>()
 const emit = defineEmits<{ 'update:modelValue': [{ country: string; city: string }] }>()
@@ -33,12 +36,12 @@ function onCityInput(e: Event) {
 <template>
   <div class="grid sm:grid-cols-2 gap-3">
     <div class="relative">
-      <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Country</label>
+      <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('countryCity.country') }}</label>
       <input
         data-testid="country-input"
         :value="query"
         autocomplete="off"
-        placeholder="Type to search"
+        :placeholder="t('countryCity.searchPlaceholder')"
         class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none focus:border-primary/40 transition"
         @input="onCountryInput"
         @focus="open = true"
@@ -61,11 +64,11 @@ function onCityInput(e: Event) {
       </ul>
     </div>
     <div>
-      <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">City</label>
+      <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('countryCity.city') }}</label>
       <input
         data-testid="city-input"
         :value="modelValue.city"
-        placeholder="City"
+        :placeholder="t('countryCity.cityPlaceholder')"
         class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none focus:border-primary/40 transition"
         @input="onCityInput"
       />
