@@ -5,6 +5,9 @@ import {
   Users, Award, ExternalLink, ChevronDown, ChevronRight,
   Check, X, Zap, Eye, AlertTriangle, ArrowUpRight,
 } from 'lucide-vue-next'
+import { useI18n } from '@/shared/utils/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   data: Record<string, unknown>
@@ -168,7 +171,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
     <div v-if="positioningIdea" class="rounded-lg border border-primary/20 bg-primary/[0.04] p-4">
       <div class="flex items-center gap-2 text-xs font-semibold text-primary mb-2">
         <Zap class="h-3.5 w-3.5" />
-        Positioning Idea
+        {{ t('competitors.section.positioningIdea') }}
       </div>
       <p class="text-sm text-foreground/90 leading-relaxed">{{ positioningIdea }}</p>
     </div>
@@ -177,7 +180,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
     <div v-if="analyzeResults.length">
       <div class="text-xs font-semibold text-foreground mb-2 flex items-center gap-2">
         <Globe class="h-3.5 w-3.5 text-primary" />
-        Analyzed Competitors
+        {{ t('competitors.section.analyzedCompetitors') }}
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <div
@@ -206,7 +209,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
     <div v-if="competitorAnalyses.length" class="space-y-3">
       <div class="text-xs font-semibold text-foreground flex items-center gap-2">
         <BarChart3 class="h-3.5 w-3.5 text-primary" />
-        Detailed Analysis
+        {{ t('competitors.section.detailedAnalysis') }}
       </div>
 
       <div v-for="(comp, ci) in competitorAnalyses" :key="ci" class="rounded-lg border border-border/30 overflow-hidden">
@@ -252,7 +255,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
           <template v-if="getBasicInfo(comp)">
             <div>
               <div class="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
-                <Globe class="h-3 w-3 text-primary" /> Basic Info
+                <Globe class="h-3 w-3 text-primary" /> {{ t('competitors.section.basicInfo') }}
               </div>
               <div class="grid grid-cols-2 gap-x-4 gap-y-1.5">
                 <template v-for="(val, key) in getBasicInfo(comp)" :key="String(key)">
@@ -269,7 +272,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div v-if="asStringArray(comp.strengths).length">
               <div class="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
-                <TrendingUp class="h-3 w-3 text-success" /> Strengths
+                <TrendingUp class="h-3 w-3 text-success" /> {{ t('competitors.section.strengths') }}
               </div>
               <div class="space-y-1">
                 <div
@@ -284,7 +287,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
             </div>
             <div v-if="asStringArray(comp.weaknesses).length">
               <div class="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
-                <TrendingDown class="h-3 w-3 text-destructive" /> Weaknesses
+                <TrendingDown class="h-3 w-3 text-destructive" /> {{ t('competitors.section.weaknesses') }}
               </div>
               <div class="space-y-1">
                 <div
@@ -303,11 +306,11 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
           <template v-if="getMessaging(comp)">
             <div>
               <div class="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
-                <MessageSquare class="h-3 w-3 text-primary" /> Messaging
+                <MessageSquare class="h-3 w-3 text-primary" /> {{ t('competitors.section.messaging') }}
               </div>
               <div class="space-y-2">
                 <div v-if="getMessaging(comp)!.tone" class="flex items-center gap-2 text-xs">
-                  <span class="text-muted-foreground/50">Tone</span>
+                  <span class="text-muted-foreground/50">{{ t('competitors.section.tone') }}</span>
                   <span class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground border border-border/20">{{ getMessaging(comp)!.tone }}</span>
                 </div>
                 <div v-if="getMessaging(comp)!.primary_message" class="text-xs text-muted-foreground bg-overlay-subtle rounded-lg p-3 border border-border/10 leading-relaxed">
@@ -323,7 +326,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
                   </span>
                 </div>
                 <div v-if="getMessaging(comp)!.vs_your_messaging" class="text-xs text-muted-foreground bg-primary/[0.03] rounded-lg p-3 border border-primary/10 leading-relaxed">
-                  <span class="text-[10px] text-primary font-medium block mb-1">vs Your Brand</span>
+                  <span class="text-[10px] text-primary font-medium block mb-1">{{ t('competitors.section.vsYourBrand') }}</span>
                   {{ getMessaging(comp)!.vs_your_messaging }}
                 </div>
               </div>
@@ -334,7 +337,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
           <template v-if="getPositioning(comp)">
             <div>
               <div class="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
-                <Target class="h-3 w-3 text-primary" /> Positioning
+                <Target class="h-3 w-3 text-primary" /> {{ t('competitors.section.positioning') }}
               </div>
               <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1.5">
                 <template v-for="(val, key) in getPositioning(comp)" :key="String(key)">
@@ -348,7 +351,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
                 {{ getPositioning(comp)!.positioning_statement }}
               </div>
               <div v-if="getPositioning(comp)!.vs_your_brand" class="text-xs text-muted-foreground bg-primary/[0.03] rounded-lg p-3 border border-primary/10 leading-relaxed mt-2">
-                <span class="text-[10px] text-primary font-medium block mb-1">vs Your Brand</span>
+                <span class="text-[10px] text-primary font-medium block mb-1">{{ t('competitors.section.vsYourBrand') }}</span>
                 {{ getPositioning(comp)!.vs_your_brand }}
               </div>
             </div>
@@ -358,13 +361,13 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
           <template v-if="getTargetAudience(comp)">
             <div>
               <div class="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
-                <Users class="h-3 w-3 text-primary" /> Target Audience
+                <Users class="h-3 w-3 text-primary" /> {{ t('competitors.section.targetAudience') }}
               </div>
               <div v-if="typeof getTargetAudience(comp)!.primary === 'string'" class="text-xs text-muted-foreground bg-overlay-subtle rounded-lg p-3 border border-border/10 leading-relaxed mb-2">
                 {{ getTargetAudience(comp)!.primary }}
               </div>
               <template v-if="asObject(getTargetAudience(comp)!.demographics)">
-                <div class="text-[11px] text-muted-foreground/60 font-medium mb-1">Demographics</div>
+                <div class="text-[11px] text-muted-foreground/60 font-medium mb-1">{{ t('competitors.section.demographics') }}</div>
                 <div class="grid grid-cols-2 gap-x-4 gap-y-1">
                   <template v-for="(val, key) in asObject(getTargetAudience(comp)!.demographics)" :key="String(key)">
                     <div v-if="val != null" class="text-xs flex items-start gap-2">
@@ -375,7 +378,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
                 </div>
               </template>
               <div v-if="asStringArray(getTargetAudience(comp)!.secondary).length" class="mt-2">
-                <div class="text-[11px] text-muted-foreground/60 font-medium mb-1">Secondary Segments</div>
+                <div class="text-[11px] text-muted-foreground/60 font-medium mb-1">{{ t('competitors.section.secondarySegments') }}</div>
                 <div class="space-y-1">
                   <div
                     v-for="(seg, i) in asStringArray(getTargetAudience(comp)!.secondary)"
@@ -459,7 +462,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
           <template v-if="asObjectArray(comp.improvement_areas).length">
             <div>
               <div class="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
-                <AlertTriangle class="h-3 w-3 text-amber-400" /> Improvement Areas
+                <AlertTriangle class="h-3 w-3 text-amber-400" /> {{ t('competitors.section.improvementAreas') }}
               </div>
               <div class="space-y-2">
                 <div
@@ -489,7 +492,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
           <template v-if="asObjectArray(comp.growth_opportunities).length">
             <div>
               <div class="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
-                <TrendingUp class="h-3 w-3 text-success" /> Growth Opportunities
+                <TrendingUp class="h-3 w-3 text-success" /> {{ t('competitors.section.growthOpportunities') }}
               </div>
               <div class="space-y-2">
                 <div
@@ -517,7 +520,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
           <template v-if="asObjectArray(comp.differentiation_opportunities).length">
             <div>
               <div class="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
-                <Eye class="h-3 w-3 text-primary" /> Differentiation Opportunities
+                <Eye class="h-3 w-3 text-primary" /> {{ t('competitors.section.differentiationOpportunities') }}
               </div>
               <div class="space-y-2">
                 <div
@@ -548,7 +551,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
             <template v-if="asObject(comp.services)">
               <div class="rounded-lg border border-border/20 bg-overlay-subtle p-3">
                 <div class="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
-                  <Award class="h-3 w-3 text-primary" /> Services
+                  <Award class="h-3 w-3 text-primary" /> {{ t('competitors.section.services') }}
                 </div>
                 <div class="grid grid-cols-2 gap-x-3 gap-y-1">
                   <template v-for="(val, key) in asObject(comp.services)" :key="String(key)">
@@ -568,7 +571,7 @@ const hasData = computed(() => Object.keys(props.data).length > 0)
             <template v-if="asObject(comp.content_strategy)">
               <div class="rounded-lg border border-border/20 bg-overlay-subtle p-3">
                 <div class="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
-                  <MessageSquare class="h-3 w-3 text-primary" /> Content Strategy
+                  <MessageSquare class="h-3 w-3 text-primary" /> {{ t('competitors.section.contentStrategy') }}
                 </div>
                 <div class="grid grid-cols-2 gap-x-3 gap-y-1">
                   <template v-for="(val, key) in asObject(comp.content_strategy)" :key="String(key)">
