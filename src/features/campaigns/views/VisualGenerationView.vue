@@ -13,6 +13,7 @@ import { campaignsApi } from '../api'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
 import { exportVisuals } from '@/shared/utils/exportStep'
+import type { GeneratedVisual } from '../types'
 
 interface AdMeta {
   uuid: string
@@ -90,6 +91,37 @@ async function generateVisuals() {
     })
   } finally {
     operationManager.finish(opKey.value)
+  }
+}
+
+const retryingAds = ref<Set<string>>(new Set())
+
+async function retryVisual(v: GeneratedVisual) {
+  const opKeyRetry = `${campaignUuid.value}:retry-visual:${v.campaign_ad_uuid}`
+  if (!operationManager.canStart(opKeyRetry)) return
+  operationManager.start(opKeyRetry)
+  retryingAds.value.add(v.campaign_ad_uuid)
+  try {
+    const res = await campaignsApi.generateVisuals(campaignUuid.value, {
+      ad_uuids: [v.campaign_ad_uuid],
+      aspect_ratio: aspectRatio.value,
+      quality: quality.value,
+    })
+    const fresh = res.data?.results?.[0]
+    if (fresh && visualResult.value) {
+      // Replace just this one result in-place so the grid keeps its order.
+      visualResult.value = {
+        ...visualResult.value,
+        results: visualResult.value.results.map((r: GeneratedVisual) =>
+          r.campaign_ad_uuid === v.campaign_ad_uuid ? fresh : r,
+        ),
+      }
+    }
+  } catch {
+    // Leave the existing error in place — the user can retry again.
+  } finally {
+    retryingAds.value.delete(v.campaign_ad_uuid)
+    operationManager.finish(opKeyRetry)
   }
 }
 
@@ -255,7 +287,16 @@ async function handleVisualExport(format: 'csv' | 'pdf' | 'pptx') {
               <div v-else class="aspect-video bg-destructive/10 grid place-items-center">
                 <div class="text-center p-3">
                   <AlertCircle class="h-5 w-5 text-destructive mx-auto mb-1" />
-                  <div class="text-[11px] text-destructive">{{ v.error || t('visual.failed') }}</div>
+                  <div class="text-[11px] text-destructive mb-2">{{ v.error || t('visual.failed') }}</div>
+                  <button
+                    :disabled="retryingAds.has(v.campaign_ad_uuid)"
+                    class="h-7 px-2.5 rounded-md border border-border/60 text-[11px] inline-flex items-center gap-1 hover:bg-overlay-subtle transition disabled:opacity-50"
+                    @click="retryVisual(v)"
+                  >
+                    <Loader2 v-if="retryingAds.has(v.campaign_ad_uuid)" class="h-3 w-3 animate-spin" />
+                    <RefreshCw v-else class="h-3 w-3" />
+                    {{ t('seg.retry') }}
+                  </button>
                 </div>
               </div>
               <div class="p-3">
