@@ -93,7 +93,6 @@ Nine features under `src/features/`:
 | `useJobTracker` | Long-running job polling with exponential backoff (2s→10s cap, max 300 attempts) |
 | `useGoogleAuth` | Google OAuth flow handling |
 | `useBrandScore` | Brand score calculation and display |
-| `useDemoMode` | Demo mode toggle |
 | `useProductTour` | Guided product tour |
 | `useMoodBoard` | Mood board management |
 | `useToast` | Toast notification system |
@@ -105,7 +104,7 @@ Nine features under `src/features/`:
 
 ### Shared Components (src/shared/components/)
 
-**UI Components**: AdCopyEditor, AdPreview, BrandScoreGauge, Breadcrumb, ConfirmDialog, CreativeBriefBuilder, DemoBanner, EmptyState, ErrorBoundary, MoodBoard, PersonaMapper, ProductTourOverlay, SkeletonLoader, ToastNotification, VirtualScroll, AnalysisPayloadRenderer
+**UI Components**: AdCopyEditor, AdPreview, BrandScoreGauge, Breadcrumb, ConfirmDialog, CreativeBriefBuilder, EmptyState, ErrorBoundary, MoodBoard, PersonaMapper, ProductTourOverlay, SkeletonLoader, ToastNotification, VirtualScroll, AnalysisPayloadRenderer
 
 **Content Renderers** (src/shared/components/renderers/): AdsStrategyRenderer, AnalysisPayloadRenderer, ContentGapsRenderer, ContentMatrixRenderer, IntelligenceSummaryRenderer, SegmentDeepResearchRenderer, TopPerformingContentRenderer
 

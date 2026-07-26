@@ -659,6 +659,8 @@ export const translations = {
   'variant.regular': { en: 'Regular', ar: 'عادي', fa: 'عادی' },
   'variant.emptyTitle': { en: 'No variants generated yet', ar: 'لم يتم توليد متغيرات بعد', fa: 'هنوز تنوعی تولید نشده' },
   'variant.emptyDesc': { en: 'Select audiences, styles, and formats to generate your variant matrix', ar: 'اختر الجمهور والأنماط والصيغ لتوليد مصفوفتك', fa: 'مخاطبان، سبک‌ها و فرمت‌ها را انتخاب کن تا ماتریس تنوعت تولید شود' },
+  'variant.emptyResultTitle': { en: 'Generation produced no variants', ar: 'لم يُنتج التوليد أي متغيرات', fa: 'تولید هیچ تنوعی نداد' },
+  'variant.emptyResultDesc': { en: 'The selected audience may not be available for this brand’s industry. Try selecting a different audience, or switching the brand.', ar: 'قد لا يكون الجمهور المحدد متاحًا لصناعة هذه العلامة التجارية. جرّب اختيار جمهور آخر أو تغيير العلامة التجارية.', fa: 'مخاطب انتخاب‌شده ممکن است برای صنعت این برند در دسترس نباشد. یک مخاطب دیگر انتخاب کن یا برند را عوض کن.' },
   'variant.metaVariants': { en: '{count} Meta Creative Variants', ar: '{count} متغيرات ميتا الإبداعية', fa: '{count} تنوع خلاقانه متا' },
   'variant.matrixTitle': { en: 'Campaign Scenario Matrix', ar: 'مصفوفة سيناريو الحملة', fa: 'ماتریس سناریو کمپین' },
   'variant.matrixDesc': { en: 'Generate scenario variant matrix for this campaign', ar: 'ولّد مصفوفة متغيرات السيناريو لهذه الحملة', fa: 'ماتریس تنوع سناریو برای این کمپین تولید کن' },
@@ -1050,12 +1052,6 @@ export const translations = {
   'tour.adLibrary.resultsTitle': { en: 'Past Runs', ar: 'التشغيلات السابقة', fa: 'اجراهای قبلی' },
   'tour.adLibrary.resultsDesc': { en: 'View your previous ad generation runs and their results.', ar: 'اطلع على تشغيلات إنشاء الإعلانات السابقة ونتائجها.', fa: 'اجراهای قبلی تولید آگهی و نتایجشون رو ببین.' },
 
-  // ---------- Demo Mode ----------
-  'demo.banner': { en: 'Demo Mode — exploring with sample data', ar: 'وضع تجريبي — استكشاف ببيانات نموذجية', fa: 'حالت دمو — بررسی با داده‌های نمونه' },
-  'demo.exit': { en: 'Exit Demo', ar: 'خروج من التجريبي', fa: 'خروج از دمو' },
-  'demo.tryDemo': { en: 'Try Demo', ar: 'جرب التجريبي', fa: 'دمو را امتحان کن' },
-  'demo.subtitle': { en: 'Explore the full platform with sample data — no signup required.', ar: 'استكشف المنصة بالكامل ببيانات نموذجية — بدون تسجيل.', fa: 'پلتفرم رو با داده‌های نمونه ببین — بدون ثبت‌نام.' },
-
   // ---------- Dashboard ----------
   'dashboard.welcomeBack': { en: 'Welcome back', ar: 'أهلاً بعودتك', fa: 'خوش آمدی' },
   'dashboard.quickActions': { en: 'Quick Actions', ar: 'إجراءات سريعة', fa: 'اقدامات سریع' },
@@ -1375,7 +1371,6 @@ export const translations = {
   'guided.brands.desc': { en: 'Every great campaign starts with a brand. Let\'s set yours up.', ar: 'كل حملة عظيمة تبدأ بعلامة. دعنا نُعدّ علامتك.', fa: 'هر کمپین عالی با یک برند شروع می‌شود. بیایید برند شما را تنظیم کنیم.' },
   'guided.brands.why': { en: 'Your brand profile powers all AI analysis — competitor insights, audience segments, and tailored ad copy.', ar: 'ملف علامتك يُشغّل كل تحليلات الذكاء الاصطناعي — رؤى المنافسين وشرائح الجمهور والنصوص المخصصة.', fa: 'پروفایل برند شما تمام تحلیل‌های هوش مصنوعی را تغذیه می‌کند — بینش رقبا، بخش‌های مخاطب و متن آگهی سفارشی.' },
   'guided.brands.addBrand': { en: 'Add Brand', ar: 'أضف علامة', fa: 'افزودن برند' },
-  'guided.brands.useDemo': { en: 'Try Demo', ar: 'جرّب العرض', fa: 'تست دمو' },
   'guided.brands.step1': { en: 'Add your brand details', ar: 'أضف تفاصيل علامتك', fa: 'اطلاعات برند را وارد کنید' },
   'guided.brands.step1Desc': { en: 'Website, industry, and product info', ar: 'الموقع والصناعة ومعلومات المنتج', fa: 'وبسایت، صنعت و اطلاعات محصول' },
   'guided.brands.step2': { en: 'Run brand analysis', ar: 'شغّل تحليل العلامة', fa: 'اجرای تحلیل برند' },
