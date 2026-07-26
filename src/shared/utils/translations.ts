@@ -417,6 +417,7 @@ export const translations = {
   'analysis.tab.audience': { en: 'Audience', ar: 'الجمهور', fa: 'مخاطب' },
   'analysis.tab.competitors': { en: 'Competitors', ar: 'المنافسون', fa: 'رقبا' },
   'analysis.tab.insights': { en: 'Insights', ar: 'رؤى', fa: 'بینش‌ها' },
+  'analysis.tab.social': { en: 'Social Presence', ar: 'التواجد الاجتماعي', fa: 'حضور اجتماعی' },
   'analysis.tab.analysis': { en: 'Analysis', ar: 'تحليل', fa: 'تحلیل' },
   'analysis.section.brandProfile': { en: 'Brand Profile', ar: 'ملف العلامة', fa: 'پروفایل برند' },
   'analysis.hint.brandProfile': { en: 'Who the brand is — identity, voice and personality at a glance.', ar: 'من هي العلامة — الهوية والصوت والشخصية بنظرة سريعة.', fa: 'برند کیست — هویت، لحن و شخصیت در یک نگاه.' },
@@ -1002,7 +1003,7 @@ export const translations = {
 
   // Brand analysis tour
   'tour.brandAnalysis.typeTitle': { en: 'Analysis Tabs', ar: 'تبويبات التحليل', fa: 'تب‌های تحلیل' },
-  'tour.brandAnalysis.typeDesc': { en: 'Switch between overview, audience, competitors and insights.', ar: 'بدّل بين النظرة العامة والجمهور والمنافسين والرؤى.', fa: 'بین نمای کلی، مخاطب، رقبا و بینش جابجا شو.' },
+  'tour.brandAnalysis.typeDesc': { en: 'Switch between overview, social presence, audience, competitors and insights.', ar: 'بدّل بين النظرة العامة والتواجد الاجتماعي والجمهور والمنافسين والرؤى.', fa: 'بین نمای کلی، حضور اجتماعی، مخاطب، رقبا و بینش جابجا شو.' },
   'tour.brandAnalysis.runTitle': { en: 'Start Analysis', ar: 'بدء التحليل', fa: 'شروع تحلیل' },
   'tour.brandAnalysis.runDesc': { en: 'Click to run a deep AI analysis of your brand.', ar: 'اضغط لتشغيل تحليل ذكي عميق لعلامتك.', fa: 'بزن تا تحلیل عمیق AI برندت اجرا بشه.' },
   'tour.brandAnalysis.resultsTitle': { en: 'Analysis Results', ar: 'نتائج التحليل', fa: 'نتایج تحلیل' },

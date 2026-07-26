@@ -127,7 +127,7 @@ const recommendations = computed(() => runData.value?.recommendations ?? null)
 const emotionProfile = computed(() => runData.value?.emotion_profile ?? null)
 const competitiveAnalysis = computed(() => runData.value?.competitive_analysis ?? null)
 
-const activeTab = ref<'overview' | 'audience' | 'competitors' | 'insights'>('overview')
+const activeTab = ref<'overview' | 'social' | 'audience' | 'competitors' | 'insights'>('overview')
 
 const isExporting = ref(false)
 const confetti = useConfetti()
@@ -274,7 +274,7 @@ setActions([
       <!-- Tabs -->
       <div class="flex gap-1 p-1 rounded-lg bg-overlay-subtle border border-border/40 w-full sm:w-fit overflow-x-auto" data-tour="brands.analysis.type-selector">
         <button
-          v-for="tab in (['overview', 'audience', 'competitors', 'insights'] as const)"
+          v-for="tab in (['overview', 'social', 'audience', 'competitors', 'insights'] as const)"
           :key="tab"
           @click="activeTab = tab"
           :data-loc="`brands.analysis.tab-${tab}`"
@@ -292,27 +292,32 @@ setActions([
       <!-- Overview Tab -->
       <div v-if="activeTab === 'overview'" class="grid md:grid-cols-2 gap-4" data-tour="brands.analysis.results">
         <!-- Brand Profile -->
-        <div v-if="brandProfile" class="surface-card p-5 space-y-4">
+        <div v-if="brandProfile" class="surface-card p-5 space-y-4 md:col-span-2">
           <div class="flex items-center gap-2 text-sm font-semibold">
             <Globe class="h-4 w-4 text-primary" /> {{ t('analysis.section.brandProfile') }} <InfoTooltip :text="t('analysis.hint.brandProfile')" />
           </div>
           <AnalysisPayloadRenderer :data="brandProfile" />
         </div>
 
-        <!-- Social Presence -->
+        <!-- Emotion Profile -->
+        <div v-if="emotionProfile" class="surface-card p-5 space-y-4 md:col-span-2">
+          <div class="flex items-center gap-2 text-sm font-semibold">
+            <Heart class="h-4 w-4 text-primary" /> {{ t('analysis.section.emotionProfile') }}
+          </div>
+          <AnalysisPayloadRenderer :data="emotionProfile" />
+        </div>
+      </div>
+
+      <!-- Social Presence Tab -->
+      <div v-if="activeTab === 'social'">
         <div v-if="socialPresence" class="surface-card p-5 space-y-4">
           <div class="flex items-center gap-2 text-sm font-semibold">
             <Brain class="h-4 w-4 text-primary" /> {{ t('analysis.section.socialPresence') }}
           </div>
           <SocialPresenceRenderer :data="socialPresence" />
         </div>
-
-        <!-- Emotion Profile -->
-        <div v-if="emotionProfile" class="surface-card p-5 space-y-4">
-          <div class="flex items-center gap-2 text-sm font-semibold">
-            <Heart class="h-4 w-4 text-primary" /> {{ t('analysis.section.emotionProfile') }}
-          </div>
-          <AnalysisPayloadRenderer :data="emotionProfile" />
+        <div v-else class="surface-card p-5 text-center text-muted-foreground text-sm py-8">
+          {{ t('analysis.noData') }}
         </div>
       </div>
 
