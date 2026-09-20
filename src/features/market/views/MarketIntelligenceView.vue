@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Brain, AlertCircle, MapPin, ShoppingBag, RefreshCw, Check, BarChart3, Target, Layers, TrendingUp, Lightbulb, Download, FileText, LayoutGrid, Loader2, ArrowLeft } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
@@ -10,7 +10,7 @@ import ContentMatrixRenderer from '@/shared/components/renderers/ContentMatrixRe
 import TopPerformingContentRenderer from '@/shared/components/renderers/TopPerformingContentRenderer.vue'
 import MarketHistoryList from '../components/MarketHistoryList.vue'
 import { useI18n } from '@/shared/utils/i18n'
-import { useBrands } from '@/features/brands/queries'
+import { useBrands, useBrandServices } from '@/features/brands/queries'
 import { useAutoSelectBrand } from '@/shared/composables/useAutoSelectBrand'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { exportIntelligencePDF, exportIntelligencePPTX, exportIntelligenceXLSX } from '@/shared/utils/exportMarket'
@@ -32,6 +32,20 @@ const industry = ref('')
 const location = ref('')
 const brandServices = ref('')
 const contentGoal = ref<'engagement' | 'leads' | 'awareness' | 'sales' | 'education'>('engagement')
+
+// Prefill the manual services input from the brand services endpoint (F14).
+// The user can still edit the text before running.
+const { data: detectedServices } = useBrandServices(selectedBrandUuid)
+
+watch(selectedBrandUuid, () => {
+  brandServices.value = ''
+})
+
+watch(detectedServices, (services) => {
+  if (services?.length && !brandServices.value.trim()) {
+    brandServices.value = services.map((s) => s.name).join(', ')
+  }
+})
 
 const result = ref<ContentIntelligenceRun | null>(null)
 const loading = ref(false)

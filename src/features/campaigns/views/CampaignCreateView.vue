@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowLeft, Megaphone } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
+import ServiceSelector from '@/shared/components/ServiceSelector.vue'
 import { useI18n } from '@/shared/utils/i18n'
-import { useBrands } from '@/features/brands/queries'
+import { useBrands, useBrandServices } from '@/features/brands/queries'
 import { useAutoSelectBrand } from '@/shared/composables/useAutoSelectBrand'
 import { useCreateCampaign } from '../queries'
 
@@ -19,6 +20,15 @@ useAutoSelectBrand(selectedBrandUuid)
 const campaignName = ref('')
 const creating = ref(false)
 
+// Services to advertise (F14): fetched for the chosen brand, selection is
+// persisted on the campaign via context_payload.selected_services.
+const { data: brandServices, isLoading: servicesLoading } = useBrandServices(selectedBrandUuid)
+const selectedServices = ref<string[]>([])
+
+watch(selectedBrandUuid, () => {
+  selectedServices.value = []
+})
+
 async function handleCreate() {
   if (!selectedBrandUuid.value) return
   creating.value = true
@@ -26,6 +36,9 @@ async function handleCreate() {
     const result = await createMutation.mutateAsync({
       brand_uuid: selectedBrandUuid.value,
       name: campaignName.value || undefined,
+      ...(selectedServices.value.length
+        ? { context_payload: { selected_services: selectedServices.value } }
+        : {}),
     })
     router.push(`/campaigns/${result.data.campaign_uuid}`)
   } finally {
@@ -82,6 +95,17 @@ async function handleCreate() {
           :placeholder="t('camp.namePlaceholder')"
           class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none focus:border-primary/60 transition"
           data-loc="campaigns.create.name-input"
+        />
+      </div>
+
+      <!-- Services to advertise (F14) -->
+      <div v-if="selectedBrandUuid && (servicesLoading || brandServices?.length)" data-loc="campaigns.create.services">
+        <label class="text-xs font-medium mb-1.5 block">{{ t('camp.servicesLabel') }}</label>
+        <p class="text-[11px] text-muted-foreground mb-2.5">{{ t('camp.servicesHint') }}</p>
+        <ServiceSelector
+          v-model="selectedServices"
+          :services="brandServices ?? []"
+          :disabled="creating"
         />
       </div>
 

@@ -106,6 +106,14 @@ export const translations = {
   'newbrand.scan.confidence.low': { en: 'Low confidence — verify', ar: 'ثقة منخفضة — تحقق', fa: 'اطمینان پایین — بررسی کنید' },
   'newbrand.scan.confidence.unknown': { en: 'Unrated', ar: 'غير مقيَّم', fa: 'بدون ارزیابی' },
 
+  // Service selector (F14)
+  'serviceSelector.empty': { en: 'No services detected yet — add the ones you want to advertise.', ar: 'لم يتم اكتشاف خدمات بعد — أضف ما تريد الإعلان عنه.', fa: 'هنوز خدمتی کشف نشده — مواردی را که می‌خواهید تبلیغ کنید اضافه کنید.' },
+  'serviceSelector.addPlaceholder': { en: 'Add another service…', ar: 'أضف خدمة أخرى…', fa: 'افزودن خدمت دیگر…' },
+  'serviceSelector.add': { en: 'Add', ar: 'إضافة', fa: 'افزودن' },
+  'serviceSelector.custom': { en: 'New', ar: 'جديد', fa: 'جدید' },
+  'camp.servicesLabel': { en: 'Services to advertise', ar: 'الخدمات للإعلان عنها', fa: 'خدمات برای تبلیغ' },
+  'camp.servicesHint': { en: 'Detected from your brand — deselect what you don\'t want, or add your own.', ar: 'تم اكتشافها من علامتك — أزل ما لا تريده أو أضف خدماتك.', fa: 'از برند شما کشف شده — موارد ناخواسته را حذف یا موارد خود را اضافه کنید.' },
+
   // Status
   'status.analyzed': { en: 'Analyzed', ar: 'تم التحليل', fa: 'تحلیل‌شده' },
   'status.analyzing': { en: 'Analyzing', ar: 'قيد التحليل', fa: 'در حال تحلیل' },

@@ -10,6 +10,7 @@ import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { useCampaign } from '../queries'
+import { useBrandServices } from '@/features/brands/queries'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
 import { exportPPCViability } from '@/shared/utils/exportStep'
@@ -20,6 +21,10 @@ const { t } = useI18n()
 
 const campaignUuid = computed(() => route.params.campaignUuid as string)
 const { data: campaign } = useCampaign(campaignUuid)
+
+// Detected brand services (F14) — primary source for the services list.
+const brandUuid = computed(() => campaign.value?.brand?.brand_uuid ?? '')
+const { data: detectedServices } = useBrandServices(brandUuid)
 
 const { setActions } = usePageActions()
 setActions([{ label: t('camp.backToCampaign'), icon: ArrowLeft, to: `/campaigns/${campaignUuid.value}` }])
@@ -43,6 +48,17 @@ const viabilityData = computed(() => {
   return payload.data ?? payload
 })
 const services = computed(() => {
+  // Prefer the brand services endpoint (merged + deduplicated backend-side);
+  // fall back to scraping the step payload for any services-like list when
+  // the endpoint has nothing (e.g. brand never analyzed/scraped).
+  const fromEndpoint = (detectedServices.value ?? []).map((s) => ({
+    name: s.name,
+    score: s.score ?? undefined,
+    classification: s.classification ?? undefined,
+    recommendation: s.recommendation ?? undefined,
+  }))
+  if (fromEndpoint.length) return fromEndpoint
+
   if (!viabilityData.value) return []
   const d = viabilityData.value
   const svcs = d.brand_trust_analysis?.services_bpc_scores
