@@ -76,6 +76,10 @@ onMounted(async () => {
 })
 
 async function generate() {
+  // A re-run produces a fresh run and fresh variant uuids — drop the stale
+  // visual overlay/error so nothing from the previous run lingers.
+  visualsByVariant.value = {}
+  visualsError.value = ''
   await startJob()
   if (runData.value?.status === 'completed' && runData.value?.scenario_variant_run_uuid) {
     router.replace(`/campaigns/${campaignUuid.value}/scenario-matrix/${runData.value.scenario_variant_run_uuid}`)

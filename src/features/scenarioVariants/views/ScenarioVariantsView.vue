@@ -245,6 +245,11 @@ async function generate() {
     selectionNotes.format_notes = Object.fromEntries(formatNames.map(n => [n, formatNotes.value]))
   }
 
+  // A new run replaces the old one — drop the previous run's persisted
+  // variants so the fresh generation result renders instead of stale data.
+  persistedVariants.value = []
+  visualsError.value = ''
+
   await run(async () => {
     const { data } = await scenarioVariantsApi.runStandaloneVariants({
       brand_uuid: brandUuid.value,
