@@ -90,6 +90,22 @@ export const translations = {
     fa: 'سایت را اسکن می‌کنیم، پرسوناهای مخاطب را می‌سازیم، رقبا را پروفایل می‌کنیم و حضور اجتماعی را تحلیل می‌کنیم. خلاصه کامل در داشبورد تو خواهد بود.',
   },
 
+  // Website auto-scan (F18)
+  'newbrand.scan.btn': { en: 'Scan website', ar: 'فحص الموقع', fa: 'اسکن وب‌سایت' },
+  'newbrand.scan.scanning': { en: 'Scanning…', ar: 'جارٍ الفحص…', fa: 'در حال اسکن…' },
+  'newbrand.scan.urlRequired': { en: 'Enter a website URL to scan first.', ar: 'أدخل رابط الموقع أولاً للفحص.', fa: 'ابتدا آدرس وب‌سایت را برای اسکن وارد کنید.' },
+  'newbrand.scan.failed': { en: 'Website scan failed. Check the URL and try again.', ar: 'فشل فحص الموقع. تحقق من الرابط وحاول مجدداً.', fa: 'اسکن وب‌سایت ناموفق بود. آدرس را بررسی کنید و دوباره تلاش کنید.' },
+  'newbrand.scan.resultTitle': { en: 'Detected brand info', ar: 'معلومات العلامة المكتشفة', fa: 'اطلاعات کشف‌شده برند' },
+  'newbrand.scan.reviewHint': { en: 'Prefilled below — review and edit before saving.', ar: 'تمت التعبئة أدناه — راجع وحرّر قبل الحفظ.', fa: 'در زیر پر شده — قبل از ذخیره بررسی و ویرایش کنید.' },
+  'newbrand.scan.services': { en: 'Services', ar: 'الخدمات', fa: 'خدمات' },
+  'newbrand.scan.language': { en: 'Language', ar: 'اللغة', fa: 'زبان' },
+  'newbrand.scan.industryCandidates': { en: 'Industry candidates — tap to select', ar: 'مرشحات الصناعة — اضغط للاختيار', fa: 'گزینه‌های صنعت — برای انتخاب ضربه بزنید' },
+  'newbrand.scan.warnings': { en: 'Scan warnings', ar: 'تحذيرات الفحص', fa: 'هشدارهای اسکن' },
+  'newbrand.scan.confidence.high': { en: 'High confidence', ar: 'ثقة عالية', fa: 'اطمینان بالا' },
+  'newbrand.scan.confidence.medium': { en: 'Medium confidence', ar: 'ثقة متوسطة', fa: 'اطمینان متوسط' },
+  'newbrand.scan.confidence.low': { en: 'Low confidence — verify', ar: 'ثقة منخفضة — تحقق', fa: 'اطمینان پایین — بررسی کنید' },
+  'newbrand.scan.confidence.unknown': { en: 'Unrated', ar: 'غير مقيَّم', fa: 'بدون ارزیابی' },
+
   // Status
   'status.analyzed': { en: 'Analyzed', ar: 'تم التحليل', fa: 'تحلیل‌شده' },
   'status.analyzing': { en: 'Analyzing', ar: 'قيد التحليل', fa: 'در حال تحلیل' },

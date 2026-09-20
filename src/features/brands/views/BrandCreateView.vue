@@ -4,13 +4,14 @@ import { useRouter, useRoute } from 'vue-router'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { useToast } from '@/shared/composables/useToast'
-import { useIndustries, useCreateBrand, useBrand, useUpdateBrand, useBrandAssets, useBrandSocialMedia } from '@/features/brands/queries'
+import { useIndustries, useCreateBrand, useUpdateBrand, useBrand, useBrandAssets, useBrandSocialMedia, useScanWebsite } from '@/features/brands/queries'
 import { brandsApi } from '@/features/brands/api'
 import {
   Globe, Building2, MapPin, Upload, Palette, ArrowRight, ArrowLeft,
-  Check, Sparkles, Facebook, Instagram, Linkedin, Youtube, X,
+  Check, Sparkles, Facebook, Instagram, Linkedin, Youtube, X, ScanSearch, AlertTriangle,
 } from 'lucide-vue-next'
 import type { TKey } from '@/shared/utils/translations'
+import type { BrandScanResult, ScanConfidence, ScanDetectedField } from '@/features/brands/types'
 
 const logoFile = ref<File | null>(null)
 const logoPreview = ref<string | null>(null)
@@ -78,6 +79,8 @@ watch(existingBrand, (brand) => {
     form.value.website_url = brand.website_url
     form.value.company_name = brand.company_name
     form.value.selected_industry_id = brand.selected_industry?.industry_uuid ?? null
+    form.value.location = brand.location ?? ''
+    form.value.brand_color = brand.brand_color ?? ''
   }
 }, { immediate: true })
 
@@ -102,6 +105,112 @@ watch(existingAssets, (assets) => {
   }
 }, { immediate: true })
 
+// ---------- Website auto-scan (F18) ----------
+const scanMutation = useScanWebsite()
+const scanResult = ref<BrandScanResult | null>(null)
+const scanError = ref('')
+const scanning = computed(() => scanMutation.isPending.value)
+
+const CONFIDENCE_CLASSES: Record<ScanConfidence, string> = {
+  high: 'bg-success/10 text-success border-success/30',
+  medium: 'bg-amber-400/10 text-amber-400 border-amber-400/30',
+  low: 'bg-destructive/10 text-destructive border-destructive/30',
+}
+
+function confidenceClass(confidence: ScanConfidence | null): string {
+  return confidence
+    ? CONFIDENCE_CLASSES[confidence]
+    : 'bg-overlay-subtle text-muted-foreground border-border/40'
+}
+
+const CONFIDENCE_LABEL_KEYS = {
+  high: 'newbrand.scan.confidence.high',
+  medium: 'newbrand.scan.confidence.medium',
+  low: 'newbrand.scan.confidence.low',
+  unknown: 'newbrand.scan.confidence.unknown',
+} as const
+
+function confidenceLabelKey(confidence: ScanConfidence | null): TKey {
+  return CONFIDENCE_LABEL_KEYS[confidence ?? 'unknown']
+}
+
+interface ScanFieldRow {
+  key: string
+  label: string
+  value: string
+  confidence: ScanConfidence | null
+}
+
+const scanRows = computed<ScanFieldRow[]>(() => {
+  const detected = scanResult.value?.detected
+  if (!detected) return []
+  const rows: ScanFieldRow[] = []
+  const push = (key: string, label: string, field: ScanDetectedField<unknown> | undefined, format: (value: unknown) => string | null) => {
+    const raw = field?.value
+    if (raw == null || (Array.isArray(raw) && raw.length === 0)) return
+    const text = format(raw)
+    if (!text) return
+    rows.push({ key, label, value: text, confidence: field?.confidence ?? null })
+  }
+  const joinList = (value: unknown) => (Array.isArray(value) ? value.join(', ') : null)
+  push('company', t('newbrand.field.company'), detected.company_name, (v) => String(v))
+  push('location', t('newbrand.field.location'), detected.location, (v) => String(v))
+  push('color', t('newbrand.color'), detected.brand_colors, joinList)
+  push('services', t('newbrand.scan.services'), detected.services, joinList)
+  push('language', t('newbrand.scan.language'), detected.language, (v) => String(v))
+  return rows
+})
+
+const industryCandidates = computed(() => scanResult.value?.detected.industry.value ?? [])
+
+// Auto-select the best detected industry once candidates and the industries list are both available.
+watch([industryCandidates, industries], ([candidates, list]) => {
+  if (!candidates.length || !list?.length) return
+  if (form.value.selected_industry_id) return // respect an explicit user choice
+  const match = candidates.find((c) => list.some((i) => i.industry_uuid === c.industry_uuid))
+  if (match) form.value.selected_industry_id = match.industry_uuid
+}, { immediate: true })
+
+async function handleScan() {
+  scanError.value = ''
+  const url = form.value.website_url.trim()
+  if (!url) {
+    scanError.value = t('newbrand.scan.urlRequired')
+    return
+  }
+  scanResult.value = null
+  try {
+    const res = await scanMutation.mutateAsync({ website_url: url })
+    scanResult.value = res.data
+    applyScanResult(res.data)
+  } catch (e: any) {
+    const data = e?.response?.data
+    const detail = data?.detail
+    scanError.value = data?.website_url?.[0]
+      || (Array.isArray(detail) ? detail.join(' ') : typeof detail === 'string' ? detail : '')
+      || data?.non_field_errors?.[0]
+      || t('newbrand.scan.failed')
+  }
+}
+
+function applyScanResult(result: BrandScanResult) {
+  const detected = result.detected
+  // Review-then-confirm (MOM 5.2): prefill every non-null value; the user
+  // reviews and can edit anything before submitting. Never auto-submit.
+  if (detected.company_name.value) form.value.company_name = detected.company_name.value
+  if (detected.location.value) form.value.location = detected.location.value
+  const colors = detected.brand_colors.value
+  if (colors?.length) form.value.brand_color = colors[0]
+  const profiles = detected.social_profiles.value
+  if (profiles?.length) {
+    for (const p of profiles) {
+      if (p.platform in socialLinks.value && p.url) {
+        socialLinks.value[p.platform] = p.url
+      }
+    }
+  }
+}
+
 const error = ref('')
 const loading = computed(() => createMutation.isPending.value || updateMutation.isPending.value)
 
@@ -118,6 +227,8 @@ async function handleSubmit() {
       website_url: form.value.website_url,
       company_name: form.value.company_name,
       selected_industry_id: form.value.selected_industry_id,
+      location: form.value.location,
+      brand_color: form.value.brand_color,
     }
     if (isEdit.value) {
       await updateMutation.mutateAsync({ uuid: brandUuid.value, payload })
@@ -221,15 +332,99 @@ async function handleSubmit() {
             <span class="text-xs font-medium text-muted-foreground mb-1.5 block">{{ t('newbrand.field.url') }}</span>
             <div class="relative">
               <Globe class="absolute start-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <input v-model="form.website_url" placeholder="https://yourbrand.com" class="w-full h-11 ps-9 pe-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 focus:bg-overlay-light transition" />
+              <input v-model="form.website_url" data-testid="website-url-input" placeholder="https://yourbrand.com" class="w-full h-11 ps-9 pe-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 focus:bg-overlay-light transition" />
             </div>
             <span class="text-[11px] text-muted-foreground mt-1.5 block">{{ t('newbrand.field.urlHint') }}</span>
           </label>
+          <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+            <button
+              type="button"
+              :disabled="scanning || !form.website_url.trim()"
+              data-loc="brands.create.scan-btn"
+              data-testid="scan-button"
+              class="w-full sm:w-auto h-10 px-4 rounded-lg border border-primary/40 bg-primary/10 text-primary text-xs font-medium hover:bg-primary/15 transition flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+              @click="handleScan"
+            >
+              <ScanSearch class="h-3.5 w-3.5" />
+              <span v-if="scanning" class="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-primary" />
+              {{ scanning ? t('newbrand.scan.scanning') : t('newbrand.scan.btn') }}
+            </button>
+            <span v-if="scanResult" class="text-[11px] text-muted-foreground px-1">{{ t('newbrand.scan.reviewHint') }}</span>
+          </div>
+          <div v-if="scanError" data-testid="scan-error" class="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-xs text-destructive">
+            <AlertTriangle class="h-3.5 w-3.5 shrink-0 mt-0.5" />
+            <span>{{ scanError }}</span>
+          </div>
+
+          <!-- Scan results: review-then-confirm (MOM 5.2) -->
+          <div v-if="scanResult" data-testid="scan-result" class="rounded-xl border border-primary/30 bg-primary/[0.04] p-4 space-y-4">
+            <div class="flex items-center gap-2">
+              <Sparkles class="h-4 w-4 text-primary" />
+              <span class="text-sm font-medium">{{ t('newbrand.scan.resultTitle') }}</span>
+            </div>
+
+            <!-- Detected fields with confidence badges -->
+            <div v-if="scanRows.length" class="space-y-1.5">
+              <div v-for="row in scanRows" :key="row.key" class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-sm">
+                <span class="text-muted-foreground text-xs">{{ row.label }}</span>
+                <span class="flex items-center gap-2 min-w-0">
+                  <span class="font-medium truncate text-xs">{{ row.value }}</span>
+                  <span
+                    :class="['inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[10px] font-medium whitespace-nowrap', confidenceClass(row.confidence)]"
+                    data-testid="scan-confidence-badge"
+                  >
+                    {{ t(confidenceLabelKey(row.confidence)) }}
+                  </span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Industry candidates -->
+            <div v-if="industryCandidates.length">
+              <div class="text-xs text-muted-foreground mb-2">{{ t('newbrand.scan.industryCandidates') }}</div>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  v-for="cand in industryCandidates"
+                  :key="cand.industry_uuid"
+                  type="button"
+                  :class="[
+                    'inline-flex items-center gap-1.5 h-8 px-3 rounded-full border text-xs transition',
+                    form.selected_industry_id === cand.industry_uuid
+                      ? 'border-primary bg-primary/15 text-primary font-medium'
+                      : 'border-border/60 bg-overlay-subtle text-foreground hover:border-primary/40',
+                  ]"
+                  data-testid="industry-candidate"
+                  @click="form.selected_industry_id = cand.industry_uuid"
+                >
+                  {{ cand.name }}
+                  <span
+                    :class="['px-1.5 py-0.5 rounded border text-[10px] font-medium', confidenceClass(cand.confidence)]"
+                    data-testid="scan-confidence-badge"
+                  >
+                    {{ t(confidenceLabelKey(cand.confidence)) }}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Warnings -->
+            <div v-if="scanResult.warnings.length" class="space-y-1.5">
+              <div class="flex items-center gap-1.5 text-xs font-medium text-amber-400">
+                <AlertTriangle class="h-3.5 w-3.5" />
+                {{ t('newbrand.scan.warnings') }}
+              </div>
+              <ul class="space-y-1">
+                <li v-for="(warning, i) in scanResult.warnings" :key="i" data-testid="scan-warning" class="text-[11px] text-muted-foreground leading-relaxed">
+                  • {{ warning }}
+                </li>
+              </ul>
+            </div>
+          </div>
           <label class="block">
             <span class="text-xs font-medium text-muted-foreground mb-1.5 block">{{ t('newbrand.field.company') }}</span>
             <div class="relative">
               <Building2 class="absolute start-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <input v-model="form.company_name" placeholder="Lumen Skincare" class="w-full h-11 ps-9 pe-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 focus:bg-overlay-light transition" />
+              <input v-model="form.company_name" data-testid="company-input" placeholder="Lumen Skincare" class="w-full h-11 ps-9 pe-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 focus:bg-overlay-light transition" />
             </div>
           </label>
           <div class="grid md:grid-cols-2 gap-4">
@@ -333,6 +528,10 @@ async function handleSubmit() {
               <span class="font-medium truncate text-end">
                 {{ industries?.find((i: any) => i.industry_uuid === form.selected_industry_id)?.name || '—' }}
               </span>
+            </div>
+            <div class="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+              <span class="text-muted-foreground shrink-0">{{ t('newbrand.row.location') }}</span>
+              <span class="font-medium truncate text-end">{{ form.location || '—' }}</span>
             </div>
             <div class="flex items-center justify-between gap-3 px-4 py-3 text-sm">
               <span class="text-muted-foreground shrink-0">{{ t('newbrand.row.color') }}</span>

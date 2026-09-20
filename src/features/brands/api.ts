@@ -1,5 +1,5 @@
 import apiClient from '@/shared/api/client'
-import type { Brand, BrandCreatePayload, Industry, BrandAsset, BrandSocialMedia, AnalysisRun, AnalysisStartPayload } from './types'
+import type { Brand, BrandCreatePayload, Industry, BrandAsset, BrandSocialMedia, AnalysisRun, AnalysisStartPayload, BrandScanPayload, BrandScanResult, BrandServicesResponse } from './types'
 
 type SignalConfig = { signal?: AbortSignal }
 
@@ -26,6 +26,14 @@ export const brandsApi = {
 
   listIndustries(config?: SignalConfig): Promise<{ data: Industry[] }> {
     return apiClient.get('/industries/', config)
+  },
+
+  scanWebsite(payload: BrandScanPayload): Promise<{ data: BrandScanResult }> {
+    return apiClient.post('/brands/scan/', payload, { timeout: 120_000 })
+  },
+
+  listServices(brandUuid: string, config?: SignalConfig): Promise<{ data: BrandServicesResponse }> {
+    return apiClient.get(`/brands/${brandUuid}/services/`, config)
   },
 
   listAssets(brandUuid: string, config?: SignalConfig): Promise<{ data: BrandAsset[] }> {
