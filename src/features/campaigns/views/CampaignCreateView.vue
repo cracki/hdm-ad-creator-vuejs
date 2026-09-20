@@ -102,7 +102,9 @@ async function handleCreate() {
       <div v-if="selectedBrandUuid && (servicesLoading || brandServices?.length)" data-loc="campaigns.create.services">
         <label class="text-xs font-medium mb-1.5 block">{{ t('camp.servicesLabel') }}</label>
         <p class="text-[11px] text-muted-foreground mb-2.5">{{ t('camp.servicesHint') }}</p>
+        <!-- :key — remount per brand so custom-added service names don't leak across brands -->
         <ServiceSelector
+          :key="selectedBrandUuid"
           v-model="selectedServices"
           :services="brandServices ?? []"
           :disabled="creating"

@@ -136,6 +136,30 @@ describe('BrandCreateView — website auto-scan (F18)', () => {
     expect((inputByPlaceholder(wrapper, '#A855F7').element as HTMLInputElement).value).toBe('#EC4899')
   })
 
+  it('never clobbers user input: typed fields survive the scan, untouched empty fields get prefilled', async () => {
+    vi.mocked(brandsApi.scanWebsite).mockResolvedValue(scanResponse)
+    const wrapper = await mountView()
+    await flushPromises()
+
+    await wrapper.find('[data-testid="website-url-input"]').setValue('https://lumen.test')
+    // User typed a company name — must be preserved
+    await wrapper.find('[data-testid="company-input"]').setValue('My Own Company')
+    // User typed a location and then cleared it — still counts as touched
+    await inputByPlaceholder(wrapper, 'Dubai, UAE').setValue('Berlin')
+    await inputByPlaceholder(wrapper, 'Dubai, UAE').setValue('')
+    await wrapper.find('[data-testid="scan-button"]').trigger('click')
+    await flushPromises()
+
+    // Typed company name survives; touched-then-cleared location stays empty
+    expect((wrapper.find('[data-testid="company-input"]').element as HTMLInputElement).value).toBe('My Own Company')
+    expect((inputByPlaceholder(wrapper, 'Dubai, UAE').element as HTMLInputElement).value).toBe('')
+
+    // Untouched empty fields are still prefilled (brand color lives on step 2)
+    await wrapper.find('[data-loc="brands.create.continue-btn"]').trigger('click')
+    await flushPromises()
+    expect((inputByPlaceholder(wrapper, '#A855F7').element as HTMLInputElement).value).toBe('#EC4899')
+  })
+
   it('does not auto-submit after a scan — submit requires the review step', async () => {
     vi.mocked(brandsApi.scanWebsite).mockResolvedValue(scanResponse)
     const wrapper = await mountView()

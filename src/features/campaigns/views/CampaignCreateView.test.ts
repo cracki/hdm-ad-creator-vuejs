@@ -109,6 +109,25 @@ describe('CampaignCreateView — service selection (F14)', () => {
     })
   })
 
+  it('resets custom-added service names when switching brands', async () => {
+    const wrapper = await mountView()
+
+    // Brand A: add a custom service alongside the detected ones
+    await wrapper.findAll('[data-loc="campaigns.create.brand-select"]')[0].trigger('click')
+    await flushPromises()
+    await wrapper.find('[data-testid="service-add-input"]').setValue('Branding')
+    await wrapper.find('[data-testid="service-add-btn"]').trigger('click')
+    expect(wrapper.findAll('[data-testid="service-chip"]').length).toBe(3) // 2 detected + 1 custom
+
+    // Switch to brand B: the custom chip must not leak into the new brand
+    await wrapper.findAll('[data-loc="campaigns.create.brand-select"]')[1].trigger('click')
+    await flushPromises()
+
+    const chips = wrapper.findAll('[data-testid="service-chip"]')
+    expect(chips.length).toBe(2)
+    expect(chips.some((c) => c.text().includes('Branding'))).toBe(false)
+  })
+
   it('omits context_payload when no services are selected', async () => {
     const wrapper = await mountView()
 

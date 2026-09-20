@@ -45,7 +45,7 @@ watch(detectedServices, (services) => {
   if (services?.length && !brandServices.value.trim()) {
     brandServices.value = services.map((s) => s.name).join(', ')
   }
-})
+}, { immediate: true }) // immediate: cached (synchronous) data must still prefill
 
 const result = ref<ContentIntelligenceRun | null>(null)
 const loading = ref(false)

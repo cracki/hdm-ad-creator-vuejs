@@ -193,18 +193,34 @@ async function handleScan() {
   }
 }
 
+// Fields the user has typed into. Scan prefill never clobbers manual input,
+// so it only fills fields that are untouched AND still empty (industry keeps
+// its own guard in the candidates watch above).
+const userEditedFields = new Set<string>()
+
+function markUserEdited(key: string) {
+  userEditedFields.add(key)
+}
+
 function applyScanResult(result: BrandScanResult) {
   const detected = result.detected
-  // Review-then-confirm (MOM 5.2): prefill every non-null value; the user
-  // reviews and can edit anything before submitting. Never auto-submit.
-  if (detected.company_name.value) form.value.company_name = detected.company_name.value
-  if (detected.location.value) form.value.location = detected.location.value
+  // Review-then-confirm (MOM 5.2): fill only untouched, still-empty fields;
+  // the user reviews and can edit anything before submitting. Never auto-submit.
+  const shouldFill = (key: string, current: string) => !userEditedFields.has(key) && !current.trim()
+  if (detected.company_name.value && shouldFill('company_name', form.value.company_name)) {
+    form.value.company_name = detected.company_name.value
+  }
+  if (detected.location.value && shouldFill('location', form.value.location)) {
+    form.value.location = detected.location.value
+  }
   const colors = detected.brand_colors.value
-  if (colors?.length) form.value.brand_color = colors[0]
+  if (colors?.length && shouldFill('brand_color', form.value.brand_color)) {
+    form.value.brand_color = colors[0]
+  }
   const profiles = detected.social_profiles.value
   if (profiles?.length) {
     for (const p of profiles) {
-      if (p.platform in socialLinks.value && p.url) {
+      if (p.platform in socialLinks.value && p.url && shouldFill(`social:${p.platform}`, socialLinks.value[p.platform])) {
         socialLinks.value[p.platform] = p.url
       }
     }
@@ -424,7 +440,7 @@ async function handleSubmit() {
             <span class="text-xs font-medium text-muted-foreground mb-1.5 block">{{ t('newbrand.field.company') }}</span>
             <div class="relative">
               <Building2 class="absolute start-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <input v-model="form.company_name" data-testid="company-input" placeholder="Lumen Skincare" class="w-full h-11 ps-9 pe-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 focus:bg-overlay-light transition" />
+              <input v-model="form.company_name" data-testid="company-input" placeholder="Lumen Skincare" class="w-full h-11 ps-9 pe-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 focus:bg-overlay-light transition" @input="markUserEdited('company_name')" />
             </div>
           </label>
           <div class="grid md:grid-cols-2 gap-4">
@@ -441,7 +457,7 @@ async function handleSubmit() {
               <span class="text-xs font-medium text-muted-foreground mb-1.5 block">{{ t('newbrand.field.location') }}</span>
               <div class="relative">
                 <MapPin class="absolute start-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                <input v-model="form.location" placeholder="Dubai, UAE" class="w-full h-11 ps-9 pe-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 focus:bg-overlay-light transition" />
+                <input v-model="form.location" placeholder="Dubai, UAE" class="w-full h-11 ps-9 pe-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 focus:bg-overlay-light transition" @input="markUserEdited('location')" />
               </div>
             </label>
           </div>
@@ -488,11 +504,11 @@ async function handleSubmit() {
               <div class="flex-1 min-w-[140px]">
                 <div class="relative">
                   <Palette class="absolute start-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                  <input v-model="form.brand_color" placeholder="#A855F7" class="w-full h-11 ps-9 pe-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 transition" />
+                  <input v-model="form.brand_color" placeholder="#A855F7" class="w-full h-11 ps-9 pe-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 transition" @input="markUserEdited('brand_color')" />
                 </div>
               </div>
               <div class="flex flex-wrap gap-1.5">
-                <button v-for="c in ['#EC4899','#A855F7','#3B82F6','#10B981','#F59E0B','#EF4444']" :key="c" data-loc="brands.create.color-option" class="h-7 w-7 rounded-md border border-border/60 hover:scale-110 transition" :style="{ background: c }" @click="form.brand_color = c" />
+                <button v-for="c in ['#EC4899','#A855F7','#3B82F6','#10B981','#F59E0B','#EF4444']" :key="c" data-loc="brands.create.color-option" class="h-7 w-7 rounded-md border border-border/60 hover:scale-110 transition" :style="{ background: c }" @click="form.brand_color = c; markUserEdited('brand_color')" />
               </div>
             </div>
           </div>
@@ -502,7 +518,7 @@ async function handleSubmit() {
             <div class="grid md:grid-cols-2 gap-3">
               <div v-for="(platform, key) in { facebook: Facebook, instagram: Instagram, linkedin: Linkedin, youtube: Youtube }" :key="key" class="flex items-center gap-2 px-3 h-10 rounded-lg bg-overlay-subtle border border-border/70">
                 <component :is="platform" class="h-3.5 w-3.5 text-muted-foreground" />
-                <input v-model="socialLinks[key]" :placeholder="`${key.charAt(0).toUpperCase() + key.slice(1)} URL`" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
+                <input v-model="socialLinks[key]" :placeholder="`${key.charAt(0).toUpperCase() + key.slice(1)} URL`" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" @input="markUserEdited(`social:${key}`)" />
               </div>
             </div>
           </div>
