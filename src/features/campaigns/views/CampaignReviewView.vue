@@ -6,7 +6,7 @@ import StepExportButton from '@/shared/components/StepExportButton.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import Topbar from '@/layout/Topbar.vue'
 import AdReviewCard from '../components/AdReviewCard.vue'
-import { useI18n } from '@/shared/utils/i18n'
+import { useI18n, languageNativeLabel } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import { useCampaign, useCampaignAds, useCompleteCampaign } from '../queries'
 import { operationManager } from '@/infrastructure/operations/operationManager'
@@ -209,6 +209,15 @@ async function handleReviewExport(format: 'csv' | 'pdf' | 'pptx') {
             <div v-if="totalBudgetText">
               <div class="text-muted-foreground mb-0.5">{{ t('camp.totalBudget') }}</div>
               <div class="font-medium" data-testid="total-budget-value">{{ totalBudgetText }}</div>
+            </div>
+            <div v-if="campaign.language">
+              <div class="text-muted-foreground mb-0.5">{{ t('camp.languageLabel') }}</div>
+              <div
+                class="font-medium inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20"
+                data-testid="campaign-language-badge"
+              >
+                {{ languageNativeLabel(campaign.language) }}
+              </div>
             </div>
           </div>
         </div>

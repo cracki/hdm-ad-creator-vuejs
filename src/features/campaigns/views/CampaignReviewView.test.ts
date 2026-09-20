@@ -150,6 +150,17 @@ describe('CampaignReviewView — total budget + funnel split (F16)', () => {
     expect(wrapper.find('[data-testid="total-budget-value"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="funnel-budget-split"]').exists()).toBe(false)
   })
+
+  it('renders the campaign language as a badge with its native name (F22)', async () => {
+    vi.mocked(useCampaign).mockReturnValue({
+      data: ref(buildCampaign({ language: 'fa' })),
+      isLoading: ref(false),
+    } as never)
+    const wrapper = await mountView()
+    const badge = wrapper.find('[data-testid="campaign-language-badge"]')
+    expect(badge.exists()).toBe(true)
+    expect(badge.text()).toBe('فارسی')
+  })
 })
 
 describe('CampaignReviewView — complete error surfacing (F17)', () => {

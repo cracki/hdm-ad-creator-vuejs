@@ -105,6 +105,7 @@ describe('CampaignCreateView — service selection (F14)', () => {
     expect(vi.mocked(campaignsApi.create).mock.calls[0][0]).toEqual({
       brand_uuid: 'b1',
       name: undefined,
+      language: 'en',
       context_payload: { selected_services: ['Web Design', 'Branding'] },
     })
   })
@@ -139,6 +140,7 @@ describe('CampaignCreateView — service selection (F14)', () => {
     expect(vi.mocked(campaignsApi.create).mock.calls[0][0]).toEqual({
       brand_uuid: 'b1',
       name: undefined,
+      language: 'en',
     })
   })
 })
@@ -182,6 +184,7 @@ describe('CampaignCreateView — total budget + currency (F16)', () => {
     expect(vi.mocked(campaignsApi.create).mock.calls[0][0]).toEqual({
       brand_uuid: 'b1',
       name: undefined,
+      language: 'en',
       total_budget: 5000,
       currency: 'AED',
     })
@@ -223,5 +226,60 @@ describe('CampaignCreateView — total budget + currency (F16)', () => {
     payload = vi.mocked(campaignsApi.create).mock.calls[1][0]
     expect('total_budget' in payload).toBe(false)
     expect('currency' in payload).toBe(false)
+  })
+})
+
+describe('CampaignCreateView — campaign language (F22)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: CampaignCreateView },
+        { path: '/brands/new', component: { template: '<div />' } },
+        { path: '/campaigns/:campaignUuid', component: { template: '<div />' } },
+      ],
+    })
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    })
+    vi.mocked(brandsApi.list).mockResolvedValue({ data: brands as never })
+    vi.mocked(brandsApi.listServices).mockResolvedValue({
+      data: { success: true, services },
+    })
+    vi.mocked(campaignsApi.create).mockResolvedValue({
+      data: { campaign_uuid: 'c1' } as never,
+    })
+  })
+
+  it('defaults to English and includes language in the create payload', async () => {
+    const wrapper = await mountView()
+
+    const select = wrapper.find('[data-testid="campaign-language-select"]')
+    expect(select.exists()).toBe(true)
+    expect((select.element as HTMLSelectElement).value).toBe('en')
+
+    await wrapper.findAll('[data-loc="campaigns.create.brand-select"]')[0].trigger('click')
+    await flushPromises()
+    await wrapper.find('[data-loc="campaigns.create.create-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(vi.mocked(campaignsApi.create).mock.calls[0][0].language).toBe('en')
+  })
+
+  it('sends the chosen language with its native-name label', async () => {
+    const wrapper = await mountView()
+
+    // Options render LANGS native names (LangSwitch-style)
+    const optionTexts = wrapper.findAll('[data-testid="campaign-language-select"] option').map((o) => o.text())
+    expect(optionTexts).toEqual(['English', 'العربية', 'فارسی'])
+
+    await wrapper.find('[data-testid="campaign-language-select"]').setValue('fa')
+    await wrapper.findAll('[data-loc="campaigns.create.brand-select"]')[0].trigger('click')
+    await flushPromises()
+    await wrapper.find('[data-loc="campaigns.create.create-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(vi.mocked(campaignsApi.create).mock.calls[0][0].language).toBe('fa')
   })
 })

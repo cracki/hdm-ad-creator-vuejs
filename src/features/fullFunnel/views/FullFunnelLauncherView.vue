@@ -5,7 +5,7 @@ import {
   Rocket, Loader2, AlertCircle, Plus, X, History,
 } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
-import { useI18n } from '@/shared/utils/i18n'
+import { useI18n, LANGS, type Lang } from '@/shared/utils/i18n'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { useBrands } from '@/features/brands/queries'
@@ -25,6 +25,8 @@ const budget = ref(1000)
 const currency = ref('USD')
 const duration = ref(30)
 const adsPerStage = ref(3)
+// Output language for the whole one-shot funnel (F22); sent as `language`.
+const language = ref<Lang>('en')
 const personas = ref<{ name: string; description: string }[]>([
   { name: '', description: '' },
 ])
@@ -83,6 +85,7 @@ async function generate() {
       duration_days: duration.value,
       funnel_stages: selectedStages.value,
       ads_per_stage: adsPerStage.value,
+      language: language.value,
     })
     return data
   })
@@ -157,6 +160,19 @@ function resetCampaign() {
               <span class="font-medium">{{ p.name }}</span>
             </button>
           </div>
+        </div>
+
+        <!-- Language (F22) -->
+        <div class="sm:w-56">
+          <label class="text-xs font-medium text-muted-foreground block mb-2">{{ t('funnelLauncher.language') }}</label>
+          <select
+            v-model="language"
+            data-loc="funnel.language-select"
+            data-testid="funnel-language-select"
+            class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none focus:ring-1 focus:ring-primary/50"
+          >
+            <option v-for="l in LANGS" :key="l.code" :value="l.code">{{ l.native }}</option>
+          </select>
         </div>
 
         <!-- Funnel Stages -->

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowLeft, ChevronDown, Megaphone } from 'lucide-vue-next'
+import { ArrowLeft, ChevronDown, Megaphone, Languages } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import ServiceSelector from '@/shared/components/ServiceSelector.vue'
-import { useI18n } from '@/shared/utils/i18n'
+import { useI18n, LANGS, type Lang } from '@/shared/utils/i18n'
 import { useBrands, useBrandServices } from '@/features/brands/queries'
 import { useAutoSelectBrand } from '@/shared/composables/useAutoSelectBrand'
 import { useCreateCampaign } from '../queries'
@@ -19,6 +19,10 @@ const selectedBrandUuid = ref('')
 useAutoSelectBrand(selectedBrandUuid)
 const campaignName = ref('')
 const creating = ref(false)
+
+// Campaign language (F22): one output language for ALL generated content;
+// defaults to English like the backend's Campaign.language.
+const language = ref<Lang>('en')
 
 // Total budget + currency (F16): optional — omitted from the payload when the
 // amount is empty/invalid, matching the backend's nullable total_budget.
@@ -50,6 +54,7 @@ async function handleCreate() {
     const result = await createMutation.mutateAsync({
       brand_uuid: selectedBrandUuid.value,
       name: campaignName.value || undefined,
+      language: language.value,
       ...budgetPayload(),
       ...(selectedServices.value.length
         ? { context_payload: { selected_services: selectedServices.value } }
@@ -141,6 +146,24 @@ async function handleCreate() {
             </select>
             <ChevronDown class="h-3.5 w-3.5 text-muted-foreground absolute end-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
+        </div>
+      </div>
+
+      <!-- Campaign language (F22) -->
+      <div data-loc="campaigns.create.language">
+        <label class="text-xs font-medium mb-1.5 block">{{ t('camp.languageLabel') }}</label>
+        <p class="text-[11px] text-muted-foreground mb-2.5">{{ t('camp.languageHint') }}</p>
+        <div class="relative">
+          <select
+            v-model="language"
+            :aria-label="t('camp.languageLabel')"
+            class="w-full sm:w-64 h-10 px-3 pe-8 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none focus:border-primary/60 transition appearance-none cursor-pointer"
+            data-testid="campaign-language-select"
+            data-loc="campaigns.create.language-select"
+          >
+            <option v-for="l in LANGS" :key="l.code" :value="l.code">{{ l.native }}</option>
+          </select>
+          <Languages class="h-3.5 w-3.5 text-muted-foreground absolute end-3 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
       </div>
 

@@ -6,10 +6,10 @@ import {
   Sparkles, Image as ImageIcon, Download,
   Check, Lock, ChevronRight, ChevronDown, ChevronUp,
   Globe, Building2, Clock, MapPin, Package, FileText,
-  TrendingUp, Users, LayoutGrid, Loader2, Presentation, CircleDollarSign,
+  TrendingUp, Users, LayoutGrid, Loader2, Presentation, CircleDollarSign, Languages,
 } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
-import { useI18n } from '@/shared/utils/i18n'
+import { useI18n, languageNativeLabel } from '@/shared/utils/i18n'
 import Breadcrumb from '@/shared/components/Breadcrumb.vue'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { useCampaign, useCampaignVisuals } from '../queries'
@@ -238,6 +238,15 @@ function getStepStatusLabel(step: StepDef, idx: number): string {
               <span class="flex items-center gap-1.5" v-if="totalBudgetText" data-testid="total-budget-value">
                 <CircleDollarSign class="h-3.5 w-3.5" />
                 {{ totalBudgetText }}
+              </span>
+              <span
+                v-if="campaign.language"
+                class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/15 text-primary border border-primary/20"
+                data-testid="campaign-language-badge"
+                data-loc="campaigns.detail.language-badge"
+              >
+                <Languages class="h-3 w-3" />
+                {{ languageNativeLabel(campaign.language) }}
               </span>
             </div>
           </div>

@@ -5,7 +5,7 @@ import {
   Sparkles, Users, Palette, Smartphone, Bookmark, Image as ImageIcon,
 } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
-import { useI18n } from '@/shared/utils/i18n'
+import { useI18n, LANGS, type Lang } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { exportCsv } from '@/shared/utils/csv'
@@ -62,6 +62,11 @@ const confetti = useConfetti()
 
 const brandUuid = ref('')
 useAutoSelectBrand(brandUuid)
+
+// Output language for the generated variants (F22); standalone runs have no
+// parent Campaign, so the language is chosen per run and also drives the
+// rendered image text on generate-visuals.
+const language = ref<Lang>('en')
 
 const selectedAudiences = ref<string[]>([])
 const selectedStyles = ref<string[]>([])
@@ -202,6 +207,7 @@ async function generateVisuals(variantUuids?: string[]) {
   try {
     await scenarioVariantsApi.generateStandaloneRunVisuals(standaloneRunUuid.value, {
       ...(variantUuids ? { variant_uuids: variantUuids } : {}),
+      language: language.value,
     })
     await refreshPersistedVariants()
   } catch (e: unknown) {
@@ -243,6 +249,7 @@ async function generate() {
     const { data } = await scenarioVariantsApi.runStandaloneVariants({
       brand_uuid: brandUuid.value,
       scenario: 'promotional',
+      language: language.value,
       selected_audiences: audienceNames,
       selected_styles: styleNames,
       selected_formats: formatNames,
@@ -316,6 +323,18 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
             {{ b.company_name }}
           </option>
         </select>
+        <!-- Language (F22) -->
+        <div class="mt-3 sm:w-56">
+          <label class="text-xs font-medium text-muted-foreground block mb-2">{{ t('variant.language') }}</label>
+          <select
+            v-model="language"
+            data-loc="variant.main.language-select"
+            data-testid="variant-language-select"
+            class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none focus:ring-1 focus:ring-primary/50"
+          >
+            <option v-for="l in LANGS" :key="l.code" :value="l.code">{{ l.native }}</option>
+          </select>
+        </div>
       </div>
 
       <!-- Step 1: Audiences -->
