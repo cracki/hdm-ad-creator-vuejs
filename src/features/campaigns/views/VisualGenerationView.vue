@@ -9,7 +9,7 @@ import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import { useConfetti } from '@/shared/composables/useConfetti'
-import { useCampaign } from '../queries'
+import { useCampaign, useCampaignAds } from '../queries'
 import { campaignsApi } from '../api'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
@@ -29,24 +29,25 @@ const { t } = useI18n()
 
 const campaignUuid = computed(() => route.params.campaignUuid as string)
 const { data: campaign } = useCampaign(campaignUuid)
+const { data: adsData, isLoading: adsLoading } = useCampaignAds(campaignUuid)
 
 const { setActions } = usePageActions()
 setActions([{ label: t('camp.backToCampaign'), icon: ArrowLeft, to: `/campaigns/${campaignUuid.value}` }])
 
 const confetti = useConfetti()
 
-function loadAdsFromStorage(): AdMeta[] {
-  try {
-    const raw = sessionStorage.getItem(`campaign-ads:${campaignUuid.value}`)
-    if (raw) return JSON.parse(raw)
-  } catch {}
-  return []
-}
-
+// Fast path: ad meta handed over via router state from the ads step; on a
+// cold load (reload / direct URL) fall back to the GET /ads/ read-back —
+// replacing the old sessionStorage handoff.
 const adsList = computed<AdMeta[]>(() => {
   const state = history.state as { adMeta?: AdMeta[] } | null
   if (Array.isArray(state?.adMeta) && state.adMeta.length) return state.adMeta
-  return loadAdsFromStorage()
+  return (adsData.value?.ads ?? []).map(a => ({
+    uuid: a.campaign_ad_uuid,
+    platform: a.platform,
+    funnel_stage: a.funnel_stage,
+    persona: a.persona,
+  }))
 })
 
 const selectedAdUuids = ref<Set<string>>(new Set())
@@ -168,8 +169,13 @@ async function handleVisualExport(format: 'csv' | 'pdf' | 'pptx') {
         </div>
       </header>
 
+      <!-- Ads read-back still loading (no router-state handoff) -->
+      <div v-if="adsLoading && adsList.length === 0" class="py-12">
+        <AiLoadingAnimation :message="t('common.loading')" size="sm" />
+      </div>
+
       <!-- No ads available -->
-      <div v-if="adsList.length === 0" class="surface-card p-8 text-center">
+      <div v-else-if="adsList.length === 0" class="surface-card p-8 text-center">
         <Shield class="h-8 w-8 text-muted-foreground mx-auto mb-3" />
         <div class="text-sm font-medium mb-1">{{ t('visual.prereqTitle') }}</div>
         <div class="text-xs text-muted-foreground mb-4">{{ t('visual.prereqDesc') }}</div>

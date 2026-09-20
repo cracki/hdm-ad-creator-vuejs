@@ -61,6 +61,8 @@ export interface CampaignStep {
   updated_at: string
 }
 
+export type CampaignAdReviewStatus = 'approved' | 'rejected'
+
 export interface CampaignAd {
   campaign_ad_uuid: string
   campaign: string
@@ -69,6 +71,10 @@ export interface CampaignAd {
   persona: string | null
   funnel_context: Record<string, unknown>
   data: Record<string, unknown>
+  /** Review decision persisted server-side on data; null = not reviewed yet. */
+  review_status: CampaignAdReviewStatus | null
+  reject_reason: string | null
+  reviewed_at: string | null
   created_at: string
   updated_at: string
 }
@@ -123,6 +129,54 @@ export interface ClearAdsResult {
   success: boolean
   deleted_count: number
   campaign: Campaign
+}
+
+// ── Ad review / manual edit / refine (F13) ────────────────
+
+export interface ReviewAdPayload {
+  decision: 'approved' | 'rejected'
+  /** Required when decision is "rejected"; must be absent when "approved". */
+  reject_reason?: string
+}
+
+/** Manual copy edit (AdCopyEditor) — any subset, values must be non-blank. */
+export interface PatchAdPayload {
+  headline?: string
+  primary_text?: string
+  description?: string
+  cta?: string
+}
+
+export interface RefineAdPayload {
+  feedback: string
+}
+
+export interface CampaignAdsListResult {
+  success: boolean
+  ads: CampaignAd[]
+}
+
+export interface AdReviewResult {
+  success: boolean
+  ad: CampaignAd
+}
+
+export interface AdUpdateResult {
+  success: boolean
+  ad: CampaignAd
+}
+
+export interface AdRefineResult {
+  success: boolean
+  campaign: Campaign
+  ad: CampaignAd
+  ads: CampaignAd[]
+}
+
+export interface StepApproveResult {
+  success: boolean
+  campaign: Campaign
+  step: CampaignStep
 }
 
 export interface SegmentationRunPayload {
@@ -283,4 +337,34 @@ export function composeLocation(tm: TargetMarket): string {
   const country = tm.country.trim()
   if (city && country) return `${city}, ${country}`
   return city || country
+}
+
+// ── Ad copy reading (F13) ─────────────────────────────────
+
+export interface AdCopyView {
+  headline: string
+  body: string
+  description: string
+  cta: string
+  framework: string
+  score: number
+}
+
+/**
+ * Read displayable copy off a CampaignAd's data. Key aliases across the LLM
+ * providers (headline|title, body|primary_text, cta|call_to_action) are
+ * resolved with the manual-edit keys FIRST: once an ad is PATCHed, its
+ * primary_text key holds the newest copy while a stale body lingers.
+ */
+export function getAdCopy(ad: Pick<CampaignAd, 'data'>): AdCopyView {
+  const d = (ad.data ?? {}) as Record<string, unknown>
+  const str = (v: unknown): string => (typeof v === 'string' ? v : '')
+  return {
+    headline: str(d.headline) || str(d.title),
+    body: str(d.primary_text) || str(d.body) || str(d.description),
+    description: str(d.description),
+    cta: str(d.cta) || str(d.call_to_action),
+    framework: str(d.framework) || str(d.creative_framework),
+    score: Number(d.score ?? d.quality_score ?? 0) || 0,
+  }
 }

@@ -248,6 +248,7 @@ export const translations = {
   'smart.locked': { en: 'Locked', ar: 'مقفل', fa: 'قفل' },
   'smart.approved': { en: 'Approved', ar: 'موافَق', fa: 'تأییدشده' },
   'smart.saveExit': { en: 'Save & Exit', ar: 'حفظ وخروج', fa: 'ذخیره و خروج' },
+  'smart.stepApproveFailed': { en: 'Could not record step approval.', ar: 'تعذّر تسجيل موافقة الخطوة.', fa: 'ثبت تأیید مرحله ممکن نشد.' },
   'smart.aiInsights': { en: 'AI-generated insights tailored to your brand.', ar: 'رؤى مولّدة بالذكاء مصمَّمة لعلامتك.', fa: 'بینش‌های تولیدشده توسط هوش مصنوعی متناسب با برند تو.' },
   'smart.subtitle': { en: 'Smart Campaign', ar: 'حملة ذكية', fa: 'کمپین هوشمند' },
 
@@ -364,6 +365,35 @@ export const translations = {
   'adgen.clearConfirmDesc': { en: 'This will permanently delete all generated ads. This cannot be undone.', ar: 'سيؤدي هذا إلى حذف جميع الإعلانات المولّدة نهائياً. لا يمكن التراجع.', fa: 'همه آگهی‌های تولیدشده برای همیشه حذف می‌شن. غیرقابل بازگشت.' },
   'adgen.noPersona': { en: 'No persona available. Complete segmentation first.', ar: 'لا توجد شخصية متاحة. أكمل التجزئة أولاً.', fa: 'پرسونایی موجود نیست. اول بخش‌بندی را تکمیل کنید.' },
 
+  // Ad review actions (Approve/Reject/Refine/Edit — F13)
+  'adreview.approve': { en: 'Approve', ar: 'موافقة', fa: 'تأیید' },
+  'adreview.reject': { en: 'Reject', ar: 'رفض', fa: 'رد' },
+  'adreview.edit': { en: 'Edit', ar: 'تعديل', fa: 'ویرایش' },
+  'adreview.refine': { en: 'Refine', ar: 'تحسين', fa: 'بهبود' },
+  'adreview.status.approved': { en: 'Approved', ar: 'تمت الموافقة', fa: 'تأییدشده' },
+  'adreview.status.rejected': { en: 'Rejected', ar: 'مرفوض', fa: 'ردشده' },
+  'adreview.rejectTitle': { en: 'Reject this ad', ar: 'رفض هذا الإعلان', fa: 'رد این آگهی' },
+  'adreview.rejectDesc': { en: 'Pick a reason — you can add details before submitting.', ar: 'اختر سبباً — يمكنك إضافة تفاصيل قبل الإرسال.', fa: 'یک دلیل انتخاب کن — قبل از ارسال می‌توانی جزئیات اضافه کنی.' },
+  'adreview.rejectReasonLabel': { en: 'Reason', ar: 'السبب', fa: 'دلیل' },
+  'adreview.rejectPlaceholder': { en: 'Why are you rejecting this ad?', ar: 'لماذا ترفض هذا الإعلان؟', fa: 'چرا این آگهی را رد می‌کنی؟' },
+  'adreview.reason.required': { en: 'A reason is required to reject an ad.', ar: 'السبب مطلوب لرفض الإعلان.', fa: 'برای رد کردن آگهی، دلیل الزامی است.' },
+  'adreview.reason.audience': { en: 'Wrong audience', ar: 'جمهور خاطئ', fa: 'مخاطب اشتباه' },
+  'adreview.reason.tone': { en: 'Wrong tone', ar: 'نبرة خاطئة', fa: 'لحن اشتباه' },
+  'adreview.reason.market': { en: 'Wrong market', ar: 'سوق خاطئ', fa: 'بازار اشتباه' },
+  'adreview.reason.service': { en: 'Wrong service', ar: 'خدمة خاطئة', fa: 'سرویس اشتباه' },
+  'adreview.rejectConfirm': { en: 'Reject Ad', ar: 'رفض الإعلان', fa: 'رد آگهی' },
+  'adreview.refineTitle': { en: 'Refine this ad', ar: 'تحسين هذا الإعلان', fa: 'بهبود این آگهی' },
+  'adreview.refineDesc': { en: 'Tell the AI what to change — only this ad is regenerated.', ar: 'أخبر الذكاء الاصطناعي بما يجب تغييره — يعاد توليد هذا الإعلان فقط.', fa: 'به هوش مصنوعی بگو چه چیزی تغییر کند — فقط همین آگهی دوباره تولید می‌شود.' },
+  'adreview.refinePlaceholder': { en: 'e.g. Make the headline shorter and bolder…', ar: 'مثلاً اجعل العنوان أقصر وأجرأ…', fa: 'مثلاً تیتر را کوتاه‌تر و جسورانه‌تر کن…' },
+  'adreview.refine.required': { en: 'Feedback is required to refine an ad.', ar: 'الملاحظات مطلوبة لتحسين الإعلان.', fa: 'برای بهبود آگهی، بازخورد الزامی است.' },
+  'adreview.refineConfirm': { en: 'Regenerate Ad', ar: 'إعادة توليد الإعلان', fa: 'تولید مجدد آگهی' },
+  'adreview.refining': { en: 'Refining…', ar: 'جارٍ التحسين…', fa: 'در حال بهبود…' },
+  'adreview.approved': { en: 'Ad approved', ar: 'تمت الموافقة على الإعلان', fa: 'آگهی تأیید شد' },
+  'adreview.rejected': { en: 'Ad rejected', ar: 'تم رفض الإعلان', fa: 'آگهی رد شد' },
+  'adreview.refined': { en: 'Ad refined', ar: 'تم تحسين الإعلان', fa: 'آگهی بهبود یافت' },
+  'adreview.saved': { en: 'Changes saved', ar: 'تم حفظ التغييرات', fa: 'تغییرات ذخیره شد' },
+  'adreview.actionFailed': { en: 'Action failed. Please try again.', ar: 'فشلت العملية. حاول مرة أخرى.', fa: 'عملیات ناموفق بود. دوباره تلاش کنید.' },
+
   // Visual Generation
   'visual.title': { en: 'Visual Generation', ar: 'توليد المرئيات', fa: 'تولید تصویر' },
   'visual.description': { en: 'Generate visuals for your ads.', ar: 'ولّد مرئيات لإعلاناتك.', fa: 'تصویر برای آگهی‌هات تولید کن.' },
@@ -393,6 +423,8 @@ export const translations = {
   'review.completing': { en: 'Completing…', ar: 'جارٍ الإكمال…', fa: 'در حال تکمیل…' },
   'review.completeFailed': { en: 'Could not complete the campaign. Please try again.', ar: 'تعذّر إكمال الحملة. حاول مرة أخرى.', fa: 'تکمیل کمپین ممکن نشد. دوباره تلاش کنید.' },
   'review.budgetSplit': { en: 'Budget split by funnel stage', ar: 'توزيع الميزانية على مراحل القمع', fa: 'تقسیم بودجه بین مراحل قیف' },
+  'review.adsSection': { en: 'Generated Ads', ar: 'الإعلانات المولّدة', fa: 'آگهی‌های تولیدشده' },
+  'review.adsSectionDesc': { en: 'Approve, reject, refine or edit each ad before completing the campaign.', ar: 'وافق على كل إعلان أو ارفضه أو حسّنه أو عدّله قبل إكمال الحملة.', fa: 'قبل از تکمیل کمپین، هر آگهی را تأیید، رد، بهبود یا ویرایش کن.' },
 
   // Shared status
   'status.completed': { en: 'Completed', ar: 'مكتمل', fa: 'تکمیل‌شده' },

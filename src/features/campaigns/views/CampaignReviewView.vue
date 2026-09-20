@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Download, ArrowLeft, Loader2, Check, AlertCircle, Wallet } from 'lucide-vue-next'
+import { Download, ArrowLeft, Loader2, Check, AlertCircle, Wallet, Sparkles } from 'lucide-vue-next'
 import StepExportButton from '@/shared/components/StepExportButton.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import Topbar from '@/layout/Topbar.vue'
+import AdReviewCard from '../components/AdReviewCard.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
-import { useCampaign } from '../queries'
-import { useCompleteCampaign } from '../queries'
+import { useCampaign, useCampaignAds, useCompleteCampaign } from '../queries'
 import { operationManager } from '@/infrastructure/operations/operationManager'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { exportReview } from '@/shared/utils/exportStep'
-import { formatCampaignBudget, getFunnelBudgetSplit } from '../types'
+import { formatCampaignBudget, getFunnelBudgetSplit, getAdCopy } from '../types'
+import type { CampaignAd } from '../types'
 
 const route = useRoute()
 const router = useRouter()
@@ -20,6 +21,14 @@ const { t } = useI18n()
 
 const campaignUuid = computed(() => route.params.campaignUuid as string)
 const { data: campaign, isLoading } = useCampaign(campaignUuid)
+const { data: adsData } = useCampaignAds(campaignUuid)
+
+const ads = computed<CampaignAd[]>(() => adsData.value?.ads ?? [])
+
+function adPlatformLabel(p: string) {
+  const map: Record<string, string> = { meta: 'Meta', google: 'Google', linkedin: 'LinkedIn' }
+  return map[p] ?? p
+}
 
 const { setActions } = usePageActions()
 setActions([{ label: t('camp.backToCampaign'), icon: ArrowLeft, to: `/campaigns/${campaignUuid.value}` }])
@@ -224,6 +233,40 @@ async function handleReviewExport(format: 'csv' | 'pdf' | 'pptx') {
           </div>
         </div>
 
+        <!-- Generated ads with review actions (F13) -->
+        <div v-if="ads.length > 0" class="mb-6" data-testid="review-ads-section">
+          <div class="flex items-start gap-2.5 mb-3">
+            <Sparkles class="h-4 w-4 text-primary shrink-0 mt-0.5" />
+            <div>
+              <div class="text-sm font-semibold">{{ t('review.adsSection') }}</div>
+              <div class="text-xs text-muted-foreground mt-0.5">{{ t('review.adsSectionDesc') }}</div>
+            </div>
+          </div>
+          <div class="grid sm:grid-cols-2 gap-3">
+            <AdReviewCard
+              v-for="ad in ads"
+              :key="ad.campaign_ad_uuid"
+              :ad="ad"
+              :campaign-uuid="campaignUuid"
+            >
+              <div>
+                <div class="flex flex-wrap items-center gap-1.5 mb-3">
+                  <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-blue-500/15 text-blue-300">{{ adPlatformLabel(ad.platform) }}</span>
+                  <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-overlay-light text-muted-foreground">{{ ad.funnel_stage }}</span>
+                  <span v-if="ad.persona" class="text-[11px] text-muted-foreground truncate">{{ ad.persona }}</span>
+                </div>
+                <div class="rounded-lg border border-border/50 bg-overlay-subtle p-3 space-y-2 text-start">
+                  <div v-if="getAdCopy(ad).headline" class="text-sm font-semibold">{{ getAdCopy(ad).headline }}</div>
+                  <div v-if="getAdCopy(ad).body" class="text-xs leading-relaxed">{{ getAdCopy(ad).body }}</div>
+                  <div v-if="getAdCopy(ad).cta" class="flex items-center justify-end pt-1">
+                    <span class="h-7 px-2.5 rounded-md bg-overlay-medium text-[11px] font-medium">{{ getAdCopy(ad).cta }}</span>
+                  </div>
+                </div>
+              </div>
+            </AdReviewCard>
+          </div>
+        </div>
+
         <!-- Completion gating error (F17) -->
         <div
           v-if="completeError"
@@ -233,7 +276,6 @@ async function handleReviewExport(format: 'csv' | 'pdf' | 'pptx') {
           <AlertCircle class="h-4 w-4 text-destructive shrink-0 mt-0.5" />
           <div class="text-xs text-destructive leading-relaxed">{{ completeError }}</div>
         </div>
-
         <div class="flex items-center justify-between">
           <button
             class="h-10 px-4 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition flex items-center gap-1.5"

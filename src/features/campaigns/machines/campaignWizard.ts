@@ -1,5 +1,5 @@
 import { reactive, computed, watch, type Ref } from 'vue'
-import type { Campaign } from '../types'
+import type { Campaign, CampaignStepType } from '../types'
 
 export type StepState = 'idle' | 'loading' | 'completed' | 'failed'
 
@@ -48,6 +48,31 @@ export function getFirstIncompleteStep(campaign: Campaign | null): number {
     if (!isStepCompleted(campaign, i)) return i
   }
   return 10
+}
+
+/**
+ * Backend step types a wizard step should approve when leaving it via
+ * "Approve & Continue" (MOM M-U3). Only steps that map to a completed backend
+ * run are returned; steps with no backend counterpart (brand intel, platform
+ * selection, ad generation, visuals, export) return []. Wizard step 7 covers
+ * every selected platform's ads-strategy step.
+ */
+export function wizardStepApproveTypes(campaign: Campaign | null, step: number): CampaignStepType[] {
+  if (!campaign) return []
+  switch (step) {
+    case 2: return campaign.segmentation_completed ? ['segmentation'] : []
+    case 3: return campaign.ppc_viability_completed ? ['ppc_viability'] : []
+    case 4: return campaign.funnel_completed ? ['funnel'] : []
+    case 5: return campaign.content_strategy_completed ? ['content_strategy'] : []
+    case 7: {
+      const ctx = campaign.context_payload as { selected_platforms?: string[] } | undefined
+      const platforms = ctx?.selected_platforms ?? []
+      return platforms
+        .filter(p => campaign[`${p}_ads_completed` as keyof Campaign] as boolean)
+        .map(p => `${p}_ads` as CampaignStepType)
+    }
+    default: return []
+  }
 }
 
 export function useCampaignWizard(campaign: Ref<Campaign | null>) {

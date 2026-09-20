@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, type Ref } from 'vue'
 import { campaignsApi } from './api'
-import type { CampaignCreatePayload, SegmentationRunPayload, AdsStrategyPayload, CampaignAdPlatform, GenerateAdPayload, GenerateVisualsPayload } from './types'
+import type { CampaignCreatePayload, SegmentationRunPayload, AdsStrategyPayload, CampaignAdPlatform, CampaignStepType, GenerateAdPayload, GenerateVisualsPayload, ReviewAdPayload, PatchAdPayload, RefineAdPayload } from './types'
 
 export function useCampaigns() {
   return useQuery({
@@ -150,6 +150,66 @@ export function useCompleteCampaign(uuid: Ref<string>) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns', uuid] })
       queryClient.invalidateQueries({ queryKey: ['campaigns'] })
+    },
+  })
+}
+
+// ── Ad review / manual edit / refine / read-back (F13) ──
+
+/** GET /campaigns/{uuid}/ads/ — server truth incl. review_status restore. */
+export function useCampaignAds(uuid: Ref<string>) {
+  return useQuery({
+    queryKey: ['campaigns', uuid, 'ads'],
+    queryFn: ({ signal }) => campaignsApi.listAds(uuid.value, { signal }).then(r => r.data),
+    enabled: computed(() => !!uuid.value),
+    staleTime: 10_000,
+  })
+}
+
+export function useReviewAd(uuid: Ref<string>) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ adUuid, payload }: { adUuid: string; payload: ReviewAdPayload }) =>
+      campaignsApi.reviewAd(uuid.value, adUuid, payload).then(r => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['campaigns', uuid] })
+      queryClient.invalidateQueries({ queryKey: ['campaigns', uuid, 'ads'] })
+    },
+  })
+}
+
+export function usePatchAd(uuid: Ref<string>) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ adUuid, payload }: { adUuid: string; payload: PatchAdPayload }) =>
+      campaignsApi.patchAd(uuid.value, adUuid, payload).then(r => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['campaigns', uuid] })
+      queryClient.invalidateQueries({ queryKey: ['campaigns', uuid, 'ads'] })
+    },
+  })
+}
+
+export function useRefineAd(uuid: Ref<string>) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ adUuid, payload }: { adUuid: string; payload: RefineAdPayload }) =>
+      campaignsApi.refineAd(uuid.value, adUuid, payload).then(r => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['campaigns', uuid] })
+      queryClient.invalidateQueries({ queryKey: ['campaigns', uuid, 'ads'] })
+    },
+  })
+}
+
+export function useApproveStep(uuid: Ref<string>) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (stepType: CampaignStepType) =>
+      campaignsApi.approveStep(uuid.value, stepType).then(r => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['campaigns', uuid] })
+      queryClient.invalidateQueries({ queryKey: ['campaigns', uuid, 'steps'] })
     },
   })
 }

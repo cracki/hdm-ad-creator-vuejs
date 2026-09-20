@@ -18,13 +18,15 @@ const PLATFORM_LIMITS: Record<string, PlatformLimits> = {
 const props = defineProps<{
   ad: AdData
   platform?: string
+  /** Start in edit mode (e.g. when opened from an external Edit action). */
+  startEditing?: boolean
 }>()
 
 const emit = defineEmits<{
   update: [ad: AdData]
 }>()
 
-const isEditing = ref(false)
+const isEditing = ref(props.startEditing ?? false)
 const localAd = ref<AdData>({ ...props.ad })
 
 watch(() => props.ad, (newAd) => {

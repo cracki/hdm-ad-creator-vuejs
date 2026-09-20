@@ -8,9 +8,11 @@ import {
 } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
+import { useToast } from '@/shared/composables/useToast'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import { useCampaign } from '@/features/campaigns/queries'
-import { useCampaignWizard, WIZARD_STEPS, getFirstIncompleteStep } from '@/features/campaigns/machines/campaignWizard'
+import { campaignsApi } from '@/features/campaigns/api'
+import { useCampaignWizard, WIZARD_STEPS, getFirstIncompleteStep, wizardStepApproveTypes } from '@/features/campaigns/machines/campaignWizard'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useTourRegistration } from '@/shared/composables/useTourRegistration'
 import { wizardTour } from '../tours'
@@ -31,6 +33,7 @@ const Step10Export = defineAsyncComponent(() => import('./Step10Export.vue'))
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
+const toast = useToast()
 const queryClient = useQueryClient()
 
 const campaignUuid = computed(() => route.params.campaignUuid as string)
@@ -82,7 +85,22 @@ function goToStep(n: number) {
   wizard.goToStep(n)
 }
 
+/**
+ * Record the backend step approval for the step being left (MOM M-U3) —
+ * fire-and-forget: navigation never waits on or breaks from this call.
+ */
+function approveCurrentStep() {
+  const stepTypes = wizardStepApproveTypes(campaign.value ?? null, wizard.currentStep.value)
+  for (const stepType of stepTypes) {
+    campaignsApi
+      .approveStep(campaignUuid.value, stepType)
+      .then(() => queryClient.invalidateQueries({ queryKey: ['campaigns', campaignUuid] }))
+      .catch(() => toast.error(t('smart.stepApproveFailed')))
+  }
+}
+
 function goNext() {
+  approveCurrentStep()
   wizard.next()
 }
 

@@ -7,11 +7,20 @@ import type {
   AdsStrategyPayload,
   AdsStrategyListResponse,
   CampaignAdPlatform,
+  CampaignStepType,
   GenerateAdPayload,
   GenerateVisualsPayload,
   AdGenerateResult,
   VisualGenerateResult,
   ClearAdsResult,
+  CampaignAdsListResult,
+  ReviewAdPayload,
+  PatchAdPayload,
+  RefineAdPayload,
+  AdReviewResult,
+  AdUpdateResult,
+  AdRefineResult,
+  StepApproveResult,
 } from './types'
 
 type SignalConfig = { signal?: AbortSignal }
@@ -86,5 +95,27 @@ export const campaignsApi = {
 
   completeCampaign(uuid: string): Promise<{ data: { success: boolean; campaign: Campaign } }> {
     return apiClient.post(`${campaign(uuid)}complete/`)
+  },
+
+  // ── Ad review / manual edit / refine / read-back (F13) ──
+
+  listAds(uuid: string, config?: SignalConfig): Promise<{ data: CampaignAdsListResult }> {
+    return apiClient.get(`${campaign(uuid)}ads/`, config)
+  },
+
+  reviewAd(uuid: string, adUuid: string, payload: ReviewAdPayload): Promise<{ data: AdReviewResult }> {
+    return apiClient.post(`${campaign(uuid)}ads/${adUuid}/review/`, payload)
+  },
+
+  patchAd(uuid: string, adUuid: string, payload: PatchAdPayload): Promise<{ data: AdUpdateResult }> {
+    return apiClient.patch(`${campaign(uuid)}ads/${adUuid}/`, payload)
+  },
+
+  refineAd(uuid: string, adUuid: string, payload: RefineAdPayload): Promise<{ data: AdRefineResult }> {
+    return apiClient.post(`${campaign(uuid)}ads/${adUuid}/refine/`, payload)
+  },
+
+  approveStep(uuid: string, stepType: CampaignStepType): Promise<{ data: StepApproveResult }> {
+    return apiClient.post(`${campaign(uuid)}steps/${stepType}/approve/`)
   },
 }

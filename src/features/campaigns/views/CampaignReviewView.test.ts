@@ -7,7 +7,11 @@ import type { Campaign } from '../types'
 
 vi.mock('@/features/campaigns/queries', () => ({
   useCampaign: vi.fn(),
+  useCampaignAds: vi.fn(),
   useCompleteCampaign: vi.fn(),
+  useReviewAd: vi.fn(),
+  usePatchAd: vi.fn(),
+  useRefineAd: vi.fn(),
 }))
 
 // AiLoadingAnimation pulls in lottie-web, which crashes at import time in jsdom
@@ -15,9 +19,32 @@ vi.mock('@/shared/components/AiLoadingAnimation.vue', () => ({
   default: { name: 'AiLoadingAnimation', template: '<div />' },
 }))
 
-import { useCampaign, useCompleteCampaign } from '../queries'
+import { useCampaign, useCampaignAds, useCompleteCampaign, useReviewAd, usePatchAd, useRefineAd } from '../queries'
+import type { CampaignAd } from '../types'
+
+function fakeMutation() {
+  return { isPending: ref(false), mutate: vi.fn() } as never
+}
 
 const mutateAsync = vi.fn()
+
+function buildAd(overrides: Partial<CampaignAd> = {}): CampaignAd {
+  return {
+    campaign_ad_uuid: 'ad-1',
+    campaign: 'c1',
+    platform: 'meta',
+    funnel_stage: 'TOFU',
+    persona: 'Anna',
+    funnel_context: {},
+    data: { headline: 'H', body: 'B', cta: 'Shop Now' },
+    review_status: null,
+    reject_reason: null,
+    reviewed_at: null,
+    created_at: '',
+    updated_at: '',
+    ...overrides,
+  } as CampaignAd
+}
 
 function buildCampaign(overrides: Partial<Campaign> = {}): Campaign {
   return {
@@ -85,6 +112,12 @@ describe('CampaignReviewView — total budget + funnel split (F16)', () => {
       isLoading: ref(false),
     } as never)
     vi.mocked(useCompleteCampaign).mockReturnValue({ mutateAsync } as never)
+    vi.mocked(useCampaignAds).mockReturnValue({
+      data: ref({ success: true, ads: [] }),
+    } as never)
+    vi.mocked(useReviewAd).mockReturnValue(fakeMutation())
+    vi.mocked(usePatchAd).mockReturnValue(fakeMutation())
+    vi.mocked(useRefineAd).mockReturnValue(fakeMutation())
   })
 
   it('shows the total budget with currency', async () => {
@@ -134,6 +167,12 @@ describe('CampaignReviewView — complete error surfacing (F17)', () => {
       isLoading: ref(false),
     } as never)
     vi.mocked(useCompleteCampaign).mockReturnValue({ mutateAsync } as never)
+    vi.mocked(useCampaignAds).mockReturnValue({
+      data: ref({ success: true, ads: [] }),
+    } as never)
+    vi.mocked(useReviewAd).mockReturnValue(fakeMutation())
+    vi.mocked(usePatchAd).mockReturnValue(fakeMutation())
+    vi.mocked(useRefineAd).mockReturnValue(fakeMutation())
   })
 
   it('renders the backend detail string when completion is rejected with 400 {detail, missing}', async () => {
@@ -169,5 +208,60 @@ describe('CampaignReviewView — complete error surfacing (F17)', () => {
     const banner = wrapper.find('[data-testid="complete-error"]')
     expect(banner.exists()).toBe(true)
     expect(banner.text()).toContain('Network failure')
+  })
+})
+
+describe('CampaignReviewView — generated ads with review actions (F13)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: CampaignReviewView },
+        { path: '/campaigns', component: { template: '<div />' } },
+        { path: '/campaigns/:campaignUuid/review', component: CampaignReviewView },
+      ],
+    })
+    vi.mocked(useCampaign).mockReturnValue({
+      data: ref(buildCampaign()),
+      isLoading: ref(false),
+    } as never)
+    vi.mocked(useCompleteCampaign).mockReturnValue({ mutateAsync } as never)
+  })
+
+  it('renders the ads section with review state restored from GET /ads/', async () => {
+    vi.mocked(useCampaignAds).mockReturnValue({
+      data: ref({
+        success: true,
+        ads: [
+          buildAd({ campaign_ad_uuid: 'ad-1', review_status: 'approved' }),
+          buildAd({
+            campaign_ad_uuid: 'ad-2',
+            review_status: 'rejected',
+            reject_reason: 'Wrong tone',
+          }),
+        ],
+      }),
+    } as never)
+
+    const wrapper = await mountView()
+
+    expect(wrapper.find('[data-testid="review-ads-section"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="ad-status-approved"]').exists()).toBe(true)
+
+    await wrapper.find('[data-testid="ad-status-rejected"]').trigger('click')
+    expect(wrapper.find('[data-testid="ad-reject-reason"]').text()).toBe('Wrong tone')
+  })
+
+  it('hides the ads section when the campaign has no ads', async () => {
+    vi.mocked(useCampaignAds).mockReturnValue({
+      data: ref({ success: true, ads: [] }),
+    } as never)
+    vi.mocked(useReviewAd).mockReturnValue(fakeMutation())
+    vi.mocked(usePatchAd).mockReturnValue(fakeMutation())
+    vi.mocked(useRefineAd).mockReturnValue(fakeMutation())
+
+    const wrapper = await mountView()
+    expect(wrapper.find('[data-testid="review-ads-section"]').exists()).toBe(false)
   })
 })
