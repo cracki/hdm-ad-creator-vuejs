@@ -90,6 +90,31 @@ export function str(raw: unknown): string {
   return typeof raw === 'string' ? raw : String(raw ?? '')
 }
 
+const PLATFORM_DISPLAY: Record<string, string> = {
+  meta: 'Meta',
+  google: 'Google',
+  linkedin: 'LinkedIn',
+}
+
+/**
+ * Render `recommended_initial_budget_allocation` for display. The backend now
+ * returns a structured dict (platform → percent); the old String() coercion
+ * produced "[object Object]". Output: "Google 40% · Meta 40% · LinkedIn 20%".
+ */
+export function formatBudgetAllocation(raw: unknown): string {
+  if (typeof raw === 'string') return raw
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return ''
+  const entries = Object.entries(raw as Record<string, unknown>)
+    .map(([platform, pct]) => [platform, Number(pct)] as const)
+    .filter(([, n]) => Number.isFinite(n))
+    // Descending by share; alphabetical tie-break keeps output deterministic
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+  if (!entries.length) return ''
+  return entries
+    .map(([platform, n]) => `${PLATFORM_DISPLAY[platform.toLowerCase()] ?? platform.charAt(0).toUpperCase() + platform.slice(1)} ${n}%`)
+    .join(' · ')
+}
+
 // ── Data extraction helpers ───────────────────────────────
 
 type StepMap = Record<string, CampaignStep | undefined>
@@ -147,6 +172,11 @@ export async function exportCampaignPDF(campaign: Campaign, steps: CampaignStep[
   ]
   const done = flags.filter(Boolean).length
   overviewRows.push(['Progress', `${done} / 7 steps completed (${Math.round((done / 7) * 100)}%)`])
+
+  const totalBudget = Number(campaign.total_budget)
+  if (campaign.total_budget != null && Number.isFinite(totalBudget)) {
+    overviewRows.push(['Total Budget', `${campaign.currency || 'USD'} ${totalBudget.toLocaleString()}`])
+  }
 
   if (platforms.length) overviewRows.push(['Platforms', platforms.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(', ')])
 
@@ -234,8 +264,8 @@ export async function exportCampaignPDF(campaign: Campaign, steps: CampaignStep[
       ['PPC Ready', `${str(ppcSummary.ppc_ready_services)} of ${str(ppcSummary.services_count)}`],
       ['Brand-First', str(ppcSummary.brand_first_services)],
     ]
-    const budgetAlloc = str(ppcSummary.recommended_initial_budget_allocation)
-    if (budgetAlloc && budgetAlloc !== 'undefined') ppcRows.push(['Budget Allocation', budgetAlloc])
+    const budgetAlloc = formatBudgetAllocation(ppcSummary.recommended_initial_budget_allocation)
+    if (budgetAlloc) ppcRows.push(['Budget Allocation', budgetAlloc])
 
     autoTable(doc, {
       startY: y,
@@ -310,10 +340,18 @@ export async function exportCampaignPDF(campaign: Campaign, steps: CampaignStep[
       ['Dominant Stage', str(funnelSummary.dominant_stage_overall).toUpperCase()],
     ]
     if (funnelSummary.tofu_budget_percentage != null) {
+      const total = Number(campaign.total_budget)
+      const hasTotal = campaign.total_budget != null && Number.isFinite(total)
+      const budgetValue = (pct: unknown): string => {
+        const label = `${str(pct)}%`
+        const n = Number(pct)
+        if (!hasTotal || !Number.isFinite(n)) return label
+        return `${label} (${campaign.currency || 'USD'} ${Math.round((total * n) / 100).toLocaleString()})`
+      }
       funnelRows.push(
-        ['TOFU Budget', `${funnelSummary.tofu_budget_percentage}%`],
-        ['MOFU Budget', `${funnelSummary.mofu_budget_percentage}%`],
-        ['BOFU Budget', `${funnelSummary.bofu_budget_percentage}%`],
+        ['TOFU Budget', budgetValue(funnelSummary.tofu_budget_percentage)],
+        ['MOFU Budget', budgetValue(funnelSummary.mofu_budget_percentage)],
+        ['BOFU Budget', budgetValue(funnelSummary.bofu_budget_percentage)],
       )
     }
 
@@ -545,6 +583,10 @@ export async function exportCampaignPPTX(campaign: Campaign, steps: CampaignStep
     [{ text: 'Industry', options: { color: white } }, { text: brand?.selected_industry?.name ?? '-', options: { color: gray } }],
     [{ text: 'Progress', options: { color: white } }, { text: `${done} / 7 (${Math.round((done / 7) * 100)}%)`, options: { color: '22C55E', bold: true } }],
   ]
+  const totalBudget = Number(campaign.total_budget)
+  if (campaign.total_budget != null && Number.isFinite(totalBudget)) {
+    overviewRows.push([{ text: 'Total Budget', options: { color: white } }, { text: `${campaign.currency || 'USD'} ${totalBudget.toLocaleString()}`, options: { color: '22C55E' } }])
+  }
   if (platforms.length) {
     overviewRows.push([{ text: 'Platforms', options: { color: white } }, { text: platforms.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(', '), options: { color: gray } }])
   }
@@ -650,10 +692,18 @@ export async function exportCampaignPPTX(campaign: Campaign, steps: CampaignStep
       [{ text: 'Dominant Stage', options: { color: white } }, { text: str(funnelSummary.dominant_stage_overall).toUpperCase(), options: { color: 'FBBF24' } }],
     ]
     if (funnelSummary.tofu_budget_percentage != null) {
+      const total = Number(campaign.total_budget)
+      const hasTotal = campaign.total_budget != null && Number.isFinite(total)
+      const budgetValue = (pct: unknown): string => {
+        const label = `${str(pct)}%`
+        const n = Number(pct)
+        if (!hasTotal || !Number.isFinite(n)) return label
+        return `${label} (${campaign.currency || 'USD'} ${Math.round((total * n) / 100).toLocaleString()})`
+      }
       rows.push(
-        [{ text: 'TOFU Budget', options: { color: '60A5FA' } }, { text: `${funnelSummary.tofu_budget_percentage}%`, options: { color: '60A5FA', bold: true } }],
-        [{ text: 'MOFU Budget', options: { color: 'FBBF24' } }, { text: `${funnelSummary.mofu_budget_percentage}%`, options: { color: 'FBBF24', bold: true } }],
-        [{ text: 'BOFU Budget', options: { color: 'F472B6' } }, { text: `${funnelSummary.bofu_budget_percentage}%`, options: { color: 'F472B6', bold: true } }],
+        [{ text: 'TOFU Budget', options: { color: '60A5FA' } }, { text: budgetValue(funnelSummary.tofu_budget_percentage), options: { color: '60A5FA', bold: true } }],
+        [{ text: 'MOFU Budget', options: { color: 'FBBF24' } }, { text: budgetValue(funnelSummary.mofu_budget_percentage), options: { color: 'FBBF24', bold: true } }],
+        [{ text: 'BOFU Budget', options: { color: 'F472B6' } }, { text: budgetValue(funnelSummary.bofu_budget_percentage), options: { color: 'F472B6', bold: true } }],
       )
     }
     slide.addTable(rows, {

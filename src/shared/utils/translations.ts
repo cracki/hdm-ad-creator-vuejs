@@ -217,6 +217,17 @@ export const translations = {
   'camp.cancel': { en: 'Cancel', ar: 'إلغاء', fa: 'انصراف' },
   'camp.createBtn': { en: 'Create Campaign', ar: 'إنشاء حملة', fa: 'ساخت کمپین' },
   'camp.creating': { en: 'Creating…', ar: 'جارٍ الإنشاء…', fa: 'در حال ساخت…' },
+  'camp.budgetLabel': { en: 'Total budget (optional)', ar: 'الميزانية الإجمالية (اختياري)', fa: 'بودجه کل (اختیاری)' },
+  'camp.budgetHint': { en: 'Used to split spend across funnel stages.', ar: 'تُستخدم لتوزيع الإنفاق على مراحل القمع.', fa: 'برای توزیع هزینه بین مراحل قیف استفاده می‌شود.' },
+  'camp.budgetPlaceholder': { en: 'e.g. 5000', ar: 'مثال: 5000', fa: 'مثال: 5000' },
+  'camp.currencyLabel': { en: 'Currency', ar: 'العملة', fa: 'ارز' },
+  'camp.currency.USD': { en: 'USD — US Dollar', ar: 'USD — دولار أمريكي', fa: 'USD — دلار آمریکا' },
+  'camp.currency.EUR': { en: 'EUR — Euro', ar: 'EUR — يورو', fa: 'EUR — یورو' },
+  'camp.currency.AED': { en: 'AED — UAE Dirham', ar: 'AED — درهم إماراتي', fa: 'AED — درهم امارات' },
+  'camp.currency.GBP': { en: 'GBP — British Pound', ar: 'GBP — جنيه إسترليني', fa: 'GBP — پوند انگلیس' },
+  'camp.currency.IRT': { en: 'IRT — Iranian Toman', ar: 'IRT — تومان إيراني', fa: 'IRT — تومان ایران' },
+  'camp.currency.SAR': { en: 'SAR — Saudi Riyal', ar: 'SAR — ريال سعودي', fa: 'SAR — ریال سعودی' },
+  'camp.totalBudget': { en: 'Total budget', ar: 'الميزانية الإجمالية', fa: 'بودجه کل' },
 
   // Smart campaign steps
   'smart.stepOf': { en: 'Step', ar: 'خطوة', fa: 'گام' },
@@ -379,6 +390,8 @@ export const translations = {
   'review.campaignInfo': { en: 'Campaign Info', ar: 'معلومات الحملة', fa: 'اطلاعات کمپین' },
   'review.completeCampaign': { en: 'Complete Campaign', ar: 'إكمال الحملة', fa: 'تکمیل کمپین' },
   'review.completing': { en: 'Completing…', ar: 'جارٍ الإكمال…', fa: 'در حال تکمیل…' },
+  'review.completeFailed': { en: 'Could not complete the campaign. Please try again.', ar: 'تعذّر إكمال الحملة. حاول مرة أخرى.', fa: 'تکمیل کمپین ممکن نشد. دوباره تلاش کنید.' },
+  'review.budgetSplit': { en: 'Budget split by funnel stage', ar: 'توزيع الميزانية على مراحل القمع', fa: 'تقسیم بودجه بین مراحل قیف' },
 
   // Shared status
   'status.completed': { en: 'Completed', ar: 'مكتمل', fa: 'تکمیل‌شده' },

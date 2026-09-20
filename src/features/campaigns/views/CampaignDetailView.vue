@@ -6,14 +6,15 @@ import {
   Sparkles, Image as ImageIcon, Download,
   Check, Lock, ChevronRight, ChevronDown, ChevronUp,
   Globe, Building2, Clock, MapPin, Package, FileText,
-  TrendingUp, Users, LayoutGrid, Loader2, Presentation,
+  TrendingUp, Users, LayoutGrid, Loader2, Presentation, CircleDollarSign,
 } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import Breadcrumb from '@/shared/components/Breadcrumb.vue'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { useCampaign } from '../queries'
-import { exportCampaignPDF, exportCampaignPPTX } from '@/shared/utils/exportCampaign'
+import { exportCampaignPDF, exportCampaignPPTX, formatBudgetAllocation } from '@/shared/utils/exportCampaign'
+import { formatCampaignBudget, getFunnelBudgetSplit } from '../types'
 import { useTourRegistration } from '@/shared/composables/useTourRegistration'
 import { campaignDetailTour } from '../tours'
 
@@ -137,6 +138,13 @@ const funnelSummary = computed(() => summary.value.funnel)
 const contentSummary = computed(() => summary.value.content_strategy)
 const selectedPlatforms = computed<string[]>(() => contextPayload.value.selected_platforms || [])
 
+// Total budget + per-stage split amounts (F16); allocation as structured dict (F16 fix)
+const totalBudgetText = computed(() => (campaign.value ? formatCampaignBudget(campaign.value) : null))
+const funnelSplit = computed(() => (campaign.value ? getFunnelBudgetSplit(campaign.value) : null))
+const budgetAllocationText = computed(() =>
+  formatBudgetAllocation(ppcSummary.value?.recommended_initial_budget_allocation),
+)
+
 const completedCount = computed(() => {
   return STEPS.filter((s) => isStepDone(s)).length
 })
@@ -209,6 +217,10 @@ function getStepStatusLabel(step: StepDef, idx: number): string {
               <span class="flex items-center gap-1.5" v-if="campaign.brand?.website_url">
                 <Globe class="h-3.5 w-3.5" />
                 <a :href="campaign.brand.website_url" target="_blank" rel="noopener" class="text-primary hover:underline">{{ campaign.brand.website_url.replace(/^https?:\/\//, '') }}</a>
+              </span>
+              <span class="flex items-center gap-1.5" v-if="totalBudgetText" data-testid="total-budget-value">
+                <CircleDollarSign class="h-3.5 w-3.5" />
+                {{ totalBudgetText }}
               </span>
             </div>
           </div>
@@ -428,7 +440,7 @@ function getStepStatusLabel(step: StepDef, idx: number): string {
       <div class="mt-4 space-y-2" data-loc="campaigns.detail.details">
 
         <!-- PPC Budget Allocation -->
-        <div v-if="ppcSummary?.recommended_initial_budget_allocation" class="surface-card overflow-hidden">
+        <div v-if="budgetAllocationText" class="surface-card overflow-hidden" data-testid="budget-allocation">
           <button
             class="w-full p-4 flex items-center justify-between hover:bg-muted/5 transition"
             @click="toggleSection('ppc')"
@@ -440,7 +452,7 @@ function getStepStatusLabel(step: StepDef, idx: number): string {
             <component :is="expandedSections.ppc ? ChevronUp : ChevronDown" class="h-4 w-4 text-muted-foreground" />
           </button>
           <div v-if="expandedSections.ppc" class="px-4 pb-4 space-y-3 border-t border-border/30">
-            <p class="text-sm text-muted-foreground mt-3 leading-relaxed">{{ ppcSummary.recommended_initial_budget_allocation }}</p>
+            <p class="text-sm text-muted-foreground mt-3 leading-relaxed">{{ budgetAllocationText }}</p>
             <div v-if="ppcSummary.top_ranked_services?.length" class="mt-2">
               <div class="text-xs text-muted-foreground mb-1.5">{{ t('cd.topServices' as any) }}</div>
               <div class="space-y-1">
@@ -496,6 +508,7 @@ function getStepStatusLabel(step: StepDef, idx: number): string {
             <div class="flex items-center gap-2">
               <Layers class="h-4 w-4 text-accent-amber" />
               <span class="text-sm font-medium">{{ t('cd.budgetSplit' as any) }}</span>
+              <span v-if="totalBudgetText" class="text-xs text-muted-foreground">· {{ totalBudgetText }}</span>
             </div>
             <component :is="expandedSections.funnel ? ChevronUp : ChevronDown" class="h-4 w-4 text-muted-foreground" />
           </button>
@@ -506,21 +519,27 @@ function getStepStatusLabel(step: StepDef, idx: number): string {
                 <div class="flex-1 h-2 rounded-full bg-muted/20 overflow-hidden">
                   <div class="h-full bg-accent-cyan rounded-full" :style="{ width: funnelSummary.tofu_budget_percentage + '%' }" />
                 </div>
-                <span class="text-xs font-medium w-10 text-end">{{ funnelSummary.tofu_budget_percentage }}%</span>
+                <span class="text-xs font-medium w-24 text-end">
+                  {{ funnelSummary.tofu_budget_percentage }}%<template v-if="funnelSplit?.tofu.amount != null"> · {{ funnelSplit.tofu.amount.toLocaleString() }}</template>
+                </span>
               </div>
               <div class="flex items-center gap-3">
                 <span class="text-xs w-24 text-muted-foreground">{{ t('cd.mofu' as any) }}</span>
                 <div class="flex-1 h-2 rounded-full bg-muted/20 overflow-hidden">
                   <div class="h-full bg-accent-amber rounded-full" :style="{ width: funnelSummary.mofu_budget_percentage + '%' }" />
                 </div>
-                <span class="text-xs font-medium w-10 text-end">{{ funnelSummary.mofu_budget_percentage }}%</span>
+                <span class="text-xs font-medium w-24 text-end">
+                  {{ funnelSummary.mofu_budget_percentage }}%<template v-if="funnelSplit?.mofu.amount != null"> · {{ funnelSplit.mofu.amount.toLocaleString() }}</template>
+                </span>
               </div>
               <div class="flex items-center gap-3">
                 <span class="text-xs w-24 text-muted-foreground">{{ t('cd.bofu' as any) }}</span>
                 <div class="flex-1 h-2 rounded-full bg-muted/20 overflow-hidden">
                   <div class="h-full bg-accent-magenta rounded-full" :style="{ width: funnelSummary.bofu_budget_percentage + '%' }" />
                 </div>
-                <span class="text-xs font-medium w-10 text-end">{{ funnelSummary.bofu_budget_percentage }}%</span>
+                <span class="text-xs font-medium w-24 text-end">
+                  {{ funnelSummary.bofu_budget_percentage }}%<template v-if="funnelSplit?.bofu.amount != null"> · {{ funnelSplit.bofu.amount.toLocaleString() }}</template>
+                </span>
               </div>
             </div>
           </div>

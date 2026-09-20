@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest'
 import {
   getCampaignProgress,
   areAllPlatformAdsComplete,
+  formatCampaignBudget,
+  getFunnelBudgetSplit,
   type Campaign,
 } from './types'
 
@@ -12,6 +14,8 @@ function buildCampaign(overrides: Partial<Campaign> = {}): Campaign {
     name: 'Test Campaign',
     status: 'in_progress',
     current_step: 'segmentation',
+    total_budget: null,
+    currency: 'USD',
     segmentation_completed: false,
     ppc_viability_completed: false,
     funnel_completed: false,
@@ -121,5 +125,60 @@ describe('areAllPlatformAdsComplete', () => {
         }),
       ),
     ).toBe(false)
+  })
+})
+
+describe('formatCampaignBudget (F16)', () => {
+  it('returns null when no budget is set', () => {
+    expect(formatCampaignBudget(buildCampaign())).toBeNull()
+    expect(formatCampaignBudget(buildCampaign({ total_budget: 'not-a-number' }))).toBeNull()
+  })
+
+  it('formats amount and currency for numeric and string decimals', () => {
+    expect(formatCampaignBudget(buildCampaign({ total_budget: 250 }))).toBe('USD 250')
+    expect(formatCampaignBudget(buildCampaign({ total_budget: '250', currency: 'AED' }))).toBe('AED 250')
+  })
+
+  it('falls back to USD when currency is blank', () => {
+    expect(formatCampaignBudget(buildCampaign({ total_budget: 250, currency: '' }))).toBe('USD 250')
+  })
+})
+
+describe('getFunnelBudgetSplit (F16)', () => {
+  const funnelSummary = {
+    tofu_budget_percentage: 40,
+    mofu_budget_percentage: 35,
+    bofu_budget_percentage: 25,
+  }
+
+  it('returns null when the funnel step produced no split', () => {
+    expect(getFunnelBudgetSplit(buildCampaign())).toBeNull()
+    expect(getFunnelBudgetSplit(buildCampaign({ summary: { funnel: {} } }))).toBeNull()
+  })
+
+  it('computes per-stage amounts from total_budget × percent', () => {
+    const split = getFunnelBudgetSplit(
+      buildCampaign({ total_budget: 1000, summary: { funnel: funnelSummary } }),
+    )
+    expect(split).not.toBeNull()
+    expect(split!.tofu).toEqual({ percent: 40, amount: 400 })
+    expect(split!.mofu).toEqual({ percent: 35, amount: 350 })
+    expect(split!.bofu).toEqual({ percent: 25, amount: 250 })
+  })
+
+  it('returns percents with null amounts when no budget is set', () => {
+    const split = getFunnelBudgetSplit(buildCampaign({ summary: { funnel: funnelSummary } }))
+    expect(split!.tofu).toEqual({ percent: 40, amount: null })
+    expect(split!.bofu).toEqual({ percent: 25, amount: null })
+  })
+
+  it('treats a missing stage percent as 0', () => {
+    const split = getFunnelBudgetSplit(
+      buildCampaign({
+        total_budget: 200,
+        summary: { funnel: { tofu_budget_percentage: 50, mofu_budget_percentage: 50 } },
+      }),
+    )
+    expect(split!.bofu).toEqual({ percent: 0, amount: 0 })
   })
 })

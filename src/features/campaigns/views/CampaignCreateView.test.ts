@@ -142,3 +142,86 @@ describe('CampaignCreateView — service selection (F14)', () => {
     })
   })
 })
+
+describe('CampaignCreateView — total budget + currency (F16)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: CampaignCreateView },
+        { path: '/brands/new', component: { template: '<div />' } },
+        { path: '/campaigns/:campaignUuid', component: { template: '<div />' } },
+      ],
+    })
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    })
+    vi.mocked(brandsApi.list).mockResolvedValue({ data: brands as never })
+    vi.mocked(brandsApi.listServices).mockResolvedValue({
+      data: { success: true, services },
+    })
+    vi.mocked(campaignsApi.create).mockResolvedValue({
+      data: { campaign_uuid: 'c1' } as never,
+    })
+  })
+
+  it('includes total_budget and currency in the create payload when set', async () => {
+    const wrapper = await mountView()
+
+    await wrapper.findAll('[data-loc="campaigns.create.brand-select"]')[0].trigger('click')
+    await flushPromises()
+
+    await wrapper.find('[data-testid="budget-amount-input"]').setValue('5000')
+    await wrapper.find('[data-testid="currency-select"]').setValue('AED')
+
+    await wrapper.find('[data-loc="campaigns.create.create-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(campaignsApi.create).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(campaignsApi.create).mock.calls[0][0]).toEqual({
+      brand_uuid: 'b1',
+      name: undefined,
+      total_budget: 5000,
+      currency: 'AED',
+    })
+  })
+
+  it('defaults the currency to USD when only the amount is set', async () => {
+    const wrapper = await mountView()
+
+    await wrapper.findAll('[data-loc="campaigns.create.brand-select"]')[0].trigger('click')
+    await flushPromises()
+
+    await wrapper.find('[data-testid="budget-amount-input"]').setValue('250')
+
+    await wrapper.find('[data-loc="campaigns.create.create-btn"]').trigger('click')
+    await flushPromises()
+
+    const payload = vi.mocked(campaignsApi.create).mock.calls[0][0]
+    expect(payload.total_budget).toBe(250)
+    expect(payload.currency).toBe('USD')
+  })
+
+  it('omits budget fields when the amount is empty or non-positive', async () => {
+    const wrapper = await mountView()
+
+    await wrapper.findAll('[data-loc="campaigns.create.brand-select"]')[0].trigger('click')
+    await flushPromises()
+
+    // Empty amount
+    await wrapper.find('[data-loc="campaigns.create.create-btn"]').trigger('click')
+    await flushPromises()
+    let payload = vi.mocked(campaignsApi.create).mock.calls[0][0]
+    expect('total_budget' in payload).toBe(false)
+    expect('currency' in payload).toBe(false)
+
+    // Zero amount — backend requires decimal > 0, so it must not be sent
+    await wrapper.find('[data-testid="budget-amount-input"]').setValue('0')
+    await wrapper.find('[data-loc="campaigns.create.create-btn"]').trigger('click')
+    await flushPromises()
+    payload = vi.mocked(campaignsApi.create).mock.calls[1][0]
+    expect('total_budget' in payload).toBe(false)
+    expect('currency' in payload).toBe(false)
+  })
+})

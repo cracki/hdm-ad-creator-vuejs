@@ -1,6 +1,6 @@
 import { triggerDownload } from './download'
 import { exportCsv } from './csv'
-import { initPDF, initPPTX, addPdfFooter, addPdfCoverTitle, parse, str } from './exportCampaign'
+import { initPDF, initPPTX, addPdfFooter, addPdfCoverTitle, parse, str, formatBudgetAllocation } from './exportCampaign'
 import { hdmLogoBase64 } from '@/shared/assets/hdm-logo-base64'
 
 type ExportFormat = 'csv' | 'pdf' | 'pptx'
@@ -234,7 +234,9 @@ export async function exportPPCViability(format: ExportFormat, payload: R, ctx: 
   const summary = data.summary as R | undefined
   const competitors = parse<R>((data as any).competitive_landscape?.competitors ?? [])
   const marketOverview = str((data as any).competitive_landscape?.market_overview)
-  const budgetAlloc = str(summary?.recommended_initial_budget_allocation ?? (data as any).summary?.recommended_initial_budget_allocation)
+  const budgetAlloc = formatBudgetAllocation(
+    summary?.recommended_initial_budget_allocation ?? (data as any).summary?.recommended_initial_budget_allocation,
+  )
 
   const allServices = bpcScores.length ? bpcScores : blueprints
 
@@ -277,7 +279,7 @@ export async function exportPPCViability(format: ExportFormat, payload: R, ctx: 
       ['PPC Ready', str(summary?.ppc_ready_services)],
       ['Brand First', str(summary?.brand_first_services)],
     ]
-    if (budgetAlloc && budgetAlloc !== 'undefined') overviewRows.push(['Budget Allocation', budgetAlloc])
+    if (budgetAlloc) overviewRows.push(['Budget Allocation', budgetAlloc])
     autoTable(doc, { startY: y, margin: { left: margin, right: margin }, head: [['Metric', 'Value']], body: overviewRows, styles: { fontSize: 9, cellPadding: 2, overflow: 'linebreak' }, headStyles: { fillColor: [88, 28, 135], textColor: 255, fontStyle: 'bold' }, columnStyles: { 0: { cellWidth: 50 }, 1: { cellWidth: 'auto' } } })
     y = (doc as any).lastAutoTable.finalY + 8
 
@@ -936,12 +938,17 @@ export async function exportReview(format: ExportFormat, campaign: any, adsList:
   ]
   const doneCount = flags.filter((f) => f.done).length
 
+  const totalBudget = Number(campaign.total_budget)
+  const hasBudget = campaign.total_budget != null && Number.isFinite(totalBudget)
+  const budgetText = hasBudget ? `${campaign.currency || 'USD'} ${totalBudget.toLocaleString()}` : ''
+
   if (format === 'csv') {
     const rows = [
       { property: 'Campaign', value: campaign.name ?? '' },
       { property: 'Brand', value: campaign.brand?.company_name ?? '' },
       { property: 'Status', value: campaign.status ?? '' },
       { property: 'Progress', value: `${doneCount} / ${flags.length}` },
+      ...(hasBudget ? [{ property: 'Total Budget', value: budgetText }] : []),
       ...flags.map((f) => ({ property: f.label, value: f.done ? 'Completed' : 'Pending' })),
       { property: 'Total Ads', value: String(adsList.length) },
     ]
@@ -964,6 +971,7 @@ export async function exportReview(format: ExportFormat, campaign: any, adsList:
       ['Brand', campaign.brand?.company_name ?? ''],
       ['Status', (campaign.status ?? '').toUpperCase()],
       ['Progress', `${doneCount} / ${flags.length} (${Math.round((doneCount / flags.length) * 100)}%)`],
+      ...(hasBudget ? [['Total Budget', budgetText]] : []),
       ...flags.map((f) => [f.label, f.done ? 'Completed' : 'Pending']),
       ['Total Ads', String(adsList.length)],
     ]
@@ -987,6 +995,7 @@ export async function exportReview(format: ExportFormat, campaign: any, adsList:
     [{ text: 'Property', options: { bold: true, color: white, fill: { color: purple } } }, { text: 'Value', options: { bold: true, color: white, fill: { color: purple } } }],
     [{ text: 'Campaign', options: { color: white } }, { text: campaign.name ?? '-', options: { color: gray } }],
     [{ text: 'Brand', options: { color: white } }, { text: campaign.brand?.company_name ?? '-', options: { color: gray } }],
+    ...(hasBudget ? [[{ text: 'Total Budget', options: { color: white } }, { text: budgetText, options: { color: '22C55E' } }]] : []),
     [{ text: 'Progress', options: { color: white } }, { text: `${doneCount} / ${flags.length}`, options: { color: '22C55E', bold: true } }],
     ...flags.map((f) => [
       { text: f.label, options: { color: white } },

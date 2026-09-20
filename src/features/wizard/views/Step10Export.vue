@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Download, Loader2, Check } from 'lucide-vue-next'
+import { Download, Loader2, Check, AlertCircle } from 'lucide-vue-next'
 import { useI18n } from '@/shared/utils/i18n'
 import { useCompleteCampaign } from '@/features/campaigns/queries'
 import { operationManager } from '@/infrastructure/operations/operationManager'
+import { formatCampaignBudget } from '@/features/campaigns/types'
 import type { Campaign } from '@/features/campaigns/types'
 
 const props = defineProps<{ campaign: Campaign; campaignUuid: string }>()
@@ -13,6 +14,8 @@ const { t } = useI18n()
 const router = useRouter()
 
 const completeMutation = useCompleteCampaign(computed(() => props.campaignUuid))
+
+const totalBudgetText = computed(() => formatCampaignBudget(props.campaign))
 
 const completionFlags = computed(() => [
   { key: 'segmentation', label: t('smart.s2'), done: props.campaign.segmentation_completed },
@@ -29,6 +32,7 @@ const progress = computed(() => Math.round((completedCount.value / completionFla
 const allDone = computed(() => completionFlags.value.every(f => f.done))
 
 const completing = ref(false)
+const completeError = ref('')
 
 async function completeCampaign() {
   if (!allDone.value) return
@@ -36,11 +40,17 @@ async function completeCampaign() {
   if (!operationManager.canStart(opKey)) return
   operationManager.start(opKey)
   completing.value = true
+  completeError.value = ''
   try {
     await completeMutation.mutateAsync()
     emit('completed')
     router.push('/campaigns')
-  } catch { /* mutation handles error */ } finally {
+  } catch (e: unknown) {
+    // Surface the backend's gating error (400 {detail, missing}) — nothing
+    // else shows it (no global mutation error handler).
+    const err = e as { response?: { data?: { detail?: string } }; message?: string }
+    completeError.value = err?.response?.data?.detail ?? err?.message ?? t('review.completeFailed')
+  } finally {
     completing.value = false
     operationManager.finish(opKey)
   }
@@ -100,7 +110,21 @@ async function completeCampaign() {
           <div class="text-muted-foreground mb-0.5">{{ t('newbrand.row.website') }}</div>
           <div class="font-medium truncate">{{ campaign.brand?.website_url ?? '—' }}</div>
         </div>
+        <div v-if="totalBudgetText">
+          <div class="text-muted-foreground mb-0.5">{{ t('camp.totalBudget') }}</div>
+          <div class="font-medium" data-testid="total-budget-value">{{ totalBudgetText }}</div>
+        </div>
       </div>
+    </div>
+
+    <!-- Completion gating error (F17) -->
+    <div
+      v-if="completeError"
+      class="surface-card p-4 flex items-start gap-3 border-destructive/40"
+      data-testid="complete-error"
+    >
+      <AlertCircle class="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+      <div class="text-xs text-destructive leading-relaxed">{{ completeError }}</div>
     </div>
 
     <!-- Complete button -->
