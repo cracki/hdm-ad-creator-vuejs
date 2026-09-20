@@ -257,6 +257,7 @@ export const translations = {
   'seg.businessTypeHint': { en: 'e.g. D2C skincare', ar: 'مثال: منتجات عناية مباشرة', fa: 'مثال: D2C مراقبت پوست' },
   'seg.location': { en: 'Location', ar: 'الموقع', fa: 'مکان' },
   'seg.locationHint': { en: 'e.g. UAE, GCC', ar: 'مثال: الإمارات، الخليج', fa: 'مثال: امارات، خلیج' },
+  'seg.targetMarket': { en: 'Target market', ar: 'السوق المستهدف', fa: 'بازار هدف' },
   'seg.productDesc': { en: 'Product description', ar: 'وصف المنتج', fa: 'توصیف محصول' },
   'seg.productDescHint': { en: 'Describe your product or service…', ar: 'صف منتجك أو خدمتك…', fa: 'محصول یا خدماتت را توصیف کن…' },
   'seg.runSegmentation': { en: 'Run Segmentation', ar: 'تشغيل التجزئة', fa: 'اجرای بخش‌بندی' },

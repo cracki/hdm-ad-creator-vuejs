@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Users, AlertCircle, RefreshCw, Check, ShoppingBag, MapPin } from 'lucide-vue-next'
+import { Users, AlertCircle, RefreshCw, Check, ShoppingBag } from 'lucide-vue-next'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import SegmentDeepResearchRenderer from '@/shared/components/renderers/SegmentDeepResearchRenderer.vue'
+import CountryCitySelect from '@/shared/components/CountryCitySelect.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { campaignsApi } from '@/features/campaigns/api'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
+import { composeLocation, resolveTargetMarket, type TargetMarket } from '@/features/campaigns/types'
 import type { Campaign } from '@/features/campaigns/types'
 
 const props = defineProps<{ campaign: Campaign; campaignUuid: string }>()
@@ -14,8 +16,12 @@ const emit = defineEmits<{ (e: 'completed'): void }>()
 const { t } = useI18n()
 
 const businessType = ref('')
-const location = ref('')
 const productDescription = ref('')
+
+// Structured target market (F19): country/city via CountryCitySelect, seeded
+// from a previous run's context_payload.target_market or best-effort from the
+// brand's free-text location. The legacy location is composed "City, Country".
+const targetMarket = ref<TargetMarket>(resolveTargetMarket(props.campaign))
 
 const opKey = computed(() => `${props.campaignUuid}:segmentation`)
 const { data: result, loading, error, run } = useAsyncOperation<any>()
@@ -39,7 +45,9 @@ async function runSegmentation() {
     await run(async () => {
       const res = await campaignsApi.runSegmentation(props.campaignUuid, {
         business_type: businessType.value || undefined,
-        location: location.value || undefined,
+        location: composeLocation(targetMarket.value) || undefined,
+        country: targetMarket.value.country.trim() || undefined,
+        city: targetMarket.value.city.trim() || undefined,
         product_description: productDescription.value || undefined,
         include_deep_research: true,
       })
@@ -67,21 +75,16 @@ async function runSegmentation() {
 
     <!-- Input form -->
     <div v-if="!stepData && !loading && !isAlreadyCompleted" class="surface-card p-5 space-y-4">
-      <div class="grid sm:grid-cols-2 gap-4">
-        <div>
-          <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('seg.businessType') }}</label>
-          <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60">
-            <ShoppingBag class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-            <input v-model="businessType" :placeholder="t('seg.businessTypeHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
-          </div>
+      <div>
+        <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('seg.businessType') }}</label>
+        <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60">
+          <ShoppingBag class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <input v-model="businessType" :placeholder="t('seg.businessTypeHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
         </div>
-        <div>
-          <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('seg.location') }}</label>
-          <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60">
-            <MapPin class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-            <input v-model="location" :placeholder="t('seg.locationHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
-          </div>
-        </div>
+      </div>
+      <div>
+        <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('seg.targetMarket') }}</label>
+        <CountryCitySelect v-model="targetMarket" />
       </div>
       <div>
         <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('seg.productDesc') }}</label>

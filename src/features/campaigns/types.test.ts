@@ -4,6 +4,8 @@ import {
   areAllPlatformAdsComplete,
   formatCampaignBudget,
   getFunnelBudgetSplit,
+  resolveTargetMarket,
+  composeLocation,
   type Campaign,
 } from './types'
 
@@ -180,5 +182,55 @@ describe('getFunnelBudgetSplit (F16)', () => {
       }),
     )
     expect(split!.bofu).toEqual({ percent: 0, amount: 0 })
+  })
+})
+
+describe('resolveTargetMarket (F19)', () => {
+  it('returns empty strings when nothing is known', () => {
+    expect(resolveTargetMarket(buildCampaign())).toEqual({ country: '', city: '' })
+    expect(resolveTargetMarket(null)).toEqual({ country: '', city: '' })
+  })
+
+  it('prefers the persisted context_payload.target_market', () => {
+    expect(
+      resolveTargetMarket(
+        buildCampaign({
+          brand: { brand_uuid: 'b1', company_name: 'L', website_url: '', location: 'Germany', selected_industry: null },
+          context_payload: { target_market: { country: 'Oman', city: 'Muscat' } },
+        }),
+      ),
+    ).toEqual({ country: 'Oman', city: 'Muscat' })
+  })
+
+  it('best-effort seeds the country from the brand free-text location', () => {
+    expect(
+      resolveTargetMarket(
+        buildCampaign({
+          brand: { brand_uuid: 'b1', company_name: 'L', website_url: '', location: 'Dubai, United Arab Emirates', selected_industry: null },
+        }),
+      ),
+    ).toEqual({ country: 'United Arab Emirates', city: '' })
+  })
+
+  it('leaves the country empty when the brand location matches no known country', () => {
+    expect(
+      resolveTargetMarket(
+        buildCampaign({
+          brand: { brand_uuid: 'b1', company_name: 'L', website_url: '', location: 'Narnia', selected_industry: null },
+        }),
+      ),
+    ).toEqual({ country: '', city: '' })
+  })
+})
+
+describe('composeLocation (F19)', () => {
+  it('composes "City, Country" when both are set', () => {
+    expect(composeLocation({ country: 'Oman', city: 'Muscat' })).toBe('Muscat, Oman')
+  })
+
+  it('falls back to whichever part exists', () => {
+    expect(composeLocation({ country: 'Oman', city: '' })).toBe('Oman')
+    expect(composeLocation({ country: '', city: 'Muscat' })).toBe('Muscat')
+    expect(composeLocation({ country: '', city: '' })).toBe('')
   })
 })
