@@ -27,7 +27,7 @@ const visualImageUrl = computed(() => props.visual?.image_url ?? props.variant?.
 const visualStatus = computed<VisualStatus | null>(
   () => props.visual?.visual_status ?? props.variant?.data?.visual_status ?? null,
 )
-const visualError = computed(() => props.visual?.error ?? props.variant?.data?.visual_error ?? null)
+const visualError = computed(() => props.visual?.error ?? props.variant?.data?.error ?? null)
 
 const adCopy = computed(() => {
   const d = props.variant?.data ?? {}

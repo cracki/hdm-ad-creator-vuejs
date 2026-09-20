@@ -5,7 +5,6 @@ import { parseVariantOptions, parseMetaFrameworks } from './schemas'
 import type {
   StandaloneVariantsPayload,
   CampaignMatrixPayload,
-  ScenarioVariantsGenerateVisualsPayload,
 } from './types'
 
 export function useVariantOptions(industry: Ref<string>) {
@@ -73,14 +72,3 @@ export function useStartCampaignMatrix(campaignUuid: Ref<string>) {
 }
 
 /** POST …/scenario-variants-matrix/{run}/generate-visuals/ — image rendering (F2). */
-export function useGenerateMatrixRunVisuals(campaignUuid: Ref<string>, runUuid: Ref<string>) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (payload: ScenarioVariantsGenerateVisualsPayload) =>
-      scenarioVariantsApi.generateMatrixRunVisuals(campaignUuid.value, runUuid.value, payload),
-    onSuccess: () => {
-      // Variant data.image_url/visual_status persist on the variants read-back.
-      queryClient.invalidateQueries({ queryKey: ['campaigns', campaignUuid, 'scenario-matrix', runUuid] })
-    },
-  })
-}
