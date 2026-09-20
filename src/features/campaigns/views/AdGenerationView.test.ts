@@ -45,6 +45,7 @@ function buildCampaign(): Campaign {
     name: 'Summer Launch',
     status: 'in_progress',
     current_step: 'meta_ads',
+    language: 'en',
     total_budget: null,
     currency: 'USD',
     segmentation_completed: true,

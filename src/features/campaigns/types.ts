@@ -5,6 +5,8 @@ export type CampaignStepType = 'segmentation' | 'ppc_viability' | 'funnel' | 'co
 export type CampaignStepStatus = 'pending' | 'running' | 'completed' | 'failed' | 'stale'
 export type CampaignAdPlatform = 'meta' | 'google' | 'linkedin'
 export type FunnelStage = 'TOFU' | 'MOFU' | 'BOFU'
+/** Output language for all campaign-generated content (B9/M-M28). */
+export type CampaignLanguage = 'en' | 'fa' | 'ar'
 
 export interface CampaignBrand {
   brand_uuid: string
@@ -21,6 +23,8 @@ export interface Campaign {
   name: string
   status: CampaignStatus
   current_step: CampaignStepType
+  /** Output language echoed everywhere by the backend (default 'en'). */
+  language: CampaignLanguage
   total_budget: number | string | null
   currency: string
   segmentation_completed: boolean
@@ -42,6 +46,7 @@ export interface CampaignCreatePayload {
   name?: string
   total_budget?: number
   currency?: string
+  language?: CampaignLanguage
   context_payload?: Record<string, unknown>
 }
 
@@ -90,10 +95,14 @@ export interface GenerateAdPayload {
   quantity?: number
 }
 
+export type VisualAspectRatio = '1:1' | '2:3' | '3:2' | '4:7' | '7:4'
+export type VisualQuality = 'auto' | 'low' | 'medium' | 'high'
+export type VisualStatus = 'completed' | 'failed'
+
 export interface GenerateVisualsPayload {
   ad_uuids: string[]
-  aspect_ratio?: '1:1' | '2:3' | '3:2' | '4:7' | '7:4'
-  quality?: 'auto' | 'low' | 'medium' | 'high'
+  aspect_ratio?: VisualAspectRatio
+  quality?: VisualQuality
 }
 
 export interface GeneratedVisual {
@@ -101,13 +110,18 @@ export interface GeneratedVisual {
   platform: string | null
   persona: string | null
   funnel_stage: string | null
+  visual_id?: string
   aspect_ratio: string
   size: string
   quality: string
   visual_summary: string
-  prompt: string
+  prompt?: string
   success: boolean
+  visual_status: VisualStatus
   image_url: string | null
+  content_type?: string | null
+  file_size?: number
+  generated_at?: string | null
   revised_prompt: string | null
   error: string | null
 }
@@ -122,6 +136,12 @@ export interface VisualGenerateResult {
   success: boolean
   campaign: Campaign
   generated_count: number
+  results: GeneratedVisual[]
+}
+
+/** GET /campaigns/{uuid}/visuals/ — every persisted visual (success + failure). */
+export interface CampaignVisualsListResult {
+  success: boolean
   results: GeneratedVisual[]
 }
 

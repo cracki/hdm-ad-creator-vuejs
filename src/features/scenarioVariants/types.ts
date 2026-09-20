@@ -1,6 +1,9 @@
 export type VariantRunStatus = 'pending' | 'running' | 'completed' | 'failed'
 export type VariantRunEntrypoint = 'standalone' | 'campaign_matrix'
 export type VariantType = 'regular' | 'meta_creative'
+export type VisualAspectRatio = '1:1' | '2:3' | '3:2' | '4:7' | '7:4'
+export type VisualQuality = 'auto' | 'low' | 'medium' | 'high'
+export type VisualStatus = 'completed' | 'failed'
 
 export interface VariantOption {
   id: string
@@ -83,6 +86,8 @@ export interface StandaloneVariantsPayload {
   campaign_tone?: string
   additional_notes?: string
   selection_notes?: Record<string, unknown>
+  /** Output language for the generated variants (default 'en'). */
+  language?: string
 }
 
 export interface StandaloneVariantsResult {
@@ -107,4 +112,29 @@ export interface CampaignMatrixPayload {
 export interface CampaignMatrixResult {
   run: ScenarioVariantRun
   variants: ScenarioVariant[]
+}
+
+// ── Visual image generation (F2) ──────────────────────────
+
+export interface ScenarioVariantsGenerateVisualsPayload {
+  variant_uuids?: string[]
+  aspect_ratio?: VisualAspectRatio
+  quality?: VisualQuality
+  /** Output language for rendered image text (defaults to the run's language). */
+  language?: string
+}
+
+export interface ScenarioVariantVisual {
+  scenario_variant_uuid: string
+  image_url: string | null
+  revised_prompt: string | null
+  success: boolean
+  visual_status: VisualStatus
+  error: string | null
+}
+
+export interface ScenarioVariantsGenerateVisualsResult {
+  success: boolean
+  generated_count: number
+  results: ScenarioVariantVisual[]
 }

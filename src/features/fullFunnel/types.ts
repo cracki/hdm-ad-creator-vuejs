@@ -7,6 +7,8 @@ export interface FullFunnelPayload {
   duration_days?: number
   funnel_stages?: string[]
   ads_per_stage?: number
+  /** Output language for the whole one-shot funnel (default 'en'). */
+  language?: string
 }
 
 export interface FullFunnelResult {
@@ -42,6 +44,10 @@ export interface FunnelStrategies {
   cross_platform_guidelines: Record<string, string>
 }
 
+export type VisualAspectRatio = '1:1' | '2:3' | '3:2' | '4:7' | '7:4'
+export type VisualQuality = 'auto' | 'low' | 'medium' | 'high'
+export type VisualStatus = 'completed' | 'failed'
+
 export interface VisualConcept {
   style: string
   mood: string
@@ -55,6 +61,37 @@ export interface VisualConcept {
   visual_psychology: string
   ad_headline: string
   platform: string
+  /** Enriched by POST …/generate-visuals/ and persisted on the run (F2). */
+  image_url?: string | null
+  visual_status?: VisualStatus
+  revised_prompt?: string | null
+  generated_at?: string | null
+  error?: string | null
+}
+
+// ── Visual image generation (F2) ──────────────────────────
+
+export interface FullFunnelGenerateVisualsPayload {
+  concept_indexes?: number[]
+  aspect_ratio?: VisualAspectRatio
+  quality?: VisualQuality
+  /** Output language for rendered image text (defaults to the run's language). */
+  language?: string
+}
+
+export interface FullFunnelConceptVisual {
+  concept_index: number
+  image_url: string | null
+  revised_prompt: string | null
+  success: boolean
+  visual_status: VisualStatus
+  error: string | null
+}
+
+export interface FullFunnelGenerateVisualsResult {
+  success: boolean
+  generated_count: number
+  results: FullFunnelConceptVisual[]
 }
 
 export interface TargetingStage {

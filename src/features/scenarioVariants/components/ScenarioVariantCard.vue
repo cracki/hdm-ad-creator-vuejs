@@ -1,21 +1,33 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Copy, Eye, Image, Check, FileText } from 'lucide-vue-next'
+import { Copy, Eye, Image, Check, FileText, AlertCircle, RefreshCw } from 'lucide-vue-next'
 import { useI18n } from '@/shared/utils/i18n'
 import { useToast } from '@/shared/composables/useToast'
+import type { ScenarioVariantVisual, VisualStatus } from '../types'
 
 const props = defineProps<{
   variant: any
+  /** Freshest render outcome for this variant (overrides the persisted data). */
+  visual?: ScenarioVariantVisual | null
 }>()
 
 const emit = defineEmits<{
   viewDetails: [variant: any]
+  retryVisual: [variant: any]
 }>()
 
 const { t } = useI18n()
 const toast = useToast()
 
 const copiedField = ref<string | null>(null)
+
+// Rendered image (F2): persisted on data.image_url after generate-visuals;
+// the parent's overlay result wins while it is fresher.
+const visualImageUrl = computed(() => props.visual?.image_url ?? props.variant?.data?.image_url ?? null)
+const visualStatus = computed<VisualStatus | null>(
+  () => props.visual?.visual_status ?? props.variant?.data?.visual_status ?? null,
+)
+const visualError = computed(() => props.visual?.error ?? props.variant?.data?.visual_error ?? null)
 
 const adCopy = computed(() => {
   const d = props.variant?.data ?? {}
@@ -64,6 +76,36 @@ function copyAll() {
 
 <template>
   <div :class="['surface-card p-4 group relative', isMetaCreative ? 'border-s-2 border-s-accent-cyan' : '']">
+    <!-- Rendered image (F2) -->
+    <div v-if="visualImageUrl" class="relative rounded-lg overflow-hidden border border-border/40 mb-3">
+      <img
+        :src="visualImageUrl"
+        :alt="adCopy.headline || variant.audience || 'variant image'"
+        loading="lazy"
+        class="w-full object-cover"
+        data-testid="variant-image"
+      />
+      <span
+        v-if="visualStatus"
+        :class="visualStatus === 'completed' ? 'text-success' : 'text-destructive'"
+        class="absolute top-2 end-2 text-[10px] font-medium px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-sm"
+        data-testid="variant-visual-status"
+      >
+        {{ visualStatus === 'completed' ? t('visual.statusCompleted') : t('visual.statusFailed') }}
+      </span>
+    </div>
+    <div v-else-if="visualStatus === 'failed'" class="rounded-lg border border-destructive/30 bg-destructive/10 p-2.5 mb-3 flex items-center gap-2" data-testid="variant-visual-failed">
+      <AlertCircle class="h-3.5 w-3.5 text-destructive shrink-0" />
+      <span class="flex-1 text-[11px] text-destructive">{{ visualError || t('visual.failed') }}</span>
+      <button
+        class="h-6 px-2 rounded-md border border-border/60 text-[10px] inline-flex items-center gap-1 hover:bg-overlay-subtle transition shrink-0"
+        data-testid="variant-visual-retry-btn"
+        @click="emit('retryVisual', variant)"
+      >
+        <RefreshCw class="h-2.5 w-2.5" /> {{ t('seg.retry') }}
+      </button>
+    </div>
+
     <!-- Tags row -->
     <div class="flex flex-wrap gap-1.5 mb-3">
       <span v-if="isMetaCreative" class="text-[11px] px-2 py-0.5 rounded-full bg-accent-cyan/15 text-accent-cyan">

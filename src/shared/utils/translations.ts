@@ -411,6 +411,8 @@ export const translations = {
   'visual.generated': { en: '{count} visuals generated', ar: '{count} مرئيات تم توليدها', fa: '{count} تصویر تولید شد' },
   'visual.failed': { en: 'Visual generation failed', ar: 'فشل توليد المرئيات', fa: 'تولید تصویر شکست خورد' },
   'visual.adsCount': { en: '{count} ads selected', ar: '{count} إعلانات محددة', fa: '{count} آگهی انتخاب شده' },
+  'visual.statusCompleted': { en: 'Ready', ar: 'جاهز', fa: 'آماده' },
+  'visual.statusFailed': { en: 'Failed', ar: 'فشل', fa: 'ناموفق' },
 
   // Review
   'review.title': { en: 'Review & Complete', ar: 'مراجعة وإكمال', fa: 'مرور و تکمیل' },
@@ -714,6 +716,8 @@ export const translations = {
   'variant.totalVariants': { en: 'total variants', ar: 'إجمالي المتغيرات', fa: 'تنوع کل' },
   'variant.generate': { en: 'Generate Matrix', ar: 'ولّد المصفوفة', fa: 'تولید ماتریس' },
   'variant.generating': { en: 'Generating Matrix…', ar: 'جارٍ توليد المصفوفة…', fa: 'در حال تولید ماتریس…' },
+  'variant.generateImages': { en: 'Generate images', ar: 'توليد الصور', fa: 'تولید تصاویر' },
+  'variant.generatingImages': { en: 'Generating images…', ar: 'جارٍ توليد الصور…', fa: 'در حال تولید تصاویر…' },
   'variant.exportCSV': { en: 'Export CSV', ar: 'تصدير CSV', fa: 'خروجی CSV' },
   'variant.cards': { en: 'Cards', ar: 'بطاقات', fa: 'کارت‌ها' },
   'variant.table': { en: 'Table', ar: 'جدول', fa: 'جدول' },
@@ -773,6 +777,8 @@ export const translations = {
   'funnelLauncher.adsPerStage': { en: 'Ads per Stage', ar: 'إعلانات لكل مرحلة', fa: 'آگهی به ازای هر مرحله' },
   'funnelLauncher.generating': { en: 'Generating Campaign…', ar: 'جارٍ توليد الحملة…', fa: 'در حال تولید کمپین…' },
   'funnelLauncher.launch': { en: 'Launch Full Funnel Campaign', ar: 'أطلق حملة القمع الكامل', fa: 'راه‌اندازی کمپین قیف کامل' },
+  'funnelLauncher.generateImages': { en: 'Generate images', ar: 'توليد الصور', fa: 'تولید تصاویر' },
+  'funnelLauncher.generatingImages': { en: 'Generating images…', ar: 'جارٍ توليد الصور…', fa: 'در حال تولید تصاویر…' },
   'funnelLauncher.successTitle': { en: 'Campaign Generated!', ar: 'تم توليد الحملة!', fa: 'کمپین تولید شد!' },
   'funnelLauncher.successDesc': { en: '{count} ads generated across all stages', ar: '{count} إعلانات مولّدة عبر كل المراحل', fa: '{count} آگهی در تمام مراحل تولید شد' },
   'funnelLauncher.newCampaign': { en: 'New Campaign', ar: 'حملة جديدة', fa: 'کمپین جدید' },

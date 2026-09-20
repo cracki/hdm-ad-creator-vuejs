@@ -2,7 +2,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, type Ref } from 'vue'
 import { scenarioVariantsApi } from './api'
 import { parseVariantOptions, parseMetaFrameworks } from './schemas'
-import type { StandaloneVariantsPayload, CampaignMatrixPayload } from './types'
+import type {
+  StandaloneVariantsPayload,
+  CampaignMatrixPayload,
+  ScenarioVariantsGenerateVisualsPayload,
+} from './types'
 
 export function useVariantOptions(industry: Ref<string>) {
   return useQuery({
@@ -64,6 +68,19 @@ export function useStartCampaignMatrix(campaignUuid: Ref<string>) {
       scenarioVariantsApi.startCampaignMatrix(campaignUuid.value, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns', campaignUuid] })
+    },
+  })
+}
+
+/** POST …/scenario-variants-matrix/{run}/generate-visuals/ — image rendering (F2). */
+export function useGenerateMatrixRunVisuals(campaignUuid: Ref<string>, runUuid: Ref<string>) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: ScenarioVariantsGenerateVisualsPayload) =>
+      scenarioVariantsApi.generateMatrixRunVisuals(campaignUuid.value, runUuid.value, payload),
+    onSuccess: () => {
+      // Variant data.image_url/visual_status persist on the variants read-back.
+      queryClient.invalidateQueries({ queryKey: ['campaigns', campaignUuid, 'scenario-matrix', runUuid] })
     },
   })
 }

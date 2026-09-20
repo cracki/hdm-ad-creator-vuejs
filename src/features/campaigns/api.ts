@@ -12,6 +12,7 @@ import type {
   GenerateVisualsPayload,
   AdGenerateResult,
   VisualGenerateResult,
+  CampaignVisualsListResult,
   ClearAdsResult,
   CampaignAdsListResult,
   ReviewAdPayload,
@@ -91,6 +92,11 @@ export const campaignsApi = {
 
   generateVisuals(uuid: string, payload: GenerateVisualsPayload): Promise<{ data: VisualGenerateResult }> {
     return apiClient.post(`${campaign(uuid)}generate-visuals/`, payload)
+  },
+
+  /** Read-back of every persisted visual (successes and failures), newest ads first. */
+  listVisuals(uuid: string, config?: SignalConfig): Promise<{ data: CampaignVisualsListResult }> {
+    return apiClient.get(`${campaign(uuid)}visuals/`, config)
   },
 
   completeCampaign(uuid: string): Promise<{ data: { success: boolean; campaign: Campaign } }> {

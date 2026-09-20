@@ -16,6 +16,7 @@ function buildCampaign(overrides: Partial<Campaign> = {}): Campaign {
     name: 'Test Campaign',
     status: 'in_progress',
     current_step: 'segmentation',
+    language: 'en',
     total_budget: null,
     currency: 'USD',
     segmentation_completed: false,

@@ -37,6 +37,7 @@ function buildCampaign(overrides: Partial<Campaign> = {}): Campaign {
     name: 'Summer Launch',
     status: 'in_progress',
     current_step: 'segmentation',
+    language: 'en',
     total_budget: null,
     currency: 'USD',
     segmentation_completed: false,

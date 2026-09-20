@@ -139,7 +139,18 @@ export function useGenerateVisuals(uuid: Ref<string>) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns', uuid] })
       queryClient.invalidateQueries({ queryKey: ['campaigns', uuid, 'ads'] })
+      queryClient.invalidateQueries({ queryKey: ['campaigns', uuid, 'visuals'] })
     },
+  })
+}
+
+/** GET /campaigns/{uuid}/visuals/ — persisted visuals restore (F2). */
+export function useCampaignVisuals(uuid: Ref<string>) {
+  return useQuery({
+    queryKey: ['campaigns', uuid, 'visuals'],
+    queryFn: ({ signal }) => campaignsApi.listVisuals(uuid.value, { signal }).then(r => r.data),
+    enabled: computed(() => !!uuid.value),
+    staleTime: 10_000,
   })
 }
 

@@ -12,7 +12,7 @@ import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import Breadcrumb from '@/shared/components/Breadcrumb.vue'
 import { useConfetti } from '@/shared/composables/useConfetti'
-import { useCampaign } from '../queries'
+import { useCampaign, useCampaignVisuals } from '../queries'
 import { exportCampaignPDF, exportCampaignPPTX, formatBudgetAllocation } from '@/shared/utils/exportCampaign'
 import { formatCampaignBudget, getFunnelBudgetSplit } from '../types'
 import { useTourRegistration } from '@/shared/composables/useTourRegistration'
@@ -27,6 +27,15 @@ const confetti = useConfetti()
 
 const campaignUuid = computed(() => route.params.campaignUuid as string)
 const { data: campaign, isLoading } = useCampaign(campaignUuid)
+
+// Real visuals state (F2): persisted visuals from GET /campaigns/{uuid}/visuals/
+// replace the old inferred "all previous steps done" proxy for this step.
+const { data: visualsData, isLoading: visualsLoading } = useCampaignVisuals(campaignUuid)
+const persistedVisuals = computed(() => visualsData.value?.results ?? [])
+const hasPersistedVisuals = computed(() => persistedVisuals.value.length > 0)
+const visualThumbnails = computed(() =>
+  persistedVisuals.value.filter((v) => v.success && v.image_url).slice(0, 8),
+)
 
 const stepsData = computed(() => {
   const latest = (campaign.value as any)?.latest_steps
@@ -87,7 +96,12 @@ function isStepDone(step: StepDef): boolean {
     if (platforms.length === 0) return false
     return platforms.every((p: string) => c?.[`${p}_ads_completed`])
   }
-  if (step.flag === '_ads_generated' || step.flag === '_visuals_generated') {
+  if (step.flag === '_visuals_generated') {
+    // Server truth: at least one persisted visual record (success or failure)
+    // proves the step ran — no more inferred flag.
+    return hasPersistedVisuals.value
+  }
+  if (step.flag === '_ads_generated') {
     const idx = STEPS.indexOf(step)
     return idx > 0 ? STEPS.slice(0, idx).every((s) => isStepDone(s)) : false
   }
@@ -118,8 +132,11 @@ function getFirstIncompleteStep(): StepDef | undefined {
 }
 
 const hasAutoRedirected = ref(false)
-watch(campaign, (c) => {
-  if (!c || hasAutoRedirected.value) return
+// Wait for the visuals read-back too: the visuals step's done-state is now
+// server truth, so redirecting before it resolves could bounce a finished
+// campaign to the visuals step.
+watch([campaign, () => visualsLoading.value], ([c, visLoading]) => {
+  if (!c || hasAutoRedirected.value || visLoading) return
   const lastSegment = route.path.split('/').pop()
   if (lastSegment === campaignUuid.value) {
     hasAutoRedirected.value = true
@@ -316,6 +333,39 @@ function getStepStatusLabel(step: StepDef, idx: number): string {
             <Check v-if="p.completed" class="h-3 w-3" />
             <span v-else class="h-3 w-3 rounded-full border border-current" />
             <span>{{ platformIconMap[p.key] || p.key }}</span>
+          </div>
+        </div>
+
+        <!-- Generated visuals strip (F2) -->
+        <div
+          v-if="visualThumbnails.length > 0"
+          class="mt-4"
+          data-loc="campaigns.detail.visuals-strip"
+          data-testid="campaign-visuals-strip"
+        >
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs text-muted-foreground">
+              {{ t('visual.generated', { count: persistedVisuals.filter(v => v.success).length }) }}
+            </span>
+            <button
+              class="text-xs text-primary hover:underline"
+              data-loc="campaigns.detail.visuals-view-all"
+              @click="router.push(`/campaigns/${campaignUuid}/visuals`)"
+            >
+              {{ t('visual.title') }}
+            </button>
+          </div>
+          <div class="flex gap-2 overflow-x-auto pb-1">
+            <img
+              v-for="(v, vi) in visualThumbnails"
+              :key="`${v.campaign_ad_uuid}-${vi}`"
+              :src="v.image_url!"
+              :alt="v.visual_summary"
+              loading="lazy"
+              class="h-16 w-24 rounded-lg object-cover border border-border/40 shrink-0 cursor-pointer hover:border-primary/50 transition"
+              data-testid="campaign-visual-thumb"
+              @click="router.push(`/campaigns/${campaignUuid}/visuals`)"
+            />
           </div>
         </div>
       </section>
