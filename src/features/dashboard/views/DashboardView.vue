@@ -16,7 +16,6 @@ const CampaignPerformanceSection = defineAsyncComponent(() => import('../compone
 const BrandHealthSection = defineAsyncComponent(() => import('../components/BrandHealthSection.vue'))
 const ContentIntelligenceSection = defineAsyncComponent(() => import('../components/ContentIntelligenceSection.vue'))
 const AdGenerationSection = defineAsyncComponent(() => import('../components/AdGenerationSection.vue'))
-const CompetitivePositioningMap = defineAsyncComponent(() => import('../components/CompetitivePositioningMap.vue'))
 const ActivityTimeline = defineAsyncComponent(() => import('../components/ActivityTimeline.vue'))
 const QuickActionsSection = defineAsyncComponent(() => import('../components/QuickActionsSection.vue'))
 
@@ -40,7 +39,6 @@ const WIDGET_COMPONENTS: Record<WidgetId, Component> = {
   'brand-health': BrandHealthSection,
   'content-intelligence': ContentIntelligenceSection,
   'ad-generation': AdGenerationSection,
-  'competitive-map': CompetitivePositioningMap,
   'activity-timeline': ActivityTimeline,
   'quick-actions': QuickActionsSection,
 }
