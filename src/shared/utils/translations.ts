@@ -529,6 +529,31 @@ export const translations = {
   'analysis.stage.competitors': { en: 'Profiling competitors…', ar: 'جارٍ تحليل المنافسين…', fa: 'در حال پروفایل‌سازی رقبا…' },
   'analysis.stage.insights': { en: 'Generating strategic insights…', ar: 'جارٍ توليد الرؤى الاستراتيجية…', fa: 'در حال تولید بینش‌های استراتژیک…' },
 
+  // Analysis live section progress (sections_status)
+  'analysis.progress.website_scrape': { en: 'Website scan', ar: 'فحص الموقع', fa: 'اسکن وب‌سایت' },
+  'analysis.progress.core_analysis': { en: 'Brand core analysis', ar: 'تحليل جوهر العلامة', fa: 'تحلیل هسته برند' },
+  'analysis.progress.quality_validation': { en: 'Quality validation', ar: 'التحقق من الجودة', fa: 'اعتبارسنجی کیفیت' },
+  'analysis.progress.audience': { en: 'Audience insights', ar: 'رؤى الجمهور', fa: 'بینش‌های مخاطب' },
+  'analysis.progress.social': { en: 'Social presence', ar: 'التواجد الاجتماعي', fa: 'حضور اجتماعی' },
+  'analysis.progress.competitors': { en: 'Competitor analysis', ar: 'تحليل المنافسين', fa: 'تحلیل رقبا' },
+  'analysis.progress.recommendations': { en: 'Recommendations', ar: 'التوصيات', fa: 'توصیه‌ها' },
+  'analysis.progress.sectionError': { en: 'Step error', ar: 'خطأ في الخطوة', fa: 'خطای مرحله' },
+
+  // Analysis brand personality visuals (MOM §4.3)
+  'analysis.personality.title': { en: 'Brand Personality', ar: 'شخصية العلامة', fa: 'شخصیت برند' },
+  'analysis.personality.hint': { en: 'Archetype, voice and traits detected from the brand analysis.', ar: 'النمط الأصلي والصوت والسمات المكتشفة من تحليل العلامة.', fa: 'کهن‌الگو، لحن و ویژگی‌های شناسایی‌شده از تحلیل برند.' },
+  'analysis.personality.archetype': { en: 'Archetype', ar: 'النمط الأصلي', fa: 'کهن‌الگو' },
+  'analysis.personality.tone': { en: 'Tone', ar: 'النبرة', fa: 'لحن' },
+  'analysis.personality.persona': { en: 'Persona', ar: 'الشخصية', fa: 'پرسونا' },
+  'analysis.personality.writingStyle': { en: 'Writing style', ar: 'أسلوب الكتابة', fa: 'سبک نوشتار' },
+  'analysis.personality.voiceAttributes': { en: 'Voice attributes', ar: 'سمات الصوت', fa: 'ویژگی‌های لحن' },
+  'analysis.personality.radarTitle': { en: 'Personality dimensions', ar: 'أبعاد الشخصية', fa: 'ابعاد شخصیت' },
+  'analysis.personality.wheelTitle': { en: 'Archetype traits', ar: 'سمات النمط الأصلي', fa: 'ویژگی‌های کهن‌الگو' },
+  'analysis.personality.wheelHint': { en: 'Trait composition of the detected archetype.', ar: 'تكوين سمات النمط الأصلي المكتشف.', fa: 'ترکیب ویژگی‌های کهن‌الگوی شناسایی‌شده.' },
+  'analysis.personality.takeawaysTitle': { en: 'Key takeaways', ar: 'الخلاصات الرئيسية', fa: 'نکات کلیدی' },
+  'analysis.personality.copy': { en: 'Copy', ar: 'نسخ', fa: 'کپی' },
+  'analysis.personality.copied': { en: 'Copied to clipboard', ar: 'تم النسخ إلى الحافظة', fa: 'در حافظه کپی شد' },
+
   // Analysis tabs & sections
   'analysis.tab.overview': { en: 'Overview', ar: 'نظرة عامة', fa: 'نمای کلی' },
   'analysis.tab.audience': { en: 'Audience', ar: 'الجمهور', fa: 'مخاطب' },
@@ -1202,7 +1227,6 @@ export const translations = {
   'dashboard.sections.brandHealth': { en: 'Brand Health', ar: 'صحة العلامة', fa: 'سلامت برند' },
   'dashboard.sections.contentIntelligence': { en: 'Content Intelligence', ar: 'ذكاء المحتوى', fa: 'هوش محتوایی' },
   'dashboard.sections.adGeneration': { en: 'Ad Generation', ar: 'توليد الإعلانات', fa: 'تولید آگهی' },
-  'dashboard.sections.competitiveMap': { en: 'Competitive Map', ar: 'خريطة تنافسية', fa: 'نقشه رقابتی' },
   'dashboard.sections.activityTimeline': { en: 'Recent Activity', ar: 'النشاط الأخير', fa: 'فعالیت اخیر' },
   'dashboard.sections.quickActions': { en: 'Quick Actions', ar: 'إجراءات سريعة', fa: 'اقدامات سریع' },
 
@@ -1217,7 +1241,6 @@ export const translations = {
   'dashboard.campaigns.statusDonut': { en: 'Campaign Status', ar: 'حالة الحملات', fa: 'وضعیت کمپین‌ها' },
   'dashboard.campaigns.stepCompletion': { en: 'Step Completion Rate', ar: 'معدل إكمال الخطوات', fa: 'نرخ تکمیل مراحل' },
   'dashboard.campaigns.progress': { en: 'Active Campaign Progress', ar: 'تقدم الحملات النشطة', fa: 'پیشرفت کمپین‌های فعال' },
-  'dashboard.campaigns.platformDist': { en: 'Platform Distribution', ar: 'توزيع المنصات', fa: 'توزیع پلتفرم‌ها' },
   'dashboard.campaigns.noData': { en: 'No campaigns yet', ar: 'لا توجد حملات بعد', fa: 'هنوز کمپینی نیست' },
   'dashboard.campaigns.inProgress': { en: 'In Progress', ar: 'قيد التقدم', fa: 'در جریان' },
   'dashboard.campaigns.completed': { en: 'Completed', ar: 'مكتمل', fa: 'تکمیل‌شده' },
@@ -1236,17 +1259,10 @@ export const translations = {
   'dashboard.campaigns.stepMetaAds': { en: 'Meta Ads', ar: 'إعلانات Meta', fa: 'آگهی متا' },
   'dashboard.campaigns.stepGoogleAds': { en: 'Google Ads', ar: 'إعلانات Google', fa: 'آگهی گوگل' },
   'dashboard.campaigns.stepLinkedInAds': { en: 'LinkedIn Ads', ar: 'إعلانات LinkedIn', fa: 'آگهی لینکدین' },
-  'dashboard.campaigns.tofu': { en: 'TOFU', ar: 'TOFU', fa: 'TOFU' },
-  'dashboard.campaigns.mofu': { en: 'MOFU', ar: 'MOFU', fa: 'MOFU' },
-  'dashboard.campaigns.bofu': { en: 'BOFU', ar: 'BOFU', fa: 'BOFU' },
   'dashboard.campaigns.totalCampaigns': { en: 'Total', ar: 'الإجمالي', fa: 'کل' },
 
   // Dashboard Brand Health
   'dashboard.brandHealth.noBrands': { en: 'No brands to analyze', ar: 'لا توجد علامات للتحليل', fa: 'برندی برای تحلیل نیست' },
-  'dashboard.brandHealth.analysis': { en: 'Analysis', ar: 'التحليل', fa: 'تحلیل' },
-  'dashboard.brandHealth.competitors': { en: 'Competitors', ar: 'المنافسون', fa: 'رقبا' },
-  'dashboard.brandHealth.social': { en: 'Social', ar: 'التواصل', fa: 'اجتماعی' },
-  'dashboard.brandHealth.assets': { en: 'Assets', ar: 'الأصول', fa: 'دارایی‌ها' },
 
   // Dashboard Content Intelligence
   'dashboard.contentIntelligence.noData': { en: 'No intelligence runs yet', ar: 'لا توجد تحليلات بعد', fa: 'هنوز تحلیل هوشمندی انجام نشده' },
@@ -1263,18 +1279,6 @@ export const translations = {
   'dashboard.adGeneration.linkedin': { en: 'LinkedIn', ar: 'LinkedIn', fa: 'لینکدین' },
   'dashboard.adGeneration.last7d': { en: 'Last 7 days', ar: 'آخر ٧ أيام', fa: '۷ روز اخیر' },
 
-  // Dashboard Competitive Map
-  'dashboard.competitiveMap.noData': { en: 'Add brands to see competitive positioning', ar: 'أضف علامات لرؤية الموقع التنافسي', fa: 'برند اضافه کنید تا موقعیت رقابتی نمایش داده شود' },
-  'dashboard.competitiveMap.strongVisible': { en: 'Strong & Visible', ar: 'قوي ومرئي', fa: 'قوی و قابل‌مشاهده' },
-  'dashboard.competitiveMap.hiddenGems': { en: 'Hidden Gems', ar: 'جواهر مخفية', fa: 'الماس‌های پنهان' },
-  'dashboard.competitiveMap.weak': { en: 'Weak Position', ar: 'موقف ضعيف', fa: 'موقعیت ضعیف' },
-  'dashboard.competitiveMap.empty': { en: 'Add brands to see competitive positioning', ar: 'أضف علامات لرؤية الموقع التنافسي', fa: 'برند اضافه کنید تا موقعیت رقابتی نمایش داده شود' },
-  'dashboard.competitiveMap.reach': { en: 'Reach', ar: 'الوصول', fa: 'دسترسی' },
-  'dashboard.competitiveMap.engagement': { en: 'Engagement', ar: 'التفاعل', fa: 'تعامل' },
-  'dashboard.competitiveMap.leaders': { en: 'Leaders', ar: 'القادة', fa: 'رهبران' },
-  'dashboard.competitiveMap.challengers': { en: 'Challengers', ar: 'المتحديون', fa: 'چالشگران' },
-  'dashboard.competitiveMap.niche': { en: 'Niche', ar: 'متخصص', fa: 'نیشه' },
-  'dashboard.competitiveMap.selectBrand': { en: 'Select a brand to see detailed competitive map', ar: 'اختر علامة لرؤية خريطة تنافسية مفصلة', fa: 'برندی را انتخاب کنید تا نقشه رقابتی دقیق نمایش داده شود' },
 
   // Dashboard Activity
   'dashboard.activity.noActivity': { en: 'No activity yet', ar: 'لا يوجد نشاط بعد', fa: 'هنوز فعالیتی نیست' },

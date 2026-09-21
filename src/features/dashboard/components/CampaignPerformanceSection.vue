@@ -264,66 +264,6 @@ const activeCampaignsOption = computed(() => {
     series: seriesData,
   }
 })
-
-// --- Chart 4: Platform Distribution (mock) ---
-const platformDistOption = computed(() => {
-  const platforms = [
-    { name: 'Meta', tofu: 35, mofu: 25, bofu: 15 },
-    { name: 'Google', tofu: 28, mofu: 22, bofu: 18 },
-    { name: 'LinkedIn', tofu: 20, mofu: 12, bofu: 8 },
-  ]
-
-  const funnelColors = ['#8b5cf6', '#06b6d4', '#f59e0b']
-  const funnelLabels = [
-    t('dashboard.campaigns.tofu' as any),
-    t('dashboard.campaigns.mofu' as any),
-    t('dashboard.campaigns.bofu' as any),
-  ]
-
-  const funnelKeys: ('tofu' | 'mofu' | 'bofu')[] = ['tofu', 'mofu', 'bofu']
-
-  return {
-    ...baseOption.value,
-    tooltip: {
-      trigger: 'axis' as const,
-      axisPointer: { type: 'shadow' as const },
-    },
-    legend: {
-      bottom: 0,
-      textStyle: { color: '#9ca3af', fontSize: 11 },
-      data: funnelLabels,
-    },
-    grid: {
-      left: dir.value === 'rtl' ? '3%' : '22%',
-      right: dir.value === 'rtl' ? '22%' : '3%',
-      top: '8%',
-      bottom: '16%',
-      containLabel: false,
-    },
-    xAxis: {
-      type: 'value' as const,
-      axisLabel: { color: '#6b7280' },
-      splitLine: { lineStyle: { color: '#1f2937' } },
-    },
-    yAxis: {
-      type: 'category' as const,
-      data: platforms.map((p) => p.name),
-      inverse: true,
-      axisLabel: { color: '#d1d5db', fontSize: 12 },
-      axisLine: { show: false },
-      axisTick: { show: false },
-    },
-    series: funnelKeys.map((key, i) => ({
-      name: funnelLabels[i],
-      type: 'bar',
-      stack: 'total',
-      barWidth: '50%',
-      emphasis: { focus: 'series' as const },
-      itemStyle: { color: funnelColors[i] },
-      data: platforms.map((p) => p[key]),
-    })),
-  }
-})
 </script>
 
 <template>
@@ -379,16 +319,6 @@ const platformDistOption = computed(() => {
         </h4>
         <div style="height: 280px">
           <VChart :option="activeCampaignsOption" autoresize />
-        </div>
-      </div>
-
-      <!-- Chart 4: Platform Distribution -->
-      <div class="surface-card rounded-xl p-4">
-        <h4 class="text-sm font-semibold text-foreground mb-3">
-          {{ t('dashboard.campaigns.platformDist' as any) }}
-        </h4>
-        <div style="height: 280px">
-          <VChart :option="platformDistOption" autoresize />
         </div>
       </div>
     </div>

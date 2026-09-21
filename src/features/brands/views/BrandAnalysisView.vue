@@ -15,6 +15,22 @@ import { operationManager } from '@/infrastructure/operations/operationManager'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import { TERMINAL_STATUSES } from '@/features/brands/schemas'
+import PersonalityCards from '../components/PersonalityCards.vue'
+import BrandRadarChart from '../components/BrandRadarChart.vue'
+import BrandWheel from '../components/BrandWheel.vue'
+import TakeawayCards from '../components/TakeawayCards.vue'
+import {
+  extractPersonality,
+  extractRadarDimensions,
+  extractWheelShares,
+  extractTakeaways,
+} from '../components/personality'
+import {
+  ANALYSIS_SECTIONS,
+  extractSectionStatus,
+  sectionStageStates,
+  firstSectionError,
+} from '../sectionProgress'
 import {
   Play, Loader2, RefreshCw, Users, BarChart3,
   Globe, Lightbulb, Brain, Heart, ChevronLeft,
@@ -116,10 +132,58 @@ const progressStepIndex = computed(() => {
   return Math.min(Math.floor(tracker.attempts.value / 8), stages.length - 1)
 })
 
-const currentStage = computed(() => progressMessages.value[progressStepIndex.value] ?? '')
+// --- Live per-section progress (backend `sections_status`) ---
+// Older runs lack the field → fall back to the poll-count derivation above.
+const sectionStatuses = computed(() => extractSectionStatus(runData.value))
+const hasSectionProgress = computed(() => sectionStatuses.value !== null)
+
+function prettifySection(key: string): string {
+  return key.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase())
+}
+
+const sectionLabels = computed(() => {
+  const statuses = sectionStatuses.value ?? {}
+  const known = ANALYSIS_SECTIONS.map((s) => t(`analysis.progress.${s}` as any))
+  const extras = Object.keys(statuses).filter(
+    (s) => !(ANALYSIS_SECTIONS as readonly string[]).includes(s),
+  )
+  return [...known, ...extras.map(prettifySection)]
+})
+
+const sectionStates = computed(() =>
+  sectionStatuses.value ? sectionStageStates(sectionStatuses.value) : [],
+)
+
+const sectionError = computed(() =>
+  sectionStatuses.value ? firstSectionError(sectionStatuses.value) : null,
+)
+
+const progressStages = computed(() =>
+  hasSectionProgress.value ? sectionLabels.value : progressMessages.value,
+)
+
+const progressStates = computed(() =>
+  hasSectionProgress.value ? sectionStates.value : undefined,
+)
+
+const currentStage = computed(() => {
+  if (hasSectionProgress.value) {
+    const idx = sectionStates.value.indexOf('current')
+    if (idx >= 0) return sectionLabels.value[idx]
+    const failedIdx = sectionStates.value.indexOf('failed')
+    if (failedIdx >= 0) return sectionLabels.value[failedIdx]
+  }
+  return progressMessages.value[progressStepIndex.value] ?? ''
+})
 
 const brandProfile = computed(() => runData.value?.brand_profile ?? null)
 const audienceInsights = computed(() => runData.value?.audience_insights ?? null)
+
+// --- Brand personality visuals (MOM §4.3); each section hides itself when the payload lacks its data ---
+const personality = computed(() => extractPersonality(brandProfile.value))
+const radarDimensions = computed(() => extractRadarDimensions(brandProfile.value))
+const wheelShares = computed(() => extractWheelShares(brandProfile.value))
+const takeaways = computed(() => extractTakeaways(brandProfile.value))
 
 const socialPresence = computed(() => runData.value?.social_presence ?? null)
 
@@ -213,7 +277,13 @@ setActions([
     <!-- Running state -->
     <div v-else-if="isRunning" class="max-w-2xl mx-auto text-center py-16 space-y-4">
       <AiLoadingAnimation :message="t('analysis.runningTitle')" :description="currentStage" />
-      <ProgressIndicator :stages="progressMessages" :current-index="progressStepIndex" status="running" class="justify-center" />
+      <ProgressIndicator
+        :stages="progressStages"
+        :current-index="progressStepIndex"
+        :states="progressStates"
+        status="running"
+        class="justify-center"
+      />
       <p class="text-xs text-muted-foreground">{{ t('analysis.runningHint') }}</p>
     </div>
 
@@ -226,7 +296,16 @@ setActions([
         <h2 class="text-xl font-semibold mb-2">{{ t('analysis.failedTitle') }}</h2>
         <p class="text-sm text-muted-foreground">{{ runData?.error_message ?? tracker.error.value ?? t('analysis.failedDesc') }}</p>
       </div>
-      <ProgressIndicator :stages="progressMessages" :current-index="progressStepIndex" status="failed" class="justify-center" />
+      <div v-if="sectionError" class="surface-card p-3 text-xs text-destructive text-start max-w-md mx-auto w-full">
+        <span class="font-medium">{{ t('analysis.progress.sectionError') }}:</span> {{ sectionError }}
+      </div>
+      <ProgressIndicator
+        :stages="progressStages"
+        :current-index="progressStepIndex"
+        :states="progressStates"
+        status="failed"
+        class="justify-center"
+      />
       <button
         @click="retryAnalysis"
         data-loc="brands.analysis.retry-btn"
@@ -305,6 +384,34 @@ setActions([
             <Heart class="h-4 w-4 text-primary" /> {{ t('analysis.section.emotionProfile') }}
           </div>
           <AnalysisPayloadRenderer :data="emotionProfile" />
+        </div>
+
+        <!-- Brand Personality visuals (MOM §4.3) -->
+        <div v-if="personality" class="surface-card p-5 space-y-4 md:col-span-2" data-testid="personality-section">
+          <div class="flex items-center gap-2 text-sm font-semibold">
+            <Sparkles class="h-4 w-4 text-primary" /> {{ t('analysis.personality.title') }}
+            <InfoTooltip :text="t('analysis.personality.hint')" />
+          </div>
+          <PersonalityCards :data="personality" />
+          <div v-if="radarDimensions || wheelShares" class="grid sm:grid-cols-2 gap-4">
+            <div v-if="radarDimensions" class="space-y-2">
+              <div class="text-xs font-medium text-muted-foreground">{{ t('analysis.personality.radarTitle') }}</div>
+              <BrandRadarChart :dimensions="radarDimensions" />
+            </div>
+            <div v-if="wheelShares" class="space-y-2">
+              <div class="text-xs font-medium text-muted-foreground">{{ t('analysis.personality.wheelTitle') }}</div>
+              <BrandWheel :shares="wheelShares" />
+              <p class="text-[11px] text-muted-foreground/70 text-center">{{ t('analysis.personality.wheelHint') }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Key takeaways -->
+        <div v-if="takeaways.length" class="surface-card p-5 space-y-4 md:col-span-2" data-testid="takeaways-section">
+          <div class="flex items-center gap-2 text-sm font-semibold">
+            <Lightbulb class="h-4 w-4 text-primary" /> {{ t('analysis.personality.takeawaysTitle') }}
+          </div>
+          <TakeawayCards :items="takeaways" />
         </div>
       </div>
 

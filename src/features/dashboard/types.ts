@@ -3,7 +3,6 @@ export type WidgetId =
   | 'brand-health'
   | 'content-intelligence'
   | 'ad-generation'
-  | 'competitive-map'
   | 'activity-timeline'
   | 'quick-actions'
 
@@ -18,7 +17,6 @@ export const DEFAULT_LAYOUT: DashboardLayout = {
     'brand-health',
     'content-intelligence',
     'ad-generation',
-    'competitive-map',
     'activity-timeline',
     'quick-actions',
   ],
@@ -30,7 +28,6 @@ export const WIDGET_TITLES: Record<WidgetId, string> = {
   'brand-health': 'dashboard.sections.brandHealth',
   'content-intelligence': 'dashboard.sections.contentIntelligence',
   'ad-generation': 'dashboard.sections.adGeneration',
-  'competitive-map': 'dashboard.sections.competitiveMap',
   'activity-timeline': 'dashboard.sections.activityTimeline',
   'quick-actions': 'dashboard.sections.quickActions',
 }
@@ -42,6 +39,4 @@ export interface DashboardStats {
   totalCampaigns: number
   brandGrowthLast7d: number
   brandGrowthPrev7d: number
-  avgBrandScore: number
-  brandScoreGrade: 'excellent' | 'good' | 'needsWork' | 'noData'
 }

@@ -2,11 +2,18 @@
 import { computed } from 'vue'
 import { Check, X, Loader2 } from 'lucide-vue-next'
 
+/**
+ * `states` (optional) overrides the derived per-stage states entirely — used
+ * when real per-section progress is available (e.g. brand analysis
+ * `sections_status`). Without it, states are derived from currentIndex/status
+ * as before.
+ */
 const props = withDefaults(
   defineProps<{
     stages: string[]
     currentIndex: number
     status?: 'running' | 'completed' | 'failed'
+    states?: ('completed' | 'current' | 'upcoming' | 'failed')[]
   }>(),
   { status: 'running' },
 )
@@ -23,7 +30,12 @@ function stateFor(i: number): 'completed' | 'current' | 'upcoming' | 'failed' {
   return 'upcoming'
 }
 
-const items = computed(() => props.stages.map((label, i) => ({ label, state: stateFor(i) })))
+const items = computed(() =>
+  props.stages.map((label, i) => ({
+    label,
+    state: props.states?.[i] ?? stateFor(i),
+  })),
+)
 </script>
 
 <template>

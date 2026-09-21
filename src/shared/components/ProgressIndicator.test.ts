@@ -41,4 +41,24 @@ describe('ProgressIndicator', () => {
     expect(states[2]).toBe('failed')
     expect(states[3]).toBe('upcoming')
   })
+
+  it('uses the explicit states prop (live section progress) over derived states', () => {
+    const wrapper = mount(ProgressIndicator, {
+      props: {
+        stages: STAGES,
+        currentIndex: 0,
+        states: ['completed', 'completed', 'current', 'failed', 'upcoming'],
+      },
+    })
+    const states = wrapper.findAll('[data-testid="progress-stage"]').map((n) => n.attributes('data-state'))
+    expect(states).toEqual(['completed', 'completed', 'current', 'failed', 'upcoming'])
+  })
+
+  it('falls back to derived states for stages beyond an explicit states array', () => {
+    const wrapper = mount(ProgressIndicator, {
+      props: { stages: STAGES, currentIndex: 3, states: ['completed', 'current'] },
+    })
+    const states = wrapper.findAll('[data-testid="progress-stage"]').map((n) => n.attributes('data-state'))
+    expect(states).toEqual(['completed', 'current', 'completed', 'current', 'upcoming'])
+  })
 })

@@ -29,8 +29,6 @@ export function useDashboardStats() {
       totalCampaigns: campaignList.length,
       brandGrowthLast7d,
       brandGrowthPrev7d,
-      avgBrandScore: 0,
-      brandScoreGrade: 'noData' as const,
     }
   })
 

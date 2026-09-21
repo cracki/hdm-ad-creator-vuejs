@@ -37,12 +37,20 @@ export const brandSocialMediaSchema = z.object({
   created_at: z.string(),
 })
 
+export const analysisSectionStatusSchema = z.object({
+  status: z.enum(['running', 'completed', 'failed']),
+  started_at: z.string().nullable().optional(),
+  finished_at: z.string().nullable().optional(),
+  error: z.string().nullable().optional(),
+})
+
 export const analysisRunSchema = z.object({
   analysis_run_uuid: z.string().uuid(),
   brand: z.string(),
   website_data: z.string().nullable(),
   core_analysis: z.string().nullable(),
   status: z.enum(['pending', 'running', 'completed', 'failed']),
+  sections_status: z.record(z.string(), analysisSectionStatusSchema).nullable().optional(),
   task_id: z.string().nullable(),
   requested_options: z.object({
     include_social: z.boolean(),

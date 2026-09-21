@@ -9,8 +9,9 @@ function loadLayout(): DashboardLayout {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return { ...DEFAULT_LAYOUT }
     const saved: DashboardLayout = JSON.parse(raw)
-    const allIds = new Set([...DEFAULT_LAYOUT.order, ...saved.order])
-    const order = saved.order.filter(id => allIds.has(id as WidgetId)) as WidgetId[]
+    // Only accept widget ids that still exist — drops stale ids from removed widgets.
+    const knownIds = new Set<WidgetId>(DEFAULT_LAYOUT.order)
+    const order = saved.order.filter(id => knownIds.has(id as WidgetId)) as WidgetId[]
     for (const id of DEFAULT_LAYOUT.order) {
       if (!order.includes(id as WidgetId)) order.push(id as WidgetId)
     }
