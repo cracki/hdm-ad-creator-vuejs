@@ -199,6 +199,67 @@ export interface StepApproveResult {
   step: CampaignStep
 }
 
+// ── Platform recommendation (F15/C5) ──────────────────────
+
+export interface PlatformRecommendation {
+  platform: CampaignAdPlatform
+  /** 0–100 suitability score from the backend recommender. */
+  suitability_score: number
+  recommended: boolean
+  rationale: string
+  key_strengths: string[]
+  risks: string[]
+  requirements: string[]
+}
+
+export interface PlatformBudgetFit {
+  assessment: string
+  notes: string
+  suggested_channel_count: number | null
+}
+
+export interface PlatformRole {
+  platform: CampaignAdPlatform
+  role: string
+  funnel_stage: string
+}
+
+export interface PlatformChannelStrategy {
+  summary: string
+  platform_roles: PlatformRole[]
+  cross_platform_relationships: string[]
+}
+
+export interface PlatformWarning {
+  type: string
+  message: string
+  platform: string | null
+}
+
+/** POST /campaigns/{uuid}/recommend-platforms/ response, also persisted into context_payload. */
+export interface PlatformRecommendationsResult {
+  success: boolean
+  campaign_uuid?: string
+  recommendations: PlatformRecommendation[]
+  budget_fit?: PlatformBudgetFit | null
+  channel_strategy?: PlatformChannelStrategy | null
+  warnings?: PlatformWarning[]
+}
+
+/**
+ * Read the persisted recommendation result off a campaign's context_payload
+ * (the backend stores the recommend-platforms result there) — null when absent.
+ */
+export function getPlatformRecommendations(
+  campaign: Pick<Campaign, 'context_payload'> | null | undefined,
+): PlatformRecommendationsResult | null {
+  const recs = (campaign?.context_payload as { platform_recommendations?: unknown } | undefined)
+    ?.platform_recommendations
+  if (!recs || typeof recs !== 'object') return null
+  const result = recs as PlatformRecommendationsResult
+  return Array.isArray(result.recommendations) && result.recommendations.length > 0 ? result : null
+}
+
 export interface SegmentationRunPayload {
   business_type?: string
   location?: string

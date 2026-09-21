@@ -165,6 +165,23 @@ export function useCompleteCampaign(uuid: Ref<string>) {
   })
 }
 
+// ── Platform recommendation (F15/C5) ──────────────────────
+
+/**
+ * POST /campaigns/{uuid}/recommend-platforms/ — the backend also persists the
+ * result into context_payload.platform_recommendations, so refetching the
+ * campaign after success keeps the recommendation across reloads.
+ */
+export function useRecommendPlatforms(uuid: Ref<string>) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => campaignsApi.recommendPlatforms(uuid.value).then(r => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['campaigns', uuid] })
+    },
+  })
+}
+
 // ── Ad review / manual edit / refine / read-back (F13) ──
 
 /** GET /campaigns/{uuid}/ads/ — server truth incl. review_status restore. */

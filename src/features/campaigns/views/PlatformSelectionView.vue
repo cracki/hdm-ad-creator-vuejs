@@ -1,15 +1,20 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { MonitorSmartphone, ArrowLeft, ArrowRight, Loader2, Shield, Check, X } from 'lucide-vue-next'
+import { MonitorSmartphone, ArrowLeft, ArrowRight, Loader2, Shield, Check, X, Sparkles } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
-import { useCampaign } from '../queries'
+import { useCampaign, useRecommendPlatforms } from '../queries'
 import { campaignsApi } from '../api'
 import { useQueryClient } from '@tanstack/vue-query'
 import { operationManager } from '@/infrastructure/operations/operationManager'
+import { useToast } from '@/shared/composables/useToast'
+import PlatformRecommendationDetails from '../components/PlatformRecommendationDetails.vue'
+import PlatformRecommendationSummary from '../components/PlatformRecommendationSummary.vue'
+import { getPlatformRecommendations } from '../types'
+import type { PlatformRecommendation, PlatformRecommendationsResult } from '../types'
 
 const route = useRoute()
 const router = useRouter()
@@ -30,13 +35,39 @@ interface PlatformOption {
   description: string
 }
 
-const platforms: PlatformOption[] = [
-  { key: 'meta', label: 'Meta (Facebook & Instagram)', description: 'Reach audiences across Facebook and Instagram feeds, Stories, Reels, and more.' },
-  { key: 'google', label: 'Google Ads', description: 'Search, Display, YouTube, Shopping, and Performance Max campaigns.' },
-  { key: 'linkedin', label: 'LinkedIn Ads', description: 'B2B targeting by job title, company size, industry, and seniority.' },
-]
+const platforms = computed<PlatformOption[]>(() => [
+  { key: 'meta', label: t('platform.meta'), description: t('platform.metaDesc') },
+  { key: 'google', label: t('platform.google'), description: t('platform.googleDesc') },
+  { key: 'linkedin', label: t('platform.linkedin'), description: t('platform.linkedinDesc') },
+])
 
 const selected = ref<Set<string>>(new Set())
+
+// ── AI platform recommendation (F15/C5) ──
+// Prefer the result of an in-session call; otherwise show what the backend
+// persisted in context_payload.platform_recommendations. The recommendation
+// only informs the decision — selection is never automated.
+const toast = useToast()
+const recommendMutation = useRecommendPlatforms(campaignUuid)
+const fetchedRecs = ref<PlatformRecommendationsResult | null>(null)
+const persistedRecs = computed(() => getPlatformRecommendations(campaign.value))
+const activeRecs = computed(() => fetchedRecs.value ?? persistedRecs.value)
+const recByPlatform = computed<Record<string, PlatformRecommendation>>(() => {
+  const map: Record<string, PlatformRecommendation> = {}
+  for (const r of activeRecs.value?.recommendations ?? []) map[r.platform] = r
+  return map
+})
+const recommending = computed(() => recommendMutation.isPending.value)
+
+async function fetchRecommendation() {
+  if (recommending.value) return
+  try {
+    fetchedRecs.value = await recommendMutation.mutateAsync()
+  } catch {
+    // Graceful fallback: static cards stay usable; nothing is auto-selected.
+    toast.error(t('platform.recFailed'))
+  }
+}
 
 const savedPlatforms = computed(() => {
   const ctx = campaign.value?.context_payload as any
@@ -169,6 +200,28 @@ function goNext() {
       </div>
 
       <template v-else>
+        <!-- AI platform recommendation (F15/C5) — informs, never auto-selects -->
+        <div class="mb-6">
+          <div v-if="!activeRecs" class="flex items-center flex-wrap gap-3 justify-between">
+            <div class="flex items-center gap-2 text-xs text-muted-foreground">
+              <Sparkles class="h-4 w-4 text-primary shrink-0" />
+              <span>{{ t('platform.recTitle') }}</span>
+            </div>
+            <button
+              class="h-10 sm:h-9 px-4 rounded-lg border border-primary/40 text-primary text-xs font-medium hover:bg-primary/10 transition flex items-center gap-1.5 disabled:opacity-50 w-full sm:w-auto justify-center"
+              data-testid="rec-button"
+              data-loc="campaigns.platform.rec-btn"
+              :disabled="recommending"
+              @click="fetchRecommendation"
+            >
+              <Loader2 v-if="recommending" class="h-3.5 w-3.5 animate-spin" />
+              <Sparkles v-else class="h-3.5 w-3.5" />
+              {{ recommending ? t('platform.recLoading') : t('platform.recButton') }}
+            </button>
+          </div>
+          <PlatformRecommendationSummary v-else :result="activeRecs" />
+        </div>
+
         <!-- Already saved -->
         <div v-if="isAlreadySaved && selected.size === 0" class="surface-card p-8 text-center mb-6">
           <div class="h-10 w-10 rounded-lg bg-success/15 border border-success/40 grid place-items-center mx-auto mb-3">
@@ -229,23 +282,29 @@ function goNext() {
             v-for="p in platforms"
             :key="p.key"
             :class="[
-              'surface-card p-4 flex items-center gap-4 cursor-pointer transition',
+              'surface-card p-4 space-y-2 cursor-pointer transition',
               isSelected(p.key) ? 'border-primary/60' : 'hover:border-primary/30',
             ]"
             data-loc="campaigns.platform.select-card"
+            :data-testid="`platform-card-${p.key}`"
             @click="togglePlatform(p.key)"
           >
-            <div
-              :class="[
-                'h-5 w-5 rounded border-2 grid place-items-center shrink-0 transition',
-                isSelected(p.key) ? 'bg-primary border-primary' : 'border-border/60',
-              ]"
-            >
-              <Check v-if="isSelected(p.key)" class="h-3 w-3 text-primary-foreground" />
+            <div class="flex items-center gap-4">
+              <div
+                :class="[
+                  'h-5 w-5 rounded border-2 grid place-items-center shrink-0 transition',
+                  isSelected(p.key) ? 'bg-primary border-primary' : 'border-border/60',
+                ]"
+              >
+                <Check v-if="isSelected(p.key)" class="h-3 w-3 text-primary-foreground" />
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium">{{ p.label }}</div>
+                <div class="text-[11px] text-muted-foreground mt-0.5">{{ p.description }}</div>
+              </div>
             </div>
-            <div class="flex-1 min-w-0">
-              <div class="text-sm font-medium">{{ p.label }}</div>
-              <div class="text-[11px] text-muted-foreground mt-0.5">{{ p.description }}</div>
+            <div v-if="recByPlatform[p.key]" @click.stop>
+              <PlatformRecommendationDetails :rec="recByPlatform[p.key]" />
             </div>
           </div>
         </div>

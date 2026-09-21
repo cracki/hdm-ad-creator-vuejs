@@ -22,6 +22,7 @@ import type {
   AdUpdateResult,
   AdRefineResult,
   StepApproveResult,
+  PlatformRecommendationsResult,
 } from './types'
 
 type SignalConfig = { signal?: AbortSignal }
@@ -101,6 +102,11 @@ export const campaignsApi = {
 
   completeCampaign(uuid: string): Promise<{ data: { success: boolean; campaign: Campaign } }> {
     return apiClient.post(`${campaign(uuid)}complete/`)
+  },
+
+  /** POST /campaigns/{uuid}/recommend-platforms/ — AI suitability per platform (F15/C5). */
+  recommendPlatforms(uuid: string): Promise<{ data: PlatformRecommendationsResult }> {
+    return apiClient.post(`${campaign(uuid)}recommend-platforms/`)
   },
 
   // ── Ad review / manual edit / refine / read-back (F13) ──
