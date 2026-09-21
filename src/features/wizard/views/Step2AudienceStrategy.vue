@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Users, AlertCircle, RefreshCw, Check, ShoppingBag } from 'lucide-vue-next'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import SegmentDeepResearchRenderer from '@/shared/components/renderers/SegmentDeepResearchRenderer.vue'
 import CountryCitySelect from '@/shared/components/CountryCitySelect.vue'
+import PersonaSelector from '@/shared/components/PersonaSelector.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { campaignsApi } from '@/features/campaigns/api'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
@@ -23,6 +24,24 @@ const productDescription = ref('')
 // brand's free-text location. The legacy location is composed "City, Country".
 const targetMarket = ref<TargetMarket>(resolveTargetMarket(props.campaign))
 
+// Persona targeting (MOM): which personas the funnel generation should use.
+// Empty selection = all personas. Prefilled once from the server-persisted
+// context_payload.selected_personas and never clobbered after a user edit.
+const selectedPersonas = ref<string[]>([])
+const selectionTouched = ref(false)
+
+watch(
+  () => props.campaign.context_payload,
+  (payload) => {
+    if (selectionTouched.value) return
+    const stored = (payload as { selected_personas?: unknown })?.selected_personas
+    if (Array.isArray(stored)) {
+      selectedPersonas.value = stored.filter((n): n is string => typeof n === 'string')
+    }
+  },
+  { immediate: true },
+)
+
 const opKey = computed(() => `${props.campaignUuid}:segmentation`)
 const { data: result, loading, error, run } = useAsyncOperation<any>()
 
@@ -35,6 +54,10 @@ const segments = computed(() => {
   const segs = payload.segments ?? payload.personas ?? payload.data?.segments ?? []
   return Array.isArray(segs) ? segs : []
 })
+
+const personas = computed(() =>
+  segments.value.map((seg: any) => ({ name: seg.name || seg.persona_name || '' })),
+)
 
 const deepResearch = computed(() => stepData.value?.response_payload?.deep_research ?? {})
 
@@ -50,6 +73,7 @@ async function runSegmentation() {
         city: targetMarket.value.city.trim() || undefined,
         product_description: productDescription.value || undefined,
         include_deep_research: true,
+        personas: selectedPersonas.value.length ? selectedPersonas.value : undefined,
       })
       return res.data
     })
@@ -128,6 +152,18 @@ async function runSegmentation() {
         <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="runSegmentation">
           <RefreshCw class="h-3 w-3" /> {{ t('seg.reRun') }}
         </button>
+      </div>
+
+      <!-- Persona targeting (MOM): pick which personas the funnel targets -->
+      <div v-if="personas.length" class="surface-card p-5 space-y-2.5 mt-4">
+        <div class="text-xs font-semibold">{{ t('seg.personaPickerTitle') }}</div>
+        <div class="text-[11px] text-muted-foreground">{{ t('seg.personaPickerHint') }}</div>
+        <PersonaSelector
+          v-model="selectedPersonas"
+          :personas="personas"
+          @update:model-value="selectionTouched = true"
+        />
+        <div class="text-[11px] text-muted-foreground" data-testid="persona-all-note">{{ t('seg.personaPickerAll') }}</div>
       </div>
 
       <div class="grid sm:grid-cols-2 gap-3">

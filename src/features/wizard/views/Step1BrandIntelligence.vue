@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Brain, Check, ExternalLink } from 'lucide-vue-next'
+import { Brain, Check, ExternalLink, RefreshCcw } from 'lucide-vue-next'
+import BrandContextPanel from '@/shared/components/BrandContextPanel.vue'
 import { useI18n } from '@/shared/utils/i18n'
-import type { Campaign } from '@/features/campaigns/types'
+import { resolveBrandContext, type Campaign } from '@/features/campaigns/types'
 
 const props = defineProps<{ campaign: Campaign; campaignUuid: string }>()
 const { t } = useI18n()
 
 const brand = computed(() => props.campaign.brand)
 const ctx = computed(() => props.campaign.context_payload as any)
+// Reused brand-analysis data (M-H8) — null hides the whole section.
+const brandContext = computed(() => resolveBrandContext(props.campaign))
 </script>
 
 <template>
@@ -59,6 +62,16 @@ const ctx = computed(() => props.campaign.context_payload as any)
         <div class="text-xs font-medium">{{ t('smart.approved') }}</div>
         <div class="text-[11px] text-muted-foreground">{{ t('smart.s1') }} — {{ t('smart.aiInsights') }}</div>
       </div>
+    </div>
+
+    <!-- Reused from Brand Analysis (M-H8): hidden unless brand_context.available -->
+    <div v-if="brandContext" class="surface-card p-5 space-y-3" data-testid="wizard-brand-context">
+      <div class="flex items-center gap-2">
+        <RefreshCcw class="h-4 w-4 text-primary shrink-0" />
+        <div class="text-sm font-semibold">{{ t('bc.title') }}</div>
+      </div>
+      <p class="text-[11px] text-muted-foreground">{{ t('bc.subtitle') }}</p>
+      <BrandContextPanel :context="brandContext" />
     </div>
   </div>
 </template>
