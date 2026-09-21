@@ -6,6 +6,7 @@ import SegmentDeepResearchRenderer from '@/shared/components/renderers/SegmentDe
 import StepExportButton from '@/shared/components/StepExportButton.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import ErrorState from '@/shared/components/ErrorState.vue'
+import StepReviewActions from '../components/StepReviewActions.vue'
 import CountryCitySelect from '@/shared/components/CountryCitySelect.vue'
 import PersonaSelector from '@/shared/components/PersonaSelector.vue'
 import Topbar from '@/layout/Topbar.vue'
@@ -115,6 +116,18 @@ function personasPayload(): string[] | undefined {
 }
 
 async function runSegmentation() {
+// Review state restore: prefer the run just returned, else the persisted
+// latest segmentation step on the campaign (latest_steps).
+const reviewState = computed(() => {
+  const fromResult = result.value?.step
+  if (fromResult?.review_status != null) return fromResult
+  return (campaign.value as any)?.latest_steps?.segmentation
+})
+
+async function runSegmentation(feedback?: string | Event) {
+  // The same fn doubles as a click handler and the refine runner — never send
+  // an Event as refinement feedback.
+  const refinementFeedback = typeof feedback === 'string' ? feedback : undefined
   if (!operationManager.canStart(opKey.value)) return
   operationManager.start(opKey.value)
   try {
@@ -130,6 +143,7 @@ async function runSegmentation() {
         // Explicit empty list only when the user CLEARED a persisted selection;
         // otherwise omit so the backend leaves any stored selection untouched.
         personas: personasPayload(),
+        refinement_feedback: refinementFeedback,
       })
       const payload = res.data?.step?.response_payload as any
       const rawSegments: any[] = payload?.data?.segments
@@ -352,6 +366,16 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx') {
             <div class="text-xs font-semibold mb-3">{{ t('seg.deepResearch') }}</div>
             <SegmentDeepResearchRenderer :data="deepResearch" />
           </div>
+
+          <!-- Approve / Reject / Refine -->
+          <StepReviewActions
+            class="mb-6"
+            :campaign-uuid="campaignUuid"
+            step-type="segmentation"
+            :review-status="reviewState?.review_status"
+            :reject-reason="reviewState?.reject_reason"
+            :run-step="runSegmentation"
+          />
 
           <!-- Next -->
           <div class="flex items-center justify-end">

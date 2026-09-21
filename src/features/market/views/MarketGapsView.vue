@@ -5,6 +5,7 @@ import Topbar from '@/layout/Topbar.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import ContentGapsRenderer from '@/shared/components/renderers/ContentGapsRenderer.vue'
 import MarketHistoryList from '../components/MarketHistoryList.vue'
+import InsightItemActions from '../components/InsightItemActions.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { useGetContentGaps, useContentGapsHistory } from '../queries'
@@ -185,7 +186,16 @@ async function handleExport(format: 'pdf' | 'pptx' | 'xlsx') {
         </div>
 
         <div class="surface-card p-5">
-          <ContentGapsRenderer :data="(gapsResult as any)" />
+          <ContentGapsRenderer :data="(gapsResult as any)">
+            <template #item-actions="{ item }">
+              <InsightItemActions
+                view="gaps"
+                :title="item.topic"
+                :snippet="item.reason || item.suggested_content_type || ''"
+                :angle="item.suggested_content_type ? `${item.suggested_content_type} — ${item.reason}` : item.reason"
+              />
+            </template>
+          </ContentGapsRenderer>
         </div>
       </div>
     </div>

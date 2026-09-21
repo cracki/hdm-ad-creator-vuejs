@@ -9,6 +9,7 @@ import {
 import Topbar from '@/layout/Topbar.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import MarketHistoryList from '../components/MarketHistoryList.vue'
+import InsightItemActions from '../components/InsightItemActions.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { useGenerateAIHooks, useAIHooksHistory } from '../queries'
@@ -356,7 +357,14 @@ const platformLabels: Record<AIHookPlatform, string> = {
                 </button>
               </div>
               <p class="text-[15px] sm:text-base leading-relaxed font-medium mb-3">{{ hook.hook }}</p>
-              <div class="text-[11px] text-muted-foreground/70">{{ t('market.inspiredBy') }}: <span class="text-muted-foreground">{{ hook.inspired_by }}</span></div>
+              <div class="text-[11px] text-muted-foreground/70 mb-3">{{ t('market.inspiredBy') }}: <span class="text-muted-foreground">{{ hook.inspired_by }}</span></div>
+
+              <!-- Per-hook actions: save to a campaign / generate a brief -->
+              <InsightItemActions
+                view="hooks"
+                :title="hook.hook"
+                :snippet="`${hookTypeLabels[hook.type]} — ${t('market.inspiredBy')}: ${hook.inspired_by}`"
+              />
             </div>
           </div>
           <div v-else class="surface-card p-8 text-center">

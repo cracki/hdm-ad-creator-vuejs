@@ -23,6 +23,9 @@ import type {
   AdRefineResult,
   StepApproveResult,
   PlatformRecommendationsResult,
+  StepRefineOptions,
+  StepReviewPayload,
+  StepReviewResult,
 } from './types'
 
 type SignalConfig = { signal?: AbortSignal }
@@ -58,16 +61,16 @@ export const campaignsApi = {
     })
   },
 
-  runPPCViability(uuid: string): Promise<{ data: StepResult }> {
-    return apiClient.post(`${campaign(uuid)}ppc-viability/`)
+  runPPCViability(uuid: string, payload: StepRefineOptions = {}): Promise<{ data: StepResult }> {
+    return apiClient.post(`${campaign(uuid)}ppc-viability/`, payload)
   },
 
-  runFunnel(uuid: string): Promise<{ data: StepResult }> {
-    return apiClient.post(`${campaign(uuid)}funnel/`)
+  runFunnel(uuid: string, payload: StepRefineOptions = {}): Promise<{ data: StepResult }> {
+    return apiClient.post(`${campaign(uuid)}funnel/`, payload)
   },
 
-  runContentStrategy(uuid: string): Promise<{ data: StepResult }> {
-    return apiClient.post(`${campaign(uuid)}content/`)
+  runContentStrategy(uuid: string, payload: StepRefineOptions = {}): Promise<{ data: StepResult }> {
+    return apiClient.post(`${campaign(uuid)}content/`, payload)
   },
 
   runAdsStrategy(uuid: string, payload: AdsStrategyPayload): Promise<{ data: StepResult }> {
@@ -129,5 +132,11 @@ export const campaignsApi = {
 
   approveStep(uuid: string, stepType: CampaignStepType): Promise<{ data: StepApproveResult }> {
     return apiClient.post(`${campaign(uuid)}steps/${stepType}/approve/`)
+  },
+
+  /** Persist a review decision on the latest run of a step (approve keeps the reason empty). */
+  reviewStep(uuid: string, stepType: CampaignStepType, payload: StepReviewPayload): Promise<{ data: StepReviewResult }> {
+    const body = payload.decision === 'rejected' ? payload : { decision: 'approved' }
+    return apiClient.post(`${campaign(uuid)}steps/${stepType}/review/`, body)
   },
 }

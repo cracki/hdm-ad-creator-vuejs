@@ -2,17 +2,22 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { createRouter, createMemoryHistory, type Router } from 'vue-router'
 import { ref } from 'vue'
+import { VueQueryPlugin } from '@tanstack/vue-query'
 import SegmentationView from './SegmentationView.vue'
 import type { Campaign } from '../types'
 
-vi.mock('@/features/campaigns/queries', () => ({
-  useCampaign: vi.fn(),
-}))
+// Keep the real queries (StepReviewActions' mutations) and only stub useCampaign.
+vi.mock('@/features/campaigns/queries', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../queries')>()
+  return { ...actual, useCampaign: vi.fn() }
+})
 
 vi.mock('@/features/campaigns/api', () => ({
   campaignsApi: {
     runSegmentation: vi.fn(),
     update: vi.fn(),
+    reviewStep: vi.fn(),
+    approveStep: vi.fn(),
   },
 }))
 
@@ -78,7 +83,7 @@ async function mountView(): Promise<VueWrapper> {
 
   const wrapper = mount(SegmentationView, {
     global: {
-      plugins: [router],
+      plugins: [router, VueQueryPlugin],
       stubs: { Topbar: true, StepExportButton: true, ErrorState: true, SegmentDeepResearchRenderer: true },
     },
   })
@@ -265,5 +270,93 @@ describe('SegmentationView — persona targeting (MOM)', () => {
     await rerun!.trigger('click')
     await flushPromises()
     expect(vi.mocked(campaignsApi.runSegmentation).mock.calls[1][1]?.personas).toEqual([])
+// ── Step reject / refine (review actions on the step output) ──
+
+describe('SegmentationView — step review actions', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(campaignsApi.runSegmentation).mockResolvedValue({
+      data: { step: { response_payload: {} } },
+    } as never)
+    vi.mocked(campaignsApi.update).mockResolvedValue({ data: {} } as never)
+  })
+
+  function mockCompletedCampaign(reviewStatus = '', rejectReason: string | null = null) {
+    mockCampaign(
+      buildCampaign({
+        segmentation_completed: true,
+        context_payload: {
+          target_market: { country: 'Oman', city: 'Muscat' },
+        },
+        // latest_steps restore — the step view reads results from here.
+        latest_steps: {
+          segmentation: {
+            status: 'completed',
+            review_status: reviewStatus,
+            reject_reason: rejectReason,
+            response_payload: {
+              segments: [{ name: 'Budget Shoppers' }],
+            },
+          },
+        },
+      } as Partial<Campaign>),
+    )
+  }
+
+  it('restores review state from latest_steps and rejects with a required reason', async () => {
+    mockCompletedCampaign('rejected', 'Too broad')
+    const wrapper = await mountView()
+
+    // Results render from latest_steps; the rejected badge is restored.
+    expect(wrapper.find('[data-testid="step-status-rejected"]').exists()).toBe(true)
+    await wrapper.find('[data-testid="step-status-rejected"]').trigger('click')
+    expect(wrapper.find('[data-testid="step-reject-reason"]').text()).toBe('Too broad')
+
+    // Reject flow: the reason is mandatory.
+    await wrapper.find('[data-testid="step-reject"]').trigger('click')
+    expect(wrapper.find('[data-testid="reject-modal"]').exists()).toBe(true)
+
+    await wrapper.find('[data-testid="reject-confirm-btn"]').trigger('click')
+    expect(wrapper.find('[data-testid="reject-reason-error"]').exists()).toBe(true)
+    expect(campaignsApi.reviewStep).not.toHaveBeenCalled()
+
+    await wrapper.find('[data-testid="reject-category-audience"]').trigger('click')
+    await wrapper.find('[data-testid="reject-confirm-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(campaignsApi.reviewStep).toHaveBeenCalledWith('c1', 'segmentation', {
+      decision: 'rejected',
+      reject_reason: 'Wrong audience',
+    })
+  })
+
+  it('refine re-POSTs segmentation with refinement_feedback plus the form values', async () => {
+    mockCompletedCampaign()
+    const wrapper = await mountView()
+
+    expect(wrapper.find('[data-testid="step-refine"]').exists()).toBe(true)
+    await wrapper.find('[data-testid="step-refine"]').trigger('click')
+    expect(wrapper.find('[data-testid="refine-modal"]').exists()).toBe(true)
+
+    await wrapper.find('[data-testid="refine-feedback-input"]').setValue('Focus on Gen Z commuters')
+    await wrapper.find('[data-testid="refine-confirm-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(campaignsApi.runSegmentation).toHaveBeenCalledTimes(1)
+    const [uuid, payload] = vi.mocked(campaignsApi.runSegmentation).mock.calls[0]
+    expect(uuid).toBe('c1')
+    expect(payload?.refinement_feedback).toBe('Focus on Gen Z commuters')
+    // Existing form values are re-sent alongside the feedback.
+    expect(payload?.country).toBe('Oman')
+    expect(payload?.city).toBe('Muscat')
+    expect(wrapper.find('[data-testid="refine-modal"]').exists()).toBe(false)
+  })
+
+  it('an approved step shows the approved badge', async () => {
+    mockCompletedCampaign('approved')
+    const wrapper = await mountView()
+
+    expect(wrapper.find('[data-testid="step-status-approved"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="step-status-rejected"]').exists()).toBe(false)
   })
 })

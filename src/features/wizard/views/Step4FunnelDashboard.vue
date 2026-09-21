@@ -6,6 +6,7 @@ import { useI18n } from '@/shared/utils/i18n'
 import { campaignsApi } from '@/features/campaigns/api'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
+import StepReviewActions from '@/features/campaigns/components/StepReviewActions.vue'
 import type { Campaign } from '@/features/campaigns/types'
 
 const props = defineProps<{ campaign: Campaign; campaignUuid: string }>()
@@ -43,11 +44,21 @@ const stages = computed(() => {
   return Array.isArray(items) ? items : []
 })
 
-async function runFunnel() {
+// Review state restore: prefer the run just returned, else the persisted
+// latest funnel step on the campaign.
+const reviewState = computed(() => {
+  const fromResult = result.value?.step
+  if (fromResult?.review_status != null) return fromResult
+  return (props.campaign as any)?.latest_steps?.funnel
+})
+
+async function runFunnel(feedback?: string | Event) {
+  // The same fn doubles as a click handler — never send an Event as feedback.
+  const refinementFeedback = typeof feedback === 'string' ? feedback : undefined
   if (!operationManager.canStart(opKey.value)) return
   operationManager.start(opKey.value)
   try {
-    await run(async () => (await campaignsApi.runFunnel(props.campaignUuid)).data)
+    await run(async () => (await campaignsApi.runFunnel(props.campaignUuid, { refinement_feedback: refinementFeedback })).data)
     emit('completed')
   } finally {
     operationManager.finish(opKey.value)
@@ -125,6 +136,16 @@ async function runFunnel() {
           </div>
         </div>
       </div>
+
+      <!-- Approve / Reject / Refine -->
+      <StepReviewActions
+        class="mt-4"
+        :campaign-uuid="campaignUuid"
+        step-type="funnel"
+        :review-status="reviewState?.review_status"
+        :reject-reason="reviewState?.reject_reason"
+        :run-step="runFunnel"
+      />
     </template>
   </div>
 </template>

@@ -96,6 +96,10 @@ export interface CampaignStep {
   started_at: string | null
   completed_at: string | null
   error_message: string | null
+  /** Review decision persisted on the latest run ('' = not reviewed yet). */
+  review_status?: 'approved' | 'rejected' | ''
+  reject_reason?: string | null
+  reviewed_at?: string | null
   created_at: string
   updated_at: string
 }
@@ -292,6 +296,23 @@ export function getPlatformRecommendations(
   if (!recs || typeof recs !== 'object') return null
   const result = recs as PlatformRecommendationsResult
   return Array.isArray(result.recommendations) && result.recommendations.length > 0 ? result : null
+// ── Step review / refine (reject + feedback re-run) ────────
+
+/** Body of POST /campaigns/{uuid}/steps/{step_type}/review/. */
+export interface StepReviewPayload {
+  decision: 'approved' | 'rejected'
+  /** Required when decision is "rejected"; must be absent/empty when "approved". */
+  reject_reason?: string
+}
+
+export interface StepReviewResult {
+  success: boolean
+  step: CampaignStep
+}
+
+/** Optional refinement feedback accepted by every step run endpoint (≤1000 chars). */
+export interface StepRefineOptions {
+  refinement_feedback?: string
 }
 
 export interface SegmentationRunPayload {
@@ -303,6 +324,7 @@ export interface SegmentationRunPayload {
   include_deep_research?: boolean
   /** Selected persona names; empty/absent = target all personas (server-side filter). */
   personas?: string[]
+  refinement_feedback?: string
 }
 
 export interface StepResult {
