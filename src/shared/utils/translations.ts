@@ -273,6 +273,17 @@ export const translations = {
   'seg.painPoints': { en: 'Pain points', ar: 'نقاط الألم', fa: 'نقاط درد' },
   'seg.deepResearch': { en: 'Deep Research', ar: 'بحث عميق', fa: 'تحقیق عمیق' },
   'seg.alreadyCompletedDesc': { en: 'Segmentation was completed in a previous session. Re-run to update results.', ar: 'تمت التجزئة في جلسة سابقة. أعد التشغيل لتحديث النتائج.', fa: 'بخش‌بندی در جلسه قبلی تکمیل شده. برای به‌روزرسانی مجدد اجرا کن.' },
+  'seg.personaPickerTitle': { en: 'Target personas', ar: 'الشخصيات المستهدفة', fa: 'پرسوناهای هدف' },
+  'seg.personaPickerHint': { en: 'Choose which personas this campaign should target — only the selected ones feed the next steps.', ar: 'اختر الشخصيات التي تستهدفها هذه الحملة — المختار منها فقط يُستخدم في الخطوات التالية.', fa: 'انتخاب کن کدام پرسوناها هدف قرار بگیرند — فقط موارد انتخاب‌شده در مراحل بعدی استفاده می‌شوند.' },
+  'seg.personaPickerAll': { en: 'Nothing selected = all personas are targeted.', ar: 'بدون تحديد = تُستهدف كل الشخصيات.', fa: 'بدون انتخاب = همه پرسوناها هدف قرار می‌گیرند.' },
+
+  // Reused brand analysis context (M-H8)
+  'bc.title': { en: 'Reused from Brand Analysis', ar: 'معاد استخدامه من تحليل العلامة', fa: 'بازاستفاده از تحلیل برند' },
+  'bc.subtitle': { en: 'Audience, personas and services pulled from your latest brand analysis.', ar: 'الجمهور والشخصيات والخدمات مأخوذة من أحدث تحليل لعلامتك.', fa: 'مخاطب، پرسوناها و خدمات گرفته‌شده از جدیدترین تحلیل برند شما.' },
+  'bc.primary': { en: 'Primary', ar: 'أساسي', fa: 'اصلی' },
+  'bc.secondary': { en: 'Secondary', ar: 'ثانوي', fa: 'ثانویه' },
+  'bc.persona': { en: 'Persona {n}', ar: 'شخصية {n}', fa: 'پرسونای {n}' },
+  'bc.services': { en: 'Services', ar: 'الخدمات', fa: 'خدمات' },
 
   // PPC Viability
   'ppc.description': { en: 'Evaluate which PPC platforms are best for your brand.', ar: 'قيّم أفضل منصات الإعلانات المدفوعة لعلامتك.', fa: 'ارزیابی بهترین پلتفرم‌های PPC برای برندت.' },

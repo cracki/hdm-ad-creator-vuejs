@@ -11,10 +11,11 @@ import {
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n, languageNativeLabel } from '@/shared/utils/i18n'
 import Breadcrumb from '@/shared/components/Breadcrumb.vue'
+import BrandContextPanel from '@/shared/components/BrandContextPanel.vue'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { useCampaign, useCampaignVisuals } from '../queries'
 import { exportCampaignPDF, exportCampaignPPTX, formatBudgetAllocation } from '@/shared/utils/exportCampaign'
-import { formatCampaignBudget, getFunnelBudgetSplit } from '../types'
+import { formatCampaignBudget, getFunnelBudgetSplit, resolveBrandContext } from '../types'
 import { useTourRegistration } from '@/shared/composables/useTourRegistration'
 import { campaignDetailTour } from '../tours'
 
@@ -180,7 +181,10 @@ const platformAdsStatus = computed(() => {
 
 
 // Expanded sections state
-const expandedSections = ref<Record<string, boolean>>({ segmentation: true, ppc: false, funnel: false, content: false })
+const expandedSections = ref<Record<string, boolean>>({ segmentation: true, ppc: false, funnel: false, content: false, brandContext: false })
+
+// Reused brand-analysis data (M-H8) — null hides the info block.
+const brandContext = computed(() => resolveBrandContext(campaign.value))
 
 function toggleSection(key: string) {
   expandedSections.value[key] = !expandedSections.value[key]
@@ -497,6 +501,25 @@ function getStepStatusLabel(step: StepDef, idx: number): string {
 
       <!-- Detailed Expandable Sections -->
       <div class="mt-4 space-y-2" data-loc="campaigns.detail.details">
+
+        <!-- Reused brand analysis (M-H8): collapsed by default, compact on mobile -->
+        <div v-if="brandContext" class="surface-card overflow-hidden" data-testid="detail-brand-context">
+          <button
+            class="w-full p-4 flex items-center justify-between hover:bg-muted/5 transition"
+            @click="toggleSection('brandContext')"
+          >
+            <div class="flex items-center gap-2 min-w-0">
+              <TrendingUp class="h-4 w-4 text-primary shrink-0" />
+              <span class="text-sm font-medium">{{ t('bc.title' as any) }}</span>
+            </div>
+            <component :is="expandedSections.brandContext ? ChevronUp : ChevronDown" class="h-4 w-4 text-muted-foreground" />
+          </button>
+          <div v-if="expandedSections.brandContext" class="px-4 pb-4 border-t border-border/30">
+            <div class="mt-3">
+              <BrandContextPanel :context="brandContext" />
+            </div>
+          </div>
+        </div>
 
         <!-- PPC Budget Allocation -->
         <div v-if="budgetAllocationText" class="surface-card overflow-hidden" data-testid="budget-allocation">

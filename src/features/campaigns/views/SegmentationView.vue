@@ -7,6 +7,7 @@ import StepExportButton from '@/shared/components/StepExportButton.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import ErrorState from '@/shared/components/ErrorState.vue'
 import CountryCitySelect from '@/shared/components/CountryCitySelect.vue'
+import PersonaSelector from '@/shared/components/PersonaSelector.vue'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
@@ -68,6 +69,27 @@ const segments = computed(() => {
   const segments = payload.segments ?? payload.personas ?? payload.data?.segments ?? []
   return Array.isArray(segments) ? segments : []
 })
+const personas = computed(() =>
+  segments.value.map((s: any) => ({ name: s.name || s.persona_name || '' })),
+)
+
+// Persona targeting (MOM): which personas the funnel generation should use.
+// Empty selection = all personas. Prefilled once from the server-persisted
+// context_payload.selected_personas and never clobbered after a user edit.
+const selectedPersonas = ref<string[]>([])
+const selectionTouched = ref(false)
+
+watch(
+  () => (campaign.value as any)?.context_payload,
+  (payload) => {
+    if (selectionTouched.value) return
+    const stored = (payload as { selected_personas?: unknown } | undefined)?.selected_personas
+    if (Array.isArray(stored)) {
+      selectedPersonas.value = stored.filter((n): n is string => typeof n === 'string')
+    }
+  },
+  { immediate: true },
+)
 const deepResearch = computed(() => {
   const raw = stepData.value?.response_payload?.deep_research
   if (!raw || typeof raw !== 'object') return {}
@@ -89,6 +111,7 @@ async function runSegmentation() {
         city: targetMarket.value.city.trim() || undefined,
         product_description: productDescription.value || undefined,
         include_deep_research: true,
+        personas: selectedPersonas.value.length ? selectedPersonas.value : undefined,
       })
       const payload = res.data?.step?.response_payload as any
       const rawSegments: any[] = payload?.data?.segments
@@ -237,6 +260,18 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx') {
                 <RefreshCw class="h-3 w-3" /> {{ t('seg.reRun') }}
               </button>
             </div>
+          </div>
+
+          <!-- Persona targeting (MOM): pick which personas the funnel targets -->
+          <div v-if="personas.length" class="surface-card p-5 space-y-2.5 mb-6">
+            <div class="text-xs font-semibold">{{ t('seg.personaPickerTitle') }}</div>
+            <div class="text-[11px] text-muted-foreground">{{ t('seg.personaPickerHint') }}</div>
+            <PersonaSelector
+              v-model="selectedPersonas"
+              :personas="personas"
+              @update:model-value="selectionTouched = true"
+            />
+            <div class="text-[11px] text-muted-foreground" data-testid="persona-all-note">{{ t('seg.personaPickerAll') }}</div>
           </div>
 
           <div class="grid sm:grid-cols-2 gap-3 mb-6">

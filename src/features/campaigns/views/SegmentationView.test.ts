@@ -161,3 +161,78 @@ describe('SegmentationView — structured target market (F19)', () => {
     expect((wrapper.find('[data-testid="city-input"]').element as HTMLInputElement).value).toBe('')
   })
 })
+
+const SEGMENTS_RESPONSE = {
+  data: {
+    step: {
+      response_payload: {
+        segments: [{ name: 'Budget Buyer' }, { name: 'Premium Seeker' }],
+      },
+    },
+  },
+} as never
+
+describe('SegmentationView — persona targeting (MOM)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(campaignsApi.runSegmentation).mockResolvedValue(SEGMENTS_RESPONSE)
+    vi.mocked(campaignsApi.update).mockResolvedValue({ data: {} } as never)
+  })
+
+  it('renders a persona chip per segmentation result once results exist', async () => {
+    mockCampaign(buildCampaign())
+    const wrapper = await mountView()
+
+    expect(wrapper.findAll('[data-testid="persona-chip"]').length).toBe(0)
+
+    await wrapper.find('[data-loc="campaigns.segmentation.run-btn"]').trigger('click')
+    await flushPromises()
+
+    const chips = wrapper.findAll('[data-testid="persona-chip"]')
+    expect(chips.map((c) => c.text())).toEqual(['Budget Buyer', 'Premium Seeker'])
+    // empty selection = all personas, surfaced as a localized note
+    expect(wrapper.find('[data-testid="persona-all-note"]').exists()).toBe(true)
+  })
+
+  it('sends the selected persona names in the segmentation run payload', async () => {
+    mockCampaign(buildCampaign())
+    const wrapper = await mountView()
+
+    await wrapper.find('[data-loc="campaigns.segmentation.run-btn"]').trigger('click')
+    await flushPromises()
+
+    const chips = wrapper.findAll('[data-testid="persona-chip"]')
+    await chips[1].trigger('click')
+
+    const rerun = wrapper.findAll('button').find((b) => b.text().includes('Re-run'))
+    await rerun!.trigger('click')
+    await flushPromises()
+
+    const calls = vi.mocked(campaignsApi.runSegmentation).mock.calls
+    expect(calls.length).toBe(2)
+    // first run: no selection yet → personas omitted (server targets all)
+    expect(calls[0][1]?.personas).toBeUndefined()
+    expect(calls[1][1]?.personas).toEqual(['Premium Seeker'])
+  })
+
+  it('restores the selection from context_payload.selected_personas on load', async () => {
+    mockCampaign(
+      buildCampaign({
+        segmentation_completed: true,
+        context_payload: { selected_personas: ['Premium Seeker'] },
+        latest_steps: {
+          segmentation: {
+            status: 'completed',
+            response_payload: { segments: [{ name: 'Budget Buyer' }, { name: 'Premium Seeker' }] },
+          },
+        },
+      } as unknown as Campaign),
+    )
+    const wrapper = await mountView()
+
+    const chips = wrapper.findAll('[data-testid="persona-chip"]')
+    expect(chips.map((c) => c.text())).toEqual(['Budget Buyer', 'Premium Seeker'])
+    expect(chips[0].attributes('data-selected')).toBe('false')
+    expect(chips[1].attributes('data-selected')).toBe('true')
+  })
+})

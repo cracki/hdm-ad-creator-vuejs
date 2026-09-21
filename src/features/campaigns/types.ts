@@ -35,10 +35,40 @@ export interface Campaign {
   google_ads_completed: boolean
   linkedin_ads_completed: boolean
   context_payload: Record<string, unknown>
+  /** Reused brand-analysis data (M-H8); null until the backend computes it. */
+  brand_context?: BrandContext | null
   summary: Record<string, unknown>
   steps_count: number
   created_at: string
   updated_at: string
+}
+
+// ── Reused brand-analysis context (M-H8) ───────────────────
+
+export interface BrandContextPersona {
+  segment: 'primary' | 'secondary' | string
+  demographics?: unknown
+  psychographics?: unknown
+  pain_points?: string[] | null
+  motivations?: string[] | null
+  summary?: string | null
+}
+
+export interface BrandContext {
+  available: boolean
+  audience_summary?: {
+    summary?: string | null
+    pain_points?: string[] | null
+    motivations?: string[] | null
+  } | null
+  personas?: BrandContextPersona[] | null
+  services?: string[] | null
+}
+
+/** Normalized read of campaign.brand_context — null when unavailable. */
+export function resolveBrandContext(campaign: Pick<Campaign, 'brand_context'> | null | undefined): BrandContext | null {
+  const bc = campaign?.brand_context
+  return bc && bc.available ? bc : null
 }
 
 export interface CampaignCreatePayload {
@@ -206,6 +236,8 @@ export interface SegmentationRunPayload {
   city?: string
   product_description?: string
   include_deep_research?: boolean
+  /** Selected persona names; empty/absent = target all personas (server-side filter). */
+  personas?: string[]
 }
 
 export interface StepResult {
