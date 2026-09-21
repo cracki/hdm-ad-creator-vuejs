@@ -486,6 +486,16 @@ export const translations = {
   'analysis.stage.competitors': { en: 'Profiling competitors…', ar: 'جارٍ تحليل المنافسين…', fa: 'در حال پروفایل‌سازی رقبا…' },
   'analysis.stage.insights': { en: 'Generating strategic insights…', ar: 'جارٍ توليد الرؤى الاستراتيجية…', fa: 'در حال تولید بینش‌های استراتژیک…' },
 
+  // Analysis live section progress (sections_status)
+  'analysis.progress.website_scrape': { en: 'Website scan', ar: 'فحص الموقع', fa: 'اسکن وب‌سایت' },
+  'analysis.progress.core_analysis': { en: 'Brand core analysis', ar: 'تحليل جوهر العلامة', fa: 'تحلیل هسته برند' },
+  'analysis.progress.quality_validation': { en: 'Quality validation', ar: 'التحقق من الجودة', fa: 'اعتبارسنجی کیفیت' },
+  'analysis.progress.audience': { en: 'Audience insights', ar: 'رؤى الجمهور', fa: 'بینش‌های مخاطب' },
+  'analysis.progress.social': { en: 'Social presence', ar: 'التواجد الاجتماعي', fa: 'حضور اجتماعی' },
+  'analysis.progress.competitors': { en: 'Competitor analysis', ar: 'تحليل المنافسين', fa: 'تحلیل رقبا' },
+  'analysis.progress.recommendations': { en: 'Recommendations', ar: 'التوصيات', fa: 'توصیه‌ها' },
+  'analysis.progress.sectionError': { en: 'Step error', ar: 'خطأ في الخطوة', fa: 'خطای مرحله' },
+
   // Analysis tabs & sections
   'analysis.tab.overview': { en: 'Overview', ar: 'نظرة عامة', fa: 'نمای کلی' },
   'analysis.tab.audience': { en: 'Audience', ar: 'الجمهور', fa: 'مخاطب' },
