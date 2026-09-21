@@ -496,6 +496,21 @@ export const translations = {
   'analysis.progress.recommendations': { en: 'Recommendations', ar: 'التوصيات', fa: 'توصیه‌ها' },
   'analysis.progress.sectionError': { en: 'Step error', ar: 'خطأ في الخطوة', fa: 'خطای مرحله' },
 
+  // Analysis brand personality visuals (MOM §4.3)
+  'analysis.personality.title': { en: 'Brand Personality', ar: 'شخصية العلامة', fa: 'شخصیت برند' },
+  'analysis.personality.hint': { en: 'Archetype, voice and traits detected from the brand analysis.', ar: 'النمط الأصلي والصوت والسمات المكتشفة من تحليل العلامة.', fa: 'کهن‌الگو، لحن و ویژگی‌های شناسایی‌شده از تحلیل برند.' },
+  'analysis.personality.archetype': { en: 'Archetype', ar: 'النمط الأصلي', fa: 'کهن‌الگو' },
+  'analysis.personality.tone': { en: 'Tone', ar: 'النبرة', fa: 'لحن' },
+  'analysis.personality.persona': { en: 'Persona', ar: 'الشخصية', fa: 'پرسونا' },
+  'analysis.personality.writingStyle': { en: 'Writing style', ar: 'أسلوب الكتابة', fa: 'سبک نوشتار' },
+  'analysis.personality.voiceAttributes': { en: 'Voice attributes', ar: 'سمات الصوت', fa: 'ویژگی‌های لحن' },
+  'analysis.personality.radarTitle': { en: 'Personality dimensions', ar: 'أبعاد الشخصية', fa: 'ابعاد شخصیت' },
+  'analysis.personality.wheelTitle': { en: 'Archetype traits', ar: 'سمات النمط الأصلي', fa: 'ویژگی‌های کهن‌الگو' },
+  'analysis.personality.wheelHint': { en: 'Trait composition of the detected archetype.', ar: 'تكوين سمات النمط الأصلي المكتشف.', fa: 'ترکیب ویژگی‌های کهن‌الگوی شناسایی‌شده.' },
+  'analysis.personality.takeawaysTitle': { en: 'Key takeaways', ar: 'الخلاصات الرئيسية', fa: 'نکات کلیدی' },
+  'analysis.personality.copy': { en: 'Copy', ar: 'نسخ', fa: 'کپی' },
+  'analysis.personality.copied': { en: 'Copied to clipboard', ar: 'تم النسخ إلى الحافظة', fa: 'در حافظه کپی شد' },
+
   // Analysis tabs & sections
   'analysis.tab.overview': { en: 'Overview', ar: 'نظرة عامة', fa: 'نمای کلی' },
   'analysis.tab.audience': { en: 'Audience', ar: 'الجمهور', fa: 'مخاطب' },

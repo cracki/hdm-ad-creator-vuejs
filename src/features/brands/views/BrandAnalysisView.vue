@@ -15,6 +15,16 @@ import { operationManager } from '@/infrastructure/operations/operationManager'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import { TERMINAL_STATUSES } from '@/features/brands/schemas'
+import PersonalityCards from '../components/PersonalityCards.vue'
+import BrandRadarChart from '../components/BrandRadarChart.vue'
+import BrandWheel from '../components/BrandWheel.vue'
+import TakeawayCards from '../components/TakeawayCards.vue'
+import {
+  extractPersonality,
+  extractRadarDimensions,
+  extractWheelShares,
+  extractTakeaways,
+} from '../components/personality'
 import {
   ANALYSIS_SECTIONS,
   extractSectionStatus,
@@ -168,6 +178,12 @@ const currentStage = computed(() => {
 
 const brandProfile = computed(() => runData.value?.brand_profile ?? null)
 const audienceInsights = computed(() => runData.value?.audience_insights ?? null)
+
+// --- Brand personality visuals (MOM §4.3); each section hides itself when the payload lacks its data ---
+const personality = computed(() => extractPersonality(brandProfile.value))
+const radarDimensions = computed(() => extractRadarDimensions(brandProfile.value))
+const wheelShares = computed(() => extractWheelShares(brandProfile.value))
+const takeaways = computed(() => extractTakeaways(brandProfile.value))
 
 const socialPresence = computed(() => runData.value?.social_presence ?? null)
 
@@ -368,6 +384,34 @@ setActions([
             <Heart class="h-4 w-4 text-primary" /> {{ t('analysis.section.emotionProfile') }}
           </div>
           <AnalysisPayloadRenderer :data="emotionProfile" />
+        </div>
+
+        <!-- Brand Personality visuals (MOM §4.3) -->
+        <div v-if="personality" class="surface-card p-5 space-y-4 md:col-span-2" data-testid="personality-section">
+          <div class="flex items-center gap-2 text-sm font-semibold">
+            <Sparkles class="h-4 w-4 text-primary" /> {{ t('analysis.personality.title') }}
+            <InfoTooltip :text="t('analysis.personality.hint')" />
+          </div>
+          <PersonalityCards :data="personality" />
+          <div v-if="radarDimensions || wheelShares" class="grid sm:grid-cols-2 gap-4">
+            <div v-if="radarDimensions" class="space-y-2">
+              <div class="text-xs font-medium text-muted-foreground">{{ t('analysis.personality.radarTitle') }}</div>
+              <BrandRadarChart :dimensions="radarDimensions" />
+            </div>
+            <div v-if="wheelShares" class="space-y-2">
+              <div class="text-xs font-medium text-muted-foreground">{{ t('analysis.personality.wheelTitle') }}</div>
+              <BrandWheel :shares="wheelShares" />
+              <p class="text-[11px] text-muted-foreground/70 text-center">{{ t('analysis.personality.wheelHint') }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Key takeaways -->
+        <div v-if="takeaways.length" class="surface-card p-5 space-y-4 md:col-span-2" data-testid="takeaways-section">
+          <div class="flex items-center gap-2 text-sm font-semibold">
+            <Lightbulb class="h-4 w-4 text-primary" /> {{ t('analysis.personality.takeawaysTitle') }}
+          </div>
+          <TakeawayCards :items="takeaways" />
         </div>
       </div>
 
