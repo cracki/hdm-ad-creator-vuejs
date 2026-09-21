@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
+import { VueQueryPlugin } from '@tanstack/vue-query'
 import Step2AudienceStrategy from './Step2AudienceStrategy.vue'
 import { campaignsApi } from '@/features/campaigns/api'
 import type { Campaign } from '@/features/campaigns/types'
@@ -7,6 +8,9 @@ import type { Campaign } from '@/features/campaigns/types'
 vi.mock('@/features/campaigns/api', () => ({
   campaignsApi: {
     runSegmentation: vi.fn(),
+    update: vi.fn(),
+    approveStep: vi.fn(),
+    reviewStep: vi.fn(),
   },
 }))
 
@@ -62,8 +66,11 @@ const SEGMENTS_RESPONSE = {
 } as never
 
 async function mountStep(campaign: Campaign) {
+  // StepReviewActions (review/refine footer) uses vue-query hooks, so the
+  // plugin must be provided just like in the real app.
   const wrapper = mount(Step2AudienceStrategy, {
     props: { campaign, campaignUuid: 'c1' },
+    global: { plugins: [VueQueryPlugin] },
   })
   await flushPromises()
   return wrapper

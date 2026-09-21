@@ -270,6 +270,9 @@ describe('SegmentationView — persona targeting (MOM)', () => {
     await rerun!.trigger('click')
     await flushPromises()
     expect(vi.mocked(campaignsApi.runSegmentation).mock.calls[1][1]?.personas).toEqual([])
+  })
+})
+
 // ── Step reject / refine (review actions on the step output) ──
 
 describe('SegmentationView — step review actions', () => {

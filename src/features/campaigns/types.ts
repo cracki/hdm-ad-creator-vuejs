@@ -296,6 +296,8 @@ export function getPlatformRecommendations(
   if (!recs || typeof recs !== 'object') return null
   const result = recs as PlatformRecommendationsResult
   return Array.isArray(result.recommendations) && result.recommendations.length > 0 ? result : null
+}
+
 // ── Step review / refine (reject + feedback re-run) ────────
 
 /** Body of POST /campaigns/{uuid}/steps/{step_type}/review/. */

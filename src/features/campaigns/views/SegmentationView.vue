@@ -115,7 +115,6 @@ function personasPayload(): string[] | undefined {
   return undefined
 }
 
-async function runSegmentation() {
 // Review state restore: prefer the run just returned, else the persisted
 // latest segmentation step on the campaign (latest_steps).
 const reviewState = computed(() => {
