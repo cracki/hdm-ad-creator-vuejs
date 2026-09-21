@@ -210,6 +210,38 @@ describe('CampaignReviewView — complete error surfacing (F17)', () => {
     )
   })
 
+  it('renders the missing step slugs as localized chips (F17)', async () => {
+    mutateAsync.mockRejectedValueOnce({
+      response: {
+        status: 400,
+        data: {
+          detail: 'Campaign completion requirements not met.',
+          missing: ['segmentation', 'meta_ads'],
+        },
+      },
+    })
+    const wrapper = await mountView()
+
+    await wrapper.find('[data-loc="campaigns.review.complete-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="complete-missing"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="missing-chip-segmentation"]').text()).toBe('Brand Intelligence')
+    expect(wrapper.find('[data-testid="missing-chip-meta_ads"]').text()).toBe('Meta Ads')
+  })
+
+  it('does not render missing chips when the error has no missing array', async () => {
+    mutateAsync.mockRejectedValueOnce({
+      response: { status: 400, data: { detail: 'Nope' } },
+    })
+    const wrapper = await mountView()
+
+    await wrapper.find('[data-loc="campaigns.review.complete-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="complete-missing"]').exists()).toBe(false)
+  })
+
   it('falls back to a generic message when the error has no detail', async () => {
     mutateAsync.mockRejectedValueOnce(new Error('Network failure'))
     const wrapper = await mountView()

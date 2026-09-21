@@ -6,6 +6,7 @@ import { useI18n } from '@/shared/utils/i18n'
 import { useCompleteCampaign } from '@/features/campaigns/queries'
 import { operationManager } from '@/infrastructure/operations/operationManager'
 import { formatCampaignBudget } from '@/features/campaigns/types'
+import { campaignStepLabel } from '@/features/campaigns/stepLabels'
 import type { Campaign } from '@/features/campaigns/types'
 
 const props = defineProps<{ campaign: Campaign; campaignUuid: string }>()
@@ -33,6 +34,7 @@ const allDone = computed(() => completionFlags.value.every(f => f.done))
 
 const completing = ref(false)
 const completeError = ref('')
+const completeMissing = ref<string[]>([])
 
 async function completeCampaign() {
   if (!allDone.value) return
@@ -41,15 +43,20 @@ async function completeCampaign() {
   operationManager.start(opKey)
   completing.value = true
   completeError.value = ''
+  completeMissing.value = []
   try {
     await completeMutation.mutateAsync()
     emit('completed')
     router.push('/campaigns')
   } catch (e: unknown) {
     // Surface the backend's gating error (400 {detail, missing}) — nothing
-    // else shows it (no global mutation error handler).
-    const err = e as { response?: { data?: { detail?: string } }; message?: string }
+    // else shows it (no global mutation error handler). The `missing` step
+    // slugs render as localized chips under the banner.
+    const err = e as { response?: { data?: { detail?: string; missing?: unknown } }; message?: string }
     completeError.value = err?.response?.data?.detail ?? err?.message ?? t('review.completeFailed')
+    completeMissing.value = Array.isArray(err?.response?.data?.missing)
+      ? (err?.response?.data?.missing as string[])
+      : []
   } finally {
     completing.value = false
     operationManager.finish(opKey)
@@ -124,7 +131,24 @@ async function completeCampaign() {
       data-testid="complete-error"
     >
       <AlertCircle class="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-      <div class="text-xs text-destructive leading-relaxed">{{ completeError }}</div>
+      <div class="min-w-0">
+        <div class="text-xs text-destructive leading-relaxed">{{ completeError }}</div>
+        <div
+          v-if="completeMissing.length"
+          class="flex flex-wrap items-center gap-1.5 mt-2"
+          data-testid="complete-missing"
+        >
+          <span class="text-[11px] text-muted-foreground">{{ t('review.missingSteps') }}</span>
+          <span
+            v-for="slug in completeMissing"
+            :key="slug"
+            class="text-[11px] font-medium px-2 py-0.5 rounded-full bg-destructive/10 border border-destructive/30 text-destructive"
+            :data-testid="`missing-chip-${slug}`"
+          >
+            {{ campaignStepLabel(slug, t) }}
+          </span>
+        </div>
+      </div>
     </div>
 
     <!-- Complete button -->
