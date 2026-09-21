@@ -284,6 +284,10 @@ export const translations = {
   'bc.secondary': { en: 'Secondary', ar: 'ثانوي', fa: 'ثانویه' },
   'bc.persona': { en: 'Persona {n}', ar: 'شخصية {n}', fa: 'پرسونای {n}' },
   'bc.services': { en: 'Services', ar: 'الخدمات', fa: 'خدمات' },
+  'bc.demographics': { en: 'Demographics', ar: 'البيانات الديموغرافية', fa: 'مختصات جمعیتی' },
+  'bc.psychographics': { en: 'Psychographics', ar: 'الخصائص النفسية', fa: 'ویژگی‌های روانی' },
+  'bc.painPoints': { en: 'Pain points', ar: 'نقاط الألم', fa: 'نقاط درد' },
+  'bc.motivations': { en: 'Motivations', ar: 'الدوافع', fa: 'انگیزه‌ها' },
 
   // PPC Viability
   'ppc.description': { en: 'Evaluate which PPC platforms are best for your brand.', ar: 'قيّم أفضل منصات الإعلانات المدفوعة لعلامتك.', fa: 'ارزیابی بهترین پلتفرم‌های PPC برای برندت.' },

@@ -52,15 +52,19 @@ export interface BrandContextPersona {
   pain_points?: string[] | null
   motivations?: string[] | null
   summary?: string | null
+  /** Secondary segments sometimes carry `description` instead of `summary`. */
+  description?: string | null
 }
 
 export interface BrandContext {
   available: boolean
-  audience_summary?: {
-    summary?: string | null
-    pain_points?: string[] | null
-    motivations?: string[] | null
-  } | null
+  /**
+   * Real backend shape (build_brand_context): the FULL target_audience object
+   * — `{ primary: segment, secondary: segment }` — NOT a flat summary with
+   * its own summary/pain_points/motivations. Personas below mirror the same
+   * segments, so the panel renders them via the persona cards.
+   */
+  audience_summary?: Record<string, unknown> | null
   personas?: BrandContextPersona[] | null
   services?: string[] | null
 }

@@ -37,7 +37,7 @@ function buildCampaign(brandContext: BrandContext | null): Campaign {
 
 const available: BrandContext = {
   available: true,
-  audience_summary: { summary: 'Urban eco shoppers.' },
+  audience_summary: { primary: { summary: 'Trend buyer' } },
   personas: [{ segment: 'primary', summary: 'Trend buyer' }],
   services: ['SEO'],
 }
@@ -54,7 +54,7 @@ describe('Step1BrandIntelligence — reused brand analysis (M-H8)', () => {
 
     expect(wrapper.find('[data-testid="wizard-brand-context"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="brand-context-panel"]').exists()).toBe(true)
-    expect(wrapper.text()).toContain('Urban eco shoppers.')
+    expect(wrapper.text()).toContain('Trend buyer')
     expect(wrapper.text()).toContain('SEO')
   })
 

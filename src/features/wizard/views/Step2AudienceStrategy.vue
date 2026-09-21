@@ -27,7 +27,10 @@ const targetMarket = ref<TargetMarket>(resolveTargetMarket(props.campaign))
 // Persona targeting (MOM): which personas the funnel generation should use.
 // Empty selection = all personas. Prefilled once from the server-persisted
 // context_payload.selected_personas and never clobbered after a user edit.
+// initialSelection remembers the persisted selection so a later deselect-all
+// can send an explicit `personas: []` and clear the stale server value.
 const selectedPersonas = ref<string[]>([])
+const initialSelection = ref<string[]>([])
 const selectionTouched = ref(false)
 
 watch(
@@ -36,7 +39,9 @@ watch(
     if (selectionTouched.value) return
     const stored = (payload as { selected_personas?: unknown })?.selected_personas
     if (Array.isArray(stored)) {
-      selectedPersonas.value = stored.filter((n): n is string => typeof n === 'string')
+      const seeded = stored.filter((n): n is string => typeof n === 'string')
+      selectedPersonas.value = seeded
+      initialSelection.value = [...seeded]
     }
   },
   { immediate: true },
@@ -61,6 +66,17 @@ const personas = computed(() =>
 
 const deepResearch = computed(() => stepData.value?.response_payload?.deep_research ?? {})
 
+/**
+ * Personas payload for the run request: a non-empty selection is sent as-is;
+ * an empty selection sends an explicit `[]` only when the user cleared a
+ * previously persisted selection (deselect-all), else omits the key entirely.
+ */
+function personasPayload(): string[] | undefined {
+  if (selectedPersonas.value.length) return selectedPersonas.value
+  if (selectionTouched.value && initialSelection.value.length) return []
+  return undefined
+}
+
 async function runSegmentation() {
   if (!operationManager.canStart(opKey.value)) return
   operationManager.start(opKey.value)
@@ -73,7 +89,9 @@ async function runSegmentation() {
         city: targetMarket.value.city.trim() || undefined,
         product_description: productDescription.value || undefined,
         include_deep_research: true,
-        personas: selectedPersonas.value.length ? selectedPersonas.value : undefined,
+        // Explicit empty list only when the user CLEARED a persisted selection;
+        // otherwise omit so the backend leaves any stored selection untouched.
+        personas: personasPayload(),
       })
       return res.data
     })

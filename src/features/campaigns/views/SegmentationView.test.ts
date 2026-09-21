@@ -235,4 +235,35 @@ describe('SegmentationView — persona targeting (MOM)', () => {
     expect(chips[0].attributes('data-selected')).toBe('false')
     expect(chips[1].attributes('data-selected')).toBe('true')
   })
+
+  it('sends an explicit empty personas list when the user clears a persisted selection', async () => {
+    mockCampaign(
+      buildCampaign({
+        segmentation_completed: true,
+        context_payload: { selected_personas: ['Premium Seeker'] },
+        latest_steps: {
+          segmentation: {
+            status: 'completed',
+            response_payload: { segments: [{ name: 'Budget Buyer' }, { name: 'Premium Seeker' }] },
+          },
+        },
+      } as unknown as Campaign),
+    )
+    const wrapper = await mountView()
+
+    // Re-run with the restored selection → sent as-is.
+    const rerun = wrapper.findAll('button').find((b) => b.text().includes('Re-run'))
+    await rerun!.trigger('click')
+    await flushPromises()
+    expect(vi.mocked(campaignsApi.runSegmentation).mock.calls[0][1]?.personas).toEqual(['Premium Seeker'])
+
+    // Deselect the only persisted persona → explicit [] so the backend clears
+    // the stale selected_personas ("nothing selected = all personas").
+    const chips = wrapper.findAll('[data-testid="persona-chip"]')
+    await chips[1].trigger('click')
+
+    await rerun!.trigger('click')
+    await flushPromises()
+    expect(vi.mocked(campaignsApi.runSegmentation).mock.calls[1][1]?.personas).toEqual([])
+  })
 })
