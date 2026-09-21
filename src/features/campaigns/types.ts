@@ -62,6 +62,10 @@ export interface CampaignStep {
   started_at: string | null
   completed_at: string | null
   error_message: string | null
+  /** Review decision persisted on the latest run ('' = not reviewed yet). */
+  review_status?: 'approved' | 'rejected' | ''
+  reject_reason?: string | null
+  reviewed_at?: string | null
   created_at: string
   updated_at: string
 }
@@ -199,6 +203,25 @@ export interface StepApproveResult {
   step: CampaignStep
 }
 
+// ── Step review / refine (reject + feedback re-run) ────────
+
+/** Body of POST /campaigns/{uuid}/steps/{step_type}/review/. */
+export interface StepReviewPayload {
+  decision: 'approved' | 'rejected'
+  /** Required when decision is "rejected"; must be absent/empty when "approved". */
+  reject_reason?: string
+}
+
+export interface StepReviewResult {
+  success: boolean
+  step: CampaignStep
+}
+
+/** Optional refinement feedback accepted by every step run endpoint (≤1000 chars). */
+export interface StepRefineOptions {
+  refinement_feedback?: string
+}
+
 export interface SegmentationRunPayload {
   business_type?: string
   location?: string
@@ -206,6 +229,7 @@ export interface SegmentationRunPayload {
   city?: string
   product_description?: string
   include_deep_research?: boolean
+  refinement_feedback?: string
 }
 
 export interface StepResult {

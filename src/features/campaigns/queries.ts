@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, type Ref } from 'vue'
 import { campaignsApi } from './api'
-import type { CampaignCreatePayload, SegmentationRunPayload, AdsStrategyPayload, CampaignAdPlatform, CampaignStepType, GenerateAdPayload, GenerateVisualsPayload, ReviewAdPayload, PatchAdPayload, RefineAdPayload } from './types'
+import type { CampaignCreatePayload, SegmentationRunPayload, AdsStrategyPayload, CampaignAdPlatform, CampaignStepType, GenerateAdPayload, GenerateVisualsPayload, ReviewAdPayload, PatchAdPayload, RefineAdPayload, StepRefineOptions, StepReviewPayload } from './types'
 
 export function useCampaigns() {
   return useQuery({
@@ -55,7 +55,7 @@ export function useRunSegmentation(uuid: Ref<string>) {
 export function useRunPPCViability(uuid: Ref<string>) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: () => campaignsApi.runPPCViability(uuid.value),
+    mutationFn: (payload: StepRefineOptions = {}) => campaignsApi.runPPCViability(uuid.value, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns', uuid] })
       queryClient.invalidateQueries({ queryKey: ['campaigns', uuid, 'steps'] })
@@ -66,7 +66,7 @@ export function useRunPPCViability(uuid: Ref<string>) {
 export function useRunFunnel(uuid: Ref<string>) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: () => campaignsApi.runFunnel(uuid.value),
+    mutationFn: (payload: StepRefineOptions = {}) => campaignsApi.runFunnel(uuid.value, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns', uuid] })
       queryClient.invalidateQueries({ queryKey: ['campaigns', uuid, 'steps'] })
@@ -77,7 +77,7 @@ export function useRunFunnel(uuid: Ref<string>) {
 export function useRunContentStrategy(uuid: Ref<string>) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: () => campaignsApi.runContentStrategy(uuid.value),
+    mutationFn: (payload: StepRefineOptions = {}) => campaignsApi.runContentStrategy(uuid.value, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns', uuid] })
       queryClient.invalidateQueries({ queryKey: ['campaigns', uuid, 'steps'] })
@@ -221,6 +221,32 @@ export function useApproveStep(uuid: Ref<string>) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns', uuid] })
       queryClient.invalidateQueries({ queryKey: ['campaigns', uuid, 'steps'] })
+    },
+  })
+}
+
+/** POST /campaigns/{uuid}/steps/{step_type}/review/ — persist approved/rejected. */
+export function useReviewStep(uuid: Ref<string>) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ stepType, payload }: { stepType: CampaignStepType; payload: StepReviewPayload }) =>
+      campaignsApi.reviewStep(uuid.value, stepType, payload).then(r => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['campaigns', uuid] })
+      queryClient.invalidateQueries({ queryKey: ['campaigns', uuid, 'steps'] })
+    },
+  })
+}
+
+/** PATCH /campaigns/{uuid}/ — partial update (used to persist content insights). */
+export function useUpdateCampaign() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ uuid, payload }: { uuid: string; payload: Partial<CampaignCreatePayload> }) =>
+      campaignsApi.update(uuid, payload).then(r => r.data),
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['campaigns', vars.uuid] })
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] })
     },
   })
 }

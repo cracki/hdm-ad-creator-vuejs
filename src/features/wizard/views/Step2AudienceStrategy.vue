@@ -8,6 +8,7 @@ import { useI18n } from '@/shared/utils/i18n'
 import { campaignsApi } from '@/features/campaigns/api'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
+import StepReviewActions from '@/features/campaigns/components/StepReviewActions.vue'
 import { composeLocation, resolveTargetMarket, type TargetMarket } from '@/features/campaigns/types'
 import type { Campaign } from '@/features/campaigns/types'
 
@@ -38,7 +39,17 @@ const segments = computed(() => {
 
 const deepResearch = computed(() => stepData.value?.response_payload?.deep_research ?? {})
 
-async function runSegmentation() {
+// Review state restore: prefer the run just returned, else the persisted
+// latest segmentation step on the campaign.
+const reviewState = computed(() => {
+  const fromResult = result.value?.step
+  if (fromResult?.review_status != null) return fromResult
+  return (props.campaign as any)?.latest_steps?.segmentation
+})
+
+async function runSegmentation(feedback?: string | Event) {
+  // The same fn doubles as a click handler — never send an Event as feedback.
+  const refinementFeedback = typeof feedback === 'string' ? feedback : undefined
   if (!operationManager.canStart(opKey.value)) return
   operationManager.start(opKey.value)
   try {
@@ -50,6 +61,7 @@ async function runSegmentation() {
         city: targetMarket.value.city.trim() || undefined,
         product_description: productDescription.value || undefined,
         include_deep_research: true,
+        refinement_feedback: refinementFeedback,
       })
       return res.data
     })
@@ -156,6 +168,16 @@ async function runSegmentation() {
         <div class="text-xs font-semibold mb-3">{{ t('seg.deepResearch') }}</div>
         <SegmentDeepResearchRenderer :data="deepResearch" />
       </div>
+
+      <!-- Approve / Reject / Refine -->
+      <StepReviewActions
+        class="mt-4"
+        :campaign-uuid="campaignUuid"
+        step-type="segmentation"
+        :review-status="reviewState?.review_status"
+        :reject-reason="reviewState?.reject_reason"
+        :run-step="runSegmentation"
+      />
     </div>
   </div>
 </template>
