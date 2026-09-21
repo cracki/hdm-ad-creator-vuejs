@@ -134,6 +134,9 @@ const stageLabels: Record<string, string> = {
           <div v-if="idea.topic && idea.topic !== 'FAQ'" class="text-[11px] text-muted-foreground/60 ps-7">
             {{ t('matrix.topic') }}: {{ idea.topic }}
           </div>
+
+          <!-- Optional per-idea actions (Add to Campaign / Generate Brief) -->
+          <slot name="item-actions" :item="idea" :index="idx" />
         </div>
       </div>
     </div>
