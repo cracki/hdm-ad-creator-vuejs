@@ -9,6 +9,8 @@ export interface Brand {
   company_name: string
   selected_industry: Industry | null
   selected_industry_id: string | null
+  location: string | null
+  brand_color: string | null
   created_at: string
   updated_at: string
 }
@@ -17,6 +19,68 @@ export interface BrandCreatePayload {
   website_url: string
   company_name: string
   selected_industry_id?: string | null
+  location?: string
+  brand_color?: string
+}
+
+// ---------- Website auto-scan (POST /brands/scan/) ----------
+
+export type ScanConfidence = 'high' | 'medium' | 'low'
+
+export interface ScanDetectedField<T> {
+  value: T | null
+  confidence: ScanConfidence | null
+  source: string | null
+}
+
+export interface ScanIndustryCandidate {
+  industry_uuid: string
+  name: string
+  confidence: ScanConfidence
+  source: string
+}
+
+export interface ScanSocialProfile {
+  platform: string
+  url: string
+}
+
+export interface BrandScanDetected {
+  company_name: ScanDetectedField<string>
+  industry: ScanDetectedField<ScanIndustryCandidate[]>
+  brand_colors: ScanDetectedField<string[]>
+  logo_url: ScanDetectedField<string>
+  services: ScanDetectedField<string[]>
+  social_profiles: ScanDetectedField<ScanSocialProfile[]>
+  language: ScanDetectedField<string>
+  location: ScanDetectedField<string>
+}
+
+export interface BrandScanResult {
+  success: boolean
+  detected: BrandScanDetected
+  warnings: string[]
+}
+
+export interface BrandScanPayload {
+  website_url: string
+}
+
+// ---------- Brand services (GET /brands/{uuid}/services/) ----------
+
+export type BrandServiceSource = 'scraped' | 'brand_analysis' | 'ppc_viability'
+
+export interface BrandService {
+  name: string
+  score: number | null
+  classification: string | null
+  recommendation: string | null
+  source: BrandServiceSource
+}
+
+export interface BrandServicesResponse {
+  success: boolean
+  services: BrandService[]
 }
 
 export interface BrandAsset {

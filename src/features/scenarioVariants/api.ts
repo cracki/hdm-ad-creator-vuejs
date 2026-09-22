@@ -7,6 +7,8 @@ import type {
   CampaignMatrixPayload,
   ScenarioVariantRun,
   ScenarioVariant,
+  ScenarioVariantsGenerateVisualsPayload,
+  ScenarioVariantsGenerateVisualsResult,
 } from './types'
 
 export const scenarioVariantsApi = {
@@ -33,5 +35,29 @@ export const scenarioVariantsApi = {
 
   getMatrixRunVariants(campaignUuid: string, runUuid: string): Promise<{ data: ScenarioVariant[] }> {
     return apiClient.get(`/campaigns/${campaignUuid}/scenario-variants-matrix/${runUuid}/variants/`)
+  },
+
+  /** Renders images for a campaign's scenario-variants-matrix run (F2). */
+  generateMatrixRunVisuals(
+    campaignUuid: string,
+    runUuid: string,
+    payload: ScenarioVariantsGenerateVisualsPayload,
+  ): Promise<{ data: ScenarioVariantsGenerateVisualsResult }> {
+    return apiClient.post(`/campaigns/${campaignUuid}/scenario-variants-matrix/${runUuid}/generate-visuals/`, payload)
+  },
+
+  /** Renders images for a standalone (no-campaign) variants run (F2). */
+  generateStandaloneRunVisuals(
+    runUuid: string,
+    payload: ScenarioVariantsGenerateVisualsPayload,
+  ): Promise<{ data: ScenarioVariantsGenerateVisualsResult }> {
+    return apiClient.post(`/campaigns/scenario-variants/${runUuid}/generate-visuals/`, payload)
+  },
+
+  /** Standalone run variants read-back (data.image_url persists after rendering). */
+  getStandaloneRunVariants(
+    runUuid: string,
+  ): Promise<{ data: { run: ScenarioVariantRun; variants: ScenarioVariant[] } }> {
+    return apiClient.get(`/campaigns/scenario-variants/${runUuid}/variants/`)
   },
 }

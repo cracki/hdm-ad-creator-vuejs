@@ -4,12 +4,21 @@ import {
   Check, RefreshCw,
   ChevronDown, ChevronUp,
   Target, Eye, Calendar, Layers, Megaphone,
+  Image as ImageIcon, Loader2, AlertCircle,
 } from 'lucide-vue-next'
 import { useI18n } from '@/shared/utils/i18n'
 import StepExportButton from '@/shared/components/StepExportButton.vue'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { exportFullFunnelCSV, exportFullFunnelPDF, exportFullFunnelPPTX } from '@/shared/utils/exportFullFunnel'
-import type { FunnelStrategies, VisualConcept, PlatformTargeting, PublishingScheduleItem } from '../types'
+import { useGenerateFullFunnelVisuals } from '../queries'
+import type {
+  FunnelStrategies,
+  VisualConcept,
+  VisualStatus,
+  PlatformTargeting,
+  PublishingScheduleItem,
+  FullFunnelConceptVisual,
+} from '../types'
 
 const props = defineProps<{
   campaignData: Record<string, unknown>
@@ -102,6 +111,63 @@ const visualConcepts = computed<VisualConcept[]>(() => {
   const raw = props.campaignData?.visual_concepts
   return Array.isArray(raw) ? raw : []
 })
+
+// ── Visual image rendering (F2) ────────────────────────────
+// POST /campaigns/full-funnel/{uuid}/generate-visuals/ renders the concepts'
+// image_prompts and persists image_url/visual_status back on the run. The
+// launcher keeps its run in local state (no query to invalidate), so the
+// freshest outcome per concept index is tracked in an overlay here.
+const funnelUuid = computed(() => String(props.campaignData?.full_funnel_compaign_uuid ?? ''))
+
+const visualAspectRatio = ref<'1:1' | '2:3' | '3:2' | '4:7' | '7:4'>('1:1')
+const visualsGenerating = ref(false)
+const visualsError = ref('')
+const retryingConcepts = ref<Set<number>>(new Set())
+const conceptVisuals = ref<Record<number, FullFunnelConceptVisual>>({})
+
+const generateVisualsMutation = useGenerateFullFunnelVisuals(funnelUuid)
+
+function applyConceptResults(results: FullFunnelConceptVisual[]) {
+  const next = { ...conceptVisuals.value }
+  for (const r of results) next[r.concept_index] = r
+  conceptVisuals.value = next
+}
+
+async function generateConceptImages(conceptIndexes?: number[]) {
+  if (!funnelUuid.value || visualsGenerating.value) return
+  visualsGenerating.value = true
+  visualsError.value = ''
+  try {
+    const { data } = await generateVisualsMutation.mutateAsync({
+      ...(conceptIndexes ? { concept_indexes: conceptIndexes } : {}),
+      aspect_ratio: visualAspectRatio.value,
+    })
+    applyConceptResults(data?.results ?? [])
+  } catch (e: unknown) {
+    const err = e as { response?: { data?: { detail?: string } }; message?: string }
+    visualsError.value = err?.response?.data?.detail ?? err?.message ?? t('visual.failed')
+  } finally {
+    visualsGenerating.value = false
+  }
+}
+
+async function retryConceptImage(idx: number) {
+  if (retryingConcepts.value.has(idx)) return
+  retryingConcepts.value.add(idx)
+  try {
+    await generateConceptImages([idx])
+  } finally {
+    retryingConcepts.value.delete(idx)
+  }
+}
+
+function conceptImage(idx: number, vc: VisualConcept): string | null {
+  return conceptVisuals.value[idx]?.image_url ?? vc.image_url ?? null
+}
+
+function conceptStatus(idx: number, vc: VisualConcept): VisualStatus | null {
+  return conceptVisuals.value[idx]?.visual_status ?? vc.visual_status ?? null
+}
 
 const targetingSpecs = computed<Record<string, PlatformTargeting>>(() => (props.campaignData?.targeting_specs as Record<string, PlatformTargeting>) ?? {})
 
@@ -356,8 +422,76 @@ const totalAds = computed(() => Object.values(adsByStage.value).flat().length)
 
     <!-- Visuals -->
     <div v-if="activeTab === 'visuals' && visualConcepts.length" class="space-y-4">
+      <!-- Generate images toolbar (F2) -->
+      <div v-if="funnelUuid" class="surface-card p-4 flex flex-col sm:flex-row sm:items-end gap-3" data-loc="funnel.visuals-toolbar">
+        <div class="flex-1">
+          <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('visual.aspectRatio') }}</label>
+          <select
+            v-model="visualAspectRatio"
+            :disabled="visualsGenerating"
+            class="w-full sm:w-40 h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none focus:border-primary/40 transition"
+            data-loc="funnel.visuals-aspect-ratio"
+            data-testid="funnel-visuals-aspect-ratio"
+          >
+            <option value="1:1">1:1</option>
+            <option value="2:3">2:3</option>
+            <option value="3:2">3:2</option>
+            <option value="4:7">4:7</option>
+            <option value="7:4">7:4</option>
+          </select>
+        </div>
+        <button
+          :disabled="visualsGenerating"
+          class="h-10 w-full sm:w-auto px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center justify-center gap-1.5 disabled:opacity-50"
+          data-loc="funnel.visuals.generate-btn"
+          data-testid="funnel-generate-images-btn"
+          @click="generateConceptImages()"
+        >
+          <Loader2 v-if="visualsGenerating" class="h-3.5 w-3.5 animate-spin" />
+          <ImageIcon v-else class="h-3.5 w-3.5" />
+          {{ visualsGenerating ? t('funnelLauncher.generatingImages') : t('funnelLauncher.generateImages') }}
+        </button>
+      </div>
+      <div v-if="visualsError" class="surface-card p-3 flex items-center gap-2 border-destructive/40" data-testid="funnel-visuals-error">
+        <AlertCircle class="h-4 w-4 text-destructive shrink-0" />
+        <span class="text-xs text-destructive">{{ visualsError }}</span>
+      </div>
+
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div v-for="(vc, idx) in visualConcepts" :key="idx" class="surface-card p-4 space-y-3">
+          <!-- Rendered image (F2) -->
+          <div v-if="conceptImage(idx, vc)" class="relative rounded-lg overflow-hidden border border-border/40">
+            <img
+              :src="conceptImage(idx, vc)!"
+              :alt="vc.ad_headline || vc.style"
+              loading="lazy"
+              class="w-full object-cover"
+              data-testid="funnel-concept-image"
+            />
+            <span
+              v-if="conceptStatus(idx, vc)"
+              :class="conceptStatus(idx, vc) === 'completed' ? 'text-success' : 'text-destructive'"
+              class="absolute top-2 end-2 text-[10px] font-medium px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-sm"
+              data-testid="funnel-concept-visual-status"
+            >
+              {{ conceptStatus(idx, vc) === 'completed' ? t('visual.statusCompleted') : t('visual.statusFailed') }}
+            </span>
+          </div>
+          <div v-else-if="conceptStatus(idx, vc) === 'failed'" class="rounded-lg border border-destructive/30 bg-destructive/10 p-3 flex flex-col sm:flex-row sm:items-center gap-2" data-testid="funnel-concept-failed">
+            <AlertCircle class="h-4 w-4 text-destructive shrink-0" />
+            <div class="flex-1 text-[11px] text-destructive">{{ conceptVisuals[idx]?.error ?? t('visual.failed') }}</div>
+            <button
+              :disabled="retryingConcepts.has(idx) || visualsGenerating"
+              class="h-7 px-2.5 rounded-md border border-border/60 text-[11px] inline-flex items-center justify-center gap-1 hover:bg-overlay-subtle transition disabled:opacity-50 w-full sm:w-auto"
+              data-testid="funnel-concept-retry-btn"
+              @click="retryConceptImage(idx)"
+            >
+              <Loader2 v-if="retryingConcepts.has(idx)" class="h-3 w-3 animate-spin" />
+              <RefreshCw v-else class="h-3 w-3" />
+              {{ t('seg.retry') }}
+            </button>
+          </div>
+
           <div class="flex items-center gap-2 flex-wrap">
             <span class="text-sm">{{ platformIcon(vc.platform) }}</span>
             <span class="text-[11px] px-2 py-0.5 rounded border" :class="stageBgColors[vc.funnel_stage]">{{ vc.funnel_stage?.toUpperCase() }}</span>

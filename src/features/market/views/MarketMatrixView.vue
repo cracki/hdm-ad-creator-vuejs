@@ -7,6 +7,7 @@ import { useI18n } from '@/shared/utils/i18n'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import MarketHistoryList from '../components/MarketHistoryList.vue'
+import InsightItemActions from '../components/InsightItemActions.vue'
 import { useGetContentMatrix, useContentMatrixHistory } from '../queries'
 import { exportContentMatrixPDF, exportContentMatrixPPTX, exportContentMatrixXLSX } from '@/shared/utils/exportMarket'
 import type { ContentMatrixResponse, ContentIntelligenceRun } from '../types'
@@ -177,7 +178,16 @@ function backToForm() {
           </div>
         </div>
         <div class="surface-card p-5">
-          <ContentMatrixRenderer :data="(matrixResult as any)" />
+          <ContentMatrixRenderer :data="(matrixResult as any)">
+            <template #item-actions="{ item }">
+              <InsightItemActions
+                view="matrix"
+                :title="item.suggested_title || item.title_inspiration || item.topic || ''"
+                :snippet="item.content_angle || item.topic || ''"
+                :angle="item.content_angle"
+              />
+            </template>
+          </ContentMatrixRenderer>
         </div>
       </div>
     </div>

@@ -18,6 +18,11 @@ export const LANGS: LangMeta[] = [
   { code: 'fa', label: 'فا', native: 'فارسی', dir: 'rtl' },
 ]
 
+/** Native display name for a language code ("fa" → "فارسی"); falls back to the code. */
+export function languageNativeLabel(code: string | null | undefined): string {
+  return LANGS.find((l) => l.code === code)?.native ?? code ?? ''
+}
+
 const storedLang = (() => {
   try {
     const s = localStorage.getItem(LANG_KEY) as Lang | null

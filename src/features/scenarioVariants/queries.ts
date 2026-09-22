@@ -2,7 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, type Ref } from 'vue'
 import { scenarioVariantsApi } from './api'
 import { parseVariantOptions, parseMetaFrameworks } from './schemas'
-import type { StandaloneVariantsPayload, CampaignMatrixPayload } from './types'
+import type {
+  StandaloneVariantsPayload,
+  CampaignMatrixPayload,
+} from './types'
 
 export function useVariantOptions(industry: Ref<string>) {
   return useQuery({
@@ -67,3 +70,5 @@ export function useStartCampaignMatrix(campaignUuid: Ref<string>) {
     },
   })
 }
+
+/** POST …/scenario-variants-matrix/{run}/generate-visuals/ — image rendering (F2). */

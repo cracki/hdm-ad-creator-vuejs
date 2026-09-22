@@ -6,14 +6,16 @@ import {
   Sparkles, Image as ImageIcon, Download,
   Check, Lock, ChevronRight, ChevronDown, ChevronUp,
   Globe, Building2, Clock, MapPin, Package, FileText,
-  TrendingUp, Users, LayoutGrid, Loader2, Presentation,
+  TrendingUp, Users, LayoutGrid, Loader2, Presentation, CircleDollarSign, Languages,
 } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
-import { useI18n } from '@/shared/utils/i18n'
+import { useI18n, languageNativeLabel } from '@/shared/utils/i18n'
 import Breadcrumb from '@/shared/components/Breadcrumb.vue'
+import BrandContextPanel from '@/shared/components/BrandContextPanel.vue'
 import { useConfetti } from '@/shared/composables/useConfetti'
-import { useCampaign } from '../queries'
-import { exportCampaignPDF, exportCampaignPPTX } from '@/shared/utils/exportCampaign'
+import { useCampaign, useCampaignVisuals } from '../queries'
+import { exportCampaignPDF, exportCampaignPPTX, formatBudgetAllocation } from '@/shared/utils/exportCampaign'
+import { formatCampaignBudget, getFunnelBudgetSplit, resolveBrandContext } from '../types'
 import { useTourRegistration } from '@/shared/composables/useTourRegistration'
 import { campaignDetailTour } from '../tours'
 
@@ -26,6 +28,15 @@ const confetti = useConfetti()
 
 const campaignUuid = computed(() => route.params.campaignUuid as string)
 const { data: campaign, isLoading } = useCampaign(campaignUuid)
+
+// Real visuals state (F2): persisted visuals from GET /campaigns/{uuid}/visuals/
+// replace the old inferred "all previous steps done" proxy for this step.
+const { data: visualsData, isLoading: visualsLoading } = useCampaignVisuals(campaignUuid)
+const persistedVisuals = computed(() => visualsData.value?.results ?? [])
+const hasPersistedVisuals = computed(() => persistedVisuals.value.length > 0)
+const visualThumbnails = computed(() =>
+  persistedVisuals.value.filter((v) => v.success && v.image_url).slice(0, 8),
+)
 
 const stepsData = computed(() => {
   const latest = (campaign.value as any)?.latest_steps
@@ -86,7 +97,12 @@ function isStepDone(step: StepDef): boolean {
     if (platforms.length === 0) return false
     return platforms.every((p: string) => c?.[`${p}_ads_completed`])
   }
-  if (step.flag === '_ads_generated' || step.flag === '_visuals_generated') {
+  if (step.flag === '_visuals_generated') {
+    // Server truth: at least one persisted visual record (success or failure)
+    // proves the step ran — no more inferred flag.
+    return hasPersistedVisuals.value
+  }
+  if (step.flag === '_ads_generated') {
     const idx = STEPS.indexOf(step)
     return idx > 0 ? STEPS.slice(0, idx).every((s) => isStepDone(s)) : false
   }
@@ -117,8 +133,11 @@ function getFirstIncompleteStep(): StepDef | undefined {
 }
 
 const hasAutoRedirected = ref(false)
-watch(campaign, (c) => {
-  if (!c || hasAutoRedirected.value) return
+// Wait for the visuals read-back too: the visuals step's done-state is now
+// server truth, so redirecting before it resolves could bounce a finished
+// campaign to the visuals step.
+watch([campaign, () => visualsLoading.value], ([c, visLoading]) => {
+  if (!c || hasAutoRedirected.value || visLoading) return
   const lastSegment = route.path.split('/').pop()
   if (lastSegment === campaignUuid.value) {
     hasAutoRedirected.value = true
@@ -136,6 +155,13 @@ const ppcSummary = computed(() => summary.value.ppc_viability)
 const funnelSummary = computed(() => summary.value.funnel)
 const contentSummary = computed(() => summary.value.content_strategy)
 const selectedPlatforms = computed<string[]>(() => contextPayload.value.selected_platforms || [])
+
+// Total budget + per-stage split amounts (F16); allocation as structured dict (F16 fix)
+const totalBudgetText = computed(() => (campaign.value ? formatCampaignBudget(campaign.value) : null))
+const funnelSplit = computed(() => (campaign.value ? getFunnelBudgetSplit(campaign.value) : null))
+const budgetAllocationText = computed(() =>
+  formatBudgetAllocation(ppcSummary.value?.recommended_initial_budget_allocation),
+)
 
 const completedCount = computed(() => {
   return STEPS.filter((s) => isStepDone(s)).length
@@ -155,7 +181,10 @@ const platformAdsStatus = computed(() => {
 
 
 // Expanded sections state
-const expandedSections = ref<Record<string, boolean>>({ segmentation: true, ppc: false, funnel: false, content: false })
+const expandedSections = ref<Record<string, boolean>>({ segmentation: true, ppc: false, funnel: false, content: false, brandContext: false })
+
+// Reused brand-analysis data (M-H8) — null hides the info block.
+const brandContext = computed(() => resolveBrandContext(campaign.value))
 
 function toggleSection(key: string) {
   expandedSections.value[key] = !expandedSections.value[key]
@@ -209,6 +238,19 @@ function getStepStatusLabel(step: StepDef, idx: number): string {
               <span class="flex items-center gap-1.5" v-if="campaign.brand?.website_url">
                 <Globe class="h-3.5 w-3.5" />
                 <a :href="campaign.brand.website_url" target="_blank" rel="noopener" class="text-primary hover:underline">{{ campaign.brand.website_url.replace(/^https?:\/\//, '') }}</a>
+              </span>
+              <span class="flex items-center gap-1.5" v-if="totalBudgetText" data-testid="total-budget-value">
+                <CircleDollarSign class="h-3.5 w-3.5" />
+                {{ totalBudgetText }}
+              </span>
+              <span
+                v-if="campaign.language"
+                class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/15 text-primary border border-primary/20"
+                data-testid="campaign-language-badge"
+                data-loc="campaigns.detail.language-badge"
+              >
+                <Languages class="h-3 w-3" />
+                {{ languageNativeLabel(campaign.language) }}
               </span>
             </div>
           </div>
@@ -304,6 +346,39 @@ function getStepStatusLabel(step: StepDef, idx: number): string {
             <Check v-if="p.completed" class="h-3 w-3" />
             <span v-else class="h-3 w-3 rounded-full border border-current" />
             <span>{{ platformIconMap[p.key] || p.key }}</span>
+          </div>
+        </div>
+
+        <!-- Generated visuals strip (F2) -->
+        <div
+          v-if="visualThumbnails.length > 0"
+          class="mt-4"
+          data-loc="campaigns.detail.visuals-strip"
+          data-testid="campaign-visuals-strip"
+        >
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs text-muted-foreground">
+              {{ t('visual.generated', { count: persistedVisuals.filter(v => v.success).length }) }}
+            </span>
+            <button
+              class="text-xs text-primary hover:underline"
+              data-loc="campaigns.detail.visuals-view-all"
+              @click="router.push(`/campaigns/${campaignUuid}/visuals`)"
+            >
+              {{ t('visual.title') }}
+            </button>
+          </div>
+          <div class="flex gap-2 overflow-x-auto pb-1">
+            <img
+              v-for="(v, vi) in visualThumbnails"
+              :key="`${v.campaign_ad_uuid}-${vi}`"
+              :src="v.image_url!"
+              :alt="v.visual_summary"
+              loading="lazy"
+              class="h-16 w-24 rounded-lg object-cover border border-border/40 shrink-0 cursor-pointer hover:border-primary/50 transition"
+              data-testid="campaign-visual-thumb"
+              @click="router.push(`/campaigns/${campaignUuid}/visuals`)"
+            />
           </div>
         </div>
       </section>
@@ -427,8 +502,27 @@ function getStepStatusLabel(step: StepDef, idx: number): string {
       <!-- Detailed Expandable Sections -->
       <div class="mt-4 space-y-2" data-loc="campaigns.detail.details">
 
+        <!-- Reused brand analysis (M-H8): collapsed by default, compact on mobile -->
+        <div v-if="brandContext" class="surface-card overflow-hidden" data-testid="detail-brand-context">
+          <button
+            class="w-full p-4 flex items-center justify-between hover:bg-muted/5 transition"
+            @click="toggleSection('brandContext')"
+          >
+            <div class="flex items-center gap-2 min-w-0">
+              <TrendingUp class="h-4 w-4 text-primary shrink-0" />
+              <span class="text-sm font-medium">{{ t('bc.title' as any) }}</span>
+            </div>
+            <component :is="expandedSections.brandContext ? ChevronUp : ChevronDown" class="h-4 w-4 text-muted-foreground" />
+          </button>
+          <div v-if="expandedSections.brandContext" class="px-4 pb-4 border-t border-border/30">
+            <div class="mt-3">
+              <BrandContextPanel :context="brandContext" />
+            </div>
+          </div>
+        </div>
+
         <!-- PPC Budget Allocation -->
-        <div v-if="ppcSummary?.recommended_initial_budget_allocation" class="surface-card overflow-hidden">
+        <div v-if="budgetAllocationText" class="surface-card overflow-hidden" data-testid="budget-allocation">
           <button
             class="w-full p-4 flex items-center justify-between hover:bg-muted/5 transition"
             @click="toggleSection('ppc')"
@@ -440,7 +534,7 @@ function getStepStatusLabel(step: StepDef, idx: number): string {
             <component :is="expandedSections.ppc ? ChevronUp : ChevronDown" class="h-4 w-4 text-muted-foreground" />
           </button>
           <div v-if="expandedSections.ppc" class="px-4 pb-4 space-y-3 border-t border-border/30">
-            <p class="text-sm text-muted-foreground mt-3 leading-relaxed">{{ ppcSummary.recommended_initial_budget_allocation }}</p>
+            <p class="text-sm text-muted-foreground mt-3 leading-relaxed">{{ budgetAllocationText }}</p>
             <div v-if="ppcSummary.top_ranked_services?.length" class="mt-2">
               <div class="text-xs text-muted-foreground mb-1.5">{{ t('cd.topServices' as any) }}</div>
               <div class="space-y-1">
@@ -496,6 +590,7 @@ function getStepStatusLabel(step: StepDef, idx: number): string {
             <div class="flex items-center gap-2">
               <Layers class="h-4 w-4 text-accent-amber" />
               <span class="text-sm font-medium">{{ t('cd.budgetSplit' as any) }}</span>
+              <span v-if="totalBudgetText" class="text-xs text-muted-foreground">· {{ totalBudgetText }}</span>
             </div>
             <component :is="expandedSections.funnel ? ChevronUp : ChevronDown" class="h-4 w-4 text-muted-foreground" />
           </button>
@@ -506,21 +601,27 @@ function getStepStatusLabel(step: StepDef, idx: number): string {
                 <div class="flex-1 h-2 rounded-full bg-muted/20 overflow-hidden">
                   <div class="h-full bg-accent-cyan rounded-full" :style="{ width: funnelSummary.tofu_budget_percentage + '%' }" />
                 </div>
-                <span class="text-xs font-medium w-10 text-end">{{ funnelSummary.tofu_budget_percentage }}%</span>
+                <span class="text-xs font-medium w-24 text-end">
+                  {{ funnelSummary.tofu_budget_percentage }}%<template v-if="funnelSplit?.tofu.amount != null"> · {{ funnelSplit.tofu.amount.toLocaleString() }}</template>
+                </span>
               </div>
               <div class="flex items-center gap-3">
                 <span class="text-xs w-24 text-muted-foreground">{{ t('cd.mofu' as any) }}</span>
                 <div class="flex-1 h-2 rounded-full bg-muted/20 overflow-hidden">
                   <div class="h-full bg-accent-amber rounded-full" :style="{ width: funnelSummary.mofu_budget_percentage + '%' }" />
                 </div>
-                <span class="text-xs font-medium w-10 text-end">{{ funnelSummary.mofu_budget_percentage }}%</span>
+                <span class="text-xs font-medium w-24 text-end">
+                  {{ funnelSummary.mofu_budget_percentage }}%<template v-if="funnelSplit?.mofu.amount != null"> · {{ funnelSplit.mofu.amount.toLocaleString() }}</template>
+                </span>
               </div>
               <div class="flex items-center gap-3">
                 <span class="text-xs w-24 text-muted-foreground">{{ t('cd.bofu' as any) }}</span>
                 <div class="flex-1 h-2 rounded-full bg-muted/20 overflow-hidden">
                   <div class="h-full bg-accent-magenta rounded-full" :style="{ width: funnelSummary.bofu_budget_percentage + '%' }" />
                 </div>
-                <span class="text-xs font-medium w-10 text-end">{{ funnelSummary.bofu_budget_percentage }}%</span>
+                <span class="text-xs font-medium w-24 text-end">
+                  {{ funnelSummary.bofu_budget_percentage }}%<template v-if="funnelSplit?.bofu.amount != null"> · {{ funnelSplit.bofu.amount.toLocaleString() }}</template>
+                </span>
               </div>
             </div>
           </div>

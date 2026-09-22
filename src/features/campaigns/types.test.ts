@@ -2,6 +2,10 @@ import { describe, it, expect } from 'vitest'
 import {
   getCampaignProgress,
   areAllPlatformAdsComplete,
+  formatCampaignBudget,
+  getFunnelBudgetSplit,
+  resolveTargetMarket,
+  composeLocation,
   type Campaign,
 } from './types'
 
@@ -12,6 +16,9 @@ function buildCampaign(overrides: Partial<Campaign> = {}): Campaign {
     name: 'Test Campaign',
     status: 'in_progress',
     current_step: 'segmentation',
+    language: 'en',
+    total_budget: null,
+    currency: 'USD',
     segmentation_completed: false,
     ppc_viability_completed: false,
     funnel_completed: false,
@@ -121,5 +128,110 @@ describe('areAllPlatformAdsComplete', () => {
         }),
       ),
     ).toBe(false)
+  })
+})
+
+describe('formatCampaignBudget (F16)', () => {
+  it('returns null when no budget is set', () => {
+    expect(formatCampaignBudget(buildCampaign())).toBeNull()
+    expect(formatCampaignBudget(buildCampaign({ total_budget: 'not-a-number' }))).toBeNull()
+  })
+
+  it('formats amount and currency for numeric and string decimals', () => {
+    expect(formatCampaignBudget(buildCampaign({ total_budget: 250 }))).toBe('USD 250')
+    expect(formatCampaignBudget(buildCampaign({ total_budget: '250', currency: 'AED' }))).toBe('AED 250')
+  })
+
+  it('falls back to USD when currency is blank', () => {
+    expect(formatCampaignBudget(buildCampaign({ total_budget: 250, currency: '' }))).toBe('USD 250')
+  })
+})
+
+describe('getFunnelBudgetSplit (F16)', () => {
+  const funnelSummary = {
+    tofu_budget_percentage: 40,
+    mofu_budget_percentage: 35,
+    bofu_budget_percentage: 25,
+  }
+
+  it('returns null when the funnel step produced no split', () => {
+    expect(getFunnelBudgetSplit(buildCampaign())).toBeNull()
+    expect(getFunnelBudgetSplit(buildCampaign({ summary: { funnel: {} } }))).toBeNull()
+  })
+
+  it('computes per-stage amounts from total_budget × percent', () => {
+    const split = getFunnelBudgetSplit(
+      buildCampaign({ total_budget: 1000, summary: { funnel: funnelSummary } }),
+    )
+    expect(split).not.toBeNull()
+    expect(split!.tofu).toEqual({ percent: 40, amount: 400 })
+    expect(split!.mofu).toEqual({ percent: 35, amount: 350 })
+    expect(split!.bofu).toEqual({ percent: 25, amount: 250 })
+  })
+
+  it('returns percents with null amounts when no budget is set', () => {
+    const split = getFunnelBudgetSplit(buildCampaign({ summary: { funnel: funnelSummary } }))
+    expect(split!.tofu).toEqual({ percent: 40, amount: null })
+    expect(split!.bofu).toEqual({ percent: 25, amount: null })
+  })
+
+  it('treats a missing stage percent as 0', () => {
+    const split = getFunnelBudgetSplit(
+      buildCampaign({
+        total_budget: 200,
+        summary: { funnel: { tofu_budget_percentage: 50, mofu_budget_percentage: 50 } },
+      }),
+    )
+    expect(split!.bofu).toEqual({ percent: 0, amount: 0 })
+  })
+})
+
+describe('resolveTargetMarket (F19)', () => {
+  it('returns empty strings when nothing is known', () => {
+    expect(resolveTargetMarket(buildCampaign())).toEqual({ country: '', city: '' })
+    expect(resolveTargetMarket(null)).toEqual({ country: '', city: '' })
+  })
+
+  it('prefers the persisted context_payload.target_market', () => {
+    expect(
+      resolveTargetMarket(
+        buildCampaign({
+          brand: { brand_uuid: 'b1', company_name: 'L', website_url: '', location: 'Germany', selected_industry: null },
+          context_payload: { target_market: { country: 'Oman', city: 'Muscat' } },
+        }),
+      ),
+    ).toEqual({ country: 'Oman', city: 'Muscat' })
+  })
+
+  it('best-effort seeds the country from the brand free-text location', () => {
+    expect(
+      resolveTargetMarket(
+        buildCampaign({
+          brand: { brand_uuid: 'b1', company_name: 'L', website_url: '', location: 'Dubai, United Arab Emirates', selected_industry: null },
+        }),
+      ),
+    ).toEqual({ country: 'United Arab Emirates', city: '' })
+  })
+
+  it('leaves the country empty when the brand location matches no known country', () => {
+    expect(
+      resolveTargetMarket(
+        buildCampaign({
+          brand: { brand_uuid: 'b1', company_name: 'L', website_url: '', location: 'Narnia', selected_industry: null },
+        }),
+      ),
+    ).toEqual({ country: '', city: '' })
+  })
+})
+
+describe('composeLocation (F19)', () => {
+  it('composes "City, Country" when both are set', () => {
+    expect(composeLocation({ country: 'Oman', city: 'Muscat' })).toBe('Muscat, Oman')
+  })
+
+  it('falls back to whichever part exists', () => {
+    expect(composeLocation({ country: 'Oman', city: '' })).toBe('Oman')
+    expect(composeLocation({ country: '', city: 'Muscat' })).toBe('Muscat')
+    expect(composeLocation({ country: '', city: '' })).toBe('')
   })
 })

@@ -99,6 +99,9 @@ function getTypeClass(type: string): string {
               <div class="text-xs text-muted-foreground">{{ item.your_opportunity }}</div>
             </div>
           </div>
+
+          <!-- Optional per-item actions (Add to Campaign / Generate Brief) -->
+          <slot name="item-actions" :item="item" :index="idx" />
         </div>
       </div>
     </div>

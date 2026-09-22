@@ -7,11 +7,25 @@ import type {
   AdsStrategyPayload,
   AdsStrategyListResponse,
   CampaignAdPlatform,
+  CampaignStepType,
   GenerateAdPayload,
   GenerateVisualsPayload,
   AdGenerateResult,
   VisualGenerateResult,
+  CampaignVisualsListResult,
   ClearAdsResult,
+  CampaignAdsListResult,
+  ReviewAdPayload,
+  PatchAdPayload,
+  RefineAdPayload,
+  AdReviewResult,
+  AdUpdateResult,
+  AdRefineResult,
+  StepApproveResult,
+  PlatformRecommendationsResult,
+  StepRefineOptions,
+  StepReviewPayload,
+  StepReviewResult,
 } from './types'
 
 type SignalConfig = { signal?: AbortSignal }
@@ -47,16 +61,16 @@ export const campaignsApi = {
     })
   },
 
-  runPPCViability(uuid: string): Promise<{ data: StepResult }> {
-    return apiClient.post(`${campaign(uuid)}ppc-viability/`)
+  runPPCViability(uuid: string, payload: StepRefineOptions = {}): Promise<{ data: StepResult }> {
+    return apiClient.post(`${campaign(uuid)}ppc-viability/`, payload)
   },
 
-  runFunnel(uuid: string): Promise<{ data: StepResult }> {
-    return apiClient.post(`${campaign(uuid)}funnel/`)
+  runFunnel(uuid: string, payload: StepRefineOptions = {}): Promise<{ data: StepResult }> {
+    return apiClient.post(`${campaign(uuid)}funnel/`, payload)
   },
 
-  runContentStrategy(uuid: string): Promise<{ data: StepResult }> {
-    return apiClient.post(`${campaign(uuid)}content/`)
+  runContentStrategy(uuid: string, payload: StepRefineOptions = {}): Promise<{ data: StepResult }> {
+    return apiClient.post(`${campaign(uuid)}content/`, payload)
   },
 
   runAdsStrategy(uuid: string, payload: AdsStrategyPayload): Promise<{ data: StepResult }> {
@@ -84,7 +98,45 @@ export const campaignsApi = {
     return apiClient.post(`${campaign(uuid)}generate-visuals/`, payload)
   },
 
+  /** Read-back of every persisted visual (successes and failures), newest ads first. */
+  listVisuals(uuid: string, config?: SignalConfig): Promise<{ data: CampaignVisualsListResult }> {
+    return apiClient.get(`${campaign(uuid)}visuals/`, config)
+  },
+
   completeCampaign(uuid: string): Promise<{ data: { success: boolean; campaign: Campaign } }> {
     return apiClient.post(`${campaign(uuid)}complete/`)
+  },
+
+  /** POST /campaigns/{uuid}/recommend-platforms/ — AI suitability per platform (F15/C5). */
+  recommendPlatforms(uuid: string): Promise<{ data: PlatformRecommendationsResult }> {
+    return apiClient.post(`${campaign(uuid)}recommend-platforms/`)
+  },
+
+  // ── Ad review / manual edit / refine / read-back (F13) ──
+
+  listAds(uuid: string, config?: SignalConfig): Promise<{ data: CampaignAdsListResult }> {
+    return apiClient.get(`${campaign(uuid)}ads/`, config)
+  },
+
+  reviewAd(uuid: string, adUuid: string, payload: ReviewAdPayload): Promise<{ data: AdReviewResult }> {
+    return apiClient.post(`${campaign(uuid)}ads/${adUuid}/review/`, payload)
+  },
+
+  patchAd(uuid: string, adUuid: string, payload: PatchAdPayload): Promise<{ data: AdUpdateResult }> {
+    return apiClient.patch(`${campaign(uuid)}ads/${adUuid}/`, payload)
+  },
+
+  refineAd(uuid: string, adUuid: string, payload: RefineAdPayload): Promise<{ data: AdRefineResult }> {
+    return apiClient.post(`${campaign(uuid)}ads/${adUuid}/refine/`, payload)
+  },
+
+  approveStep(uuid: string, stepType: CampaignStepType): Promise<{ data: StepApproveResult }> {
+    return apiClient.post(`${campaign(uuid)}steps/${stepType}/approve/`)
+  },
+
+  /** Persist a review decision on the latest run of a step (approve keeps the reason empty). */
+  reviewStep(uuid: string, stepType: CampaignStepType, payload: StepReviewPayload): Promise<{ data: StepReviewResult }> {
+    const body = payload.decision === 'rejected' ? payload : { decision: 'approved' }
+    return apiClient.post(`${campaign(uuid)}steps/${stepType}/review/`, body)
   },
 }

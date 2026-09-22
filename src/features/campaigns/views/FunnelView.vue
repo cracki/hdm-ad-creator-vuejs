@@ -5,6 +5,7 @@ import { Layers, ArrowLeft, ArrowRight, RefreshCw, Shield, Check } from 'lucide-
 import StepExportButton from '@/shared/components/StepExportButton.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import ErrorState from '@/shared/components/ErrorState.vue'
+import StepReviewActions from '../components/StepReviewActions.vue'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
@@ -72,13 +73,24 @@ const tofuItems = computed(() => stages.value.filter((s: any) => (s.stage ?? s.n
 const mofuItems = computed(() => stages.value.filter((s: any) => (s.stage ?? s.name ?? '').toLowerCase().includes('mofu') || (s.stage ?? s.name ?? '').toLowerCase().includes('consideration')))
 const bofuItems = computed(() => stages.value.filter((s: any) => (s.stage ?? s.name ?? '').toLowerCase().includes('bofu') || (s.stage ?? s.name ?? '').toLowerCase().includes('conversion')))
 
-async function runFunnel() {
+// Review state restore: prefer the run just returned, else the persisted
+// latest funnel step on the campaign (latest_steps).
+const reviewState = computed(() => {
+  const fromResult = result.value?.step
+  if (fromResult?.review_status != null) return fromResult
+  return (campaign.value as any)?.latest_steps?.funnel
+})
+
+async function runFunnel(feedback?: string | Event) {
+  // The same fn doubles as a click handler and the refine runner — never send
+  // an Event as refinement feedback.
+  const refinementFeedback = typeof feedback === 'string' ? feedback : undefined
   if (!isPrereqMet.value || !operationManager.canStart(opKey.value)) return
   operationManager.start(opKey.value)
   try {
     await run(async () => {
       const { campaignsApi } = await import('../api')
-      return (await campaignsApi.runFunnel(campaignUuid.value)).data
+      return (await campaignsApi.runFunnel(campaignUuid.value, { refinement_feedback: refinementFeedback })).data
     })
   } finally {
     operationManager.finish(opKey.value)
@@ -249,6 +261,16 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx') {
               </div>
             </div>
           </div>
+
+          <!-- Approve / Reject / Refine -->
+          <StepReviewActions
+            class="mb-6"
+            :campaign-uuid="campaignUuid"
+            step-type="funnel"
+            :review-status="reviewState?.review_status"
+            :reject-reason="reviewState?.reject_reason"
+            :run-step="runFunnel"
+          />
 
           <div class="flex items-center justify-end">
             <button

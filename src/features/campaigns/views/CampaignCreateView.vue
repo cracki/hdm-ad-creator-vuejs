@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowLeft, Megaphone } from 'lucide-vue-next'
+import { ArrowLeft, ChevronDown, Megaphone, Languages } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
-import { useI18n } from '@/shared/utils/i18n'
-import { useBrands } from '@/features/brands/queries'
+import ServiceSelector from '@/shared/components/ServiceSelector.vue'
+import { useI18n, LANGS, type Lang } from '@/shared/utils/i18n'
+import { useBrands, useBrandServices } from '@/features/brands/queries'
 import { useAutoSelectBrand } from '@/shared/composables/useAutoSelectBrand'
 import { useCreateCampaign } from '../queries'
 
@@ -19,6 +20,33 @@ useAutoSelectBrand(selectedBrandUuid)
 const campaignName = ref('')
 const creating = ref(false)
 
+// Campaign language (F22): one output language for ALL generated content;
+// defaults to English like the backend's Campaign.language.
+const language = ref<Lang>('en')
+
+// Total budget + currency (F16): optional — omitted from the payload when the
+// amount is empty/invalid, matching the backend's nullable total_budget.
+const CURRENCIES = ['USD', 'EUR', 'AED', 'GBP', 'IRT', 'SAR'] as const
+const budgetAmount = ref('')
+const budgetCurrency = ref<string>('USD')
+
+function budgetPayload(): { total_budget: number; currency: string } | Record<string, never> {
+  // v-model on type="number" inputs auto-casts to number (empty → '')
+  const raw = String(budgetAmount.value ?? '').trim()
+  const amount = Number(raw)
+  if (raw === '' || !Number.isFinite(amount) || amount <= 0) return {}
+  return { total_budget: amount, currency: budgetCurrency.value || 'USD' }
+}
+
+// Services to advertise (F14): fetched for the chosen brand, selection is
+// persisted on the campaign via context_payload.selected_services.
+const { data: brandServices, isLoading: servicesLoading } = useBrandServices(selectedBrandUuid)
+const selectedServices = ref<string[]>([])
+
+watch(selectedBrandUuid, () => {
+  selectedServices.value = []
+})
+
 async function handleCreate() {
   if (!selectedBrandUuid.value) return
   creating.value = true
@@ -26,6 +54,11 @@ async function handleCreate() {
     const result = await createMutation.mutateAsync({
       brand_uuid: selectedBrandUuid.value,
       name: campaignName.value || undefined,
+      language: language.value,
+      ...budgetPayload(),
+      ...(selectedServices.value.length
+        ? { context_payload: { selected_services: selectedServices.value } }
+        : {}),
     })
     router.push(`/campaigns/${result.data.campaign_uuid}`)
   } finally {
@@ -82,6 +115,68 @@ async function handleCreate() {
           :placeholder="t('camp.namePlaceholder')"
           class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none focus:border-primary/60 transition"
           data-loc="campaigns.create.name-input"
+        />
+      </div>
+
+      <!-- Total budget + currency (F16) -->
+      <div data-loc="campaigns.create.budget">
+        <label class="text-xs font-medium mb-1.5 block">{{ t('camp.budgetLabel') }}</label>
+        <p class="text-[11px] text-muted-foreground mb-2.5">{{ t('camp.budgetHint') }}</p>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <input
+            v-model="budgetAmount"
+            type="number"
+            min="0"
+            step="any"
+            inputmode="decimal"
+            :placeholder="t('camp.budgetPlaceholder')"
+            class="flex-1 h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none focus:border-primary/60 transition"
+            data-testid="budget-amount-input"
+            data-loc="campaigns.create.budget-input"
+          />
+          <div class="relative sm:w-52">
+            <select
+              v-model="budgetCurrency"
+              :aria-label="t('camp.currencyLabel')"
+              class="w-full h-10 px-3 pe-8 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none focus:border-primary/60 transition appearance-none cursor-pointer"
+              data-testid="currency-select"
+              data-loc="campaigns.create.currency-select"
+            >
+              <option v-for="c in CURRENCIES" :key="c" :value="c">{{ t(`camp.currency.${c}`) }}</option>
+            </select>
+            <ChevronDown class="h-3.5 w-3.5 text-muted-foreground absolute end-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Campaign language (F22) -->
+      <div data-loc="campaigns.create.language">
+        <label class="text-xs font-medium mb-1.5 block">{{ t('camp.languageLabel') }}</label>
+        <p class="text-[11px] text-muted-foreground mb-2.5">{{ t('camp.languageHint') }}</p>
+        <div class="relative">
+          <select
+            v-model="language"
+            :aria-label="t('camp.languageLabel')"
+            class="w-full sm:w-64 h-10 px-3 pe-8 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none focus:border-primary/60 transition appearance-none cursor-pointer"
+            data-testid="campaign-language-select"
+            data-loc="campaigns.create.language-select"
+          >
+            <option v-for="l in LANGS" :key="l.code" :value="l.code">{{ l.native }}</option>
+          </select>
+          <Languages class="h-3.5 w-3.5 text-muted-foreground absolute end-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+        </div>
+      </div>
+
+      <!-- Services to advertise (F14) -->
+      <div v-if="selectedBrandUuid && (servicesLoading || brandServices?.length)" data-loc="campaigns.create.services">
+        <label class="text-xs font-medium mb-1.5 block">{{ t('camp.servicesLabel') }}</label>
+        <p class="text-[11px] text-muted-foreground mb-2.5">{{ t('camp.servicesHint') }}</p>
+        <!-- :key — remount per brand so custom-added service names don't leak across brands -->
+        <ServiceSelector
+          :key="selectedBrandUuid"
+          v-model="selectedServices"
+          :services="brandServices ?? []"
+          :disabled="creating"
         />
       </div>
 

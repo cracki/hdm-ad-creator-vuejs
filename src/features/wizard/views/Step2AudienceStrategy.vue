@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { Users, AlertCircle, RefreshCw, Check, ShoppingBag, MapPin } from 'lucide-vue-next'
+import { computed, ref, watch } from 'vue'
+import { Users, AlertCircle, RefreshCw, Check, ShoppingBag } from 'lucide-vue-next'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import SegmentDeepResearchRenderer from '@/shared/components/renderers/SegmentDeepResearchRenderer.vue'
+import CountryCitySelect from '@/shared/components/CountryCitySelect.vue'
+import PersonaSelector from '@/shared/components/PersonaSelector.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { campaignsApi } from '@/features/campaigns/api'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
+import StepReviewActions from '@/features/campaigns/components/StepReviewActions.vue'
+import { composeLocation, resolveTargetMarket, type TargetMarket } from '@/features/campaigns/types'
 import type { Campaign } from '@/features/campaigns/types'
 
 const props = defineProps<{ campaign: Campaign; campaignUuid: string }>()
@@ -14,8 +18,35 @@ const emit = defineEmits<{ (e: 'completed'): void }>()
 const { t } = useI18n()
 
 const businessType = ref('')
-const location = ref('')
 const productDescription = ref('')
+
+// Structured target market (F19): country/city via CountryCitySelect, seeded
+// from a previous run's context_payload.target_market or best-effort from the
+// brand's free-text location. The legacy location is composed "City, Country".
+const targetMarket = ref<TargetMarket>(resolveTargetMarket(props.campaign))
+
+// Persona targeting (MOM): which personas the funnel generation should use.
+// Empty selection = all personas. Prefilled once from the server-persisted
+// context_payload.selected_personas and never clobbered after a user edit.
+// initialSelection remembers the persisted selection so a later deselect-all
+// can send an explicit `personas: []` and clear the stale server value.
+const selectedPersonas = ref<string[]>([])
+const initialSelection = ref<string[]>([])
+const selectionTouched = ref(false)
+
+watch(
+  () => props.campaign.context_payload,
+  (payload) => {
+    if (selectionTouched.value) return
+    const stored = (payload as { selected_personas?: unknown })?.selected_personas
+    if (Array.isArray(stored)) {
+      const seeded = stored.filter((n): n is string => typeof n === 'string')
+      selectedPersonas.value = seeded
+      initialSelection.value = [...seeded]
+    }
+  },
+  { immediate: true },
+)
 
 const opKey = computed(() => `${props.campaignUuid}:segmentation`)
 const { data: result, loading, error, run } = useAsyncOperation<any>()
@@ -30,18 +61,49 @@ const segments = computed(() => {
   return Array.isArray(segs) ? segs : []
 })
 
+const personas = computed(() =>
+  segments.value.map((seg: any) => ({ name: seg.name || seg.persona_name || '' })),
+)
+
 const deepResearch = computed(() => stepData.value?.response_payload?.deep_research ?? {})
 
-async function runSegmentation() {
+/**
+ * Personas payload for the run request: a non-empty selection is sent as-is;
+ * an empty selection sends an explicit `[]` only when the user cleared a
+ * previously persisted selection (deselect-all), else omits the key entirely.
+ */
+function personasPayload(): string[] | undefined {
+  if (selectedPersonas.value.length) return selectedPersonas.value
+  if (selectionTouched.value && initialSelection.value.length) return []
+  return undefined
+}
+
+// Review state restore: prefer the run just returned, else the persisted
+// latest segmentation step on the campaign.
+const reviewState = computed(() => {
+  const fromResult = result.value?.step
+  if (fromResult?.review_status != null) return fromResult
+  return (props.campaign as any)?.latest_steps?.segmentation
+})
+
+async function runSegmentation(feedback?: string | Event) {
+  // The same fn doubles as a click handler — never send an Event as feedback.
+  const refinementFeedback = typeof feedback === 'string' ? feedback : undefined
   if (!operationManager.canStart(opKey.value)) return
   operationManager.start(opKey.value)
   try {
     await run(async () => {
       const res = await campaignsApi.runSegmentation(props.campaignUuid, {
         business_type: businessType.value || undefined,
-        location: location.value || undefined,
+        location: composeLocation(targetMarket.value) || undefined,
+        country: targetMarket.value.country.trim() || undefined,
+        city: targetMarket.value.city.trim() || undefined,
         product_description: productDescription.value || undefined,
         include_deep_research: true,
+        // Explicit empty list only when the user CLEARED a persisted selection;
+        // otherwise omit so the backend leaves any stored selection untouched.
+        personas: personasPayload(),
+        refinement_feedback: refinementFeedback,
       })
       return res.data
     })
@@ -67,21 +129,16 @@ async function runSegmentation() {
 
     <!-- Input form -->
     <div v-if="!stepData && !loading && !isAlreadyCompleted" class="surface-card p-5 space-y-4">
-      <div class="grid sm:grid-cols-2 gap-4">
-        <div>
-          <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('seg.businessType') }}</label>
-          <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60">
-            <ShoppingBag class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-            <input v-model="businessType" :placeholder="t('seg.businessTypeHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
-          </div>
+      <div>
+        <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('seg.businessType') }}</label>
+        <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60">
+          <ShoppingBag class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <input v-model="businessType" :placeholder="t('seg.businessTypeHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
         </div>
-        <div>
-          <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('seg.location') }}</label>
-          <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60">
-            <MapPin class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-            <input v-model="location" :placeholder="t('seg.locationHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
-          </div>
-        </div>
+      </div>
+      <div>
+        <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('seg.targetMarket') }}</label>
+        <CountryCitySelect v-model="targetMarket" />
       </div>
       <div>
         <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('seg.productDesc') }}</label>
@@ -127,6 +184,18 @@ async function runSegmentation() {
         </button>
       </div>
 
+      <!-- Persona targeting (MOM): pick which personas the funnel targets -->
+      <div v-if="personas.length" class="surface-card p-5 space-y-2.5 mt-4">
+        <div class="text-xs font-semibold">{{ t('seg.personaPickerTitle') }}</div>
+        <div class="text-[11px] text-muted-foreground">{{ t('seg.personaPickerHint') }}</div>
+        <PersonaSelector
+          v-model="selectedPersonas"
+          :personas="personas"
+          @update:model-value="selectionTouched = true"
+        />
+        <div class="text-[11px] text-muted-foreground" data-testid="persona-all-note">{{ t('seg.personaPickerAll') }}</div>
+      </div>
+
       <div class="grid sm:grid-cols-2 gap-3">
         <div v-for="(seg, idx) in segments" :key="idx" class="surface-card p-5 space-y-3">
           <div class="flex items-center gap-3">
@@ -153,6 +222,16 @@ async function runSegmentation() {
         <div class="text-xs font-semibold mb-3">{{ t('seg.deepResearch') }}</div>
         <SegmentDeepResearchRenderer :data="deepResearch" />
       </div>
+
+      <!-- Approve / Reject / Refine -->
+      <StepReviewActions
+        class="mt-4"
+        :campaign-uuid="campaignUuid"
+        step-type="segmentation"
+        :review-status="reviewState?.review_status"
+        :reject-reason="reviewState?.reject_reason"
+        :run-step="runSegmentation"
+      />
     </div>
   </div>
 </template>

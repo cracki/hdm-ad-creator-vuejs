@@ -2,10 +2,10 @@
 import { ref, computed, type Ref } from 'vue'
 import {
   Grid3X3, Download, Loader2, AlertCircle, Check, RefreshCw,
-  Sparkles, Users, Palette, Smartphone, Bookmark,
+  Sparkles, Users, Palette, Smartphone, Bookmark, Image as ImageIcon,
 } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
-import { useI18n } from '@/shared/utils/i18n'
+import { useI18n, LANGS, type Lang } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { exportCsv } from '@/shared/utils/csv'
@@ -16,7 +16,7 @@ import GuidedAction from '@/shared/components/guided-actions/GuidedAction.vue'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { useVariantOptions, useMetaFrameworks } from '../queries'
 import { scenarioVariantsApi } from '../api'
-import type { VariantOption, VariantFormatOption, MetaCreativeFramework } from '../types'
+import type { VariantOption, VariantFormatOption, MetaCreativeFramework, ScenarioVariant } from '../types'
 
 interface VariantAdCopy {
   headline?: string
@@ -40,6 +40,10 @@ interface GeneratedVariant {
   visual_prompt?: string
   framework_name?: string
   framework?: string
+  /** Present after the variants read-back (visual image rendering, F2). */
+  scenario_variant_uuid?: string
+  image_url?: string | null
+  visual_status?: 'completed' | 'failed'
 }
 
 interface VariantResult {
@@ -58,6 +62,11 @@ const confetti = useConfetti()
 
 const brandUuid = ref('')
 useAutoSelectBrand(brandUuid)
+
+// Output language for the generated variants (F22); standalone runs have no
+// parent Campaign, so the language is chosen per run and also drives the
+// rendered image text on generate-visuals.
+const language = ref<Lang>('en')
 
 const selectedAudiences = ref<string[]>([])
 const selectedStyles = ref<string[]>([])
@@ -139,16 +148,79 @@ const totalVariants = computed(() => {
 })
 
 const variants = computed<GeneratedVariant[]>(() => {
+  // After visual rendering (F2), the persisted read-back is the freshest
+  // source — it carries data.image_url/visual_status.
+  if (persistedVariants.value.length > 0) return persistedRegular.value
   if (!result.value) return []
   const r = result.value.result ?? result.value
   return r.variants ?? r.rows ?? []
 })
 
 const metaVariants = computed<GeneratedVariant[]>(() => {
+  if (persistedVariants.value.length > 0) return persistedMeta.value
   if (!result.value) return []
   const r = result.value.result ?? result.value
   return r.meta_creative_variants ?? []
 })
+
+// ── Visual image rendering (F2) ────────────────────────────
+// POST /campaigns/scenario-variants/{run}/generate-visuals/ renders every
+// variant's prompt; the outcome persists on each variant's data payload,
+// so the variants read-back (GET …/variants/) is refreshed after a run.
+const generatingVisuals = ref(false)
+const visualsError = ref('')
+const persistedVariants = ref<ScenarioVariant[]>([])
+
+const standaloneRunUuid = computed(
+  () => (result.value as { run?: { scenario_variant_run_uuid?: string } } | undefined)?.run?.scenario_variant_run_uuid ?? '',
+)
+
+function toGeneratedVariant(sv: ScenarioVariant): GeneratedVariant {
+  const d = (sv.data ?? {}) as Record<string, unknown>
+  return {
+    ...d,
+    audience: sv.audience ?? d.audience,
+    style: sv.style ?? d.style ?? d.creative_style,
+    format: sv.ad_format ?? d.format ?? d.ad_format,
+    framework_name: sv.framework_name ?? d.framework_name ?? d.framework,
+    scenario_variant_uuid: sv.scenario_variant_uuid,
+  } as GeneratedVariant
+}
+
+const persistedRegular = computed(() =>
+  persistedVariants.value.filter((sv) => sv.variant_type !== 'meta_creative').map(toGeneratedVariant),
+)
+const persistedMeta = computed(() =>
+  persistedVariants.value.filter((sv) => sv.variant_type === 'meta_creative').map(toGeneratedVariant),
+)
+
+async function refreshPersistedVariants() {
+  if (!standaloneRunUuid.value) return
+  const { data } = await scenarioVariantsApi.getStandaloneRunVariants(standaloneRunUuid.value)
+  persistedVariants.value = data?.variants ?? []
+}
+
+async function generateVisuals(variantUuids?: string[]) {
+  if (!standaloneRunUuid.value || generatingVisuals.value) return
+  generatingVisuals.value = true
+  visualsError.value = ''
+  try {
+    await scenarioVariantsApi.generateStandaloneRunVisuals(standaloneRunUuid.value, {
+      ...(variantUuids ? { variant_uuids: variantUuids } : {}),
+      language: language.value,
+    })
+    await refreshPersistedVariants()
+  } catch (e: unknown) {
+    const err = e as { response?: { data?: { detail?: string } }; message?: string }
+    visualsError.value = err?.response?.data?.detail ?? err?.message ?? t('visual.failed')
+  } finally {
+    generatingVisuals.value = false
+  }
+}
+
+function retryVariantVisual(v: GeneratedVariant) {
+  if (v.scenario_variant_uuid) generateVisuals([v.scenario_variant_uuid])
+}
 
 const canGenerate = computed(() =>
   selectedAudiences.value.length > 0 &&
@@ -173,10 +245,16 @@ async function generate() {
     selectionNotes.format_notes = Object.fromEntries(formatNames.map(n => [n, formatNotes.value]))
   }
 
+  // A new run replaces the old one — drop the previous run's persisted
+  // variants so the fresh generation result renders instead of stale data.
+  persistedVariants.value = []
+  visualsError.value = ''
+
   await run(async () => {
     const { data } = await scenarioVariantsApi.runStandaloneVariants({
       brand_uuid: brandUuid.value,
       scenario: 'promotional',
+      language: language.value,
       selected_audiences: audienceNames,
       selected_styles: styleNames,
       selected_formats: formatNames,
@@ -250,6 +328,18 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
             {{ b.company_name }}
           </option>
         </select>
+        <!-- Language (F22) -->
+        <div class="mt-3 sm:w-56">
+          <label class="text-xs font-medium text-muted-foreground block mb-2">{{ t('variant.language') }}</label>
+          <select
+            v-model="language"
+            data-loc="variant.main.language-select"
+            data-testid="variant-language-select"
+            class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none focus:ring-1 focus:ring-primary/50"
+          >
+            <option v-for="l in LANGS" :key="l.code" :value="l.code">{{ l.native }}</option>
+          </select>
+        </div>
       </div>
 
       <!-- Step 1: Audiences -->
@@ -437,29 +527,78 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
 
       <!-- Results -->
       <div v-if="variants.length > 0">
-        <div class="flex items-center justify-between mb-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
           <h3 class="text-sm font-semibold">{{ variants.length }} {{ t('variant.totalVariants') }}</h3>
-          <div class="flex gap-1 bg-overlay-subtle rounded-lg p-0.5">
+          <div class="flex flex-wrap items-center gap-2">
             <button
-              data-loc="variant.main.view-cards"
-              @click="viewMode = 'cards'"
-              :class="['min-h-[44px] px-2.5 py-1 rounded text-xs font-medium transition', viewMode === 'cards' ? 'bg-overlay-medium text-foreground' : 'text-muted-foreground']"
+              v-if="standaloneRunUuid"
+              data-loc="variant.main.generate-images-btn"
+              data-testid="variant-generate-images-btn"
+              :disabled="generatingVisuals"
+              class="h-8 px-3 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium flex items-center gap-1.5 disabled:opacity-50"
+              @click="generateVisuals()"
             >
-              {{ t('variant.cards') }}
+              <Loader2 v-if="generatingVisuals" class="h-3 w-3 animate-spin" />
+              <ImageIcon v-else class="h-3 w-3" />
+              {{ generatingVisuals ? t('variant.generatingImages') : t('variant.generateImages') }}
             </button>
-            <button
-              data-loc="variant.main.view-table"
-              @click="viewMode = 'table'"
-              :class="['min-h-[44px] px-2.5 py-1 rounded text-xs font-medium transition', viewMode === 'table' ? 'bg-overlay-medium text-foreground' : 'text-muted-foreground']"
-            >
-              {{ t('variant.table') }}
-            </button>
+            <div class="flex gap-1 bg-overlay-subtle rounded-lg p-0.5">
+              <button
+                data-loc="variant.main.view-cards"
+                @click="viewMode = 'cards'"
+                :class="['min-h-[44px] px-2.5 py-1 rounded text-xs font-medium transition', viewMode === 'cards' ? 'bg-overlay-medium text-foreground' : 'text-muted-foreground']"
+              >
+                {{ t('variant.cards') }}
+              </button>
+              <button
+                data-loc="variant.main.view-table"
+                @click="viewMode = 'table'"
+                :class="['min-h-[44px] px-2.5 py-1 rounded text-xs font-medium transition', viewMode === 'table' ? 'bg-overlay-medium text-foreground' : 'text-muted-foreground']"
+              >
+                {{ t('variant.table') }}
+              </button>
+            </div>
           </div>
+        </div>
+
+        <!-- Visual rendering error (F2) -->
+        <div v-if="visualsError" class="surface-card p-3 mb-4 flex items-center gap-2 border-destructive/40" data-testid="variant-visuals-error">
+          <AlertCircle class="h-4 w-4 text-destructive shrink-0" />
+          <span class="flex-1 text-xs text-destructive">{{ visualsError }}</span>
         </div>
 
         <!-- Cards View -->
         <div v-if="viewMode === 'cards'" class="grid grid-cols-1 lg:grid-cols-2 gap-3">
           <div v-for="(v, idx) in variants" :key="idx" data-loc="variant.main.variant-card" class="surface-card p-4">
+            <!-- Rendered image (F2) -->
+            <div v-if="v.image_url" class="relative rounded-lg overflow-hidden border border-border/40 mb-3">
+              <img
+                :src="v.image_url"
+                :alt="v.ad_copy?.headline ?? v.headline ?? 'variant image'"
+                loading="lazy"
+                class="w-full object-cover"
+                data-testid="variant-image"
+              />
+              <span
+                v-if="v.visual_status"
+                :class="v.visual_status === 'completed' ? 'text-success' : 'text-destructive'"
+                class="absolute top-2 end-2 text-[10px] font-medium px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-sm"
+                data-testid="variant-visual-status"
+              >
+                {{ v.visual_status === 'completed' ? t('visual.statusCompleted') : t('visual.statusFailed') }}
+              </span>
+            </div>
+            <div v-else-if="v.visual_status === 'failed'" class="rounded-lg border border-destructive/30 bg-destructive/10 p-2.5 mb-3 flex items-center gap-2" data-testid="variant-visual-failed">
+              <AlertCircle class="h-3.5 w-3.5 text-destructive shrink-0" />
+              <span class="flex-1 text-[11px] text-destructive">{{ t('visual.failed') }}</span>
+              <button
+                class="h-6 px-2 rounded-md border border-border/60 text-[10px] inline-flex items-center gap-1 hover:bg-overlay-subtle transition shrink-0"
+                data-testid="variant-visual-retry-btn"
+                @click="retryVariantVisual(v)"
+              >
+                <RefreshCw class="h-2.5 w-2.5" /> {{ t('seg.retry') }}
+              </button>
+            </div>
             <div class="flex flex-wrap gap-1.5 mb-3">
               <span class="text-[11px] px-2 py-0.5 rounded-full bg-accent-cyan/15 text-accent-cyan">{{ v.audience }}</span>
               <span class="text-[11px] px-2 py-0.5 rounded-full bg-accent-magenta/15 text-accent-magenta">{{ v.style ?? v.creative_style }}</span>
@@ -524,6 +663,35 @@ setActions([{ label: t('variant.exportCSV'), icon: Download, handler: exportCSV 
         </div>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
           <div v-for="(mv, idx) in metaVariants" :key="`meta-${idx}`" data-loc="variant.main.meta-variant-card" class="surface-card p-4 border-s-2 border-s-accent-cyan">
+            <!-- Rendered image (F2) -->
+            <div v-if="mv.image_url" class="relative rounded-lg overflow-hidden border border-border/40 mb-3">
+              <img
+                :src="mv.image_url"
+                :alt="mv.headline ?? mv.ad_copy?.headline ?? 'variant image'"
+                loading="lazy"
+                class="w-full object-cover"
+                data-testid="variant-image"
+              />
+              <span
+                v-if="mv.visual_status"
+                :class="mv.visual_status === 'completed' ? 'text-success' : 'text-destructive'"
+                class="absolute top-2 end-2 text-[10px] font-medium px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-sm"
+                data-testid="variant-visual-status"
+              >
+                {{ mv.visual_status === 'completed' ? t('visual.statusCompleted') : t('visual.statusFailed') }}
+              </span>
+            </div>
+            <div v-else-if="mv.visual_status === 'failed'" class="rounded-lg border border-destructive/30 bg-destructive/10 p-2.5 mb-3 flex items-center gap-2" data-testid="variant-visual-failed">
+              <AlertCircle class="h-3.5 w-3.5 text-destructive shrink-0" />
+              <span class="flex-1 text-[11px] text-destructive">{{ t('visual.failed') }}</span>
+              <button
+                class="h-6 px-2 rounded-md border border-border/60 text-[10px] inline-flex items-center gap-1 hover:bg-overlay-subtle transition shrink-0"
+                data-testid="variant-visual-retry-btn"
+                @click="retryVariantVisual(mv)"
+              >
+                <RefreshCw class="h-2.5 w-2.5" /> {{ t('seg.retry') }}
+              </button>
+            </div>
             <div class="flex flex-wrap gap-1.5 mb-3">
               <span class="text-[11px] px-2 py-0.5 rounded-full bg-accent-cyan/15 text-accent-cyan">{{ mv.framework_name ?? mv.framework ?? 'Framework' }}</span>
               <span v-if="mv.audience" class="text-[11px] px-2 py-0.5 rounded-full bg-accent-magenta/15 text-accent-magenta">{{ mv.audience }}</span>

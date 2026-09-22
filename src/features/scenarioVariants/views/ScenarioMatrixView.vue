@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import {
   Grid3X3, AlertCircle, RefreshCw,
   ArrowLeft, Download, Copy, Eye, Check,
+  Image as ImageIcon, Loader2,
 } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
@@ -16,7 +17,7 @@ import { scenarioVariantsApi } from '../api'
 import { parseScenarioVariants } from '../schemas'
 import ScenarioVariantCard from '../components/ScenarioVariantCard.vue'
 import VariantDetailModal from '../components/VariantDetailModal.vue'
-import type { ScenarioVariantRun } from '../types'
+import type { ScenarioVariantRun, ScenarioVariantVisual } from '../types'
 
 const route = useRoute()
 const router = useRouter()
@@ -75,11 +76,60 @@ onMounted(async () => {
 })
 
 async function generate() {
+  // A re-run produces a fresh run and fresh variant uuids — drop the stale
+  // visual overlay/error so nothing from the previous run lingers.
+  visualsByVariant.value = {}
+  visualsError.value = ''
   await startJob()
   if (runData.value?.status === 'completed' && runData.value?.scenario_variant_run_uuid) {
     router.replace(`/campaigns/${campaignUuid.value}/scenario-matrix/${runData.value.scenario_variant_run_uuid}`)
     await fetchVariants(runData.value.scenario_variant_run_uuid)
   }
+}
+
+// ── Visual image rendering (F2) ────────────────────────────
+// POST …/scenario-variants-matrix/{run}/generate-visuals/ renders every
+// variant's prompt; outcomes persist on the variant data (data.image_url /
+// visual_status) and are overlaid here for immediate feedback.
+const generatingVisuals = ref(false)
+const visualsError = ref('')
+const visualsByVariant = ref<Record<string, ScenarioVariantVisual>>({})
+
+const runUuid = computed(() => runData.value?.scenario_variant_run_uuid ?? '')
+
+function visualFor(v: any): ScenarioVariantVisual | null {
+  return visualsByVariant.value[v?.scenario_variant_uuid] ?? null
+}
+
+function applyVisualResults(results: ScenarioVariantVisual[]) {
+  const next = { ...visualsByVariant.value }
+  for (const r of results) next[r.scenario_variant_uuid] = r
+  visualsByVariant.value = next
+}
+
+async function generateRunVisuals(variantUuids?: string[]) {
+  if (!runUuid.value || generatingVisuals.value) return
+  generatingVisuals.value = true
+  visualsError.value = ''
+  try {
+    const { data } = await scenarioVariantsApi.generateMatrixRunVisuals(
+      campaignUuid.value,
+      runUuid.value,
+      variantUuids ? { variant_uuids: variantUuids } : {},
+    )
+    applyVisualResults(data?.results ?? [])
+    // The rendered outcome also persists on the variants read-back.
+    await fetchVariants(runUuid.value)
+  } catch (e: unknown) {
+    const err = e as { response?: { data?: { detail?: string } }; message?: string }
+    visualsError.value = err?.response?.data?.detail ?? err?.message ?? t('visual.failed')
+  } finally {
+    generatingVisuals.value = false
+  }
+}
+
+function retryVariantVisual(v: any) {
+  generateRunVisuals([v.scenario_variant_uuid])
 }
 
 function openDetail(variant: any) {
@@ -192,9 +242,20 @@ function getAdCopy(v: any) {
 
       <!-- Results -->
       <div v-if="variants.length > 0">
-        <div class="flex items-center justify-between mb-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
           <h3 class="text-sm font-semibold">{{ variants.length }} {{ t('variant.totalVariants') }}</h3>
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              data-loc="variant.matrix.generate-images-btn"
+              data-testid="variant-generate-images-btn"
+              :disabled="generatingVisuals || !runUuid"
+              class="h-8 px-3 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium flex items-center gap-1.5 disabled:opacity-50"
+              @click="generateRunVisuals()"
+            >
+              <Loader2 v-if="generatingVisuals" class="h-3 w-3 animate-spin" />
+              <ImageIcon v-else class="h-3 w-3" />
+              {{ generatingVisuals ? t('variant.generatingImages') : t('variant.generateImages') }}
+            </button>
             <button
               data-loc="variant.matrix.export-btn"
               class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition"
@@ -224,6 +285,12 @@ function getAdCopy(v: any) {
           </div>
         </div>
 
+        <!-- Visual rendering error (F2) -->
+        <div v-if="visualsError" class="surface-card p-3 mb-4 flex items-center gap-2 border-destructive/40" data-testid="variant-visuals-error">
+          <AlertCircle class="h-4 w-4 text-destructive shrink-0" />
+          <span class="flex-1 text-xs text-destructive">{{ visualsError }}</span>
+        </div>
+
         <!-- Cards View -->
         <div v-if="viewMode === 'cards'" class="grid grid-cols-1 lg:grid-cols-2 gap-3">
           <ScenarioVariantCard
@@ -231,7 +298,9 @@ function getAdCopy(v: any) {
             :key="idx"
             data-loc="variant.matrix.variant-card"
             :variant="v"
+            :visual="visualFor(v)"
             @view-details="openDetail"
+            @retry-visual="retryVariantVisual"
           />
         </div>
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useQueryClient } from '@tanstack/vue-query'
 import { Image as ImageIcon, ArrowLeft, ArrowRight, Loader2, AlertCircle, RefreshCw, Shield, Download } from 'lucide-vue-next'
 import StepExportButton from '@/shared/components/StepExportButton.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
@@ -9,7 +10,7 @@ import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import { useConfetti } from '@/shared/composables/useConfetti'
-import { useCampaign } from '../queries'
+import { useCampaign, useCampaignAds, useCampaignVisuals } from '../queries'
 import { campaignsApi } from '../api'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
@@ -29,24 +30,25 @@ const { t } = useI18n()
 
 const campaignUuid = computed(() => route.params.campaignUuid as string)
 const { data: campaign } = useCampaign(campaignUuid)
+const { data: adsData, isLoading: adsLoading } = useCampaignAds(campaignUuid)
 
 const { setActions } = usePageActions()
 setActions([{ label: t('camp.backToCampaign'), icon: ArrowLeft, to: `/campaigns/${campaignUuid.value}` }])
 
 const confetti = useConfetti()
 
-function loadAdsFromStorage(): AdMeta[] {
-  try {
-    const raw = sessionStorage.getItem(`campaign-ads:${campaignUuid.value}`)
-    if (raw) return JSON.parse(raw)
-  } catch {}
-  return []
-}
-
+// Fast path: ad meta handed over via router state from the ads step; on a
+// cold load (reload / direct URL) fall back to the GET /ads/ read-back —
+// replacing the old sessionStorage handoff.
 const adsList = computed<AdMeta[]>(() => {
   const state = history.state as { adMeta?: AdMeta[] } | null
   if (Array.isArray(state?.adMeta) && state.adMeta.length) return state.adMeta
-  return loadAdsFromStorage()
+  return (adsData.value?.ads ?? []).map(a => ({
+    uuid: a.campaign_ad_uuid,
+    platform: a.platform,
+    funnel_stage: a.funnel_stage,
+    persona: a.persona,
+  }))
 })
 
 const selectedAdUuids = ref<Set<string>>(new Set())
@@ -74,8 +76,19 @@ const quality = ref<'auto' | 'low' | 'medium' | 'high'>('auto')
 const opKey = computed(() => `${campaignUuid.value}:generate-visuals`)
 const { data: visualResult, loading, error, run } = useAsyncOperation<any>()
 
-const results = computed(() => visualResult.value?.results ?? [])
-const generatedCount = computed(() => visualResult.value?.generated_count ?? 0)
+// Restore (F2): the grid is server truth. On a cold load (reload / direct
+// URL) the persisted visuals from GET /campaigns/{uuid}/visuals/ render;
+// once this session generates, its fresher result takes precedence.
+const queryClient = useQueryClient()
+const { data: persistedVisuals } = useCampaignVisuals(campaignUuid)
+
+const results = computed<GeneratedVisual[]>(() => {
+  if (visualResult.value?.results?.length) return visualResult.value.results
+  return persistedVisuals.value?.results ?? []
+})
+const generatedCount = computed(() =>
+  visualResult.value?.generated_count ?? results.value.filter((v) => v.success).length,
+)
 
 async function generateVisuals() {
   if (selectedAdUuids.value.size === 0) return
@@ -117,6 +130,10 @@ async function retryVisual(v: GeneratedVisual) {
           r.campaign_ad_uuid === v.campaign_ad_uuid ? fresh : r,
         ),
       }
+    } else {
+      // Retried straight from the persisted read-back — refetch it so the
+      // restored grid picks up the new outcome.
+      queryClient.invalidateQueries({ queryKey: ['campaigns', campaignUuid, 'visuals'] })
     }
   } catch {
     // Leave the existing error in place — the user can retry again.
@@ -168,8 +185,13 @@ async function handleVisualExport(format: 'csv' | 'pdf' | 'pptx') {
         </div>
       </header>
 
+      <!-- Ads read-back still loading (no router-state handoff) -->
+      <div v-if="adsLoading && adsList.length === 0" class="py-12">
+        <AiLoadingAnimation :message="t('common.loading')" size="sm" />
+      </div>
+
       <!-- No ads available -->
-      <div v-if="adsList.length === 0" class="surface-card p-8 text-center">
+      <div v-else-if="adsList.length === 0" class="surface-card p-8 text-center">
         <Shield class="h-8 w-8 text-muted-foreground mx-auto mb-3" />
         <div class="text-sm font-medium mb-1">{{ t('visual.prereqTitle') }}</div>
         <div class="text-xs text-muted-foreground mb-4">{{ t('visual.prereqDesc') }}</div>
@@ -267,9 +289,14 @@ async function handleVisualExport(format: 'csv' | 'pdf' | 'pptx') {
             <StepExportButton :disabled="visExporting" @export="handleVisualExport" />
           </div>
           <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            <div v-for="v in results" :key="v.campaign_ad_uuid" class="surface-card overflow-hidden">
+            <div
+              v-for="(v, vi) in results"
+              :key="`${v.campaign_ad_uuid}-${vi}`"
+              class="surface-card overflow-hidden"
+              data-loc="campaigns.visual.result-card"
+            >
               <div v-if="v.success && v.image_url" class="relative">
-                <img :src="v.image_url" :alt="v.visual_summary" loading="lazy" class="w-full aspect-video object-cover" />
+                <img :src="v.image_url" :alt="v.visual_summary" loading="lazy" class="w-full aspect-video object-cover" data-testid="visual-result-image" />
                 <a
                   :href="v.image_url"
                   download

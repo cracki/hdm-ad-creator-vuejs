@@ -1,18 +1,31 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useQueryClient } from '@tanstack/vue-query'
 import { Sparkles, Loader2, AlertCircle, RefreshCw, Shield, Trash2, Copy } from 'lucide-vue-next'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import { useI18n } from '@/shared/utils/i18n'
+import AdReviewCard from '@/features/campaigns/components/AdReviewCard.vue'
 import { campaignsApi } from '@/features/campaigns/api'
+import { useCampaignAds } from '@/features/campaigns/queries'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
+import { getAdCopy } from '@/features/campaigns/types'
 import type { Campaign, CampaignAd, CampaignAdPlatform, FunnelStage } from '@/features/campaigns/types'
 
 const props = defineProps<{ campaign: Campaign; campaignUuid: string }>()
 const emit = defineEmits<{ (e: 'completed'): void }>()
 const { t } = useI18n()
+const queryClient = useQueryClient()
 
 const localAds = ref<CampaignAd[]>([])
+
+// Server truth via GET /campaigns/{uuid}/ads/ — restores previously generated
+// ads (incl. review status) when the wizard step is revisited.
+const campaignUuidRef = computed(() => props.campaignUuid)
+const { data: adsData, isLoading: adsLoading } = useCampaignAds(campaignUuidRef)
+watch(adsData, (d) => {
+  if (d?.ads) localAds.value = d.ads
+}, { immediate: true })
 
 const selectedPlatforms = computed(() => (props.campaign.context_payload as any)?.selected_platforms ?? [])
 const isPrereqMet = computed(() => {
@@ -61,6 +74,7 @@ async function generateAds() {
       }
       return res.data
     })
+    queryClient.invalidateQueries({ queryKey: ['campaigns', campaignUuidRef, 'ads'] })
     emit('completed')
   } finally {
     operationManager.finish(genOpKey.value)
@@ -74,6 +88,7 @@ async function clearAllAds() {
   try {
     await clearRun(async () => (await campaignsApi.clearAllAds(props.campaignUuid)).data)
     localAds.value = []
+    queryClient.invalidateQueries({ queryKey: ['campaigns', campaignUuidRef, 'ads'] })
   } finally {
     operationManager.finish(clearOpKey.value)
   }
@@ -90,15 +105,12 @@ function copyToClipboard(text: string) {
 
 const adsList = computed(() => localAds.value)
 
-function getAdData(ad: any) {
-  const d = ad.data ?? {}
-  return {
-    headline: d.headline ?? d.title ?? '',
-    body: d.body ?? d.description ?? d.primary_text ?? '',
-    cta: d.cta ?? d.call_to_action ?? '',
-    framework: d.framework ?? d.creative_framework ?? '',
-    score: d.score ?? d.quality_score ?? 0,
-  }
+function getAdData(ad: CampaignAd) {
+  return getAdCopy(ad)
+}
+
+function onAdUpdated(freshAd: CampaignAd) {
+  localAds.value = localAds.value.map(a => (a.campaign_ad_uuid === freshAd.campaign_ad_uuid ? freshAd : a))
 }
 </script>
 
@@ -164,7 +176,7 @@ function getAdData(ad: any) {
       </button>
 
       <!-- Empty -->
-      <div v-if="adsList.length === 0 && !genLoading" class="surface-card p-8 text-center">
+      <div v-if="adsList.length === 0 && !genLoading && !adsLoading" class="surface-card p-8 text-center">
         <Sparkles class="h-8 w-8 text-primary mx-auto mb-3" />
         <div class="text-sm font-medium mb-1">{{ t('adgen.ready') }}</div>
         <div class="text-xs text-muted-foreground mb-4">{{ t('adgen.readyDesc') }}</div>
@@ -192,31 +204,39 @@ function getAdData(ad: any) {
           </button>
         </div>
         <div class="grid sm:grid-cols-2 gap-3">
-          <div v-for="ad in adsList" :key="ad.campaign_ad_uuid" class="surface-card p-5 group">
-            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-              <div class="flex flex-wrap items-center gap-1.5">
-                <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-blue-500/15 text-blue-300">{{ adPlatformLabel(ad.platform) }}</span>
-                <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-overlay-light text-muted-foreground">{{ ad.funnel_stage }}</span>
-                <span v-if="getAdData(ad).framework" class="text-[11px] font-semibold px-2 py-0.5 rounded border border-primary/40 text-primary">{{ getAdData(ad).framework }}</span>
+          <AdReviewCard
+            v-for="ad in adsList"
+            :key="ad.campaign_ad_uuid"
+            :ad="ad"
+            :campaign-uuid="campaignUuid"
+            @updated="onAdUpdated"
+          >
+            <div class="group">
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-blue-500/15 text-blue-300">{{ adPlatformLabel(ad.platform) }}</span>
+                  <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-overlay-light text-muted-foreground">{{ ad.funnel_stage }}</span>
+                  <span v-if="getAdData(ad).framework" class="text-[11px] font-semibold px-2 py-0.5 rounded border border-primary/40 text-primary">{{ getAdData(ad).framework }}</span>
+                </div>
+                <div v-if="getAdData(ad).score" class="flex items-center gap-1 text-[11px] font-semibold text-success">
+                  <span class="h-1.5 w-1.5 rounded-full bg-success" /> {{ getAdData(ad).score }}
+                </div>
               </div>
-              <div v-if="getAdData(ad).score" class="flex items-center gap-1 text-[11px] font-semibold text-success">
-                <span class="h-1.5 w-1.5 rounded-full bg-success" /> {{ getAdData(ad).score }}
+              <div class="rounded-lg border border-border/50 bg-overlay-subtle p-3 space-y-2 mb-3">
+                <div v-if="ad.persona" class="text-[11px] text-muted-foreground">{{ ad.persona }}</div>
+                <div v-if="getAdData(ad).headline" class="text-sm font-semibold">{{ getAdData(ad).headline }}</div>
+                <div v-if="getAdData(ad).body" class="text-xs leading-relaxed">{{ getAdData(ad).body }}</div>
+                <div v-if="getAdData(ad).cta" class="flex items-center justify-end pt-1">
+                  <span class="h-7 px-2.5 rounded-md bg-overlay-medium text-[11px] font-medium">{{ getAdData(ad).cta }}</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition">
+                <button class="h-10 w-10 grid place-items-center rounded-md hover:bg-overlay-medium transition" @click="copyToClipboard(JSON.stringify(ad.data, null, 2))">
+                  <Copy class="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
               </div>
             </div>
-            <div class="rounded-lg border border-border/50 bg-overlay-subtle p-3 space-y-2 mb-3">
-              <div v-if="ad.persona" class="text-[11px] text-muted-foreground">{{ ad.persona }}</div>
-              <div v-if="getAdData(ad).headline" class="text-sm font-semibold">{{ getAdData(ad).headline }}</div>
-              <div v-if="getAdData(ad).body" class="text-xs leading-relaxed">{{ getAdData(ad).body }}</div>
-              <div v-if="getAdData(ad).cta" class="flex items-center justify-end pt-1">
-                <span class="h-7 px-2.5 rounded-md bg-overlay-medium text-[11px] font-medium">{{ getAdData(ad).cta }}</span>
-              </div>
-            </div>
-            <div class="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition">
-              <button class="h-10 w-10 grid place-items-center rounded-md hover:bg-overlay-medium transition" @click="copyToClipboard(JSON.stringify(ad.data, null, 2))">
-                <Copy class="h-3.5 w-3.5 text-muted-foreground" />
-              </button>
-            </div>
-          </div>
+          </AdReviewCard>
         </div>
       </div>
 

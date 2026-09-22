@@ -120,6 +120,9 @@ function contentTypeName(type: string): string {
             </span>
           </div>
         </div>
+
+        <!-- Optional per-item actions (Add to Campaign / Generate Brief) -->
+        <slot name="item-actions" :item="gap" :index="idx" />
       </div>
     </div>
   </div>

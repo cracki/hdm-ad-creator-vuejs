@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, type Ref } from 'vue'
 import { brandsApi } from './api'
-import type { BrandCreatePayload, AnalysisStartPayload } from './types'
+import type { BrandCreatePayload, AnalysisStartPayload, BrandScanPayload } from './types'
 import { parseAnalysisRun, analysisRunListSchema } from './schemas'
 
 export function useBrands() {
@@ -111,6 +111,21 @@ export function useBrandSocialMedia(brandUuid: Ref<string>) {
     queryFn: ({ signal }) => brandsApi.listSocialMedia(brandUuid.value, { signal }).then(r => r.data),
     enabled: computed(() => !!brandUuid.value),
     staleTime: 10_000,
+  })
+}
+
+export function useScanWebsite() {
+  return useMutation({
+    mutationFn: (payload: BrandScanPayload) => brandsApi.scanWebsite(payload),
+  })
+}
+
+export function useBrandServices(brandUuid: Ref<string>) {
+  return useQuery({
+    queryKey: ['brands', brandUuid, 'services'],
+    queryFn: ({ signal }) => brandsApi.listServices(brandUuid.value, { signal }).then(r => r.data.services),
+    enabled: computed(() => !!brandUuid.value),
+    staleTime: 30_000,
   })
 }
 

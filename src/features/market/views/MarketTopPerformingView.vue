@@ -7,6 +7,7 @@ import { useI18n } from '@/shared/utils/i18n'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import MarketHistoryList from '../components/MarketHistoryList.vue'
+import InsightItemActions from '../components/InsightItemActions.vue'
 import { useGetTopPerformingContent, useTopPerformingHistory } from '../queries'
 import { exportTopPerformingPDF, exportTopPerformingPPTX, exportTopPerformingXLSX } from '@/shared/utils/exportMarket'
 import type { TopPerformingContentResponse, ContentIntelligenceRun } from '../types'
@@ -168,7 +169,16 @@ function backToForm() {
           </div>
         </div>
         <div class="surface-card p-5">
-          <TopPerformingContentRenderer :data="(topResult as any)" />
+          <TopPerformingContentRenderer :data="(topResult as any)">
+            <template #item-actions="{ item }">
+              <InsightItemActions
+                view="top_performers"
+                :title="item.title || ''"
+                :snippet="item.why_it_ranks || item.snippet || ''"
+                :angle="item.your_opportunity"
+              />
+            </template>
+          </TopPerformingContentRenderer>
         </div>
       </div>
     </div>
