@@ -99,6 +99,18 @@ describe('useProductTour — dismissal persistence (QA fix 4)', () => {
     })
   })
 
+  it('stopTour() (programmatic teardown, e.g. route change) does NOT persist completion', () => {
+    const def = makeTour()
+    tour.registerTour(def)
+    tour.startTour(def.id)
+
+    tour.stopTour()
+
+    expect(tour.isActive.value).toBe(false)
+    expect(tour.hasCompletedTour(def.id)).toBe(false)
+    expect(readStore()[def.id]).toBeUndefined()
+  })
+
   it('resetTourCompletion clears the persisted dismissal', () => {
     const def = makeTour()
     tour.registerTour(def)

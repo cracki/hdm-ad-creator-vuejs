@@ -116,6 +116,15 @@ function resetActiveTour() {
   currentStepIndex.value = 0
 }
 
+/**
+ * Programmatically stop the active tour (e.g. the user navigated away).
+ * Unlike dismiss() this does NOT persist completion — the tour may re-offer
+ * itself the next time the user lands on its page.
+ */
+function stopTour() {
+  resetActiveTour()
+}
+
 function startTour(tourId: string) {
   const def = registry.get(tourId)
   if (!def) return
@@ -214,6 +223,7 @@ export function useProductTour() {
     prev,
     close,
     dismiss,
+    stopTour,
     finish,
     autoStartForRoute,
     hasCompletedTour,
