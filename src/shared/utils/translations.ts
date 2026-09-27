@@ -36,6 +36,7 @@ export const translations = {
   'brands.delete': { en: 'Delete', ar: 'حذف', fa: 'حذف' },
   'brands.confirmDelete': { en: 'Are you sure you want to delete this brand?', ar: 'هل أنت متأكد من حذف هذه العلامة؟', fa: 'آیا مطمئن هستید که می‌خواهید این برند را حذف کنید؟' },
   'brands.campaigns': { en: 'campaigns', ar: 'حملات', fa: 'کمپین' },
+  'brandDetail.services': { en: 'Services', ar: 'الخدمات', fa: 'خدمات' },
 
   // Industries
   'ind.beauty': { en: 'Beauty', ar: 'تجميل', fa: 'زیبایی' },
