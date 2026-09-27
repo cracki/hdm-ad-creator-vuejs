@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { computed, type Ref } from 'vue'
 import { brandsApi } from './api'
-import type { BrandCreatePayload, AnalysisStartPayload, BrandScanPayload } from './types'
+import type { BrandCreatePayload, AnalysisStartPayload, BrandScanPayload, CreateManagedServicePayload } from './types'
 import { parseAnalysisRun, analysisRunListSchema } from './schemas'
 
 export function useBrands() {
@@ -126,6 +126,39 @@ export function useBrandServices(brandUuid: Ref<string>) {
     queryFn: ({ signal }) => brandsApi.listServices(brandUuid.value, { signal }).then(r => r.data.services),
     enabled: computed(() => !!brandUuid.value),
     staleTime: 30_000,
+  })
+}
+
+// ---- Managed services (/brands/{uuid}/services/manage/) ----
+
+export function useManagedBrandServices(brandUuid: Ref<string>) {
+  return useQuery({
+    queryKey: ['brands', brandUuid, 'services-managed'],
+    queryFn: ({ signal }) => brandsApi.listManagedServices(brandUuid.value, { signal }).then(r => r.data.services),
+    enabled: computed(() => !!brandUuid.value),
+    staleTime: 10_000,
+  })
+}
+
+export function useCreateManagedBrandService(brandUuid: Ref<string>) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: CreateManagedServicePayload) =>
+      brandsApi.createManagedService(brandUuid.value, payload),
+    onSuccess: () => {
+      // Prefix match also refreshes the read-only merged list ('services').
+      queryClient.invalidateQueries({ queryKey: ['brands', brandUuid, 'services'] })
+    },
+  })
+}
+
+export function useDeleteManagedBrandService(brandUuid: Ref<string>) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (serviceUuid: string) => brandsApi.deleteManagedService(brandUuid.value, serviceUuid),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['brands', brandUuid, 'services'] })
+    },
   })
 }
 

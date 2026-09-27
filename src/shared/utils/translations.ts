@@ -38,6 +38,20 @@ export const translations = {
   'brands.campaigns': { en: 'campaigns', ar: 'حملات', fa: 'کمپین' },
   'brandDetail.services': { en: 'Services', ar: 'الخدمات', fa: 'خدمات' },
 
+  // Managed services (brand edit)
+  'brandServices.title': { en: 'Services', ar: 'الخدمات', fa: 'خدمات' },
+  'brandServices.note': { en: 'Scanned services update automatically on the next re-analysis; services you add here are kept.', ar: 'تتحدّث الخدمات الممسوحة تلقائياً عند إعادة التحليل؛ والخدمات التي تضيفها هنا تبقى.', fa: 'خدمات اسکن‌شده در تحلیل مجدد بعدی به‌روز می‌شوند؛ خدمت‌هایی که اینجا اضافه می‌کنید حفظ می‌شوند.' },
+  'brandServices.addPlaceholder': { en: 'Add a service…', ar: 'أضف خدمة…', fa: 'افزودن خدمت…' },
+  'brandServices.add': { en: 'Add', ar: 'إضافة', fa: 'افزودن' },
+  'brandServices.delete': { en: 'Remove service', ar: 'إزالة خدمة', fa: 'حذف خدمت' },
+  'brandServices.empty': { en: 'No services yet — add the services this brand offers.', ar: 'لا توجد خدمات بعد — أضف خدمات هذه العلامة.', fa: 'هنوز خدمتی نیست — خدمت‌هایی که این برند ارائه می‌دهد را اضافه کنید.' },
+  'brandServices.addFailed': { en: 'Could not add the service.', ar: 'تعذّت إضافة الخدمة.', fa: 'افزودن خدمت ناموفق بود.' },
+  'brandServices.deleteFailed': { en: 'Could not remove the service.', ar: 'تعذّرت إزالة الخدمة.', fa: 'حذف خدمت ناموفق بود.' },
+  'brandServices.source.scraped': { en: 'Scanned', ar: 'ممسوح', fa: 'اسکن‌شده' },
+  'brandServices.source.brandAnalysis': { en: 'Analysis', ar: 'تحليل', fa: 'تحلیل' },
+  'brandServices.source.ppcViability': { en: 'PPC', ar: 'PPC', fa: 'PPC' },
+  'brandServices.source.manual': { en: 'Manual', ar: 'يدوي', fa: 'دستی' },
+
   // Industries
   'ind.beauty': { en: 'Beauty', ar: 'تجميل', fa: 'زیبایی' },
   'ind.fitness': { en: 'Fitness', ar: 'لياقة', fa: 'تناسب اندام' },
@@ -52,6 +66,9 @@ export const translations = {
   // Brand wizard
   'newbrand.title': { en: 'Create Brand', ar: 'إنشاء علامة', fa: 'ساخت برند' },
   'newbrand.subtitle': { en: '3 steps · auto-saves as you go', ar: '٣ خطوات · حفظ تلقائي', fa: '۳ گام · ذخیره خودکار' },
+  'newbrand.editTitle': { en: 'Edit Brand', ar: 'تعديل العلامة', fa: 'ویرایش برند' },
+  'newbrand.editSubtitle': { en: 'Update your brand details', ar: 'حدّث تفاصيل علامتك', fa: 'به‌روزرسانی جزئیات برند' },
+  'newbrand.save': { en: 'Save Changes', ar: 'حفظ التغييرات', fa: 'ذخیره تغییرات' },
   'newbrand.s1.label': { en: 'Basics', ar: 'الأساسيات', fa: 'اطلاعات پایه' },
   'newbrand.s1.desc': { en: 'Tell us where to look', ar: 'أخبرنا أين نبحث', fa: 'بگو کجا را جستجو کنیم' },
   'newbrand.s2.label': { en: 'Identity', ar: 'الهوية', fa: 'هویت' },

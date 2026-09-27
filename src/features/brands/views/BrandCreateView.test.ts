@@ -4,7 +4,7 @@ import { createRouter, createMemoryHistory, type Router } from 'vue-router'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import BrandCreateView from './BrandCreateView.vue'
 import { brandsApi } from '@/features/brands/api'
-import type { BrandScanResult } from '../types'
+import type { BrandScanResult, Brand, ManagedBrandService } from '../types'
 
 vi.mock('@/features/brands/api', () => ({
   brandsApi: {
@@ -16,6 +16,10 @@ vi.mock('@/features/brands/api', () => ({
     listIndustries: vi.fn(),
     scanWebsite: vi.fn(),
     listServices: vi.fn(),
+    listManagedServices: vi.fn(),
+    createManagedService: vi.fn(),
+    updateManagedService: vi.fn(),
+    deleteManagedService: vi.fn(),
     listAssets: vi.fn().mockResolvedValue({ data: [] }),
     listSocialMedia: vi.fn().mockResolvedValue({ data: [] }),
     uploadAsset: vi.fn(),
@@ -210,5 +214,141 @@ describe('BrandCreateView — website auto-scan (F18)', () => {
       location: 'Dubai, UAE',
       brand_color: '#EC4899',
     })
+  })
+})
+
+function buildExistingBrand(): Brand {
+  return {
+    brand_uuid: 'b1',
+    website_url: 'https://lumen.test',
+    company_name: 'Lumen Skincare',
+    selected_industry: { industry_uuid: 'ind-1', name: 'Beauty' },
+    selected_industry_id: 'ind-1',
+    location: 'Dubai, UAE',
+    brand_color: '#EC4899',
+    created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-02T00:00:00Z',
+  }
+}
+
+function buildManagedService(overrides: Partial<ManagedBrandService> = {}): ManagedBrandService {
+  return {
+    service_uuid: 'svc-1',
+    name: 'Facials',
+    source: 'scraped',
+    created_at: '2026-01-01T00:00:00Z',
+    ...overrides,
+  }
+}
+
+describe('BrandCreateView — edit mode (QA Fix 4)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', name: 'brand-create', component: BrandCreateView },
+        { path: '/brands', component: { template: '<div />' } },
+        { path: '/brands/:brandUuid/edit', name: 'brand-edit', component: BrandCreateView },
+      ],
+    })
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    })
+    vi.mocked(brandsApi.get).mockResolvedValue({ data: buildExistingBrand() })
+    vi.mocked(brandsApi.listIndustries).mockResolvedValue({
+      data: [
+        { industry_uuid: 'ind-1', name: 'Beauty' },
+        { industry_uuid: 'ind-2', name: 'Fitness' },
+      ],
+    })
+    vi.mocked(brandsApi.update).mockResolvedValue({ data: buildExistingBrand() })
+    vi.mocked(brandsApi.listManagedServices).mockResolvedValue({
+      data: {
+        success: true,
+        services: [
+          buildManagedService({ service_uuid: 'svc-1', name: 'Facials', source: 'scraped' }),
+          buildManagedService({ service_uuid: 'svc-2', name: 'Consultation', source: 'manual' }),
+        ],
+      },
+    })
+    vi.mocked(brandsApi.createManagedService).mockResolvedValue({
+      data: { success: true, service: buildManagedService({ service_uuid: 'svc-3', name: 'Teeth Whitening', source: 'manual' }) },
+    })
+  })
+
+  async function mountEditView() {
+    await router.push('/brands/b1/edit')
+    const wrapper = mount(BrandCreateView, {
+      global: {
+        plugins: [router, [VueQueryPlugin, { queryClient }]],
+        stubs: {
+          Topbar: { props: ['title', 'subtitle'], template: '<header><div data-testid="page-title">{{ title }}</div><div data-testid="page-subtitle">{{ subtitle }}</div></header>' },
+        },
+      },
+    })
+    await flushPromises()
+    return wrapper
+  }
+
+  it('labels the page "Edit Brand" instead of "Create Brand"', async () => {
+    const wrapper = await mountEditView()
+
+    expect(wrapper.find('[data-testid="page-title"]').text()).toBe('Edit Brand')
+    expect(wrapper.find('[data-testid="page-title"]').text()).not.toBe('Create Brand')
+  })
+
+  it('labels the final action "Save Changes" in edit mode', async () => {
+    const wrapper = await mountEditView()
+
+    await wrapper.find('[data-loc="brands.create.continue-btn"]').trigger('click')
+    await wrapper.find('[data-loc="brands.create.continue-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-loc="brands.create.start-btn"]').text()).toContain('Save Changes')
+  })
+
+  it('lists managed services with name and source badge', async () => {
+    const wrapper = await mountEditView()
+
+    const items = wrapper.findAll('[data-testid="brand-service-item"]')
+    expect(items.length).toBe(2)
+    expect(items[0].find('[data-testid="brand-service-name"]').text()).toBe('Facials')
+    expect(items[0].find('[data-testid="brand-service-source"]').text()).toBe('Scanned')
+    expect(items[1].find('[data-testid="brand-service-name"]').text()).toBe('Consultation')
+    expect(items[1].find('[data-testid="brand-service-source"]').text()).toBe('Manual')
+  })
+
+  it('POSTs the trimmed name when adding a service', async () => {
+    const wrapper = await mountEditView()
+
+    await wrapper.find('[data-testid="brand-service-add-input"]').setValue('  Teeth Whitening  ')
+    await wrapper.find('[data-testid="brand-service-add-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(brandsApi.createManagedService).toHaveBeenCalledWith('b1', { name: 'Teeth Whitening' })
+  })
+
+  it('calls the delete endpoint with the service uuid', async () => {
+    const wrapper = await mountEditView()
+
+    await wrapper.findAll('[data-testid="brand-service-delete-btn"]')[0].trigger('click')
+    await flushPromises()
+
+    expect(brandsApi.deleteManagedService).toHaveBeenCalledWith('b1', 'svc-1')
+  })
+
+  it('does not render the services manager in create mode', async () => {
+    await router.push('/')
+    const wrapper = mount(BrandCreateView, {
+      global: {
+        plugins: [router, [VueQueryPlugin, { queryClient }]],
+        stubs: { Topbar: true },
+      },
+    })
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="brand-services-manager"]').exists()).toBe(false)
+    expect(brandsApi.listManagedServices).not.toHaveBeenCalled()
   })
 })
