@@ -142,3 +142,61 @@ describe('PPCViabilityView — live update after run/refine (MOM)', () => {
     })
   })
 })
+
+// ── Expandable service cards (MOM 11.2) ──
+
+describe('PPCViabilityView — expandable service cards', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(campaignsApi.get).mockResolvedValue({
+      data: buildCampaign({
+        latest_steps: {
+          ppc_viability: {
+            status: 'completed',
+            response_payload: {
+              brand_trust_analysis: {
+                services_bpc_scores: [
+                  { service: 'Implants', bpc_score: 72, classification: 'Mixed', reasoning: 'Trust-driven consideration' },
+                ],
+              },
+              strategic_prioritization: {
+                ppc_blueprints: [
+                  {
+                    service: 'Implants',
+                    priority: '1',
+                    key_platforms: ['Google Ads', 'Meta'],
+                    campaign_objective: 'Lead generation',
+                    unique_value_proposition: 'Painless same-day implants',
+                    key_risk: 'Long consideration cycle',
+                  },
+                ],
+              },
+            },
+          },
+        },
+      } as unknown as Campaign),
+    } as never)
+  })
+
+  it('is collapsed by default and expands on click, revealing the payload details', async () => {
+    const wrapper = await mountView()
+
+    const card = wrapper.find('[data-testid="ppc-service-card"]')
+    expect(card.exists()).toBe(true)
+    expect(wrapper.find('[data-testid="ppc-service-details-0"]').exists()).toBe(false)
+
+    await wrapper.find('[data-testid="ppc-service-toggle-0"]').trigger('click')
+    const details = wrapper.find('[data-testid="ppc-service-details-0"]')
+    expect(details.exists()).toBe(true)
+    // Blueprint fields merged into the service card (defensive read).
+    expect(details.text()).toContain('Trust-driven consideration')
+    expect(details.text()).toContain('Google Ads, Meta')
+    expect(details.text()).toContain('Lead generation')
+    expect(details.text()).toContain('Painless same-day implants')
+    expect(details.text()).toContain('Long consideration cycle')
+
+    // Collapses again on a second click.
+    await wrapper.find('[data-testid="ppc-service-toggle-0"]').trigger('click')
+    expect(wrapper.find('[data-testid="ppc-service-details-0"]').exists()).toBe(false)
+  })
+})

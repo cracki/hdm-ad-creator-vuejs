@@ -1,4 +1,5 @@
 import { COUNTRIES } from '@/shared/data/countries'
+import type { TKey } from '@/shared/utils/translations'
 
 export type CampaignStatus = 'draft' | 'in_progress' | 'completed' | 'archived'
 export type CampaignStepType = 'segmentation' | 'ppc_viability' | 'funnel' | 'content_strategy' | 'meta_ads' | 'google_ads' | 'linkedin_ads'
@@ -386,6 +387,94 @@ export function areAllPlatformAdsComplete(campaign: Campaign): boolean {
     const flag = `${p}_ads_completed` as keyof Campaign
     return campaign[flag]
   })
+}
+
+// ── PPC service cards (MOM 11.2 — expandable details) ─────
+
+export interface PpcServiceDetailRow { labelKey: TKey; text: string }
+
+function ppcDetailValue(v: unknown): string | null {
+  if (v == null) return null
+  if (typeof v === 'string') return v.trim() ? v.trim() : null
+  if (typeof v === 'number') return String(v)
+  if (Array.isArray(v)) {
+    const items = v.filter((x): x is string => typeof x === 'string' && !!x.trim())
+    return items.length ? items.join(', ') : null
+  }
+  if (typeof v === 'object') {
+    const entries = Object.entries(v as Record<string, unknown>).map(
+      ([k, val]) => `${k}: ${typeof val === 'object' ? JSON.stringify(val) : String(val)}`,
+    )
+    return entries.length ? entries.join(' · ') : null
+  }
+  return null
+}
+
+/**
+ * Detail rows for an expandable PPC service card (MOM 11.2): reads whatever
+ * detail keys exist on the service object — the BPC-scores shape (`reasoning`,
+ * `classification`), the opportunity-ranking shape (`priority_level`) and the
+ * PPC-blueprint shape (`key_platforms`, `campaign_objective`, `key_risk`, …) —
+ * and returns only the ones carrying a usable value. Labels are localized by
+ * the caller via `t(row.labelKey)`.
+ */
+export function ppcServiceDetailRows(svc: Record<string, unknown> | null | undefined): PpcServiceDetailRow[] {
+  if (!svc || typeof svc !== 'object') return []
+  const rows: PpcServiceDetailRow[] = []
+  const push = (labelKey: TKey, ...values: unknown[]) => {
+    for (const v of values) {
+      const text = ppcDetailValue(v)
+      if (text) {
+        rows.push({ labelKey, text })
+        return
+      }
+    }
+  }
+  push('ppc.detail.priority', svc.priority_level, svc.priority)
+  push('ppc.detail.platforms', svc.key_platforms, svc.recommended_platforms, svc.platforms)
+  push('ppc.detail.objective', svc.campaign_objective, svc.objective)
+  push('ppc.detail.valueProp', svc.unique_value_proposition, svc.value_proposition)
+  push('ppc.detail.budget', svc.budget_allocation, svc.recommended_budget, svc.budget)
+  push('ppc.detail.reasoning', svc.reasoning, svc.rationale, svc.notes, svc.analysis)
+  push('ppc.detail.risk', svc.key_risk, svc.risk)
+  return rows
+}
+
+/** Whether a service card has anything to reveal when expanded. */
+export function hasPpcServiceDetails(svc: Record<string, unknown> | null | undefined): boolean {
+  if (!svc || typeof svc !== 'object') return false
+  if (typeof svc.description === 'string' && svc.description.trim()) return true
+  if (Array.isArray(svc.pros) && svc.pros.length) return true
+  if (Array.isArray(svc.cons) && svc.cons.length) return true
+  return ppcServiceDetailRows(svc).length > 0
+}
+
+/**
+ * Service list from a PPC viability payload: prefers the BPC scores, then the
+ * opportunity ranking, then any services-like list. Each row is enriched with
+ * its matching `ppc_blueprints` entry (joined by service name) so the
+ * expandable cards can surface platform / objective / risk details.
+ */
+export function ppcServiceList(data: Record<string, unknown> | null | undefined): Record<string, unknown>[] {
+  if (!data || typeof data !== 'object') return []
+  const d = data as Record<string, any>
+  const svcs = d.brand_trust_analysis?.services_bpc_scores
+    ?? d.strategic_prioritization?.ppc_opportunity_ranking
+    ?? d.services
+    ?? d.platforms
+    ?? d.recommendations
+    ?? []
+  const items: unknown[] = Array.isArray(svcs) ? svcs : []
+  const blueprints = d.strategic_prioritization?.ppc_blueprints
+  if (Array.isArray(blueprints) && blueprints.length) {
+    const byName = new Map(blueprints.map((b: any) => [b?.service ?? b?.name ?? '', b]))
+    return items.map((s) => {
+      const row = (s ?? {}) as Record<string, any>
+      const bp = byName.get(row.service ?? row.name ?? '')
+      return bp ? { ...bp, ...row } : row
+    })
+  }
+  return items.filter((s): s is Record<string, unknown> => !!s && typeof s === 'object')
 }
 
 export function getCampaignStepStatuses(campaign: Campaign): Record<CampaignStepType, 'completed' | 'pending'> {

@@ -302,6 +302,13 @@ export const translations = {
   'ppc.analyzingDesc': { en: 'Evaluating platform fit, cost estimates and competition.', ar: 'تقييم ملاءمة المنصة والتكاليف والمنافسة.', fa: 'ارزیابی تناسب پلتفرم، هزینه‌ها و رقابت.' },
   'ppc.servicesFound': { en: '{count} services analyzed', ar: '{count} خدمات تم تحليلها', fa: '{count} سرویس تحلیل شد' },
   'ppc.service': { en: 'Service', ar: 'خدمة', fa: 'سرویس' },
+  'ppc.detail.priority': { en: 'Priority', ar: 'الأولوية', fa: 'اولویت' },
+  'ppc.detail.platforms': { en: 'Key platforms', ar: 'المنصات الرئيسية', fa: 'پلتفرم‌های کلیدی' },
+  'ppc.detail.objective': { en: 'Campaign objective', ar: 'هدف الحملة', fa: 'هدف کمپین' },
+  'ppc.detail.valueProp': { en: 'Value proposition', ar: 'عرض القيمة', fa: 'ارزش پیشنهادی' },
+  'ppc.detail.budget': { en: 'Budget allocation', ar: 'توزيع الميزانية', fa: 'تخصیص بودجه' },
+  'ppc.detail.reasoning': { en: 'Reasoning', ar: 'التفسير', fa: 'استدلال' },
+  'ppc.detail.risk': { en: 'Key risk', ar: 'المخاطرة الرئيسية', fa: 'ریسک اصلی' },
   'ppc.alreadyCompletedDesc': { en: 'PPC analysis was completed previously. Re-run to update.', ar: 'تم تحليل PPC مسبقاً. أعد التشغيل للتحديث.', fa: 'تحلیل PPC قبلاً تکمیل شده. برای به‌روزرسانی مجدد اجرا کن.' },
 
   // Funnel
