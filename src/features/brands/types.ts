@@ -83,6 +83,35 @@ export interface BrandServicesResponse {
   services: BrandService[]
 }
 
+// ---------- Managed brand services (/brands/{uuid}/services/manage/) ----------
+
+export type ManagedBrandServiceSource = BrandServiceSource | 'manual'
+
+export interface ManagedBrandService {
+  service_uuid: string
+  name: string
+  source: ManagedBrandServiceSource
+  created_at?: string
+}
+
+export interface ManagedBrandServicesResponse {
+  success: boolean
+  services: ManagedBrandService[]
+}
+
+export interface ManagedBrandServiceResult {
+  success: boolean
+  service: ManagedBrandService
+}
+
+export interface CreateManagedServicePayload {
+  name: string
+}
+
+export interface UpdateManagedServicePayload {
+  name: string
+}
+
 export interface BrandAsset {
   asset_uuid: string
   brand: string

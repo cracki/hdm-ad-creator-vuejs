@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import Topbar from '@/layout/Topbar.vue'
+import BrandServicesManager from '../components/BrandServicesManager.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { useToast } from '@/shared/composables/useToast'
 import { useIndustries, useCreateBrand, useUpdateBrand, useBrand, useBrandAssets, useBrandSocialMedia, useScanWebsite, useStartAnalysis } from '@/features/brands/queries'
@@ -328,7 +329,7 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <Topbar :title="t('newbrand.title')" :subtitle="t('newbrand.subtitle')" />
+  <Topbar :title="isEdit ? t('newbrand.editTitle') : t('newbrand.title')" :subtitle="isEdit ? t('newbrand.editSubtitle') : t('newbrand.subtitle')" />
   <main class="flex-1 p-4 sm:p-6 overflow-y-auto">
     <div class="max-w-3xl mx-auto space-y-8">
       <!-- Stepper -->
@@ -482,6 +483,9 @@ async function handleSubmit() {
               </div>
             </label>
           </div>
+
+          <!-- Services management (edit mode only) -->
+          <BrandServicesManager v-if="isEdit" :brand-uuid="brandUuid" />
         </div>
 
         <!-- Step 2: Identity -->
@@ -578,7 +582,8 @@ async function handleSubmit() {
 
           <div v-if="error" class="text-sm text-destructive">{{ error }}</div>
 
-          <div class="rounded-xl border border-primary/30 bg-primary/[0.04] p-4 flex items-start gap-3">
+          <!-- Analysis launch hint only applies to brand creation -->
+          <div v-if="!isEdit" class="rounded-xl border border-primary/30 bg-primary/[0.04] p-4 flex items-start gap-3">
             <Sparkles class="h-4 w-4 text-primary mt-0.5" />
             <div class="text-xs text-muted-foreground">
               <span class="text-foreground font-medium">{{ t('newbrand.next') }}</span> {{ t('newbrand.nextDesc') }}
@@ -612,7 +617,7 @@ async function handleSubmit() {
           data-loc="brands.create.start-btn"
           class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5 disabled:opacity-60"
         >
-          <Sparkles class="h-3.5 w-3.5" /> {{ loading ? '...' : t('newbrand.start') }}
+          <Check class="h-3.5 w-3.5" /> {{ loading ? '...' : isEdit ? t('newbrand.save') : t('newbrand.start') }}
         </button>
       </div>
     </div>

@@ -4,11 +4,12 @@ import { useRoute, useRouter } from 'vue-router'
 import { Download, ArrowLeft, Loader2, Check, AlertCircle, Wallet, Sparkles } from 'lucide-vue-next'
 import StepExportButton from '@/shared/components/StepExportButton.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
+import ImageLightbox from '@/shared/components/ImageLightbox.vue'
 import Topbar from '@/layout/Topbar.vue'
 import AdReviewCard from '../components/AdReviewCard.vue'
 import { useI18n, languageNativeLabel } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
-import { useCampaign, useCampaignAds, useCompleteCampaign } from '../queries'
+import { useCampaign, useCampaignAds, useCampaignVisuals, useCompleteCampaign } from '../queries'
 import { operationManager } from '@/infrastructure/operations/operationManager'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { exportReview } from '@/shared/utils/exportStep'
@@ -25,6 +26,28 @@ const { data: campaign, isLoading } = useCampaign(campaignUuid)
 const { data: adsData } = useCampaignAds(campaignUuid)
 
 const ads = computed<CampaignAd[]>(() => adsData.value?.ads ?? [])
+
+// Persisted visuals from the visuals step (QA photo 28): review showed only
+// text. campaign_ad_uuid → latest successful image_url, rendered as a
+// thumbnail on each ad card.
+const { data: visualsData } = useCampaignVisuals(campaignUuid)
+
+const visualByAd = computed<Map<string, string>>(() => {
+  const map = new Map<string, string>()
+  const successful = (visualsData.value?.results ?? [])
+    .filter((v) => v.success && v.image_url)
+    .sort((a, b) => (a.generated_at ?? '').localeCompare(b.generated_at ?? ''))
+  for (const v of successful) {
+    if (v.image_url) map.set(v.campaign_ad_uuid, v.image_url)
+  }
+  return map
+})
+
+const lightbox = ref<{ src: string; caption: string } | null>(null)
+
+function openLightbox(src: string, caption: string) {
+  lightbox.value = { src, caption }
+}
 
 function adPlatformLabel(p: string) {
   const map: Record<string, string> = { meta: 'Meta', google: 'Google', linkedin: 'LinkedIn' }
@@ -266,6 +289,21 @@ async function handleReviewExport(format: 'csv' | 'pdf' | 'pptx') {
               :campaign-uuid="campaignUuid"
             >
               <div>
+                <button
+                  v-if="visualByAd.get(ad.campaign_ad_uuid)"
+                  type="button"
+                  class="block w-full mb-3 rounded-lg overflow-hidden cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                  :aria-label="t('visual.preview')"
+                  data-testid="review-ad-visual"
+                  @click="openLightbox(visualByAd.get(ad.campaign_ad_uuid)!, getAdCopy(ad).headline)"
+                >
+                  <img
+                    :src="visualByAd.get(ad.campaign_ad_uuid)"
+                    :alt="getAdCopy(ad).headline || t('visual.preview')"
+                    loading="lazy"
+                    class="w-full aspect-video object-contain bg-overlay-subtle"
+                  />
+                </button>
                 <div class="flex flex-wrap items-center gap-1.5 mb-3">
                   <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-blue-500/15 text-blue-300">{{ adPlatformLabel(ad.platform) }}</span>
                   <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-overlay-light text-muted-foreground">{{ ad.funnel_stage }}</span>
@@ -330,4 +368,11 @@ async function handleReviewExport(format: 'csv' | 'pdf' | 'pptx') {
       </template>
     </div>
   </main>
+
+  <ImageLightbox
+    :src="lightbox?.src ?? null"
+    :alt="lightbox?.caption"
+    :caption="lightbox?.caption"
+    @close="lightbox = null"
+  />
 </template>

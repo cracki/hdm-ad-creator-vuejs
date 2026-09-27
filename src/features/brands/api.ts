@@ -1,5 +1,5 @@
 import apiClient from '@/shared/api/client'
-import type { Brand, BrandCreatePayload, Industry, BrandAsset, BrandSocialMedia, AnalysisRun, AnalysisStartPayload, BrandScanPayload, BrandScanResult, BrandServicesResponse } from './types'
+import type { Brand, BrandCreatePayload, Industry, BrandAsset, BrandSocialMedia, AnalysisRun, AnalysisStartPayload, BrandScanPayload, BrandScanResult, BrandServicesResponse, ManagedBrandServicesResponse, ManagedBrandServiceResult, CreateManagedServicePayload, UpdateManagedServicePayload } from './types'
 
 type SignalConfig = { signal?: AbortSignal }
 
@@ -34,6 +34,24 @@ export const brandsApi = {
 
   listServices(brandUuid: string, config?: SignalConfig): Promise<{ data: BrandServicesResponse }> {
     return apiClient.get(`/brands/${brandUuid}/services/`, config)
+  },
+
+  // Managed services — parallel backend contract (QA Fix 4): the merged list is
+  // read via listServices(); these manage the editable entries.
+  listManagedServices(brandUuid: string, config?: SignalConfig): Promise<{ data: ManagedBrandServicesResponse }> {
+    return apiClient.get(`/brands/${brandUuid}/services/manage/`, config)
+  },
+
+  createManagedService(brandUuid: string, payload: CreateManagedServicePayload): Promise<{ data: ManagedBrandServiceResult }> {
+    return apiClient.post(`/brands/${brandUuid}/services/manage/`, payload)
+  },
+
+  updateManagedService(brandUuid: string, serviceUuid: string, payload: UpdateManagedServicePayload): Promise<{ data: ManagedBrandServiceResult }> {
+    return apiClient.patch(`/brands/${brandUuid}/services/manage/${serviceUuid}/`, payload)
+  },
+
+  deleteManagedService(brandUuid: string, serviceUuid: string): Promise<void> {
+    return apiClient.delete(`/brands/${brandUuid}/services/manage/${serviceUuid}/`)
   },
 
   listAssets(brandUuid: string, config?: SignalConfig): Promise<{ data: BrandAsset[] }> {

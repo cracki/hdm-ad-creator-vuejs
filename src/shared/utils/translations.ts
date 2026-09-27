@@ -36,6 +36,21 @@ export const translations = {
   'brands.delete': { en: 'Delete', ar: 'حذف', fa: 'حذف' },
   'brands.confirmDelete': { en: 'Are you sure you want to delete this brand?', ar: 'هل أنت متأكد من حذف هذه العلامة؟', fa: 'آیا مطمئن هستید که می‌خواهید این برند را حذف کنید؟' },
   'brands.campaigns': { en: 'campaigns', ar: 'حملات', fa: 'کمپین' },
+  'brandDetail.services': { en: 'Services', ar: 'الخدمات', fa: 'خدمات' },
+
+  // Managed services (brand edit)
+  'brandServices.title': { en: 'Services', ar: 'الخدمات', fa: 'خدمات' },
+  'brandServices.note': { en: 'Scanned services update automatically on the next re-analysis; services you add here are kept.', ar: 'تتحدّث الخدمات الممسوحة تلقائياً عند إعادة التحليل؛ والخدمات التي تضيفها هنا تبقى.', fa: 'خدمات اسکن‌شده در تحلیل مجدد بعدی به‌روز می‌شوند؛ خدمت‌هایی که اینجا اضافه می‌کنید حفظ می‌شوند.' },
+  'brandServices.addPlaceholder': { en: 'Add a service…', ar: 'أضف خدمة…', fa: 'افزودن خدمت…' },
+  'brandServices.add': { en: 'Add', ar: 'إضافة', fa: 'افزودن' },
+  'brandServices.delete': { en: 'Remove service', ar: 'إزالة خدمة', fa: 'حذف خدمت' },
+  'brandServices.empty': { en: 'No services yet — add the services this brand offers.', ar: 'لا توجد خدمات بعد — أضف خدمات هذه العلامة.', fa: 'هنوز خدمتی نیست — خدمت‌هایی که این برند ارائه می‌دهد را اضافه کنید.' },
+  'brandServices.addFailed': { en: 'Could not add the service.', ar: 'تعذّت إضافة الخدمة.', fa: 'افزودن خدمت ناموفق بود.' },
+  'brandServices.deleteFailed': { en: 'Could not remove the service.', ar: 'تعذّرت إزالة الخدمة.', fa: 'حذف خدمت ناموفق بود.' },
+  'brandServices.source.scraped': { en: 'Scanned', ar: 'ممسوح', fa: 'اسکن‌شده' },
+  'brandServices.source.brandAnalysis': { en: 'Analysis', ar: 'تحليل', fa: 'تحلیل' },
+  'brandServices.source.ppcViability': { en: 'PPC', ar: 'PPC', fa: 'PPC' },
+  'brandServices.source.manual': { en: 'Manual', ar: 'يدوي', fa: 'دستی' },
 
   // Industries
   'ind.beauty': { en: 'Beauty', ar: 'تجميل', fa: 'زیبایی' },
@@ -51,6 +66,9 @@ export const translations = {
   // Brand wizard
   'newbrand.title': { en: 'Create Brand', ar: 'إنشاء علامة', fa: 'ساخت برند' },
   'newbrand.subtitle': { en: '3 steps · auto-saves as you go', ar: '٣ خطوات · حفظ تلقائي', fa: '۳ گام · ذخیره خودکار' },
+  'newbrand.editTitle': { en: 'Edit Brand', ar: 'تعديل العلامة', fa: 'ویرایش برند' },
+  'newbrand.editSubtitle': { en: 'Update your brand details', ar: 'حدّث تفاصيل علامتك', fa: 'به‌روزرسانی جزئیات برند' },
+  'newbrand.save': { en: 'Save Changes', ar: 'حفظ التغييرات', fa: 'ذخیره تغییرات' },
   'newbrand.s1.label': { en: 'Basics', ar: 'الأساسيات', fa: 'اطلاعات پایه' },
   'newbrand.s1.desc': { en: 'Tell us where to look', ar: 'أخبرنا أين نبحث', fa: 'بگو کجا را جستجو کنیم' },
   'newbrand.s2.label': { en: 'Identity', ar: 'الهوية', fa: 'هویت' },
@@ -499,6 +517,7 @@ export const translations = {
   'visual.adsCount': { en: '{count} ads selected', ar: '{count} إعلانات محددة', fa: '{count} آگهی انتخاب شده' },
   'visual.statusCompleted': { en: 'Ready', ar: 'جاهز', fa: 'آماده' },
   'visual.statusFailed': { en: 'Failed', ar: 'فشل', fa: 'ناموفق' },
+  'visual.preview': { en: 'Preview image', ar: 'معاينة الصورة', fa: 'پیش‌نمایش تصویر' },
 
   // Review
   'review.title': { en: 'Review & Complete', ar: 'مراجعة وإكمال', fa: 'مرور و تکمیل' },
@@ -1429,6 +1448,7 @@ export const translations = {
   'opportunities.topResults': { en: 'Top results', ar: 'أفضل النتائج', fa: 'بهترین نتایج' },
   'opportunities.competingDomains': { en: 'Competing domains', ar: 'النطاقات المنافسة', fa: 'دامین‌های رقیب' },
   'opportunities.topPerforming': { en: 'Top Performing Content', ar: 'المحتوى الأفضل أداءً', fa: 'محتوای برتر' },
+  'opportunities.emptyState': { en: 'No content opportunities were generated for this analysis.', ar: 'لم يتم توليد فرص محتوى لهذا التحليل.', fa: 'هیچ فرصت محتوایی برای این تحلیل تولید نشد.' },
   'opportunities.byType': { en: 'Content by Type', ar: 'المحتوى حسب النوع', fa: 'محتوا بر اساس نوع' },
   'opportunities.topDomains': { en: 'Top Competing Domains', ar: 'النطاقات المنافسة العليا', fa: 'دامین‌های رقیب برتر' },
   'opportunities.content': { en: 'content', ar: 'محتوى', fa: 'محتوا' },
