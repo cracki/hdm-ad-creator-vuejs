@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useQueryClient } from '@tanstack/vue-query'
 import { Target, ArrowLeft, ArrowRight, RefreshCw, Shield, TrendingUp, Check } from 'lucide-vue-next'
 import StepExportButton from '@/shared/components/StepExportButton.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
@@ -19,6 +20,7 @@ import { exportPPCViability } from '@/shared/utils/exportStep'
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
+const queryClient = useQueryClient()
 
 const campaignUuid = computed(() => route.params.campaignUuid as string)
 const { data: campaign } = useCampaign(campaignUuid)
@@ -86,10 +88,17 @@ async function runPPC(feedback?: string | Event) {
   if (!isPrereqMet.value || !operationManager.canStart(opKey.value)) return
   operationManager.start(opKey.value)
   try {
-    await run(async () => {
+    const res = await run(async () => {
       const { campaignsApi } = await import('../api')
       return (await campaignsApi.runPPCViability(campaignUuid.value, { refinement_feedback: refinementFeedback })).data
     })
+    // Keep the page live after a run/refine (MOM): refetch the campaign so
+    // latest_steps / completion flags update without a manual refresh. The
+    // displayed result prefers the fresh run response above, then latest_steps.
+    if (res) {
+      queryClient.invalidateQueries({ queryKey: ['campaigns', campaignUuid] })
+      queryClient.invalidateQueries({ queryKey: ['campaigns', campaignUuid, 'steps'] })
+    }
   } finally {
     operationManager.finish(opKey.value)
   }

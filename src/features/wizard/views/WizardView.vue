@@ -79,6 +79,7 @@ watch(campaign, (c) => {
 
 function onStepCompleted() {
   queryClient.invalidateQueries({ queryKey: ['campaigns', campaignUuid] })
+  queryClient.invalidateQueries({ queryKey: ['campaigns', campaignUuid, 'steps'] })
 }
 
 function goToStep(n: number) {

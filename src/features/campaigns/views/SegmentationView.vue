@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useQueryClient } from '@tanstack/vue-query'
 import { Brain, ArrowLeft, ArrowRight, ShoppingBag, RefreshCw, Check } from 'lucide-vue-next'
 import SegmentDeepResearchRenderer from '@/shared/components/renderers/SegmentDeepResearchRenderer.vue'
 import StepExportButton from '@/shared/components/StepExportButton.vue'
@@ -24,6 +25,7 @@ const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
 const { normalize } = useNormalizeResponse()
+const queryClient = useQueryClient()
 
 const campaignUuid = computed(() => route.params.campaignUuid as string)
 const { data: campaign, isLoading: campaignLoading } = useCampaign(campaignUuid)
@@ -157,7 +159,7 @@ async function runSegmentation(feedback?: string | Event) {
   if (!operationManager.canStart(opKey.value)) return
   operationManager.start(opKey.value)
   try {
-    await run(async () => {
+    const runResult = await run(async () => {
       const { campaignsApi } = await import('../api')
       const res = await campaignsApi.runSegmentation(campaignUuid.value, {
         business_type: businessType.value || undefined,
@@ -188,6 +190,13 @@ async function runSegmentation(feedback?: string | Event) {
       }
       return res.data
     })
+    // Keep the page live after a run/refine (MOM): refetch the campaign so
+    // latest_steps / completion flags update without a manual refresh. The
+    // displayed result prefers the fresh run response above, then latest_steps.
+    if (runResult) {
+      queryClient.invalidateQueries({ queryKey: ['campaigns', campaignUuid] })
+      queryClient.invalidateQueries({ queryKey: ['campaigns', campaignUuid, 'steps'] })
+    }
   } finally {
     operationManager.finish(opKey.value)
   }
