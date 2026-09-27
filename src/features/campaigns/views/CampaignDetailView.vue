@@ -675,6 +675,7 @@ function getStepStatusLabel(step: StepDef, idx: number): string {
           <div
             v-for="(step, idx) in STEPS"
             :key="step.routeSuffix"
+            :data-tour="idx === STEPS.findIndex(s => !isStepDone(s)) ? 'campaigns.detail.continue-btn' : undefined"
             :class="[
               'surface-card p-3 sm:p-4 flex items-center gap-3 transition',
               canNavigate(step) ? 'hover:border-primary/40 cursor-pointer' : 'opacity-50 cursor-not-allowed',

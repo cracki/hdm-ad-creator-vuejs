@@ -91,13 +91,29 @@ const totalSteps = computed(() => activeSteps.value.length)
 
 // --- Tour lifecycle ---
 
+/** True when a CSS selector currently matches an element in the DOM. */
+export function tourTargetExists(selector: string): boolean {
+  try {
+    return !!document.querySelector(selector)
+  } catch {
+    return false
+  }
+}
+
 function registerTour(def: TourDefinition) {
   registry.set(def.id, def)
 }
 
 function unregisterTour(id: string) {
-  if (activeTourId.value === id) dismiss()
+  if (activeTourId.value === id) resetActiveTour()
   registry.delete(id)
+}
+
+/** Stop the active tour WITHOUT persisting completion (internal resets only). */
+function resetActiveTour() {
+  isActive.value = false
+  activeTourId.value = null
+  currentStepIndex.value = 0
 }
 
 function startTour(tourId: string) {
@@ -111,7 +127,7 @@ function startTour(tourId: string) {
   // If all steps are hidden, silently dismiss without marking completed
   const firstVisible = findNextVisibleStep(0, 1)
   if (firstVisible === -1) {
-    dismiss()
+    resetActiveTour()
     return
   }
   currentStepIndex.value = firstVisible
@@ -134,17 +150,19 @@ function findNextVisibleStep(startIdx: number, direction: 1 | -1): number {
 /** User completed all steps — mark as done */
 function finish() {
   const tourId = activeTourId.value
-  isActive.value = false
-  activeTourId.value = null
-  currentStepIndex.value = 0
+  resetActiveTour()
   if (tourId) markTourCompleted(tourId)
 }
 
-/** User dismissed (X button) or navigated away — do NOT mark completed */
+/**
+ * User dismissed the tour (X button, backdrop click, skip) — QA fix 4:
+ * persist completion in the same store finish() uses, otherwise the tour
+ * re-opens on every page load.
+ */
 function dismiss() {
-  isActive.value = false
-  activeTourId.value = null
-  currentStepIndex.value = 0
+  const tourId = activeTourId.value
+  resetActiveTour()
+  if (tourId) markTourCompleted(tourId)
 }
 
 function next() {

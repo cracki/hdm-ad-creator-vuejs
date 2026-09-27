@@ -37,7 +37,23 @@ async function updatePosition() {
   if (!currentStep.value || !isActive.value) return
 
   const el = await waitForElement(currentStep.value)
-  if (!el || !isActive.value) return
+  if (!isActive.value) return
+
+  if (!el) {
+    // Target not in the DOM (conditionally rendered section, hidden form…).
+    // Never keep the previous step's highlight — that made the tooltip point
+    // at the wrong element (QA fix 4). Clear the ring/cutout and pin the
+    // tooltip top-center instead.
+    const fallbackWidth = window.innerWidth < 768 ? window.innerWidth - 16 : 320
+    highlightRect.value = { top: -20, left: -20, width: 0, height: 0 }
+    cutoutPath.value = 'M0,0 L0,0 Z'
+    tooltipStyle.value = {
+      top: '24px',
+      left: `${Math.max(8, window.innerWidth / 2 - fallbackWidth / 2)}px`,
+      width: `${fallbackWidth}px`,
+    }
+    return
+  }
 
   // Only scroll on step change, not on re-renders
   if (prevStepIndex.value !== currentStepIndex.value) {
@@ -134,8 +150,8 @@ onUnmounted(() => {
 <template>
   <Teleport to="body">
     <div v-if="isActive" class="fixed inset-0 z-[9999]">
-      <!-- SVG cutout backdrop -->
-      <svg class="absolute inset-0 w-full h-full" :viewBox="`0 0 ${vpWidth} ${vpHeight}`" style="pointer-events: auto">
+      <!-- SVG cutout backdrop — clicking it dismisses (and persists) the tour -->
+      <svg class="absolute inset-0 w-full h-full" :viewBox="`0 0 ${vpWidth} ${vpHeight}`" style="pointer-events: auto" @click="handleDismiss">
         <defs>
           <clipPath id="tour-cutout">
             <path :d="cutoutPath" clip-rule="evenodd" />
