@@ -1612,6 +1612,12 @@ export const translations = {
   'guided.dashboard.step2Desc': { en: 'AI guides you through each step', ar: 'الذكاء الاصطناعي يرشدك في كل خطوة', fa: 'هوش مصنوعی شما را در هر مرحله راهنمایی می‌کند' },
   'guided.dashboard.step3': { en: 'Generate your first ad', ar: 'أنشئ أول إعلان', fa: 'اولین آگهی خود را تولید کنید' },
   'guided.dashboard.step3Desc': { en: 'Production-ready creatives in seconds', ar: 'إعلانات جاهزة للإنتاج في ثوانٍ', fa: 'خلاقیت آماده تولید در چند ثانیه' },
+  // ---------- Segmentation deep research: language patterns (QA fix 3) ----------
+  'segResearch.lang.title': { en: 'Language patterns', ar: 'أنماط اللغة', fa: 'الگوهای زبانی' },
+  'segResearch.lang.use': { en: 'Use', ar: 'استخدم', fa: 'استفاده کن' },
+  'segResearch.lang.avoid': { en: 'Avoid', ar: 'تجنّب', fa: 'اجتناب کن' },
+  'segResearch.lang.hint': { en: 'Terms extracted from audience research — review them against your brand guidelines before use.', ar: 'مصطلحات مستخرجة من بحث الجمهور — راجعها مقابل إرشادات علامتك قبل الاستخدام.', fa: 'عبارات استخراج‌شده از تحقیق مخاطب — قبل از استفاده، آنها را با راهنمای برند خود بسنجید.' },
+
   // ---------- Analysis payload key labels (QA fix 1: humanized renderer labels) ----------
   'payload.company_name': { en: 'Company', ar: 'الشركة', fa: 'شرکت' },
   'payload.industry': { en: 'Industry', ar: 'الصناعة', fa: 'صنعت' },
