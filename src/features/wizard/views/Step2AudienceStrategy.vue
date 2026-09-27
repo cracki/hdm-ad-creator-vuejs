@@ -20,6 +20,33 @@ const { t } = useI18n()
 const businessType = ref('')
 const productDescription = ref('')
 
+// Prefill from brand analysis (MOM 10.1): business type from the brand's
+// industry, product description from the detected services. Only fills
+// untouched, still-empty fields so manual input is never clobbered (mirrors
+// BrandCreateView's shouldFill); the hint disappears once the user edits.
+const businessTypeTouched = ref(false)
+const productDescTouched = ref(false)
+const businessTypeFromAnalysis = ref(false)
+const productDescFromAnalysis = ref(false)
+
+watch(
+  () => props.campaign,
+  (c) => {
+    if (!c) return
+    const industry = c.brand?.selected_industry?.name
+    if (industry && !businessTypeTouched.value && !businessType.value.trim()) {
+      businessType.value = industry
+      businessTypeFromAnalysis.value = true
+    }
+    const services = c.brand_context?.available ? (c.brand_context.services ?? []) : []
+    if (services.length && !productDescTouched.value && !productDescription.value.trim()) {
+      productDescription.value = services.slice(0, 3).join(', ')
+      productDescFromAnalysis.value = true
+    }
+  },
+  { immediate: true },
+)
+
 // Structured target market (F19): country/city via CountryCitySelect, seeded
 // from a previous run's context_payload.target_market or best-effort from the
 // brand's free-text location. The legacy location is composed "City, Country".
@@ -130,10 +157,17 @@ async function runSegmentation(feedback?: string | Event) {
     <!-- Input form -->
     <div v-if="!stepData && !loading && !isAlreadyCompleted" class="surface-card p-5 space-y-4">
       <div>
-        <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('seg.businessType') }}</label>
+        <div class="flex items-center gap-2 mb-1.5">
+          <label class="text-[11px] uppercase tracking-wider text-muted-foreground">{{ t('seg.businessType') }}</label>
+          <span
+            v-if="businessTypeFromAnalysis && !businessTypeTouched"
+            data-testid="business-type-analysis-hint"
+            class="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary"
+          >{{ t('seg.fromBrandAnalysis') }}</span>
+        </div>
         <div class="flex items-center gap-2 h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60">
           <ShoppingBag class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-          <input v-model="businessType" :placeholder="t('seg.businessTypeHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" />
+          <input v-model="businessType" :placeholder="t('seg.businessTypeHint')" class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60" @input="businessTypeTouched = true" />
         </div>
       </div>
       <div>
@@ -141,8 +175,15 @@ async function runSegmentation(feedback?: string | Event) {
         <CountryCitySelect v-model="targetMarket" />
       </div>
       <div>
-        <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('seg.productDesc') }}</label>
-        <textarea v-model="productDescription" :placeholder="t('seg.productDescHint')" rows="3" class="w-full px-3 py-2 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60 resize-none" />
+        <div class="flex items-center gap-2 mb-1.5">
+          <label class="text-[11px] uppercase tracking-wider text-muted-foreground">{{ t('seg.productDesc') }}</label>
+          <span
+            v-if="productDescFromAnalysis && !productDescTouched"
+            data-testid="product-desc-analysis-hint"
+            class="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary"
+          >{{ t('seg.fromBrandAnalysis') }}</span>
+        </div>
+        <textarea v-model="productDescription" :placeholder="t('seg.productDescHint')" rows="3" class="w-full px-3 py-2 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60 resize-none" @input="productDescTouched = true" />
       </div>
       <button class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5" @click="runSegmentation">
         <Users class="h-3.5 w-3.5" /> {{ t('seg.runSegmentation') }}

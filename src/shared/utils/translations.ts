@@ -263,6 +263,7 @@ export const translations = {
   'seg.targetMarket': { en: 'Target market', ar: 'السوق المستهدف', fa: 'بازار هدف' },
   'seg.productDesc': { en: 'Product description', ar: 'وصف المنتج', fa: 'توصیف محصول' },
   'seg.productDescHint': { en: 'Describe your product or service…', ar: 'صف منتجك أو خدمتك…', fa: 'محصول یا خدماتت را توصیف کن…' },
+  'seg.fromBrandAnalysis': { en: 'From brand analysis', ar: 'من تحليل العلامة', fa: 'از تحلیل برند' },
   'seg.runSegmentation': { en: 'Run Segmentation', ar: 'تشغيل التجزئة', fa: 'اجرای بخش‌بندی' },
   'seg.analyzing': { en: 'Analyzing your audience…', ar: 'جارٍ تحليل جمهورك…', fa: 'در حال تحلیل مخاطبت…' },
   'seg.analyzingDesc': { en: 'Building personas, identifying pain points and goals.', ar: 'بناء الشخصيات، تحديد نقاط الألم والأهداف.', fa: 'ساخت پرسوناها، شناسایی نقاط درد و اهداف.' },

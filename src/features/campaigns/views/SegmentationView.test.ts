@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { createRouter, createMemoryHistory, type Router } from 'vue-router'
-import { ref } from 'vue'
+import { ref, type Ref } from 'vue'
 import { VueQueryPlugin } from '@tanstack/vue-query'
 import SegmentationView from './SegmentationView.vue'
 import type { Campaign } from '../types'
@@ -64,6 +64,14 @@ function buildCampaign(overrides: Partial<Campaign> = {}): Campaign {
 function mockCampaign(campaign: Campaign) {
   vi.mocked(useCampaign).mockReturnValue({
     data: ref(campaign),
+    isLoading: ref(false),
+  } as never)
+}
+
+/** Variant whose campaign ref the test controls (e.g. loads after typing). */
+function mockCampaignRef(campaignRef: Ref<Campaign | null>) {
+  vi.mocked(useCampaign).mockReturnValue({
+    data: campaignRef,
     isLoading: ref(false),
   } as never)
 }
@@ -270,6 +278,82 @@ describe('SegmentationView — persona targeting (MOM)', () => {
     await rerun!.trigger('click')
     await flushPromises()
     expect(vi.mocked(campaignsApi.runSegmentation).mock.calls[1][1]?.personas).toEqual([])
+  })
+})
+
+// ── Prefill from brand analysis (MOM 10.1 / باگ۱۰) ──
+
+describe('SegmentationView — prefill from brand analysis', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(campaignsApi.runSegmentation).mockResolvedValue({
+      data: { step: { response_payload: {} } },
+    } as never)
+    vi.mocked(campaignsApi.update).mockResolvedValue({ data: {} } as never)
+  })
+
+  it('prefills business type from the brand industry and product description from services', async () => {
+    mockCampaign(
+      buildCampaign({
+        brand: {
+          brand_uuid: 'b1',
+          company_name: 'Lumen Dental',
+          website_url: 'https://lumen.test',
+          location: null,
+          selected_industry: { industry_uuid: 'i1', name: 'Dental Care' },
+        },
+        brand_context: { available: true, services: ['Implants', 'Whitening', 'Orthodontics', 'Surgery'] },
+      }),
+    )
+    const wrapper = await mountView()
+
+    const businessType = wrapper.find('[data-loc="campaigns.segmentation.business-type-input"]').element as HTMLInputElement
+    expect(businessType.value).toBe('Dental Care')
+    const productDesc = wrapper.find('[data-loc="campaigns.segmentation.product-desc-input"]').element as HTMLTextAreaElement
+    expect(productDesc.value).toBe('Implants, Whitening, Orthodontics')
+
+    expect(wrapper.find('[data-testid="business-type-analysis-hint"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="product-desc-analysis-hint"]').exists()).toBe(true)
+  })
+
+  it('never overwrites values the user already typed', async () => {
+    const campaignRef = ref<Campaign | null>(null)
+    mockCampaignRef(campaignRef)
+    const wrapper = await mountView()
+
+    await wrapper.find('[data-loc="campaigns.segmentation.business-type-input"]').setValue('My own type')
+    await wrapper.find('[data-loc="campaigns.segmentation.product-desc-input"]').setValue('My own description')
+
+    campaignRef.value = buildCampaign({
+      brand: {
+        brand_uuid: 'b1',
+        company_name: 'Lumen Dental',
+        website_url: 'https://lumen.test',
+        location: null,
+        selected_industry: { industry_uuid: 'i1', name: 'Dental Care' },
+      },
+      brand_context: { available: true, services: ['Implants', 'Whitening'] },
+    })
+    await flushPromises()
+
+    const businessType = wrapper.find('[data-loc="campaigns.segmentation.business-type-input"]').element as HTMLInputElement
+    expect(businessType.value).toBe('My own type')
+    const productDesc = wrapper.find('[data-loc="campaigns.segmentation.product-desc-input"]').element as HTMLTextAreaElement
+    expect(productDesc.value).toBe('My own description')
+    expect(wrapper.find('[data-testid="business-type-analysis-hint"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="product-desc-analysis-hint"]').exists()).toBe(false)
+  })
+
+  it('leaves fields untouched when the brand has no analysis data', async () => {
+    mockCampaign(buildCampaign())
+    const wrapper = await mountView()
+
+    const businessType = wrapper.find('[data-loc="campaigns.segmentation.business-type-input"]').element as HTMLInputElement
+    expect(businessType.value).toBe('')
+    const productDesc = wrapper.find('[data-loc="campaigns.segmentation.product-desc-input"]').element as HTMLTextAreaElement
+    expect(productDesc.value).toBe('')
+    expect(wrapper.find('[data-testid="business-type-analysis-hint"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="product-desc-analysis-hint"]').exists()).toBe(false)
   })
 })
 

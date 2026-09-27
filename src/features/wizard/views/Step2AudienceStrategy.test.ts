@@ -148,3 +148,47 @@ describe('Step2AudienceStrategy — persona targeting (MOM)', () => {
     expect(vi.mocked(campaignsApi.runSegmentation).mock.calls[1][1]?.personas).toEqual([])
   })
 })
+
+describe('Step2AudienceStrategy — prefill from brand analysis (MOM 10.1)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(campaignsApi.runSegmentation).mockResolvedValue(SEGMENTS_RESPONSE)
+  })
+
+  const analyzedCampaign = () =>
+    buildCampaign({
+      brand: {
+        brand_uuid: 'b1',
+        company_name: 'Lumen Dental',
+        website_url: 'https://lumen.test',
+        location: null,
+        selected_industry: { industry_uuid: 'i1', name: 'Dental Care' },
+      },
+      brand_context: { available: true, services: ['Implants', 'Whitening', 'Orthodontics', 'Surgery'] },
+    })
+
+  it('prefills business type and product description once the campaign has analysis data', async () => {
+    const wrapper = await mountStep(analyzedCampaign())
+
+    expect((wrapper.find('input').element as HTMLInputElement).value).toBe('Dental Care')
+    const productDesc = wrapper.find('textarea').element as HTMLTextAreaElement
+    expect(productDesc.value).toBe('Implants, Whitening, Orthodontics')
+    expect(wrapper.find('[data-testid="business-type-analysis-hint"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="product-desc-analysis-hint"]').exists()).toBe(true)
+  })
+
+  it('keeps user-typed values when the campaign prop refreshes with analysis data', async () => {
+    const wrapper = await mountStep(buildCampaign())
+
+    await wrapper.find('input').setValue('My own type')
+    await wrapper.find('textarea').setValue('My own description')
+
+    await wrapper.setProps({ campaign: analyzedCampaign() })
+    await flushPromises()
+
+    expect((wrapper.find('input').element as HTMLInputElement).value).toBe('My own type')
+    expect((wrapper.find('textarea').element as HTMLTextAreaElement).value).toBe('My own description')
+    expect(wrapper.find('[data-testid="business-type-analysis-hint"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="product-desc-analysis-hint"]').exists()).toBe(false)
+  })
+})
