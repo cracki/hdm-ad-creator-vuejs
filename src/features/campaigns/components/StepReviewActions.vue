@@ -83,6 +83,14 @@ function submitReject() {
         showReject.value = false
         toast.success(t('stepreview.rejected'))
         emit('rejected')
+        // MOM 16.2: a rejection almost always leads to a refine — open the
+        // refine sheet prefilled with the reject reason (editable before
+        // submitting). Closing the sheet keeps the rejected badge as-is.
+        if (props.runStep) {
+          refineFeedback.value = reason
+          refineError.value = false
+          showRefine.value = true
+        }
       },
       onError: () => toast.error(t('adreview.actionFailed')),
     },
