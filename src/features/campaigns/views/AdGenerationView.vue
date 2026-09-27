@@ -421,7 +421,7 @@ async function handleAdExport(format: 'csv' | 'pdf' | 'pptx') {
           <button
             :disabled="adsList.length === 0"
             class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center justify-center gap-1.5 disabled:opacity-50"
-            @click="router.push({ path: `/campaigns/${campaignUuid}/visuals`, state: { adUuids: adsList.map(a => a.campaign_ad_uuid), adMeta: adsList.map(a => ({ uuid: a.campaign_ad_uuid, platform: a.platform, funnel_stage: a.funnel_stage, persona: a.persona })) } })"
+            @click="router.push({ path: `/campaigns/${campaignUuid}/visuals`, state: { adUuids: adsList.map(a => a.campaign_ad_uuid), adMeta: adsList.map(a => ({ uuid: a.campaign_ad_uuid, platform: a.platform, funnel_stage: a.funnel_stage, persona: a.persona, headline: getAdCopy(a).headline || null })) } })"
           >
             {{ t('smart.approveContinue') }} {{ t('smart.continue') }} <ArrowRight class="h-3.5 w-3.5" />
           </button>

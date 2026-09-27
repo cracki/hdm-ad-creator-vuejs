@@ -6,6 +6,7 @@ import { Image as ImageIcon, ArrowLeft, ArrowRight, Loader2, AlertCircle, Refres
 import StepExportButton from '@/shared/components/StepExportButton.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import ErrorState from '@/shared/components/ErrorState.vue'
+import ImageLightbox from '@/shared/components/ImageLightbox.vue'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
@@ -15,6 +16,7 @@ import { campaignsApi } from '../api'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
 import { exportVisuals } from '@/shared/utils/exportStep'
+import { getAdCopy } from '../types'
 import type { GeneratedVisual } from '../types'
 
 interface AdMeta {
@@ -22,6 +24,7 @@ interface AdMeta {
   platform: string
   funnel_stage: string | null
   persona: string | null
+  headline?: string | null
 }
 
 const route = useRoute()
@@ -48,6 +51,7 @@ const adsList = computed<AdMeta[]>(() => {
     platform: a.platform,
     funnel_stage: a.funnel_stage,
     persona: a.persona,
+    headline: getAdCopy(a).headline || null,
   }))
 })
 
@@ -158,6 +162,13 @@ async function handleVisualExport(format: 'csv' | 'pdf' | 'pptx') {
     visExporting.value = false
   }
 }
+
+// Full-screen preview of a generated image (QA: cropped card image, no large view).
+const lightbox = ref<{ src: string; caption: string } | null>(null)
+
+function openLightbox(src: string, caption: string) {
+  lightbox.value = { src, caption }
+}
 </script>
 
 <template>
@@ -254,6 +265,7 @@ async function handleVisualExport(format: 'csv' | 'pdf' | 'pptx') {
                     <span class="font-semibold px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-300 text-[11px]">{{ adPlatformLabel(ad.platform) }}</span>
                     <span class="text-[11px] text-muted-foreground">{{ ad.funnel_stage }}</span>
                   </div>
+                  <div class="text-xs font-medium truncate mb-1" data-testid="visual-ad-headline">{{ ad.headline || '—' }}</div>
                   <div class="text-[11px] text-muted-foreground truncate">{{ ad.persona || '—' }}</div>
                 </div>
               </div>
@@ -296,7 +308,16 @@ async function handleVisualExport(format: 'csv' | 'pdf' | 'pptx') {
               data-loc="campaigns.visual.result-card"
             >
               <div v-if="v.success && v.image_url" class="relative">
-                <img :src="v.image_url" :alt="v.visual_summary" loading="lazy" class="w-full aspect-video object-cover" data-testid="visual-result-image" />
+                <button
+                  type="button"
+                  class="block w-full cursor-zoom-in rounded-t-[inherit] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                  :aria-label="t('visual.preview')"
+                  data-testid="visual-open-preview"
+                  @click="openLightbox(v.image_url, v.visual_summary)"
+                >
+                  <!-- object-contain: show the whole image letterboxed, never cropped (QA photo 26) -->
+                  <img :src="v.image_url" :alt="v.visual_summary || t('visual.preview')" loading="lazy" class="w-full aspect-video object-contain bg-overlay-subtle" data-testid="visual-result-image" />
+                </button>
                 <a
                   :href="v.image_url"
                   download
@@ -349,4 +370,11 @@ async function handleVisualExport(format: 'csv' | 'pdf' | 'pptx') {
       </template>
     </div>
   </main>
+
+  <ImageLightbox
+    :src="lightbox?.src ?? null"
+    :alt="lightbox?.caption"
+    :caption="lightbox?.caption"
+    @close="lightbox = null"
+  />
 </template>

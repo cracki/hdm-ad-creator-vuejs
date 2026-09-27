@@ -490,6 +490,7 @@ export const translations = {
   'visual.adsCount': { en: '{count} ads selected', ar: '{count} إعلانات محددة', fa: '{count} آگهی انتخاب شده' },
   'visual.statusCompleted': { en: 'Ready', ar: 'جاهز', fa: 'آماده' },
   'visual.statusFailed': { en: 'Failed', ar: 'فشل', fa: 'ناموفق' },
+  'visual.preview': { en: 'Preview image', ar: 'معاينة الصورة', fa: 'پیش‌نمایش تصویر' },
 
   // Review
   'review.title': { en: 'Review & Complete', ar: 'مراجعة وإكمال', fa: 'مرور و تکمیل' },
