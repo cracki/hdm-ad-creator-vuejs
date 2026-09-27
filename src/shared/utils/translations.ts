@@ -583,6 +583,7 @@ export const translations = {
   'analysis.personality.radarTitle': { en: 'Personality dimensions', ar: 'أبعاد الشخصية', fa: 'ابعاد شخصیت' },
   'analysis.personality.wheelTitle': { en: 'Archetype traits', ar: 'سمات النمط الأصلي', fa: 'ویژگی‌های کهن‌الگو' },
   'analysis.personality.wheelHint': { en: 'Trait composition of the detected archetype.', ar: 'تكوين سمات النمط الأصلي المكتشف.', fa: 'ترکیب ویژگی‌های کهن‌الگوی شناسایی‌شده.' },
+  'analysis.personality.notEnoughData': { en: 'Not enough data yet — charts appear once numeric trait scores are available.', ar: 'لا توجد بيانات كافية بعد — تظهر الرسوم البيانية عند توفر درجات رقمية للسمات.', fa: 'داده کافی نیست — نمودارها پس از در دسترس بودن امتیازهای عددی ویژگی‌ها نمایش داده می‌شوند.' },
   'analysis.personality.takeawaysTitle': { en: 'Key takeaways', ar: 'الخلاصات الرئيسية', fa: 'نکات کلیدی' },
   'analysis.personality.copy': { en: 'Copy', ar: 'نسخ', fa: 'کپی' },
   'analysis.personality.copied': { en: 'Copied to clipboard', ar: 'تم النسخ إلى الحافظة', fa: 'در حافظه کپی شد' },
