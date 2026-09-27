@@ -116,28 +116,15 @@ export function extractRadarDimensions(
 }
 
 /**
- * Defining traits per brand archetype (mirrors brand/services/builder.py).
- * A definitional decomposition of the detected archetype — not measured scores.
- */
-const ARCHETYPE_TRAITS: Record<string, string[]> = {
-  Sage: ['Wisdom', 'Expertise', 'Insight', 'Education', 'Authority'],
-  Hero: ['Courage', 'Achievement', 'Mastery', 'Boldness', 'Discipline'],
-  Creator: ['Innovation', 'Craft', 'Originality', 'Vision', 'Expression'],
-  Ruler: ['Prestige', 'Excellence', 'Control', 'Sophistication', 'Status'],
-  Caregiver: ['Care', 'Support', 'Warmth', 'Protection', 'Generosity'],
-  Everyman: ['Reliability', 'Honesty', 'Friendliness', 'Accessibility', 'Belonging'],
-  Lover: ['Passion', 'Elegance', 'Intimacy', 'Beauty', 'Indulgence'],
-  Jester: ['Fun', 'Playfulness', 'Humor', 'Spontaneity', 'Joy'],
-  Magician: ['Transformation', 'Vision', 'Inspiration', 'Wonder', 'Change'],
-  Innocent: ['Simplicity', 'Purity', 'Optimism', 'Honesty', 'Safety'],
-  Rebel: ['Disruption', 'Unconventionality', 'Edge', 'Freedom', 'Defiance'],
-  Explorer: ['Adventure', 'Discovery', 'Independence', 'Freedom', 'Pioneering'],
-}
-
-/**
- * Trait shares for the brand wheel. Explicit numeric shares win when the
- * payload provides them; otherwise the detected archetype's defining traits
- * split evenly. Null when nothing to draw (no archetype, no shares).
+ * Trait shares for the brand wheel. QA fix 2: the wheel renders ONLY from
+ * real numeric trait weights in the payload — the previous equal-split
+ * fallback (every trait exactly 20%) fabricated data and is removed.
+ *
+ * Backends can also flag availability explicitly (brand_personality
+ * .wheel_available / brand_profile.personality_wheel_available): an explicit
+ * `false` hides the wheel even when numeric shares exist; anything other
+ * than `false` is ignored (unknown/missing = decide by the data itself).
+ * Returns null when there is nothing real to draw.
  */
 export function extractWheelShares(
   profile: Record<string, unknown> | null | undefined,
@@ -145,19 +132,40 @@ export function extractWheelShares(
   if (!profile || typeof profile !== 'object') return null
   const bp = asRecord(profile.brand_personality)
 
-  // Explicit numeric shares from the payload, when present.
+  // Explicit opt-out from the backend wins over any data.
+  if (
+    bp.wheel_available === false ||
+    profile.wheel_available === false ||
+    profile.personality_wheel_available === false
+  ) {
+    return null
+  }
+
+  // Real numeric shares from the payload — record or array shaped.
   const rawShares = bp.trait_shares
-  if (typeof rawShares === 'object' && rawShares !== null && !Array.isArray(rawShares)) {
+  if (rawShares === null || rawShares === undefined) return null
+
+  if (Array.isArray(rawShares)) {
+    const entries = rawShares
+      .map((entry): { name: string; value: number } | null => {
+        const obj = asRecord(entry)
+        const name = asString(obj.name) || asString(obj.label) || asString(obj.trait)
+        const value = [obj.value, obj.percent, obj.share, obj.score].find(
+          (v) => typeof v === 'number' && Number.isFinite(v),
+        ) as number | undefined
+        return name && value !== undefined && value > 0 ? { name, value } : null
+      })
+      .filter((e): e is { name: string; value: number } => e !== null)
+    return normalizeShares(entries)
+  }
+
+  if (typeof rawShares === 'object') {
     const entries = Object.entries(rawShares as Record<string, unknown>).filter(
       ([, v]) => typeof v === 'number' && Number.isFinite(v) && (v as number) > 0,
     )
     return normalizeShares(entries.map(([name, v]) => ({ name, value: v as number })))
   }
-
-  const archetype = asString(bp.archetype)
-  const traits = ARCHETYPE_TRAITS[archetype]
-  if (!traits) return null
-  return normalizeShares(traits.map((name) => ({ name, value: 1 })))
+  return null
 }
 
 function normalizeShares(entries: { name: string; value: number }[]): TraitShare[] | null {

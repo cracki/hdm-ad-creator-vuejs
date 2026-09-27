@@ -404,6 +404,14 @@ setActions([
               <p class="text-[11px] text-muted-foreground/70 text-center">{{ t('analysis.personality.wheelHint') }}</p>
             </div>
           </div>
+          <!-- QA fix 2: charts stay hidden without real numeric data — say so instead of faking shares -->
+          <div
+            v-else
+            data-testid="personality-charts-missing"
+            class="rounded-lg border border-dashed border-border/50 bg-overlay-subtle px-4 py-3 text-xs text-muted-foreground text-center"
+          >
+            {{ t('analysis.personality.notEnoughData') }}
+          </div>
         </div>
 
         <!-- Key takeaways -->

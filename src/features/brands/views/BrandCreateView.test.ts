@@ -23,6 +23,7 @@ vi.mock('@/features/brands/api', () => ({
     updateSocialMedia: vi.fn(),
     deleteSocialMedia: vi.fn(),
     logoAnalysis: vi.fn(),
+    startAnalysis: vi.fn(),
   },
 }))
 
@@ -83,6 +84,8 @@ describe('BrandCreateView — website auto-scan (F18)', () => {
       routes: [
         { path: '/', name: 'brand-create', component: BrandCreateView },
         { path: '/brands', component: { template: '<div />' } },
+        { path: '/brands/:brandUuid/analysis', name: 'brand-analysis', component: { template: '<div />' } },
+        { path: '/brands/:brandUuid/analysis/:runUuid', name: 'brand-analysis-run', component: { template: '<div />' } },
       ],
     })
     queryClient = new QueryClient({
@@ -101,6 +104,9 @@ describe('BrandCreateView — website auto-scan (F18)', () => {
       },
     })
     vi.mocked(brandsApi.createSocialMedia).mockResolvedValue({ data: {} as never })
+    vi.mocked(brandsApi.startAnalysis).mockResolvedValue({
+      data: { analysis_run_uuid: 'run-1', status: 'pending' } as never,
+    })
   })
 
   it('calls the scan API with the entered URL, prefills fields, and renders confidence badges', async () => {
@@ -210,5 +216,44 @@ describe('BrandCreateView — website auto-scan (F18)', () => {
       location: 'Dubai, UAE',
       brand_color: '#EC4899',
     })
+  })
+
+  it('create submit starts the analysis and navigates to the run tracker (QA fix 5)', async () => {
+    vi.mocked(brandsApi.scanWebsite).mockResolvedValue(scanResponse)
+    const wrapper = await mountView()
+    await flushPromises()
+
+    await wrapper.find('[data-testid="website-url-input"]').setValue('https://lumen.test')
+    await wrapper.find('[data-testid="scan-button"]').trigger('click')
+    await flushPromises()
+    await advanceToReview(wrapper)
+
+    await wrapper.find('[data-loc="brands.create.start-btn"]').trigger('click')
+    await flushPromises()
+
+    // One action: create → start analysis → land on the analysis run view
+    expect(brandsApi.create).toHaveBeenCalledTimes(1)
+    expect(brandsApi.startAnalysis).toHaveBeenCalledTimes(1)
+    expect(brandsApi.startAnalysis).toHaveBeenCalledWith('b1', {})
+    expect(router.currentRoute.value.path).toBe('/brands/b1/analysis/run-1')
+  })
+
+  it('falls back to the analysis start screen when starting the analysis fails', async () => {
+    vi.mocked(brandsApi.scanWebsite).mockResolvedValue(scanResponse)
+    vi.mocked(brandsApi.startAnalysis).mockRejectedValue(new Error('boom'))
+    const wrapper = await mountView()
+    await flushPromises()
+
+    await wrapper.find('[data-testid="website-url-input"]').setValue('https://lumen.test')
+    await wrapper.find('[data-testid="scan-button"]').trigger('click')
+    await flushPromises()
+    await advanceToReview(wrapper)
+
+    await wrapper.find('[data-loc="brands.create.start-btn"]').trigger('click')
+    await flushPromises()
+
+    // The brand is saved; the user lands on the analysis page to retry manually
+    expect(brandsApi.create).toHaveBeenCalledTimes(1)
+    expect(router.currentRoute.value.path).toBe('/brands/b1/analysis')
   })
 })

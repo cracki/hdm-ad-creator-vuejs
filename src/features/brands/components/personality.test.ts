@@ -97,12 +97,9 @@ describe('extractRadarDimensions', () => {
 })
 
 describe('extractWheelShares', () => {
-  it('splits the detected archetype defining traits evenly, summing to 100', () => {
-    const shares = extractWheelShares(fixtureProfile)
-    expect(shares).not.toBeNull()
-    expect(shares!.every((s) => s.percent > 0)).toBe(true)
-    expect(shares!.reduce((sum, s) => sum + s.percent, 0)).toBe(100)
-    expect(shares!.map((s) => s.name)).toEqual(['Care', 'Support', 'Warmth', 'Protection', 'Generosity'])
+  it('returns null without numeric shares — no more equal-split fallback (QA fix 2)', () => {
+    // The current backend payload: archetype + text fields only.
+    expect(extractWheelShares(fixtureProfile)).toBeNull()
   })
 
   it('uses explicit numeric trait shares from the payload when present', () => {
@@ -119,9 +116,36 @@ describe('extractWheelShares', () => {
     ])
   })
 
-  it('returns null when there is no archetype and no shares', () => {
+  it('accepts array-shaped numeric shares', () => {
+    const profile = {
+      brand_personality: {
+        trait_shares: [
+          { name: 'care', percent: 60 },
+          { label: 'warmth', value: 40 },
+        ],
+      },
+    }
+    expect(extractWheelShares(profile)).toEqual([
+      { name: 'care', percent: 60 },
+      { name: 'warmth', percent: 40 },
+    ])
+  })
+
+  it('hides the wheel when the backend flags it unavailable, even with numeric shares', () => {
+    const withShares = { trait_shares: { care: 60, warmth: 40 } }
+    expect(extractWheelShares({ brand_personality: { ...withShares, wheel_available: false } })).toBeNull()
+    expect(extractWheelShares({ brand_personality: withShares, personality_wheel_available: false })).toBeNull()
+    expect(extractWheelShares({ brand_personality: withShares, wheel_available: false })).toBeNull()
+    // Explicit true / missing flag leaves the data to decide
+    expect(extractWheelShares({ brand_personality: { ...withShares, wheel_available: true } })).not.toBeNull()
+  })
+
+  it('returns null when there is no numeric share data', () => {
     expect(extractWheelShares(null)).toBeNull()
     expect(extractWheelShares({ brand_personality: {} })).toBeNull()
+    expect(extractWheelShares({ brand_personality: { archetype: 'Sage' } })).toBeNull()
+    expect(extractWheelShares({ brand_personality: { trait_shares: { care: 'high' } } })).toBeNull()
+    expect(extractWheelShares({ brand_personality: { trait_shares: { care: 0, warmth: -2 } } })).toBeNull()
   })
 })
 

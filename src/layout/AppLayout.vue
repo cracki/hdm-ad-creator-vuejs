@@ -8,7 +8,7 @@ import { welcomeTour } from '@/features/auth/tours'
 import { useVisualSettings } from '@/shared/composables/useVisualSettings'
 import { useAuthStore } from '@/features/auth/store'
 
-const { registerTour, autoStartForRoute, isActive, dismiss } = useProductTour()
+const { registerTour, autoStartForRoute, isActive, stopTour } = useProductTour()
 const visualSettings = useVisualSettings()
 const auth = useAuthStore()
 const route = useRoute()
@@ -25,8 +25,10 @@ watch(() => auth.user, (user) => {
   visualSettings.initForUser(user?.user_uuid)
 })
 
+// Navigating away tears the tour down WITHOUT persisting completion — only
+// an explicit dismissal (X / backdrop) or finishing marks it done (QA fix 4).
 watch(() => route.name, () => {
-  if (isActive.value) dismiss()
+  if (isActive.value) stopTour()
 })
 </script>
 

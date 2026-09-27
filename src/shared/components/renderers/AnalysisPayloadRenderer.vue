@@ -1,10 +1,19 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Check, X } from 'lucide-vue-next'
+import { useI18n } from '@/shared/utils/i18n'
+import {
+  payloadLabelKey,
+  prettifyPayloadKey,
+  shouldHidePayloadEntry,
+  filterPlaceholderItems,
+} from '@/shared/utils/payloadDisplay'
 
 const props = defineProps<{
   data: Record<string, unknown>
 }>()
+
+const { t } = useI18n()
 
 interface TreeNode {
   key: string
@@ -17,11 +26,14 @@ interface TreeNode {
   scoreValue?: number
 }
 
-function formatLabel(key: string): string {
-  return key
-    .replace(/_/g, ' ')
-    .replace(/([a-z])([A-Z])/g, '$1 $2')
-    .replace(/^\w/, (c) => c.toUpperCase())
+/**
+ * Humanized label for a payload key: localized map first (payload.<key> in
+ * translations.ts), Title-Case prettifying as fallback. Raw DB key names
+ * never reach the user (MOM §4.4 / QA fix 1).
+ */
+function labelFor(key: string): string {
+  const tKey = payloadLabelKey(key)
+  return tKey ? t(tKey) : prettifyPayloadKey(key)
 }
 
 function extractScore(val: Record<string, unknown>): { score: number; max: number } | null {
@@ -41,33 +53,34 @@ function extractScore(val: Record<string, unknown>): { score: number; max: numbe
   return { score, max }
 }
 
-function classify(key: string, val: unknown): TreeNode {
-  if (val === null || val === undefined) {
-    return { key, label: formatLabel(key), value: '—', type: 'text' }
-  }
+const SCORE_CHILD_EXCLUDED_KEYS = ['score', 'max', 'max_score', 'max_possible_score', 'total_score']
+
+function classify(key: string, val: unknown): TreeNode | null {
+  // Internal keys, empty values and placeholder strings never render.
+  if (shouldHidePayloadEntry(key, val)) return null
   if (typeof val === 'boolean') {
-    return { key, label: formatLabel(key), value: val, type: 'text' }
+    return { key, label: labelFor(key), value: val, type: 'text' }
   }
   if (typeof val === 'number') {
     if (key.toLowerCase().includes('score') || key.toLowerCase().includes('confidence')) {
       const max = key.toLowerCase().includes('confidence') ? 100 : undefined
-      return { key, label: formatLabel(key), value: val, type: 'score', scoreValue: val, scoreMax: max }
+      return { key, label: labelFor(key), value: val, type: 'score', scoreValue: val, scoreMax: max }
     }
-    return { key, label: formatLabel(key), value: String(val), type: 'text' }
+    return { key, label: labelFor(key), value: String(val), type: 'text' }
   }
   if (typeof val === 'string') {
-    return { key, label: formatLabel(key), value: val, type: 'text' }
+    return { key, label: labelFor(key), value: val, type: 'text' }
   }
   if (Array.isArray(val)) {
-    if (val.length === 0) {
-      return { key, label: formatLabel(key), value: [], type: 'list' }
-    }
+    if (val.length === 0) return null
     if (typeof val[0] === 'string') {
-      return { key, label: formatLabel(key), value: val as string[], type: 'list' }
+      const entries = filterPlaceholderItems(val as string[])
+      if (entries.length === 0) return null
+      return { key, label: labelFor(key), value: entries, type: 'list' }
     }
     return {
       key,
-      label: formatLabel(key),
+      label: labelFor(key),
       value: val,
       type: 'object_list',
       objectItems: val as Record<string, unknown>[],
@@ -79,34 +92,37 @@ function classify(key: string, val: unknown): TreeNode {
     if (scoreInfo && Object.keys(obj).filter(k => !['grade', 'grade_label', 'timestamp', 'not_found', 'data_completeness', 'confidence_level', 'sources_with_data', 'missing_data', 'certifications_found', 'parsedValue', 'source', 'percentage'].includes(k)).length <= 6) {
       return {
         key,
-        label: formatLabel(key),
+        label: labelFor(key),
         value: val,
         type: 'score',
         scoreValue: scoreInfo.score,
         scoreMax: scoreInfo.max,
         children: Object.entries(obj)
-          .filter(([k, v]) => v !== null && v !== undefined && k !== 'score' && k !== 'max' && k !== 'max_score' && k !== 'max_possible_score' && k !== 'total_score')
-          .map(([k, v]) => classify(k, v)),
+          .filter(([k, v]) => !SCORE_CHILD_EXCLUDED_KEYS.includes(k) && !shouldHidePayloadEntry(k, v))
+          .map(([k, v]) => classify(k, v))
+          .filter((n): n is TreeNode => n !== null),
       }
     }
+    const children = Object.entries(obj)
+      .map(([k, v]) => classify(k, v))
+      .filter((n): n is TreeNode => n !== null)
+    if (children.length === 0) return null
     return {
       key,
-      label: formatLabel(key),
+      label: labelFor(key),
       value: val,
       type: 'nested',
-      children: Object.entries(obj)
-        .filter(([, v]) => v !== null && v !== undefined)
-        .map(([k, v]) => classify(k, v)),
+      children,
     }
   }
-  return { key, label: formatLabel(key), value: String(val), type: 'text' }
+  return null
 }
 
 const items = computed<TreeNode[]>(() => {
   if (!props.data || typeof props.data !== 'object') return []
   return Object.entries(props.data)
-    .filter(([, v]) => v !== null && v !== undefined)
     .map(([key, value]) => classify(key, value))
+    .filter((n): n is TreeNode => n !== null)
 })
 
 const hasData = computed(() => items.value.length > 0)
@@ -145,10 +161,10 @@ function getItemTitle(obj: Record<string, unknown>): string | null {
 function getPrimitiveFields(obj: Record<string, unknown>): { label: string; value: string }[] {
   const result: { label: string; value: string }[] = []
   for (const [k, v] of Object.entries(obj)) {
-    if (v === null || v === undefined) continue
+    if (shouldHidePayloadEntry(k, v)) continue
     if (k === 'name' || k === 'title' || k === 'hook' || k === 'theme' || k === 'concept') continue
     if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
-      result.push({ label: formatLabel(k), value: typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v) })
+      result.push({ label: labelFor(k), value: typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v) })
     }
   }
   return result
@@ -157,9 +173,10 @@ function getPrimitiveFields(obj: Record<string, unknown>): { label: string; valu
 function getListFields(obj: Record<string, unknown>): { label: string; items: string[] }[] {
   const result: { label: string; items: string[] }[] = []
   for (const [k, v] of Object.entries(obj)) {
-    if (v === null || v === undefined) continue
+    if (shouldHidePayloadEntry(k, v)) continue
     if (Array.isArray(v) && v.length > 0 && typeof v[0] === 'string') {
-      result.push({ label: formatLabel(k), items: v as string[] })
+      const items = filterPlaceholderItems(v as string[])
+      if (items.length > 0) result.push({ label: labelFor(k), items })
     }
   }
   return result
@@ -168,9 +185,9 @@ function getListFields(obj: Record<string, unknown>): { label: string; items: st
 function getNestedObjectFields(obj: Record<string, unknown>): { label: string; data: Record<string, unknown> }[] {
   const result: { label: string; data: Record<string, unknown> }[] = []
   for (const [k, v] of Object.entries(obj)) {
-    if (v === null || v === undefined) continue
+    if (shouldHidePayloadEntry(k, v)) continue
     if (typeof v === 'object' && !Array.isArray(v)) {
-      result.push({ label: formatLabel(k), data: v as Record<string, unknown> })
+      result.push({ label: labelFor(k), data: v as Record<string, unknown> })
     }
   }
   return result
@@ -454,11 +471,11 @@ function getNestedObjectFields(obj: Record<string, unknown>): { label: string; d
                   <div class="grid grid-cols-2 gap-x-3 gap-y-1">
                     <template v-for="[dk, dv] in Object.entries(nestedField.data)" :key="dk">
                       <div v-if="typeof dv === 'string' || typeof dv === 'number'" class="text-[10px] flex items-start gap-1">
-                        <span class="text-muted-foreground/50 shrink-0">{{ formatLabel(dk) }}:</span>
+                        <span class="text-muted-foreground/50 shrink-0">{{ labelFor(dk) }}:</span>
                         <span class="text-muted-foreground">{{ dv }}</span>
                       </div>
                       <div v-else-if="Array.isArray(dv) && dv.length > 0 && typeof dv[0] === 'string'" class="col-span-2 text-[10px]">
-                        <span class="text-muted-foreground/50">{{ formatLabel(dk) }}:</span>
+                        <span class="text-muted-foreground/50">{{ labelFor(dk) }}:</span>
                         <div class="flex flex-wrap gap-0.5 mt-0.5">
                           <span v-for="(tag, ti) in (dv as string[])" :key="ti" class="px-1 py-0.5 rounded bg-overlay-medium text-muted-foreground">{{ tag }}</span>
                         </div>
