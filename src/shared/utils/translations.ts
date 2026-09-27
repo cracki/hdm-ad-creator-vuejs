@@ -1438,6 +1438,7 @@ export const translations = {
   'opportunities.topResults': { en: 'Top results', ar: 'أفضل النتائج', fa: 'بهترین نتایج' },
   'opportunities.competingDomains': { en: 'Competing domains', ar: 'النطاقات المنافسة', fa: 'دامین‌های رقیب' },
   'opportunities.topPerforming': { en: 'Top Performing Content', ar: 'المحتوى الأفضل أداءً', fa: 'محتوای برتر' },
+  'opportunities.emptyState': { en: 'No content opportunities were generated for this analysis.', ar: 'لم يتم توليد فرص محتوى لهذا التحليل.', fa: 'هیچ فرصت محتوایی برای این تحلیل تولید نشد.' },
   'opportunities.byType': { en: 'Content by Type', ar: 'المحتوى حسب النوع', fa: 'محتوا بر اساس نوع' },
   'opportunities.topDomains': { en: 'Top Competing Domains', ar: 'النطاقات المنافسة العليا', fa: 'دامین‌های رقیب برتر' },
   'opportunities.content': { en: 'content', ar: 'محتوى', fa: 'محتوا' },
