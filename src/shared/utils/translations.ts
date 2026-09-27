@@ -84,6 +84,7 @@ export const translations = {
   'newbrand.row.social': { en: 'Social profiles', ar: 'حسابات التواصل', fa: 'شبکه‌های اجتماعی' },
   'newbrand.row.socialVal': { en: '4 connected', ar: '٤ متصلة', fa: '۴ متصل' },
   'newbrand.next': { en: 'What happens next:', ar: 'ماذا بعد:', fa: 'گام بعد:' },
+  'newbrand.analysisStartFailed': { en: 'Brand saved, but the analysis could not start — open the brand to run it manually.', ar: 'تم حفظ العلامة، لكن تعذّر بدء التحليل — افتح العلامة لتشغيله يدوياً.', fa: 'برند ذخیره شد اما شروع تحلیل ممکن نشد — برند را باز کن و به‌صورت دستی اجرا کن.' },
   'newbrand.nextDesc': {
     en: 'we\'ll scrape your site, build your audience personas, profile competitors, and analyze your social presence. You\'ll get a full brief in your dashboard.',
     ar: 'سنفحص موقعك، ونبني شخصيات جمهورك، ونحلّل المنافسين وحضورك الاجتماعي. ستحصل على ملخص كامل في لوحتك.',

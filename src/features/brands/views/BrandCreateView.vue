@@ -4,7 +4,7 @@ import { useRouter, useRoute } from 'vue-router'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { useToast } from '@/shared/composables/useToast'
-import { useIndustries, useCreateBrand, useUpdateBrand, useBrand, useBrandAssets, useBrandSocialMedia, useScanWebsite } from '@/features/brands/queries'
+import { useIndustries, useCreateBrand, useUpdateBrand, useBrand, useBrandAssets, useBrandSocialMedia, useScanWebsite, useStartAnalysis } from '@/features/brands/queries'
 import { brandsApi } from '@/features/brands/api'
 import {
   Globe, Building2, MapPin, Upload, Palette, ArrowRight, ArrowLeft,
@@ -57,6 +57,12 @@ const { data: existingAssets } = useBrandAssets(brandUuid)
 const { data: existingSocialMedia } = useBrandSocialMedia(brandUuid)
 const createMutation = useCreateBrand()
 const updateMutation = useUpdateBrand()
+
+// QA fix 5 (one-click create): after creating a brand we immediately start
+// its analysis with the same mutation the analysis page uses. The uuid is
+// only known after the create resolves, hence the late-bound ref.
+const createdBrandUuid = ref('')
+const startAnalysisMutation = useStartAnalysis(createdBrandUuid)
 
 const step = ref(1)
 const form = ref({
@@ -228,7 +234,9 @@ function applyScanResult(result: BrandScanResult) {
 }
 
 const error = ref('')
-const loading = computed(() => createMutation.isPending.value || updateMutation.isPending.value)
+const loading = computed(() =>
+  createMutation.isPending.value || updateMutation.isPending.value || startAnalysisMutation.isPending.value,
+)
 
 const steps: Array<{ n: number; labelKey: TKey; descKey: TKey }> = [
   { n: 1, labelKey: 'newbrand.s1.label', descKey: 'newbrand.s1.desc' },
@@ -297,6 +305,19 @@ async function handleSubmit() {
           await brandsApi.createSocialMedia(newBrandUuid, { platform, profile_url: url.trim() })
         } catch {}
       }
+
+      // QA fix 5: one action — create + start analysis + jump to the run
+      // tracker. On start failure the brand is still saved; fall back to the
+      // analysis start screen where the user can retry.
+      createdBrandUuid.value = newBrandUuid
+      try {
+        const run = await startAnalysisMutation.mutateAsync({})
+        router.push(`/brands/${newBrandUuid}/analysis/${run.data.analysis_run_uuid}`)
+      } catch {
+        toast.error(t('newbrand.analysisStartFailed'))
+        router.push(`/brands/${newBrandUuid}/analysis`)
+      }
+      return
     }
     router.push('/brands')
   } catch (e: any) {
