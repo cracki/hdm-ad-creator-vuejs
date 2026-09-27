@@ -84,6 +84,67 @@ describe('StepReviewActions — reject flow', () => {
   })
 })
 
+describe('StepReviewActions — reject → refine handoff (MOM 16.2)', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('opens the refine sheet prefilled with the reject reason and submits it', async () => {
+    vi.mocked(campaignsApi.reviewStep).mockResolvedValue({
+      data: { success: true, step: { review_status: 'rejected' } as never },
+    } as never)
+    const runStep = vi.fn().mockResolvedValue({})
+    const wrapper = mountBar({}, runStep)
+
+    await wrapper.find('[data-testid="step-reject"]').trigger('click')
+    await wrapper.find('[data-testid="reject-category-tone"]').trigger('click')
+    await wrapper.find('[data-testid="reject-confirm-btn"]').trigger('click')
+    await flushPromises()
+
+    // The refine sheet auto-opens with the reason prefilled.
+    expect(wrapper.find('[data-testid="refine-modal"]').exists()).toBe(true)
+    const textarea = wrapper.find('[data-testid="refine-feedback-input"]').element as HTMLTextAreaElement
+    expect(textarea.value).toBe('Wrong tone')
+
+    // Submitting runs the step refine with the prefilled reason.
+    await wrapper.find('[data-testid="refine-confirm-btn"]').trigger('click')
+    await flushPromises()
+    expect(runStep).toHaveBeenCalledWith('Wrong tone')
+  })
+
+  it('closing the auto-opened refine sheet does not run the step', async () => {
+    vi.mocked(campaignsApi.reviewStep).mockResolvedValue({
+      data: { success: true, step: { review_status: 'rejected' } as never },
+    } as never)
+    const runStep = vi.fn().mockResolvedValue({})
+    const wrapper = mountBar({}, runStep)
+
+    await wrapper.find('[data-testid="step-reject"]').trigger('click')
+    await wrapper.find('[data-testid="reject-category-audience"]').trigger('click')
+    await wrapper.find('[data-testid="reject-confirm-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="refine-modal"]').exists()).toBe(true)
+    await wrapper.find('[data-testid="refine-cancel-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="refine-modal"]').exists()).toBe(false)
+    expect(runStep).not.toHaveBeenCalled()
+  })
+
+  it('does not auto-open refine when no runStep is provided', async () => {
+    vi.mocked(campaignsApi.reviewStep).mockResolvedValue({
+      data: { success: true, step: { review_status: 'rejected' } as never },
+    } as never)
+    const wrapper = mountBar()
+
+    await wrapper.find('[data-testid="step-reject"]').trigger('click')
+    await wrapper.find('[data-testid="reject-category-tone"]').trigger('click')
+    await wrapper.find('[data-testid="reject-confirm-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="refine-modal"]').exists()).toBe(false)
+  })
+})
+
 describe('StepReviewActions — refine flow', () => {
   beforeEach(() => vi.clearAllMocks())
 

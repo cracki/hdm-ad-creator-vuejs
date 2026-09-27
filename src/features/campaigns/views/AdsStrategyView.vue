@@ -50,8 +50,12 @@ const platformResults = computed(() => {
   const strategies = strategyData.value?.strategies ?? []
   for (const platform of selectedPlatforms.value) {
     const run = strategies.find(s => s.platform === platform)
+    // Live status (MOM): a platform is done when either the ads-strategy run
+    // list says so OR the campaign's per-platform completion flag is set —
+    // the run invalidates both queries, so the badge flips without a refresh.
+    const flag = (campaign.value as Record<string, unknown> | undefined)?.[`${platform}_ads_completed`]
     map.set(platform, {
-      completed: run?.status === 'completed',
+      completed: run?.status === 'completed' || flag === true,
       data: run?.status === 'completed' ? run : null,
     })
   }
@@ -190,7 +194,7 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx', platform: string) {
                 </div>
                 <div class="min-w-0">
                   <div class="text-sm font-semibold truncate">{{ platformLabel(p) }}</div>
-                  <div class="text-[11px] text-muted-foreground">
+                  <div class="text-[11px] text-muted-foreground" :data-testid="`platform-status-${p}`">
                     {{ platformResults.get(p)?.completed ? t('status.completed') : t('strategy.pending') }}
                   </div>
                 </div>

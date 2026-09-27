@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { Target, AlertCircle, RefreshCw, Check, Shield } from 'lucide-vue-next'
+import { computed, ref } from 'vue'
+import { Target, AlertCircle, RefreshCw, Check, Shield, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { campaignsApi } from '@/features/campaigns/api'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
 import StepReviewActions from '@/features/campaigns/components/StepReviewActions.vue'
+import { ppcServiceList, ppcServiceDetailRows, hasPpcServiceDetails } from '@/features/campaigns/types'
 import type { Campaign } from '@/features/campaigns/types'
 
 const props = defineProps<{ campaign: Campaign; campaignUuid: string }>()
@@ -23,14 +24,15 @@ const isPrereqMet = computed(() => props.campaign.segmentation_completed)
 const services = computed(() => {
   const payload = stepData.value?.response_payload
   if (!payload) return []
-  const d = payload.data ?? payload
-  const items = d.brand_trust_analysis?.services_bpc_scores
-    ?? d.strategic_prioritization?.ppc_opportunity_ranking
-    ?? d.services
-    ?? payload.results
-    ?? []
-  return Array.isArray(items) ? items : []
+  return ppcServiceList(payload.data ?? payload)
 })
+
+// Expandable cards (MOM 11.2): one card open at a time, collapsed by default.
+const expandedService = ref<number | null>(null)
+
+function toggleService(idx: number) {
+  expandedService.value = expandedService.value === idx ? null : idx
+}
 
 // Review state restore: prefer the run just returned, else the persisted
 // latest ppc_viability step on the campaign.
@@ -120,14 +122,42 @@ async function runPPC(feedback?: string | Event) {
           </button>
         </div>
         <div class="grid sm:grid-cols-2 gap-3">
-          <div v-for="(svc, idx) in services" :key="idx" class="surface-card p-5 space-y-2">
-            <div class="text-sm font-semibold">{{ svc.name || svc.service || `${t('ppc.service')} ${idx + 1}` }}</div>
-            <div v-if="svc.recommendation || svc.viability || svc.classification" class="flex items-center gap-2">
-              <span :class="['text-[11px] px-2 py-0.5 rounded font-semibold', (svc.recommendation === 'High' || svc.viability === 'high' || svc.classification === 'Performance-Friendly') ? 'bg-success/15 text-success' : (svc.recommendation === 'Medium' || svc.viability === 'medium' || svc.classification === 'Mixed') ? 'bg-warning/15 text-warning' : 'bg-destructive/15 text-destructive']">
-                {{ svc.recommendation || svc.viability || svc.classification || '—' }}
-              </span>
+          <div v-for="(svc, idx) in services" :key="idx" class="surface-card overflow-hidden" data-testid="ppc-service-card">
+            <!-- Collapsed summary: name + classification badge -->
+            <div class="p-4 sm:p-5 space-y-2">
+              <div class="flex items-start justify-between gap-2">
+                <div class="text-sm font-semibold min-w-0">{{ svc.name || svc.service || `${t('ppc.service')} ${idx + 1}` }}</div>
+                <button
+                  v-if="hasPpcServiceDetails(svc)"
+                  type="button"
+                  :data-testid="`ppc-service-toggle-${idx}`"
+                  :aria-expanded="expandedService === idx"
+                  class="h-7 w-7 rounded-lg border border-border/40 grid place-items-center hover:bg-overlay-subtle transition shrink-0"
+                  @click="toggleService(idx)"
+                >
+                  <ChevronDown v-if="expandedService !== idx" class="h-3.5 w-3.5 text-muted-foreground" />
+                  <ChevronUp v-else class="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+              </div>
+              <div v-if="svc.recommendation || svc.viability || svc.classification" class="flex items-center gap-2">
+                <span :class="['text-[11px] px-2 py-0.5 rounded font-semibold', (svc.recommendation === 'High' || svc.viability === 'high' || svc.classification === 'Performance-Friendly') ? 'bg-success/15 text-success' : (svc.recommendation === 'Medium' || svc.viability === 'medium' || svc.classification === 'Mixed') ? 'bg-warning/15 text-warning' : 'bg-destructive/15 text-destructive']">
+                  {{ svc.recommendation || svc.viability || svc.classification || '—' }}
+                </span>
+              </div>
             </div>
-            <p v-if="svc.description || svc.reasoning" class="text-xs text-muted-foreground leading-relaxed line-clamp-3">{{ svc.description || svc.reasoning }}</p>
+
+            <!-- Expandable details (MOM 11.2): whatever the payload carries -->
+            <div
+              v-if="expandedService === idx"
+              :data-testid="`ppc-service-details-${idx}`"
+              class="border-t border-border/30 px-4 sm:px-5 py-3 space-y-2 bg-overlay-subtle/30"
+            >
+              <p v-if="svc.description || svc.reasoning" class="text-xs text-muted-foreground leading-relaxed">{{ svc.description || svc.reasoning }}</p>
+              <div v-for="row in ppcServiceDetailRows(svc)" :key="row.labelKey" class="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-2">
+                <span class="text-[11px] uppercase tracking-wider text-muted-foreground shrink-0">{{ t(row.labelKey) }}</span>
+                <span class="text-xs leading-relaxed">{{ row.text }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

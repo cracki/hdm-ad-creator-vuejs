@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { ExternalLink, Globe, BarChart3, Tag } from 'lucide-vue-next'
+import { ExternalLink, Globe, BarChart3, Tag, TrendingUp } from 'lucide-vue-next'
 import type { ContentOpportunities, ContentOpportunityTopic } from '@/features/market/types'
-import AnalysisPayloadRenderer from '@/shared/components/renderers/AnalysisPayloadRenderer.vue'
 import { useI18n } from '@/shared/utils/i18n'
 
 const { t } = useI18n()
@@ -145,6 +144,11 @@ function typeName(key: string): string {
     </div>
   </div>
 
-  <AnalysisPayloadRenderer v-else-if="Object.keys(data).length" :data="(data as any)" />
-  <div v-else class="text-xs text-muted-foreground/50 py-2">{{ t('analysis.noData') }}</div>
+  <!-- QA photo 31: when the opportunities payload lacks its core fields the old
+       generic-payload fallback rendered unrelated content (looked like a copy of
+       the Top Performers tab). Show an honest empty state instead. -->
+  <div v-else class="surface-card p-8 text-center" data-testid="opportunities-empty-state">
+    <TrendingUp class="h-6 w-6 text-muted-foreground/50 mx-auto mb-2" />
+    <div class="text-xs text-muted-foreground">{{ t('opportunities.emptyState') }}</div>
+  </div>
 </template>

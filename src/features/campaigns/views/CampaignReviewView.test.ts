@@ -8,6 +8,7 @@ import type { Campaign } from '../types'
 vi.mock('@/features/campaigns/queries', () => ({
   useCampaign: vi.fn(),
   useCampaignAds: vi.fn(),
+  useCampaignVisuals: vi.fn(),
   useCompleteCampaign: vi.fn(),
   useReviewAd: vi.fn(),
   usePatchAd: vi.fn(),
@@ -19,8 +20,8 @@ vi.mock('@/shared/components/AiLoadingAnimation.vue', () => ({
   default: { name: 'AiLoadingAnimation', template: '<div />' },
 }))
 
-import { useCampaign, useCampaignAds, useCompleteCampaign, useReviewAd, usePatchAd, useRefineAd } from '../queries'
-import type { CampaignAd } from '../types'
+import { useCampaign, useCampaignAds, useCampaignVisuals, useCompleteCampaign, useReviewAd, usePatchAd, useRefineAd } from '../queries'
+import type { CampaignAd, GeneratedVisual } from '../types'
 
 function fakeMutation() {
   return { isPending: ref(false), mutate: vi.fn() } as never
@@ -116,6 +117,9 @@ describe('CampaignReviewView — total budget + funnel split (F16)', () => {
     vi.mocked(useCampaignAds).mockReturnValue({
       data: ref({ success: true, ads: [] }),
     } as never)
+    vi.mocked(useCampaignVisuals).mockReturnValue({
+      data: ref({ success: true, results: [] }),
+    } as never)
     vi.mocked(useReviewAd).mockReturnValue(fakeMutation())
     vi.mocked(usePatchAd).mockReturnValue(fakeMutation())
     vi.mocked(useRefineAd).mockReturnValue(fakeMutation())
@@ -181,6 +185,9 @@ describe('CampaignReviewView — complete error surfacing (F17)', () => {
     vi.mocked(useCompleteCampaign).mockReturnValue({ mutateAsync } as never)
     vi.mocked(useCampaignAds).mockReturnValue({
       data: ref({ success: true, ads: [] }),
+    } as never)
+    vi.mocked(useCampaignVisuals).mockReturnValue({
+      data: ref({ success: true, results: [] }),
     } as never)
     vi.mocked(useReviewAd).mockReturnValue(fakeMutation())
     vi.mocked(usePatchAd).mockReturnValue(fakeMutation())
@@ -271,6 +278,9 @@ describe('CampaignReviewView — generated ads with review actions (F13)', () =>
       isLoading: ref(false),
     } as never)
     vi.mocked(useCompleteCampaign).mockReturnValue({ mutateAsync } as never)
+    vi.mocked(useCampaignVisuals).mockReturnValue({
+      data: ref({ success: true, results: [] }),
+    } as never)
   })
 
   it('renders the ads section with review state restored from GET /ads/', async () => {
@@ -307,5 +317,134 @@ describe('CampaignReviewView — generated ads with review actions (F13)', () =>
 
     const wrapper = await mountView()
     expect(wrapper.find('[data-testid="review-ads-section"]').exists()).toBe(false)
+  })
+})
+
+function buildVisual(overrides: Partial<GeneratedVisual> = {}): GeneratedVisual {
+  return {
+    campaign_ad_uuid: 'ad-1',
+    platform: 'meta',
+    persona: 'Anna',
+    funnel_stage: 'TOFU',
+    aspect_ratio: '1:1',
+    size: '1024x1024',
+    quality: 'auto',
+    visual_summary: 'A serene product shot',
+    success: true,
+    visual_status: 'completed',
+    image_url: 'http://localhost:8000/media/visuals/ad-1.png',
+    revised_prompt: null,
+    error: null,
+    generated_at: '2026-01-01T10:00:00Z',
+    ...overrides,
+  } as GeneratedVisual
+}
+
+describe('CampaignReviewView — ad visuals on review (QA photo 28)', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: CampaignReviewView },
+        { path: '/campaigns', component: { template: '<div />' } },
+        { path: '/campaigns/:campaignUuid/review', component: CampaignReviewView },
+      ],
+    })
+    await router.push('/campaigns/c1/review')
+    vi.mocked(useCampaign).mockReturnValue({
+      data: ref(buildCampaign()),
+      isLoading: ref(false),
+    } as never)
+    vi.mocked(useCompleteCampaign).mockReturnValue({ mutateAsync } as never)
+    vi.mocked(useCampaignAds).mockReturnValue({
+      data: ref({
+        success: true,
+        ads: [buildAd({ campaign_ad_uuid: 'ad-1' }), buildAd({ campaign_ad_uuid: 'ad-2' })],
+      }),
+    } as never)
+    vi.mocked(useReviewAd).mockReturnValue(fakeMutation())
+    vi.mocked(usePatchAd).mockReturnValue(fakeMutation())
+    vi.mocked(useRefineAd).mockReturnValue(fakeMutation())
+  })
+
+  it('renders each ad generated image next to its copy', async () => {
+    vi.mocked(useCampaignVisuals).mockReturnValue({
+      data: ref({
+        success: true,
+        results: [
+          buildVisual({ campaign_ad_uuid: 'ad-1', image_url: 'http://localhost:8000/media/visuals/ad-1.png' }),
+          buildVisual({ campaign_ad_uuid: 'ad-2', image_url: 'http://localhost:8000/media/visuals/ad-2.png' }),
+        ],
+      }),
+    } as never)
+
+    const wrapper = await mountView()
+
+    const thumbs = wrapper.findAll('[data-testid="review-ad-visual"]')
+    expect(thumbs.length).toBe(2)
+    expect((thumbs[0].find('img').element as HTMLImageElement).getAttribute('src')).toBe(
+      'http://localhost:8000/media/visuals/ad-1.png',
+    )
+    expect((thumbs[1].find('img').element as HTMLImageElement).getAttribute('src')).toBe(
+      'http://localhost:8000/media/visuals/ad-2.png',
+    )
+    wrapper.unmount()
+  })
+
+  it('picks the latest successful visual per ad and ignores failed ones', async () => {
+    vi.mocked(useCampaignVisuals).mockReturnValue({
+      data: ref({
+        success: true,
+        results: [
+          buildVisual({ image_url: 'http://localhost:8000/media/old.png', generated_at: '2026-01-01T10:00:00Z' }),
+          buildVisual({
+            success: false,
+            visual_status: 'failed',
+            image_url: null,
+            error: 'boom',
+            generated_at: '2026-01-02T10:00:00Z',
+          }),
+          buildVisual({ image_url: 'http://localhost:8000/media/new.png', generated_at: '2026-01-03T10:00:00Z' }),
+        ],
+      }),
+    } as never)
+
+    const wrapper = await mountView()
+
+    const thumb = wrapper.find('[data-testid="review-ad-visual"]')
+    expect(thumb.exists()).toBe(true)
+    expect((thumb.find('img').element as HTMLImageElement).getAttribute('src')).toBe(
+      'http://localhost:8000/media/new.png',
+    )
+    wrapper.unmount()
+  })
+
+  it('opens the lightbox when a review thumbnail is clicked', async () => {
+    vi.mocked(useCampaignVisuals).mockReturnValue({
+      data: ref({ success: true, results: [buildVisual()] }),
+    } as never)
+
+    const wrapper = await mountView()
+
+    await wrapper.find('[data-testid="review-ad-visual"]').trigger('click')
+    await flushPromises()
+
+    const img = document.querySelector('[data-testid="image-lightbox-img"]') as HTMLImageElement
+    expect(img).not.toBeNull()
+    expect(img.getAttribute('src')).toBe('http://localhost:8000/media/visuals/ad-1.png')
+    wrapper.unmount()
+  })
+
+  it('keeps the ad card text-only when no visual exists for the ad', async () => {
+    vi.mocked(useCampaignVisuals).mockReturnValue({
+      data: ref({ success: true, results: [] }),
+    } as never)
+
+    const wrapper = await mountView()
+
+    expect(wrapper.find('[data-testid="review-ads-section"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="review-ad-visual"]').exists()).toBe(false)
+    wrapper.unmount()
   })
 })

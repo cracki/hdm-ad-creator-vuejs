@@ -2,12 +2,12 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Topbar from '@/layout/Topbar.vue'
-import { useBrand, useDeleteBrand, useAnalysisRuns } from '@/features/brands/queries'
+import { useBrand, useDeleteBrand, useAnalysisRuns, useBrandServices } from '@/features/brands/queries'
 import { useI18n } from '@/shared/utils/i18n'
 import { useToast } from '@/shared/composables/useToast'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import Breadcrumb from '@/shared/components/Breadcrumb.vue'
-import { Globe, Trash2, Pencil, Sparkles, Clock, CheckCircle2, XCircle, Loader2, BarChart3, ChevronLeft } from 'lucide-vue-next'
+import { Globe, Trash2, Pencil, Sparkles, Clock, CheckCircle2, XCircle, Loader2, BarChart3, ChevronLeft, MapPin, Briefcase } from 'lucide-vue-next'
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
 import GuidedAction from '@/shared/components/guided-actions/GuidedAction.vue'
 import { useTourRegistration } from '@/shared/composables/useTourRegistration'
@@ -29,6 +29,9 @@ const breadcrumbs = computed(() => [
 ])
 const { data: brand, isLoading } = useBrand(brandUuid)
 const { data: analysisRuns } = useAnalysisRuns(brandUuid)
+// Merged read-only services list (GET /brands/{uuid}/services/) — QA photo 5:
+// the brand page showed only name/site/industry.
+const { data: brandServices } = useBrandServices(brandUuid)
 const deleteMutation = useDeleteBrand()
 
 const activeTab = ref<'overview' | 'analysis'>('overview')
@@ -138,6 +141,13 @@ setActions([
                 {{ brand.selected_industry.name }}
               </span>
             </div>
+            <div v-if="brand.location" data-testid="brand-location">
+              <div class="text-xs text-muted-foreground mb-1">{{ t('newbrand.row.location') }}</div>
+              <div class="flex items-center gap-2 min-w-0">
+                <MapPin class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <span class="text-sm truncate">{{ brand.location }}</span>
+              </div>
+            </div>
             <div>
               <div class="text-xs text-muted-foreground mb-1">Created</div>
               <div class="text-sm">{{ new Date(brand.created_at).toLocaleDateString() }}</div>
@@ -146,6 +156,25 @@ setActions([
               <div class="text-xs text-muted-foreground mb-1">Updated</div>
               <div class="text-sm">{{ new Date(brand.updated_at).toLocaleDateString() }}</div>
             </div>
+          </div>
+        </div>
+
+        <!-- Services (merged, read-only — updates on re-analysis) -->
+        <div v-if="brandServices?.length" class="surface-card p-6" data-testid="brand-services-card">
+          <div class="flex items-center gap-2 mb-3">
+            <Briefcase class="h-4 w-4 text-primary shrink-0" />
+            <div class="text-sm font-semibold">{{ t('brandDetail.services') }}</div>
+            <span class="text-[11px] text-muted-foreground ms-auto">{{ brandServices.length }}</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            <span
+              v-for="svc in brandServices"
+              :key="svc.name"
+              class="text-xs px-2.5 py-1 rounded-full border border-border/60 bg-overlay-subtle text-muted-foreground"
+              data-testid="brand-service-chip"
+            >
+              {{ svc.name }}
+            </span>
           </div>
         </div>
       </template>

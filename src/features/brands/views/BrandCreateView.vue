@@ -2,9 +2,10 @@
 import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import Topbar from '@/layout/Topbar.vue'
+import BrandServicesManager from '../components/BrandServicesManager.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { useToast } from '@/shared/composables/useToast'
-import { useIndustries, useCreateBrand, useUpdateBrand, useBrand, useBrandAssets, useBrandSocialMedia, useScanWebsite } from '@/features/brands/queries'
+import { useIndustries, useCreateBrand, useUpdateBrand, useBrand, useBrandAssets, useBrandSocialMedia, useScanWebsite, useStartAnalysis } from '@/features/brands/queries'
 import { brandsApi } from '@/features/brands/api'
 import {
   Globe, Building2, MapPin, Upload, Palette, ArrowRight, ArrowLeft,
@@ -57,6 +58,12 @@ const { data: existingAssets } = useBrandAssets(brandUuid)
 const { data: existingSocialMedia } = useBrandSocialMedia(brandUuid)
 const createMutation = useCreateBrand()
 const updateMutation = useUpdateBrand()
+
+// QA fix 5 (one-click create): after creating a brand we immediately start
+// its analysis with the same mutation the analysis page uses. The uuid is
+// only known after the create resolves, hence the late-bound ref.
+const createdBrandUuid = ref('')
+const startAnalysisMutation = useStartAnalysis(createdBrandUuid)
 
 const step = ref(1)
 const form = ref({
@@ -228,7 +235,9 @@ function applyScanResult(result: BrandScanResult) {
 }
 
 const error = ref('')
-const loading = computed(() => createMutation.isPending.value || updateMutation.isPending.value)
+const loading = computed(() =>
+  createMutation.isPending.value || updateMutation.isPending.value || startAnalysisMutation.isPending.value,
+)
 
 const steps: Array<{ n: number; labelKey: TKey; descKey: TKey }> = [
   { n: 1, labelKey: 'newbrand.s1.label', descKey: 'newbrand.s1.desc' },
@@ -297,6 +306,19 @@ async function handleSubmit() {
           await brandsApi.createSocialMedia(newBrandUuid, { platform, profile_url: url.trim() })
         } catch {}
       }
+
+      // QA fix 5: one action — create + start analysis + jump to the run
+      // tracker. On start failure the brand is still saved; fall back to the
+      // analysis start screen where the user can retry.
+      createdBrandUuid.value = newBrandUuid
+      try {
+        const run = await startAnalysisMutation.mutateAsync({})
+        router.push(`/brands/${newBrandUuid}/analysis/${run.data.analysis_run_uuid}`)
+      } catch {
+        toast.error(t('newbrand.analysisStartFailed'))
+        router.push(`/brands/${newBrandUuid}/analysis`)
+      }
+      return
     }
     router.push('/brands')
   } catch (e: any) {
@@ -307,7 +329,7 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <Topbar :title="t('newbrand.title')" :subtitle="t('newbrand.subtitle')" />
+  <Topbar :title="isEdit ? t('newbrand.editTitle') : t('newbrand.title')" :subtitle="isEdit ? t('newbrand.editSubtitle') : t('newbrand.subtitle')" />
   <main class="flex-1 p-4 sm:p-6 overflow-y-auto">
     <div class="max-w-3xl mx-auto space-y-8">
       <!-- Stepper -->
@@ -461,6 +483,9 @@ async function handleSubmit() {
               </div>
             </label>
           </div>
+
+          <!-- Services management (edit mode only) -->
+          <BrandServicesManager v-if="isEdit" :brand-uuid="brandUuid" />
         </div>
 
         <!-- Step 2: Identity -->
@@ -557,7 +582,8 @@ async function handleSubmit() {
 
           <div v-if="error" class="text-sm text-destructive">{{ error }}</div>
 
-          <div class="rounded-xl border border-primary/30 bg-primary/[0.04] p-4 flex items-start gap-3">
+          <!-- Analysis launch hint only applies to brand creation -->
+          <div v-if="!isEdit" class="rounded-xl border border-primary/30 bg-primary/[0.04] p-4 flex items-start gap-3">
             <Sparkles class="h-4 w-4 text-primary mt-0.5" />
             <div class="text-xs text-muted-foreground">
               <span class="text-foreground font-medium">{{ t('newbrand.next') }}</span> {{ t('newbrand.nextDesc') }}
@@ -591,7 +617,7 @@ async function handleSubmit() {
           data-loc="brands.create.start-btn"
           class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5 disabled:opacity-60"
         >
-          <Sparkles class="h-3.5 w-3.5" /> {{ loading ? '...' : t('newbrand.start') }}
+          <Check class="h-3.5 w-3.5" /> {{ loading ? '...' : isEdit ? t('newbrand.save') : t('newbrand.start') }}
         </button>
       </div>
     </div>

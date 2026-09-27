@@ -101,6 +101,56 @@ describe('AdReviewCard — reject flow', () => {
   })
 })
 
+describe('AdReviewCard — reject → refine handoff (MOM 16.2)', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('opens the refine sheet prefilled with the reject reason and submits it', async () => {
+    const rejected = buildAd({ review_status: 'rejected', reject_reason: 'Wrong tone' })
+    vi.mocked(campaignsApi.reviewAd).mockResolvedValue({
+      data: { success: true, ad: rejected },
+    } as never)
+    const refined = buildAd({ data: { headline: 'New Headline', body: 'New body', cta: 'Learn More' } })
+    vi.mocked(campaignsApi.refineAd).mockResolvedValue({
+      data: { success: true, campaign: {} as never, ad: refined, ads: [refined] },
+    } as never)
+
+    const wrapper = mountCard()
+    await wrapper.find('[data-testid="output-reject"]').trigger('click')
+    await wrapper.find('[data-testid="reject-category-tone"]').trigger('click')
+    await wrapper.find('[data-testid="reject-confirm-btn"]').trigger('click')
+    await flushPromises()
+
+    // The refine sheet auto-opens with the reason prefilled.
+    expect(wrapper.find('[data-testid="refine-modal"]').exists()).toBe(true)
+    const textarea = wrapper.find('[data-testid="refine-feedback-input"]').element as HTMLTextAreaElement
+    expect(textarea.value).toBe('Wrong tone')
+
+    await wrapper.find('[data-testid="refine-confirm-btn"]').trigger('click')
+    await flushPromises()
+    expect(campaignsApi.refineAd).toHaveBeenCalledWith('c1', 'ad-1', { feedback: 'Wrong tone' })
+  })
+
+  it('closing the auto-opened refine sheet does not refine the ad', async () => {
+    const rejected = buildAd({ review_status: 'rejected', reject_reason: 'Wrong audience' })
+    vi.mocked(campaignsApi.reviewAd).mockResolvedValue({
+      data: { success: true, ad: rejected },
+    } as never)
+
+    const wrapper = mountCard()
+    await wrapper.find('[data-testid="output-reject"]').trigger('click')
+    await wrapper.find('[data-testid="reject-category-audience"]').trigger('click')
+    await wrapper.find('[data-testid="reject-confirm-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="refine-modal"]').exists()).toBe(true)
+    await wrapper.find('[data-testid="refine-cancel-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="refine-modal"]').exists()).toBe(false)
+    expect(campaignsApi.refineAd).not.toHaveBeenCalled()
+  })
+})
+
 describe('AdReviewCard — refine flow', () => {
   beforeEach(() => vi.clearAllMocks())
 

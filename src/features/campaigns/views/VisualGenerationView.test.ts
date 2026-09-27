@@ -206,3 +206,90 @@ describe('VisualGenerationView — persisted visuals restore (F2)', () => {
     })
   })
 })
+
+describe('VisualGenerationView — full image preview + ad headlines (QA photo 26)', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: VisualGenerationView },
+        { path: '/campaigns/:campaignUuid/generate-ads', component: { template: '<div />' } },
+        { path: '/campaigns/:campaignUuid/visuals', component: VisualGenerationView },
+      ],
+    })
+    await router.push('/campaigns/c1/visuals')
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    })
+    vi.mocked(useCampaign).mockReturnValue({
+      data: ref(buildCampaign()),
+      isLoading: ref(false),
+    } as never)
+    vi.mocked(useCampaignAds).mockReturnValue({
+      data: ref({
+        success: true,
+        ads: [buildAd({ data: { headline: 'Glow Boost Serum', body: 'B', cta: 'Shop Now' } })],
+      }),
+      isLoading: ref(false),
+    } as never)
+    vi.mocked(useCampaignVisuals).mockReturnValue({
+      data: ref({ success: true, results: [buildPersistedVisual()] }),
+    } as never)
+  })
+
+  it('letterboxes the full image (object-contain) instead of cropping it', async () => {
+    const wrapper = await mountView()
+
+    const img = wrapper.find('[data-testid="visual-result-image"]')
+    expect(img.exists()).toBe(true)
+    expect(img.classes()).toContain('object-contain')
+    expect(img.classes()).not.toContain('object-cover')
+    wrapper.unmount()
+  })
+
+  it('shows each ad headline on the selection cards', async () => {
+    const wrapper = await mountView()
+
+    const headline = wrapper.find('[data-testid="visual-ad-headline"]')
+    expect(headline.exists()).toBe(true)
+    expect(headline.text()).toBe('Glow Boost Serum')
+    wrapper.unmount()
+  })
+
+  it('opens a full-screen lightbox on image click and closes it via the close button', async () => {
+    const wrapper = await mountView()
+
+    await wrapper.find('[data-testid="visual-open-preview"]').trigger('click')
+    await flushPromises()
+
+    const overlay = document.querySelector('[data-testid="image-lightbox"]')
+    expect(overlay).not.toBeNull()
+    const img = document.querySelector('[data-testid="image-lightbox-img"]') as HTMLImageElement
+    expect(img.getAttribute('src')).toBe('http://localhost:8000/media/visuals/ad-1.png')
+
+    ;(document.querySelector('[data-testid="image-lightbox-close"]') as HTMLElement).click()
+    await flushPromises()
+    expect(document.querySelector('[data-testid="image-lightbox"]')).toBeNull()
+    wrapper.unmount()
+  })
+
+  it('closes the lightbox on ESC and on backdrop click', async () => {
+    const wrapper = await mountView()
+
+    await wrapper.find('[data-testid="visual-open-preview"]').trigger('click')
+    await flushPromises()
+    expect(document.querySelector('[data-testid="image-lightbox"]')).not.toBeNull()
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    await flushPromises()
+    expect(document.querySelector('[data-testid="image-lightbox"]')).toBeNull()
+
+    await wrapper.find('[data-testid="visual-open-preview"]').trigger('click')
+    await flushPromises()
+    ;(document.querySelector('[data-testid="image-lightbox-backdrop"]') as HTMLElement).click()
+    await flushPromises()
+    expect(document.querySelector('[data-testid="image-lightbox"]')).toBeNull()
+    wrapper.unmount()
+  })
+})

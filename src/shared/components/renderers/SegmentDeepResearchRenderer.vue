@@ -3,12 +3,16 @@ import { computed } from 'vue'
 import {
   Users, Heart, Brain, Target, TrendingUp,
   AlertTriangle, Lightbulb, MessageSquare, Shield,
-  BarChart3, Globe, Zap, Award, Eye,
+  BarChart3, Globe, Zap, Award, Eye, ThumbsUp, ThumbsDown,
 } from 'lucide-vue-next'
+import { useI18n } from '@/shared/utils/i18n'
+import { filterPlaceholderItems } from '@/shared/utils/payloadDisplay'
 
 const props = defineProps<{
   data: Record<string, unknown>
 }>()
+
+const { t } = useI18n()
 
 const ICON_MAP: Record<string, any> = {
   audience: Users,
@@ -59,14 +63,71 @@ interface RenderItem {
   key: string
   label: string
   value: unknown
-  type: 'text' | 'list' | 'tags' | 'nested' | 'card-list'
+  type: 'text' | 'list' | 'tags' | 'nested' | 'card-list' | 'lang-patterns'
   children?: RenderItem[]
   cards?: Record<string, unknown>[]
+  /** lang-patterns: words to use / avoid when the payload separates them */
+  useWords?: string[]
+  avoidWords?: string[]
+  /** lang-patterns: unclassifiable flat list — rendered as ONE group with a hint */
+  flatItems?: string[]
 }
 
-function classify(key: string, val: unknown): RenderItem {
+/** Backend structured keys that split language patterns into use vs avoid. */
+const LANG_USE_KEYS = ['words_they_use', 'words_to_use', 'recommended_words']
+const LANG_AVOID_KEYS = ['phrases_to_avoid', 'words_to_avoid', 'avoid_words']
+
+function asCleanStringList(val: unknown): string[] {
+  return Array.isArray(val) ? filterPlaceholderItems(val.filter((v): v is string => typeof v === 'string' && v.trim().length > 0)) : []
+}
+
+/**
+ * QA fix 3 (Terminology): language patterns must never mix "use" and "avoid"
+ * vocabulary in one undifferentiated list. When the payload carries
+ * structured keys (words_they_use / phrases_to_avoid — the backend's deep
+ * research shape) they render as two labeled groups with distinct styling.
+ * A flat list is NEVER split by guessing — it renders as one group with a
+ * backend-agnostic hint instead.
+ */
+function classifyLanguagePatterns(val: unknown): RenderItem | null {
+  if (Array.isArray(val)) {
+    const flat = asCleanStringList(val)
+    if (flat.length === 0) return null
+    return { key: 'language_patterns', label: t('segResearch.lang.title'), value: val, type: 'lang-patterns', flatItems: flat }
+  }
+  if (typeof val !== 'object' || val === null) return null
+
+  const obj = val as Record<string, unknown>
+  const useWords = LANG_USE_KEYS.flatMap((k) => asCleanStringList(obj[k]))
+  const avoidWords = LANG_AVOID_KEYS.flatMap((k) => asCleanStringList(obj[k]))
+  if (useWords.length === 0 && avoidWords.length === 0) return null
+
+  const consumed = new Set([...LANG_USE_KEYS, ...LANG_AVOID_KEYS])
+  const extras = Object.entries(obj)
+    .filter(([k]) => !consumed.has(k))
+    .map(([k, v]) => classify(k, v))
+    .filter((item): item is RenderItem => item !== null)
+
+  return {
+    key: 'language_patterns',
+    label: t('segResearch.lang.title'),
+    value: val,
+    type: 'lang-patterns',
+    useWords: [...new Set(useWords)],
+    avoidWords: [...new Set(avoidWords)],
+    children: extras,
+  }
+}
+
+function classify(key: string, val: unknown): RenderItem | null {
   if (val === null || val === undefined) {
-    return { key, label: formatLabel(key), value: '', type: 'text' }
+    return null
+  }
+
+  if (key === 'language_patterns') {
+    const langItem = classifyLanguagePatterns(val)
+    if (langItem) return langItem
+    // No structured/flat language data — fall through to the generic paths.
   }
 
   if (typeof val === 'boolean') {
@@ -83,7 +144,7 @@ function classify(key: string, val: unknown): RenderItem {
 
   if (Array.isArray(val)) {
     if (val.length === 0) {
-      return { key, label: formatLabel(key), value: [], type: 'tags' }
+      return null
     }
     if (typeof val[0] === 'string') {
       const allShort = (val as string[]).every((v) => v.length < 60)
@@ -107,14 +168,16 @@ function classify(key: string, val: unknown): RenderItem {
   }
 
   if (typeof val === 'object') {
+    const children = Object.entries(val as Record<string, unknown>)
+      .map(([k, v]) => classify(k, v))
+      .filter((item): item is RenderItem => item !== null)
+    if (children.length === 0) return null
     return {
       key,
       label: formatLabel(key),
       value: val,
       type: 'nested',
-      children: Object.entries(val as Record<string, unknown>)
-        .filter(([, v]) => v !== null && v !== undefined)
-        .map(([k, v]) => classify(k, v)),
+      children,
     }
   }
 
@@ -132,8 +195,8 @@ function cardTitleField(card: Record<string, unknown>): string | null {
 const items = computed<RenderItem[]>(() => {
   if (!props.data || typeof props.data !== 'object') return []
   return Object.entries(props.data)
-    .filter(([, v]) => v !== null && v !== undefined)
     .map(([key, value]) => classify(key, value))
+    .filter((item): item is RenderItem => item !== null)
 })
 
 const hasData = computed(() => items.value.length > 0)
@@ -212,6 +275,31 @@ const hasData = computed(() => items.value.length > 0)
                 </div>
               </div>
 
+              <!-- Nested language patterns (QA fix 3) -->
+              <div v-else-if="child.type === 'lang-patterns'" class="ps-2 border-s-2 border-border/20 space-y-2" data-testid="language-patterns">
+                <div class="text-[11px] text-muted-foreground/60 font-medium">{{ child.label }}</div>
+                <div v-if="child.useWords?.length" data-testid="lang-use-group">
+                  <div class="flex items-center gap-1.5 text-[11px] font-medium text-success mb-1">
+                    <ThumbsUp class="h-3 w-3" /> {{ t('segResearch.lang.use') }}
+                  </div>
+                  <div class="flex flex-wrap gap-1">
+                    <span v-for="(word, i) in child.useWords" :key="i" data-testid="lang-use-chip" class="text-[11px] px-2 py-0.5 rounded-full border border-success/40 bg-success/10 text-success">{{ word }}</span>
+                  </div>
+                </div>
+                <div v-if="child.avoidWords?.length" data-testid="lang-avoid-group">
+                  <div class="flex items-center gap-1.5 text-[11px] font-medium text-destructive mb-1">
+                    <ThumbsDown class="h-3 w-3" /> {{ t('segResearch.lang.avoid') }}
+                  </div>
+                  <div class="flex flex-wrap gap-1">
+                    <span v-for="(word, i) in child.avoidWords" :key="i" data-testid="lang-avoid-chip" class="text-[11px] px-2 py-0.5 rounded-full border border-destructive/40 bg-destructive/10 text-destructive">{{ word }}</span>
+                  </div>
+                </div>
+                <div v-if="child.flatItems?.length" class="flex flex-wrap gap-1" data-testid="lang-flat-group">
+                  <span v-for="(word, i) in child.flatItems" :key="i" data-testid="lang-flat-chip" class="text-[11px] px-2 py-0.5 rounded-full border border-border/50 bg-overlay-subtle text-muted-foreground">{{ word }}</span>
+                </div>
+                <p v-if="child.flatItems?.length" class="text-[11px] text-muted-foreground/70">{{ t('segResearch.lang.hint') }}</p>
+              </div>
+
               <!-- Deeply nested (render inline) -->
               <div v-else-if="child.type === 'nested' && child.children?.length" class="space-y-1.5 ps-2 border-s-2 border-border/20">
                 <div class="text-[11px] text-muted-foreground/60 font-medium">{{ child.label }}</div>
@@ -228,6 +316,86 @@ const hasData = computed(() => items.value.length > 0)
               </div>
             </template>
           </div>
+        </div>
+      </template>
+
+      <!-- LANGUAGE PATTERNS (QA fix 3: use vs avoid never mixed) -->
+      <template v-else-if="item.type === 'lang-patterns'">
+        <div class="rounded-lg border border-border/30 bg-overlay-subtle p-4 space-y-3" data-testid="language-patterns">
+          <div class="flex items-center gap-2 text-xs font-semibold text-foreground">
+            <component :is="pickIcon(item.key)" class="h-3.5 w-3.5 text-primary" />
+            {{ item.label }}
+          </div>
+
+          <!-- Structured payload: two labeled groups with distinct styling -->
+          <template v-if="item.useWords?.length || item.avoidWords?.length">
+            <div v-if="item.useWords?.length" data-testid="lang-use-group">
+              <div class="flex items-center gap-1.5 text-[11px] font-medium text-success mb-1.5">
+                <ThumbsUp class="h-3 w-3" /> {{ t('segResearch.lang.use') }}
+              </div>
+              <div class="flex flex-wrap gap-1.5">
+                <span
+                  v-for="(word, i) in item.useWords"
+                  :key="i"
+                  data-testid="lang-use-chip"
+                  class="text-[11px] px-2 py-0.5 rounded-full border border-success/40 bg-success/10 text-success"
+                >
+                  {{ word }}
+                </span>
+              </div>
+            </div>
+            <div v-if="item.avoidWords?.length" data-testid="lang-avoid-group">
+              <div class="flex items-center gap-1.5 text-[11px] font-medium text-destructive mb-1.5">
+                <ThumbsDown class="h-3 w-3" /> {{ t('segResearch.lang.avoid') }}
+              </div>
+              <div class="flex flex-wrap gap-1.5">
+                <span
+                  v-for="(word, i) in item.avoidWords"
+                  :key="i"
+                  data-testid="lang-avoid-chip"
+                  class="text-[11px] px-2 py-0.5 rounded-full border border-destructive/40 bg-destructive/10 text-destructive"
+                >
+                  {{ word }}
+                </span>
+              </div>
+            </div>
+            <!-- Remaining structured keys (emotional triggers, tone preferences…) -->
+            <template v-for="extra in item.children" :key="extra.key">
+              <div v-if="extra.type === 'tags'" class="space-y-1">
+                <div class="text-[11px] text-muted-foreground/60">{{ extra.label }}</div>
+                <div class="flex flex-wrap gap-1">
+                  <span v-for="(tg, ti) in (extra.value as string[])" :key="ti" class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground">{{ tg }}</span>
+                </div>
+              </div>
+              <div v-else-if="extra.type === 'list'" class="space-y-1">
+                <div class="text-[11px] text-muted-foreground/60">{{ extra.label }}</div>
+                <ul class="space-y-0.5">
+                  <li v-for="(entry, li) in (extra.value as string[])" :key="li" class="text-xs text-muted-foreground flex items-start gap-1.5">
+                    <span class="h-1 w-1 rounded-full bg-primary/60 mt-1.5 shrink-0" /> {{ entry }}
+                  </li>
+                </ul>
+              </div>
+              <div v-else-if="extra.type === 'text'" class="flex items-start gap-2">
+                <span class="text-[11px] text-muted-foreground/60 min-w-[110px] shrink-0">{{ extra.label }}</span>
+                <span class="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">{{ extra.value }}</span>
+              </div>
+            </template>
+          </template>
+
+          <!-- Flat list: rendered as ONE group + hint — never split by guessing -->
+          <template v-else>
+            <div class="flex flex-wrap gap-1.5" data-testid="lang-flat-group">
+              <span
+                v-for="(word, i) in item.flatItems"
+                :key="i"
+                data-testid="lang-flat-chip"
+                class="text-[11px] px-2 py-0.5 rounded-full border border-border/50 bg-overlay-subtle text-muted-foreground"
+              >
+                {{ word }}
+              </span>
+            </div>
+            <p class="text-[11px] text-muted-foreground/70">{{ t('segResearch.lang.hint') }}</p>
+          </template>
         </div>
       </template>
 

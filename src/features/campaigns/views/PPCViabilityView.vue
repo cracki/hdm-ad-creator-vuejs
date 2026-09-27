@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Target, ArrowLeft, ArrowRight, RefreshCw, Shield, TrendingUp, Check } from 'lucide-vue-next'
+import { useQueryClient } from '@tanstack/vue-query'
+import { Target, ArrowLeft, ArrowRight, RefreshCw, Shield, TrendingUp, Check, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import StepExportButton from '@/shared/components/StepExportButton.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import ErrorState from '@/shared/components/ErrorState.vue'
@@ -11,6 +12,7 @@ import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { useCampaign } from '../queries'
+import { mergePpcBlueprints, ppcServiceList, ppcServiceDetailRows, hasPpcServiceDetails } from '../types'
 import { useBrandServices } from '@/features/brands/queries'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
@@ -19,6 +21,7 @@ import { exportPPCViability } from '@/shared/utils/exportStep'
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
+const queryClient = useQueryClient()
 
 const campaignUuid = computed(() => route.params.campaignUuid as string)
 const { data: campaign } = useCampaign(campaignUuid)
@@ -48,28 +51,25 @@ const viabilityData = computed(() => {
   if (!payload) return null
   return payload.data ?? payload
 })
-const services = computed(() => {
+const services = computed<Record<string, any>[]>(() => {
   // Prefer the brand services endpoint (merged + deduplicated backend-side);
   // fall back to scraping the step payload for any services-like list when
-  // the endpoint has nothing (e.g. brand never analyzed/scraped).
-  const fromEndpoint = (detectedServices.value ?? []).map((s) => ({
-    name: s.name,
-    score: s.score ?? undefined,
-    classification: s.classification ?? undefined,
-    recommendation: s.recommendation ?? undefined,
-  }))
-  if (fromEndpoint.length) return fromEndpoint
-
-  if (!viabilityData.value) return []
-  const d = viabilityData.value
-  const svcs = d.brand_trust_analysis?.services_bpc_scores
-    ?? d.strategic_prioritization?.ppc_opportunity_ranking
-    ?? d.services
-    ?? d.platforms
-    ?? d.recommendations
-    ?? []
-  return Array.isArray(svcs) ? svcs : []
+  // the endpoint has nothing (e.g. brand never analyzed/scraped). Either way
+  // the rows are enriched with the run's blueprints so the expandable cards
+  // keep their platform/objective/risk details.
+  const fromEndpoint = (detectedServices.value ?? []).map((s) => ({ ...s } as Record<string, any>))
+  if (fromEndpoint.length) {
+    return mergePpcBlueprints(fromEndpoint, viabilityData.value as Record<string, unknown>)
+  }
+  return ppcServiceList(viabilityData.value)
 })
+
+// Expandable cards (MOM 11.2): one card open at a time, collapsed by default.
+const expandedService = ref<number | null>(null)
+
+function toggleService(idx: number) {
+  expandedService.value = expandedService.value === idx ? null : idx
+}
 
 // Review state restore: prefer the run just returned, else the persisted
 // latest ppc_viability step on the campaign (latest_steps).
@@ -86,10 +86,17 @@ async function runPPC(feedback?: string | Event) {
   if (!isPrereqMet.value || !operationManager.canStart(opKey.value)) return
   operationManager.start(opKey.value)
   try {
-    await run(async () => {
+    const res = await run(async () => {
       const { campaignsApi } = await import('../api')
       return (await campaignsApi.runPPCViability(campaignUuid.value, { refinement_feedback: refinementFeedback })).data
     })
+    // Keep the page live after a run/refine (MOM): refetch the campaign so
+    // latest_steps / completion flags update without a manual refresh. The
+    // displayed result prefers the fresh run response above, then latest_steps.
+    if (res) {
+      queryClient.invalidateQueries({ queryKey: ['campaigns', campaignUuid] })
+      queryClient.invalidateQueries({ queryKey: ['campaigns', campaignUuid, 'steps'] })
+    }
   } finally {
     operationManager.finish(opKey.value)
   }
@@ -216,39 +223,66 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx') {
             <div
               v-for="(svc, idx) in services"
               :key="idx"
-              class="surface-card p-5"
+              class="surface-card overflow-hidden"
+              data-testid="ppc-service-card"
             >
-              <div class="flex items-start justify-between mb-3">
-                <div class="flex items-center gap-3">
-                  <div class="h-8 w-8 rounded-lg bg-overlay-light grid place-items-center shrink-0">
-                    <TrendingUp class="h-4 w-4 text-primary" />
+              <!-- Collapsed summary: name + classification + score -->
+              <div class="p-4 sm:p-5">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="flex items-start gap-3 min-w-0">
+                    <div class="h-8 w-8 rounded-lg bg-overlay-light grid place-items-center shrink-0">
+                      <TrendingUp class="h-4 w-4 text-primary" />
+                    </div>
+                    <div class="min-w-0">
+                      <div class="text-sm font-semibold truncate">{{ svc.name || svc.platform || svc.service || `${t('ppc.service')} ${idx + 1}` }}</div>
+                      <div v-if="svc.type || svc.category || svc.classification" class="text-[11px] text-muted-foreground truncate">{{ svc.type || svc.category || svc.classification }}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div class="text-sm font-semibold">{{ svc.name || svc.platform || svc.service || `${t('ppc.service')} ${idx + 1}` }}</div>
-                    <div v-if="svc.type || svc.category || svc.classification" class="text-[11px] text-muted-foreground">{{ svc.type || svc.category || svc.classification }}</div>
+                  <div class="flex items-center gap-1.5 shrink-0">
+                    <div v-if="svc.score || svc.bpc_score || svc.viability_score || svc.opportunity_score || svc.priority" class="flex items-center gap-1">
+                      <span class="h-1.5 w-1.5 rounded-full bg-success" />
+                      <span class="text-xs font-semibold text-success">
+                        {{ svc.score ?? svc.bpc_score ?? svc.viability_score ?? svc.opportunity_score ?? svc.priority }}
+                      </span>
+                    </div>
+                    <button
+                      v-if="hasPpcServiceDetails(svc)"
+                      type="button"
+                      :data-testid="`ppc-service-toggle-${idx}`"
+                      :aria-expanded="expandedService === idx"
+                      class="h-8 w-8 rounded-lg border border-border/40 grid place-items-center hover:bg-overlay-subtle transition"
+                      @click="toggleService(idx)"
+                    >
+                      <ChevronDown v-if="expandedService !== idx" class="h-3.5 w-3.5 text-muted-foreground" />
+                      <ChevronUp v-else class="h-3.5 w-3.5 text-muted-foreground" />
+                    </button>
                   </div>
                 </div>
-                <div v-if="svc.score || svc.viability_score || svc.priority" class="flex items-center gap-1">
-                  <span class="h-1.5 w-1.5 rounded-full bg-success" />
-                  <span class="text-xs font-semibold text-success">
-                    {{ svc.score ?? svc.bpc_score ?? svc.viability_score ?? svc.priority }}
+              </div>
+
+              <!-- Expandable details (MOM 11.2): whatever the payload carries -->
+              <div
+                v-if="expandedService === idx"
+                :data-testid="`ppc-service-details-${idx}`"
+                class="border-t border-border/30 px-4 sm:px-5 py-4 space-y-3 bg-overlay-subtle/30"
+              >
+                <p v-if="svc.description || svc.recommendation || svc.reasoning" class="text-xs text-muted-foreground leading-relaxed">
+                  {{ svc.description || svc.recommendation || svc.reasoning }}
+                </p>
+                <div v-for="row in ppcServiceDetailRows(svc)" :key="row.labelKey" class="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-2">
+                  <span class="text-[11px] uppercase tracking-wider text-muted-foreground shrink-0">{{ t(row.labelKey) }}</span>
+                  <span class="text-xs leading-relaxed">{{ row.text }}</span>
+                </div>
+                <div v-if="svc.pros?.length" class="flex flex-wrap gap-1">
+                  <span v-for="pro in (svc.pros ?? [])" :key="pro" class="text-[11px] px-2 py-0.5 rounded bg-success/10 text-success/80">
+                    {{ pro }}
                   </span>
                 </div>
-              </div>
-
-              <p v-if="svc.description || svc.recommendation || svc.reasoning" class="text-xs text-muted-foreground leading-relaxed mb-3">
-                {{ svc.description || svc.recommendation || svc.reasoning }}
-              </p>
-
-              <div v-if="svc.pros?.length" class="flex flex-wrap gap-1">
-                <span v-for="pro in (svc.pros ?? [])" :key="pro" class="text-[11px] px-2 py-0.5 rounded bg-success/10 text-success/80">
-                  {{ pro }}
-                </span>
-              </div>
-              <div v-if="svc.cons?.length" class="flex flex-wrap gap-1 mt-1">
-                <span v-for="con in svc.cons" :key="con" class="text-[11px] px-2 py-0.5 rounded bg-destructive/10 text-destructive/80">
-                  {{ con }}
-                </span>
+                <div v-if="svc.cons?.length" class="flex flex-wrap gap-1">
+                  <span v-for="con in svc.cons" :key="con" class="text-[11px] px-2 py-0.5 rounded bg-destructive/10 text-destructive/80">
+                    {{ con }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
