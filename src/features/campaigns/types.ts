@@ -355,7 +355,13 @@ export interface AdsStrategyListResponse {
   strategies: AdsStrategyRun[]
 }
 
-export function getCampaignProgress(campaign: Campaign): number {
+/**
+ * Completed vs applicable step count (MOM باگ۶): the 4 base steps plus only
+ * the platforms the user actually selected. If platform selection hasn't
+ * happened yet, all three platform flags count so early-campaign progress is
+ * unchanged (a partial-platform campaign can still reach 100%).
+ */
+export function getCampaignStepCounts(campaign: Campaign): { completed: number; total: number } {
   const baseFlags = [
     campaign.segmentation_completed,
     campaign.ppc_viability_completed,
@@ -364,9 +370,6 @@ export function getCampaignProgress(campaign: Campaign): number {
   ]
   const ctx = campaign.context_payload as { selected_platforms?: string[] } | undefined
   const selectedPlatforms = ctx?.selected_platforms ?? []
-  // Only count the platforms the user actually selected. If platform selection
-  // hasn't happened yet, fall back to all platform flags so early-campaign
-  // progress is unchanged (a partial-platform campaign can now reach 100%).
   const platformFlags = selectedPlatforms.length
     ? selectedPlatforms.map((p) => campaign[`${p}_ads_completed` as keyof Campaign])
     : [
@@ -375,8 +378,12 @@ export function getCampaignProgress(campaign: Campaign): number {
         campaign.linkedin_ads_completed,
       ]
   const flags = [...baseFlags, ...platformFlags]
-  const completed = flags.filter(Boolean).length
-  return Math.round((completed / flags.length) * 100)
+  return { completed: flags.filter(Boolean).length, total: flags.length }
+}
+
+export function getCampaignProgress(campaign: Campaign): number {
+  const { completed, total } = getCampaignStepCounts(campaign)
+  return Math.round((completed / total) * 100)
 }
 
 export function areAllPlatformAdsComplete(campaign: Campaign): boolean {

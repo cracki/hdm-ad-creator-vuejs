@@ -9,7 +9,8 @@ import SkeletonLoader from '@/shared/components/SkeletonLoader.vue'
 import GuidedAction from '@/shared/components/guided-actions/GuidedAction.vue'
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
 import { useCampaigns, useDeleteCampaign } from '../queries'
-import { getCampaignProgress } from '../types'
+import { getCampaignProgress, getCampaignStepCounts } from '../types'
+import type { Campaign } from '../types'
 import { useTourRegistration } from '@/shared/composables/useTourRegistration'
 import { campaignsListTour } from '../tours'
 
@@ -43,6 +44,31 @@ function getStatusBadge(campaign: { status: string }) {
     archived: { label: 'Archived', cls: 'bg-overlay-subtle text-muted-foreground' },
   }
   return map[campaign.status] ?? map.draft
+}
+
+const PLATFORM_LABELS: Record<string, () => string> = {
+  meta: () => t('platform.meta'),
+  google: () => t('platform.google'),
+  linkedin: () => t('platform.linkedin'),
+}
+
+/** Localized labels for the platforms the user actually selected. */
+function selectedPlatformLabels(campaign: Campaign): string[] {
+  const ctx = campaign.context_payload as { selected_platforms?: string[] } | undefined
+  return (ctx?.selected_platforms ?? [])
+    .map((p) => PLATFORM_LABELS[p]?.() ?? p)
+}
+
+/**
+ * Truthful "Current" cell (MOM باگ۶): a completed campaign says Completed
+ * instead of a misleading current_step; otherwise the selected platforms (or
+ * the current step while platform selection hasn't happened yet).
+ */
+function currentLabel(campaign: Campaign): string {
+  if (campaign.status === 'completed') return t('status.completed')
+  const platforms = selectedPlatformLabels(campaign)
+  if (platforms.length) return platforms.join(' · ')
+  return campaign.current_step.replace(/_/g, ' ')
 }
 
 async function handleDelete(uuid: string, name: string) {
@@ -173,17 +199,32 @@ async function confirmDelete() {
           <!-- Stats row -->
           <div class="grid grid-cols-3 gap-2 text-center">
             <div class="p-2 rounded-lg bg-overlay-subtle">
-              <div class="text-sm font-bold">{{ campaign.steps_count }}</div>
+              <div class="text-sm font-bold" data-testid="campaign-card-steps">
+                {{ getCampaignStepCounts(campaign).completed }} / {{ getCampaignStepCounts(campaign).total }}
+              </div>
               <div class="text-[11px] text-muted-foreground">{{ t('camp.steps') }}</div>
             </div>
             <div class="p-2 rounded-lg bg-overlay-subtle">
-              <div class="text-sm font-bold capitalize">{{ campaign.current_step.replace('_', ' ') }}</div>
+              <div class="text-sm font-bold truncate capitalize" data-testid="campaign-card-current">
+                {{ currentLabel(campaign) }}
+              </div>
               <div class="text-[11px] text-muted-foreground">{{ t('camp.current') }}</div>
             </div>
             <div class="p-2 rounded-lg bg-overlay-subtle">
-              <div class="text-sm font-bold">{{ campaign.brand?.selected_industry?.name ?? '—' }}</div>
+              <div class="text-sm font-bold truncate">{{ campaign.brand?.selected_industry?.name ?? '—' }}</div>
               <div class="text-[11px] text-muted-foreground">{{ t('camp.industry') }}</div>
             </div>
+          </div>
+
+          <!-- Selected platforms (MOM باگ۶): what the campaign actually runs on -->
+          <div v-if="selectedPlatformLabels(campaign).length" class="flex flex-wrap gap-1" data-testid="campaign-card-platforms">
+            <span
+              v-for="label in selectedPlatformLabels(campaign)"
+              :key="label"
+              class="text-[11px] px-2 py-0.5 rounded bg-overlay-light text-muted-foreground"
+            >
+              {{ label }}
+            </span>
           </div>
 
           <!-- Date -->
