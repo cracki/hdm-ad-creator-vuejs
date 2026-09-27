@@ -39,7 +39,23 @@ export const brandsApi = {
   // Managed services — parallel backend contract (QA Fix 4): the merged list is
   // read via listServices(); these manage the editable entries.
   listManagedServices(brandUuid: string, config?: SignalConfig): Promise<{ data: ManagedBrandServicesResponse }> {
-    return apiClient.get(`/brands/${brandUuid}/services/manage/`, config)
+    // Backend returns a bare array of {brand_service_uuid, name, source, ...};
+    // normalize to the wrapper + service_uuid shape the UI consumes (accept
+    // both shapes defensively).
+    return apiClient.get(`/brands/${brandUuid}/services/manage/`, config).then(r => {
+      const raw = r.data
+      const rows: any[] = Array.isArray(raw) ? raw : (raw?.services ?? [])
+      return {
+        ...r,
+        data: {
+          success: raw?.success ?? true,
+          services: rows.map(row => ({
+            ...row,
+            service_uuid: row.service_uuid ?? row.brand_service_uuid,
+          })),
+        },
+      }
+    })
   },
 
   createManagedService(brandUuid: string, payload: CreateManagedServicePayload): Promise<{ data: ManagedBrandServiceResult }> {

@@ -32,6 +32,8 @@ const SOURCE_LABEL_KEYS: Record<string, TKey> = {
   brand_analysis: 'brandServices.source.brandAnalysis',
   ppc_viability: 'brandServices.source.ppcViability',
   manual: 'brandServices.source.manual',
+  scan: 'brandServices.source.scanned',
+  campaign: 'brandServices.source.campaign',
 }
 
 function sourceLabel(source: string): string {

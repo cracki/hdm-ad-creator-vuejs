@@ -51,6 +51,8 @@ export const translations = {
   'brandServices.source.brandAnalysis': { en: 'Analysis', ar: 'تحليل', fa: 'تحلیل' },
   'brandServices.source.ppcViability': { en: 'PPC', ar: 'PPC', fa: 'PPC' },
   'brandServices.source.manual': { en: 'Manual', ar: 'يدوي', fa: 'دستی' },
+  'brandServices.source.scanned': { en: 'Scan', ar: 'مسح', fa: 'اسکن' },
+  'brandServices.source.campaign': { en: 'Campaign', ar: 'حملة', fa: 'کمپین' },
 
   // Industries
   'ind.beauty': { en: 'Beauty', ar: 'تجميل', fa: 'زیبایی' },

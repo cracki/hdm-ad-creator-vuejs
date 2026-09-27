@@ -12,7 +12,7 @@ import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { useCampaign } from '../queries'
-import { ppcServiceList, ppcServiceDetailRows, hasPpcServiceDetails } from '../types'
+import { mergePpcBlueprints, ppcServiceList, ppcServiceDetailRows, hasPpcServiceDetails } from '../types'
 import { useBrandServices } from '@/features/brands/queries'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
@@ -54,9 +54,13 @@ const viabilityData = computed(() => {
 const services = computed<Record<string, any>[]>(() => {
   // Prefer the brand services endpoint (merged + deduplicated backend-side);
   // fall back to scraping the step payload for any services-like list when
-  // the endpoint has nothing (e.g. brand never analyzed/scraped).
+  // the endpoint has nothing (e.g. brand never analyzed/scraped). Either way
+  // the rows are enriched with the run's blueprints so the expandable cards
+  // keep their platform/objective/risk details.
   const fromEndpoint = (detectedServices.value ?? []).map((s) => ({ ...s } as Record<string, any>))
-  if (fromEndpoint.length) return fromEndpoint
+  if (fromEndpoint.length) {
+    return mergePpcBlueprints(fromEndpoint, viabilityData.value as Record<string, unknown>)
+  }
   return ppcServiceList(viabilityData.value)
 })
 

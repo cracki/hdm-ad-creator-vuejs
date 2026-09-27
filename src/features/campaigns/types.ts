@@ -472,16 +472,31 @@ export function ppcServiceList(data: Record<string, unknown> | null | undefined)
     ?? d.recommendations
     ?? []
   const items: unknown[] = Array.isArray(svcs) ? svcs : []
-  const blueprints = d.strategic_prioritization?.ppc_blueprints
-  if (Array.isArray(blueprints) && blueprints.length) {
-    const byName = new Map(blueprints.map((b: any) => [b?.service ?? b?.name ?? '', b]))
-    return items.map((s) => {
-      const row = (s ?? {}) as Record<string, any>
-      const bp = byName.get(row.service ?? row.name ?? '')
-      return bp ? { ...bp, ...row } : row
-    })
-  }
-  return items.filter((s): s is Record<string, unknown> => !!s && typeof s === 'object')
+  return mergePpcBlueprints(
+    items.filter((s): s is Record<string, unknown> => !!s && typeof s === 'object'),
+    d,
+  )
+}
+
+/**
+ * Join each service row with its matching `ppc_blueprints` entry (case-
+ * insensitive on the service name) so expandable cards keep their platform /
+ * objective / risk details whichever list the rows came from.
+ */
+export function mergePpcBlueprints(
+  rows: Record<string, unknown>[],
+  data: Record<string, unknown> | null | undefined,
+): Record<string, unknown>[] {
+  const blueprints = (data as Record<string, any> | null | undefined)?.strategic_prioritization?.ppc_blueprints
+  if (!Array.isArray(blueprints) || !blueprints.length) return rows
+  const byName = new Map(
+    blueprints.map((b: any) => [String(b?.service ?? b?.name ?? '').toLowerCase(), b]),
+  )
+  return rows.map((row) => {
+    const key = String((row as any).service ?? (row as any).name ?? '').toLowerCase()
+    const bp = byName.get(key)
+    return bp ? { ...bp, ...row } : row
+  })
 }
 
 export function getCampaignStepStatuses(campaign: Campaign): Record<CampaignStepType, 'completed' | 'pending'> {
