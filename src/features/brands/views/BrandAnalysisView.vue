@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useQueryClient } from '@tanstack/vue-query'
 import Topbar from '@/layout/Topbar.vue'
 import AnalysisPayloadRenderer from '@/shared/components/renderers/AnalysisPayloadRenderer.vue'
 import CompetitiveAnalysisRenderer from '@/shared/components/renderers/CompetitiveAnalysisRenderer.vue'
@@ -47,6 +48,7 @@ import { exportBrandAnalysisPDF } from '@/shared/utils/exportBrandAnalysis'
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
+const queryClient = useQueryClient()
 
 const brandUuid = computed(() => route.params.brandUuid as string)
 const runUuid = computed(() => (route.params.runUuid as string) || '')
@@ -99,6 +101,16 @@ function startAnalysis() {
     }
   })
 }
+
+// QA round 3: when the tracker reaches terminal success, invalidate the run
+// queries so the displayed run refetches the FINAL payload — the Overview tab
+// used to stay empty until a manual refresh (the stale pre-completion fetch
+// outranked the tracker's data).
+watch(tracker.status, (s) => {
+  if (s === 'completed') {
+    queryClient.invalidateQueries({ queryKey: ['brands', brandUuid, 'analysis-runs'] })
+  }
+})
 
 function retryAnalysis() {
   operationManager.finish(opKey.value)
