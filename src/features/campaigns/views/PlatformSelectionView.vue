@@ -237,6 +237,7 @@ function goNext() {
             </button>
             <button
               class="h-9 px-4 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5"
+              data-testid="step-next-btn"
               @click="goNext"
             >
               {{ t('smart.continue') }} <ArrowRight class="h-3.5 w-3.5" />
