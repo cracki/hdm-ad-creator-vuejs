@@ -171,11 +171,16 @@ const scanRows = computed<ScanFieldRow[]>(() => {
 const industryCandidates = computed(() => scanResult.value?.detected.industry.value ?? [])
 
 // Auto-select the best detected industry once candidates and the industries list are both available.
+// Only HIGH-confidence candidates are auto-selected (QA: a wrong medium/low
+// guess like "Beauty & Personal Care" for a coaching brand misleads the user);
+// lower-confidence candidates stay as chips for manual review.
 watch([industryCandidates, industries], ([candidates, list]) => {
   if (!candidates.length || !list?.length) return
   if (form.value.selected_industry_id) return // respect an explicit user choice
-  const match = candidates.find((c) => list.some((i) => i.industry_uuid === c.industry_uuid))
-  if (match) form.value.selected_industry_id = match.industry_uuid
+  const confident = candidates.find(
+    (c) => c.confidence === 'high' && list.some((i) => i.industry_uuid === c.industry_uuid),
+  )
+  if (confident) form.value.selected_industry_id = confident.industry_uuid
 }, { immediate: true })
 
 async function handleScan() {
