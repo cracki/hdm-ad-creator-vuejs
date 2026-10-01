@@ -126,3 +126,50 @@ describe('AnalysisPayloadRenderer — humanized labels (QA fix 1)', () => {
     expect(wrapper.find('*').exists()).toBe(false)
   })
 })
+
+// ── QA round 3 fix 3 ──
+
+describe('AnalysisPayloadRenderer — humanizer gaps (QA r3 fix 3)', () => {
+  const { setLang } = useI18n()
+
+  beforeEach(() => setLang('en'))
+  afterEach(() => setLang('en'))
+
+  it('never renders the internal personality_wheel_available flag', () => {
+    const wrapper = mount(AnalysisPayloadRenderer, {
+      props: { data: { brand_voice: { tone: 'warm' }, personality_wheel_available: false } },
+    })
+    const text = wrapper.text()
+    expect(text).toContain('Tone')
+    expect(text).not.toContain('Personality Wheel')
+    expect(text).not.toContain('wheel')
+  })
+
+  it('prettifies raw snake_case leaf values as Title Case', () => {
+    const wrapper = mount(AnalysisPayloadRenderer, {
+      props: { data: { messaging_focus: 'trust_and_results' } },
+    })
+    const text = wrapper.text()
+    expect(text).toContain('Trust And Results')
+    expect(text).not.toContain('trust_and_results')
+  })
+
+  it('hides emotion entries that are unfilled placeholder templates', () => {
+    const wrapper = mount(AnalysisPayloadRenderer, {
+      props: {
+        data: {
+          emotion_profile: {
+            joy: { intensity: 'unknown', trigger: 'N/A' },
+            trust: { intensity: 'high', trigger: 'proven results' },
+          },
+        },
+      },
+    })
+    const text = wrapper.text()
+    // The all-placeholder `joy` entry vanishes; the real one stays.
+    expect(text).not.toContain('Joy')
+    expect(text).not.toContain('unknown')
+    expect(text).toContain('Trust')
+    expect(text).toContain('proven results')
+  })
+})

@@ -26,12 +26,25 @@ export function prettifyPayloadKey(key: string): string {
     .join(' ')
 }
 
+/**
+ * Plain snake_case VALUE token ("trust_and_results") → Title Case
+ * ("Trust And Results") — QA round 3 fix 3. Only untouched single-token
+ * snake_case strings are rewritten; sentences, URLs, ids and already-human
+ * strings pass through unchanged.
+ */
+const SNAKE_CASE_VALUE = /^[a-z0-9]+(?:_[a-z0-9]+)+$/
+export function prettifyPayloadValue(value: string): string {
+  return SNAKE_CASE_VALUE.test(value) ? prettifyPayloadKey(value) : value
+}
+
 /** Internal/debug keys that must never render. */
 const HIDDEN_EXACT_KEYS = new Set([
   'is_real_data',
   'platforms_missing',
   'content_hash',
   'task_id',
+  // Internal LLM flag leaked to the UI ("Personality Wheel Available: No").
+  'personality_wheel_available',
 ])
 const HIDDEN_KEY_PREFIXES = ['_', 'raw_', 'schema_']
 
@@ -82,6 +95,18 @@ export function isEmptyPayloadValue(value: unknown): boolean {
   return false
 }
 
+/**
+ * QA round 3 fix 3: a non-empty object whose EVERY value is a placeholder
+ * string ("unknown", "N/A", …) is an unfilled LLM template — hide it whole
+ * (e.g. template emotion entries rendered for brands they don't apply to).
+ */
+export function isPlaceholderObject(value: unknown): boolean {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return false
+  const entries = Object.entries(value as Record<string, unknown>)
+  if (entries.length === 0) return false
+  return entries.every(([, v]) => isEmptyPayloadValue(v) || isPlaceholderValue(v))
+}
+
 /** True when a key/value pair must not render at all. */
 export function shouldHidePayloadEntry(key: string, value: unknown): boolean {
   if (isHiddenPayloadKey(key)) return true
@@ -91,6 +116,7 @@ export function shouldHidePayloadEntry(key: string, value: unknown): boolean {
     const hasNonString = value.some((v) => typeof v !== 'string')
     if (!hasNonString) return value.every((v) => isPlaceholderValue(v))
   }
+  if (isPlaceholderObject(value)) return true
   return false
 }
 

@@ -5,8 +5,10 @@ import {
   isEmptyPayloadValue,
   shouldHidePayloadEntry,
   prettifyPayloadKey,
+  prettifyPayloadValue,
   payloadLabelKey,
   filterPlaceholderItems,
+  isPlaceholderObject,
 } from './payloadDisplay'
 
 describe('isPlaceholderValue', () => {
@@ -97,5 +99,45 @@ describe('filterPlaceholderItems', () => {
   it('drops placeholder items but keeps real ones', () => {
     expect(filterPlaceholderItems(['relax', 'unknown', 'licensed', 'N/A'])).toEqual(['relax', 'licensed'])
     expect(filterPlaceholderItems([1, 2])).toEqual([1, 2])
+  })
+})
+
+// ── QA round 3 fix 3 ──
+
+describe('personality_wheel_available (QA r3 fix 3)', () => {
+  it('is an internal flag that must never render', () => {
+    expect(isHiddenPayloadKey('personality_wheel_available')).toBe(true)
+    expect(shouldHidePayloadEntry('personality_wheel_available', false)).toBe(true)
+    expect(shouldHidePayloadEntry('personality_wheel_available', true)).toBe(true)
+  })
+})
+
+describe('prettifyPayloadValue (QA r3 fix 3)', () => {
+  it('renders plain snake_case values as Title Case', () => {
+    expect(prettifyPayloadValue('trust_and_results')).toBe('Trust And Results')
+    expect(prettifyPayloadValue('emotional_connection')).toBe('Emotional Connection')
+  })
+
+  it('leaves human text, ids and single words untouched', () => {
+    expect(prettifyPayloadValue('Clean formulas')).toBe('Clean formulas')
+    expect(prettifyPayloadValue('https://example.com/a_b')).toBe('https://example.com/a_b')
+    expect(prettifyPayloadValue('modern')).toBe('modern')
+    expect(prettifyPayloadValue('user_123')).toBe('User 123')
+  })
+})
+
+describe('isPlaceholderObject (QA r3 fix 3)', () => {
+  it('detects unfilled template-like entries', () => {
+    expect(isPlaceholderObject({ trust: 'unknown', tone: 'N/A' })).toBe(true)
+    expect(isPlaceholderObject({ trust: '', tone: null })).toBe(true)
+    expect(isPlaceholderObject({ trust: 'high', tone: 'unknown' })).toBe(false)
+    expect(isPlaceholderObject({})).toBe(false)
+    expect(isPlaceholderObject(['unknown'])).toBe(false)
+    expect(isPlaceholderObject(null)).toBe(false)
+  })
+
+  it('shouldHidePayloadEntry hides whole placeholder objects', () => {
+    expect(shouldHidePayloadEntry('emotions', { trust: 'unknown', tone: 'N/A' })).toBe(true)
+    expect(shouldHidePayloadEntry('emotions', { trust: 'high', tone: 'unknown' })).toBe(false)
   })
 })
