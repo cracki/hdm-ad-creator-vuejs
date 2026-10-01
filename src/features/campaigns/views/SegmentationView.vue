@@ -363,6 +363,7 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx') {
             </button>
             <button
               class="h-9 px-4 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5"
+              data-testid="step-next-btn"
               @click="goNext"
             >
               {{ t('smart.continue') }} <ArrowRight class="h-3.5 w-3.5" />
@@ -473,6 +474,7 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx') {
             <button
               class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5"
               data-loc="campaigns.segmentation.next-btn"
+              data-testid="step-next-btn"
               @click="goNext"
             >
               {{ t('smart.approveContinue') }} {{ t('smart.continue') }} <ArrowRight class="h-3.5 w-3.5" />

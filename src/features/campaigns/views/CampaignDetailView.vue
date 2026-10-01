@@ -13,7 +13,7 @@ import { useI18n, languageNativeLabel } from '@/shared/utils/i18n'
 import Breadcrumb from '@/shared/components/Breadcrumb.vue'
 import BrandContextPanel from '@/shared/components/BrandContextPanel.vue'
 import { useConfetti } from '@/shared/composables/useConfetti'
-import { useCampaign, useCampaignVisuals } from '../queries'
+import { useCampaign, useCampaignAds, useCampaignVisuals } from '../queries'
 import { exportCampaignPDF, exportCampaignPPTX, formatBudgetAllocation } from '@/shared/utils/exportCampaign'
 import { formatCampaignBudget, getFunnelBudgetSplit, resolveBrandContext } from '../types'
 import { useTourRegistration } from '@/shared/composables/useTourRegistration'
@@ -37,6 +37,14 @@ const hasPersistedVisuals = computed(() => persistedVisuals.value.length > 0)
 const visualThumbnails = computed(() =>
   persistedVisuals.value.filter((v) => v.success && v.image_url).slice(0, 8),
 )
+
+// Real ads state (QA round 3): ad-generation completion additionally requires
+// at least one persisted ad record — the flags alone can claim success after a
+// clear-all or a stale write, which used to bounce the detail view past the
+// ads step ("No ads yet").
+const { data: adsData, isLoading: adsLoading } = useCampaignAds(campaignUuid)
+const persistedAds = computed(() => adsData.value?.ads ?? [])
+const hasPersistedAds = computed(() => persistedAds.value.length > 0)
 
 const stepsData = computed(() => {
   const latest = (campaign.value as any)?.latest_steps
@@ -103,8 +111,11 @@ function isStepDone(step: StepDef): boolean {
     return hasPersistedVisuals.value
   }
   if (step.flag === '_ads_generated') {
+    // Server truth: at least one persisted ad record must exist (QA round 3).
     const idx = STEPS.indexOf(step)
-    return idx > 0 ? STEPS.slice(0, idx).every((s) => isStepDone(s)) : false
+    return idx > 0 && hasPersistedAds.value
+      ? STEPS.slice(0, idx).every((s) => isStepDone(s))
+      : false
   }
   if (step.flag === '_review') {
     return c?.status === 'completed'
@@ -133,11 +144,11 @@ function getFirstIncompleteStep(): StepDef | undefined {
 }
 
 const hasAutoRedirected = ref(false)
-// Wait for the visuals read-back too: the visuals step's done-state is now
-// server truth, so redirecting before it resolves could bounce a finished
-// campaign to the visuals step.
-watch([campaign, () => visualsLoading.value], ([c, visLoading]) => {
-  if (!c || hasAutoRedirected.value || visLoading) return
+// Wait for the visuals AND ads read-backs: both steps' done-states are server
+// truth now, so redirecting before they resolve could bounce a finished
+// campaign back to the ads/visuals step.
+watch([campaign, () => visualsLoading.value || adsLoading.value], ([c, readbacksLoading]) => {
+  if (!c || hasAutoRedirected.value || readbacksLoading) return
   const lastSegment = route.path.split('/').pop()
   if (lastSegment === campaignUuid.value) {
     hasAutoRedirected.value = true

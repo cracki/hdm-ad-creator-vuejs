@@ -614,6 +614,121 @@ export function readContentPiecesCount(data: unknown): number | null {
   return Number.isFinite(n) && n > 0 ? Math.round(n) : null
 }
 
+// ── Strategy-derived budget split (QA round 3, MOM §12.4) ──
+export interface StrategyPlatformShare {
+  platform: string
+  /** Normalized 0–100 share of the total budget. */
+  share: number
+}
+export interface StrategyBudgetSplit {
+  byStage: Record<'tofu' | 'mofu' | 'bofu', number>
+  byPlatform: StrategyPlatformShare[]
+}
+/**
+ * Platform budget weights off the persisted platform recommendation: a
+ * `budget_share` map ({meta: 60, google: 40}) or per-recommendation
+ * `budget_share` fields when present, else null (caller falls back to equal
+ * weights).
+ */
+export function getPlatformBudgetShares(
+  campaign: Pick<Campaign, 'context_payload'> | null | undefined,
+): Record<string, number> | null {
+  const recs = (campaign?.context_payload as {
+    platform_recommendations?: {
+      budget_share?: unknown
+      recommendations?: { platform?: unknown; budget_share?: unknown }[]
+    }
+  } | undefined)?.platform_recommendations
+  if (!recs) return null
+  const collect = (pairs: [string, unknown][]): Record<string, number> | null => {
+    const out: Record<string, number> = {}
+    for (const [platform, value] of pairs) {
+      if (typeof platform === 'string' && platform && typeof value === 'number' && Number.isFinite(value) && value > 0) {
+        out[platform] = value
+      }
+    }
+    return Object.keys(out).length ? out : null
+  }
+  if (recs.budget_share && typeof recs.budget_share === 'object' && !Array.isArray(recs.budget_share)) {
+    const map = collect(Object.entries(recs.budget_share as Record<string, unknown>))
+    if (map) return map
+  }
+  if (Array.isArray(recs.recommendations)) {
+    const map = collect(
+      recs.recommendations.map((r) => [String(r?.platform ?? ''), r?.budget_share] as [string, unknown]),
+    )
+    if (map) return map
+  }
+  return null
+}
+function normalizeStageKey(raw: unknown): 'tofu' | 'mofu' | 'bofu' | null {
+  const s = String(raw ?? '').toLowerCase()
+  if (s.startsWith('tofu') || s.includes('top')) return 'tofu'
+  if (s.startsWith('mofu') || s.includes('middle')) return 'mofu'
+  if (s.startsWith('bofu') || s.includes('bottom')) return 'bofu'
+  return null
+}
+/**
+ * Budget split aggregated from the ACTUAL ads-strategy steps (QA round 3):
+ * each platform's `funnel_campaigns` entries carry a per-stage
+ * `budget_percent`; platforms are weighted by their recommended budget share
+ * (equal weights when absent). Null when no strategy carries funnel data —
+ * the caller falls back to the funnel-step split.
+ */
+export function getStrategyBudgetSplit(
+  strategies: { platform: string; response_payload?: Record<string, unknown> | null }[],
+  budgetShares: Record<string, number> | null,
+): StrategyBudgetSplit | null {
+  const platformsWithStages: { platform: string; stagePercents: Record<string, number> }[] = []
+  for (const strategy of strategies ?? []) {
+    const campaigns = (strategy?.response_payload as { funnel_campaigns?: unknown } | undefined)?.funnel_campaigns
+    if (!Array.isArray(campaigns)) continue
+    const stagePercents: Record<string, number> = { tofu: 0, mofu: 0, bofu: 0 }
+    for (const entry of campaigns) {
+      if (!entry || typeof entry !== 'object') continue
+      const stage = normalizeStageKey((entry as { funnel_stage?: unknown }).funnel_stage)
+      if (!stage) continue
+      const percent = Number((entry as { budget_percent?: unknown }).budget_percent)
+      if (Number.isFinite(percent) && percent > 0) stagePercents[stage] += percent
+    }
+    const total = stagePercents.tofu + stagePercents.mofu + stagePercents.bofu
+    if (total <= 0) continue
+    // Normalize each platform plan to a 100% split before weighting.
+    for (const stage of ['tofu', 'mofu', 'bofu'] as const) {
+      stagePercents[stage] = (stagePercents[stage] / total) * 100
+    }
+    platformsWithStages.push({ platform: strategy.platform, stagePercents })
+  }
+  if (!platformsWithStages.length) return null
+  // Platform weights: recommended shares (restricted to platforms that have
+  // strategies, renormalized) or equal weights.
+  let weights: number[]
+  const shares = budgetShares
+    ? platformsWithStages.map((p) => budgetShares[p.platform]).filter((w): w is number => typeof w === 'number' && w > 0)
+    : []
+  if (shares.length === platformsWithStages.length) {
+    const sum = shares.reduce((a, b) => a + b, 0)
+    weights = shares.map((w) => w / sum)
+  } else {
+    weights = platformsWithStages.map(() => 1 / platformsWithStages.length)
+  }
+  const byStage: Record<'tofu' | 'mofu' | 'bofu', number> = { tofu: 0, mofu: 0, bofu: 0 }
+  platformsWithStages.forEach((p, i) => {
+    for (const stage of ['tofu', 'mofu', 'bofu'] as const) {
+      byStage[stage] += weights[i] * p.stagePercents[stage]
+    }
+  })
+  for (const stage of ['tofu', 'mofu', 'bofu'] as const) {
+    byStage[stage] = Math.round(byStage[stage] * 10) / 10
+  }
+  const weightSum = weights.reduce((a, b) => a + b, 0)
+  const byPlatform = platformsWithStages.map((p, i) => ({
+    platform: p.platform,
+    share: Math.round((weights[i] / weightSum) * 1000) / 10,
+  }))
+  return { byStage, byPlatform }
+}
+
 // ── Target market (country/city, F19) ─────────────────────
 
 export interface TargetMarket {

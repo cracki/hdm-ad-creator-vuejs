@@ -152,6 +152,12 @@ async function runContentStrategy(feedback?: string | Event) {
 const exporting = ref(false)
 const hasExportData = computed(() => !!stepData.value?.response_payload)
 
+// Canonical wizard order (QA3): content matrix (step 5) continues to platform
+// selection (step 6), NOT straight to ads-strategy (step 7).
+function goNext() {
+  router.push(`/campaigns/${campaignUuid.value}/platform`)
+}
+
 async function handleExport(format: 'csv' | 'pdf' | 'pptx') {
   if (!stepData.value?.response_payload) return
   exporting.value = true
@@ -220,7 +226,8 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx') {
             </button>
             <button
               class="h-9 px-4 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5"
-              @click="router.push(`/campaigns/${campaignUuid}/ads-strategy`)"
+              data-testid="step-next-btn"
+              @click="goNext"
             >
               {{ t('smart.continue') }} <ArrowRight class="h-3.5 w-3.5" />
             </button>
@@ -351,7 +358,8 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx') {
             <button
               class="h-10 px-5 rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground text-xs font-medium shadow-[var(--shadow-glow)] flex items-center gap-1.5"
               data-loc="campaigns.content.next-btn"
-              @click="router.push(`/campaigns/${campaignUuid}/ads-strategy`)"
+              data-testid="step-next-btn"
+              @click="goNext"
             >
               {{ t('smart.approveContinue') }} {{ t('smart.continue') }} <ArrowRight class="h-3.5 w-3.5" />
             </button>

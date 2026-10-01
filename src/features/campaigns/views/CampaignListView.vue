@@ -36,12 +36,18 @@ const filteredCampaigns = computed(() => {
   )
 })
 
+/**
+ * Status badge is the campaign's actual status, localized (QA round 3): the
+ * backend no longer auto-completes campaigns, so the card must say In Progress
+ * while the campaign is open — even when every step flag is done and the
+ * progress percent reads 100% (steps done ≠ campaign closed).
+ */
 function getStatusBadge(campaign: { status: string }) {
   const map: Record<string, { label: string; cls: string }> = {
-    draft: { label: 'Draft', cls: 'bg-overlay-strong text-muted-foreground' },
-    in_progress: { label: 'In progress', cls: 'bg-blue-500/15 text-blue-300' },
-    completed: { label: 'Completed', cls: 'bg-success/15 text-success' },
-    archived: { label: 'Archived', cls: 'bg-overlay-subtle text-muted-foreground' },
+    draft: { label: t('status.draft'), cls: 'bg-overlay-strong text-muted-foreground' },
+    in_progress: { label: t('status.inProgress'), cls: 'bg-blue-500/15 text-blue-300' },
+    completed: { label: t('status.completed'), cls: 'bg-success/15 text-success' },
+    archived: { label: t('status.archived'), cls: 'bg-overlay-subtle text-muted-foreground' },
   }
   return map[campaign.status] ?? map.draft
 }
@@ -163,6 +169,7 @@ async function confirmDelete() {
                 'text-[11px] font-semibold px-2 py-0.5 rounded',
                 getStatusBadge(campaign).cls,
               ]"
+              data-testid="campaign-card-status"
             >
               {{ getStatusBadge(campaign).label }}
             </span>
