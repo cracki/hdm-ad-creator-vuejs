@@ -11,6 +11,7 @@ import TopPerformingContentRenderer from '@/shared/components/renderers/TopPerfo
 import MarketHistoryList from '../components/MarketHistoryList.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { useBrands, useBrandServices } from '@/features/brands/queries'
+import { managedServiceNames, selectServiceSuggestions } from '@/features/brands/serviceSuggestions'
 import { useAutoSelectBrand } from '@/shared/composables/useAutoSelectBrand'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { exportIntelligencePDF, exportIntelligencePPTX, exportIntelligenceXLSX } from '@/shared/utils/exportMarket'
@@ -33,17 +34,25 @@ const location = ref('')
 const brandServices = ref('')
 const contentGoal = ref<'engagement' | 'leads' | 'awareness' | 'sales' | 'education'>('engagement')
 
-// Prefill the manual services input from the brand services endpoint (F14).
-// The user can still edit the text before running.
+// Prefill the manual services input (F14) — QA round 3 fix 2: the brand's
+// MANAGED services win; otherwise the merged scan/analysis list, capped at 6
+// so junk floods can't dominate. The user can still edit the text before run.
 const { data: detectedServices } = useBrandServices(selectedBrandUuid)
+
+const selectedBrand = computed(() => brands.value?.find((b) => b.brand_uuid === selectedBrandUuid.value) ?? null)
+const managedNames = computed(() => managedServiceNames(selectedBrand.value?.services))
 
 watch(selectedBrandUuid, () => {
   brandServices.value = ''
 })
 
-watch(detectedServices, (services) => {
-  if (services?.length && !brandServices.value.trim()) {
-    brandServices.value = services.map((s) => s.name).join(', ')
+watch([managedNames, detectedServices], ([managed, detected]) => {
+  if (brandServices.value.trim()) return
+  const names = managed.length
+    ? managed
+    : selectServiceSuggestions([], detected ?? []).options.map((s) => s.name)
+  if (names.length) {
+    brandServices.value = names.join(', ')
   }
 }, { immediate: true }) // immediate: cached (synchronous) data must still prefill
 

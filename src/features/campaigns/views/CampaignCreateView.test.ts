@@ -16,6 +16,7 @@ vi.mock('@/features/brands/api', () => ({
     listIndustries: vi.fn().mockResolvedValue({ data: [] }),
     scanWebsite: vi.fn(),
     listServices: vi.fn(),
+    checkServiceRelatedness: vi.fn().mockResolvedValue({ data: { related: true } }),
     listAssets: vi.fn().mockResolvedValue({ data: [] }),
     listSocialMedia: vi.fn().mockResolvedValue({ data: [] }),
     uploadAsset: vi.fn(),
@@ -97,6 +98,7 @@ describe('CampaignCreateView — service selection (F14)', () => {
     // Add a custom service too
     await wrapper.find('[data-testid="service-add-input"]').setValue('Branding')
     await wrapper.find('[data-testid="service-add-btn"]').trigger('click')
+    await flushPromises()
 
     await wrapper.find('[data-loc="campaigns.create.create-btn"]').trigger('click')
     await flushPromises()
@@ -118,6 +120,7 @@ describe('CampaignCreateView — service selection (F14)', () => {
     await flushPromises()
     await wrapper.find('[data-testid="service-add-input"]').setValue('Branding')
     await wrapper.find('[data-testid="service-add-btn"]').trigger('click')
+    await flushPromises()
     expect(wrapper.findAll('[data-testid="service-chip"]').length).toBe(3) // 2 detected + 1 custom
 
     // Switch to brand B: the custom chip must not leak into the new brand
@@ -281,5 +284,74 @@ describe('CampaignCreateView — campaign language (F22)', () => {
     await flushPromises()
 
     expect(vi.mocked(campaignsApi.create).mock.calls[0][0].language).toBe('fa')
+  })
+})
+
+// ── Managed-first, capped service suggestions (QA round 3 fix 2) ──
+
+describe('CampaignCreateView — service suggestions (QA r3 fix 2)', () => {
+  const junkServices = Array.from({ length: 8 }, (_, i) => ({
+    name: `Junk ${i + 1}`,
+    score: 10 + i,
+    classification: null,
+    recommendation: null,
+    source: 'scraped' as const,
+  }))
+
+  function setupCommon() {
+    router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: CampaignCreateView },
+        { path: '/brands/new', component: { template: '<div />' } },
+        { path: '/campaigns/:campaignUuid', component: { template: '<div />' } },
+      ],
+    })
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    })
+    vi.mocked(brandsApi.list).mockResolvedValue({ data: brands as never })
+    vi.mocked(brandsApi.checkServiceRelatedness).mockResolvedValue({ data: { related: true } })
+    vi.mocked(campaignsApi.create).mockResolvedValue({ data: { campaign_uuid: 'c1' } as never })
+  }
+
+  it('suggests ONLY the brand managed services when present', async () => {
+    setupCommon()
+    vi.mocked(brandsApi.listServices).mockResolvedValue({
+      data: { success: true, services: junkServices },
+    })
+    vi.mocked(brandsApi.list).mockResolvedValue({
+      data: [
+        { ...brands[0], services: [{ name: 'Coaching' }, { name: 'Mentorship' }] },
+        brands[1],
+      ] as never,
+    })
+
+    const wrapper = await mountView()
+    await wrapper.findAll('[data-loc="campaigns.create.brand-select"]')[0].trigger('click')
+    await flushPromises()
+
+    const chipTexts = wrapper.findAll('[data-testid="service-chip"]').map((c) => c.text())
+    expect(chipTexts).toEqual(['Coaching', 'Mentorship'])
+    // no capped fallback -> no show-more toggle
+    expect(wrapper.find('[data-testid="services-show-more"]').exists()).toBe(false)
+  })
+
+  it('caps the fallback suggestions at 6 with a show-more toggle', async () => {
+    setupCommon()
+    vi.mocked(brandsApi.listServices).mockResolvedValue({
+      data: { success: true, services: junkServices },
+    })
+
+    const wrapper = await mountView()
+    await wrapper.findAll('[data-loc="campaigns.create.brand-select"]')[0].trigger('click')
+    await flushPromises()
+
+    expect(wrapper.findAll('[data-testid="service-chip"]').length).toBe(6)
+    expect(wrapper.find('[data-testid="services-show-more"]').exists()).toBe(true)
+
+    await wrapper.find('[data-testid="services-show-more"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.findAll('[data-testid="service-chip"]').length).toBe(8)
   })
 })

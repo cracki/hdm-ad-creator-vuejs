@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowLeft, ChevronDown, Megaphone, Languages } from 'lucide-vue-next'
 import Topbar from '@/layout/Topbar.vue'
 import ServiceSelector from '@/shared/components/ServiceSelector.vue'
 import { useI18n, LANGS, type Lang } from '@/shared/utils/i18n'
 import { useBrands, useBrandServices } from '@/features/brands/queries'
+import { managedServiceNames, selectServiceSuggestions, SERVICE_SUGGESTION_CAP } from '@/features/brands/serviceSuggestions'
 import { useAutoSelectBrand } from '@/shared/composables/useAutoSelectBrand'
 import { useCreateCampaign } from '../queries'
 
@@ -43,8 +44,20 @@ function budgetPayload(): { total_budget: number; currency: string } | Record<st
 const { data: brandServices, isLoading: servicesLoading } = useBrandServices(selectedBrandUuid)
 const selectedServices = ref<string[]>([])
 
+// QA round 3 fix 2: the brand's MANAGED (user-confirmed) services are the
+// primary suggestions; the merged scan/analysis list is only a fallback,
+// capped so an extraction junk flood can't dominate the picker.
+const selectedBrand = computed(() => brands.value?.find((b) => b.brand_uuid === selectedBrandUuid.value) ?? null)
+const managedNames = computed(() => managedServiceNames(selectedBrand.value?.services))
+const showAllServices = ref(false)
+
+const serviceSuggestions = computed(() =>
+  selectServiceSuggestions(managedNames.value, brandServices.value ?? [], SERVICE_SUGGESTION_CAP, showAllServices.value),
+)
+
 watch(selectedBrandUuid, () => {
   selectedServices.value = []
+  showAllServices.value = false
 })
 
 async function handleCreate() {
@@ -168,16 +181,27 @@ async function handleCreate() {
       </div>
 
       <!-- Services to advertise (F14) -->
-      <div v-if="selectedBrandUuid && (servicesLoading || brandServices?.length)" data-loc="campaigns.create.services">
+      <div v-if="selectedBrandUuid && (servicesLoading || serviceSuggestions.options.length)" data-loc="campaigns.create.services">
         <label class="text-xs font-medium mb-1.5 block">{{ t('camp.servicesLabel') }}</label>
         <p class="text-[11px] text-muted-foreground mb-2.5">{{ t('camp.servicesHint') }}</p>
         <!-- :key — remount per brand so custom-added service names don't leak across brands -->
         <ServiceSelector
           :key="selectedBrandUuid"
           v-model="selectedServices"
-          :services="brandServices ?? []"
+          :services="serviceSuggestions.options"
+          :brand-uuid="selectedBrandUuid"
           :disabled="creating"
         />
+        <!-- QA round 3 fix 2: the capped fallback can be expanded on demand -->
+        <button
+          v-if="serviceSuggestions.capped"
+          type="button"
+          class="mt-2 h-8 px-3 rounded-lg border border-border/60 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-subtle transition"
+          data-testid="services-show-more"
+          @click="showAllServices = !showAllServices"
+        >
+          {{ showAllServices ? t('common.showLess') : t('common.showMore') }}
+        </button>
       </div>
 
       <!-- Actions -->
