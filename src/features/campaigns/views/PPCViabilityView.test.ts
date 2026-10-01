@@ -200,3 +200,52 @@ describe('PPCViabilityView — expandable service cards', () => {
     expect(wrapper.find('[data-testid="ppc-service-details-0"]').exists()).toBe(false)
   })
 })
+
+// ── Selected-only primary cards + count truth (QA round 3 fix 4) ──
+
+describe('PPCViabilityView — selected-only primary cards (QA r3 fix 4)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    // 3 analyzed rows in the run payload; the endpoint (brand total) is
+    // deliberately larger so a brand-count-based header would lie.
+    vi.mocked(campaignsApi.get).mockResolvedValue({
+      data: buildCampaign({
+        context_payload: { selected_services: ['Consulting'] },
+        latest_steps: {
+          ppc_viability: {
+            status: 'completed',
+            response_payload: {
+              brand_trust_analysis: {
+                services_bpc_scores: [
+                  { service: 'Implants', bpc_score: 72, classification: 'Mixed', reasoning: 'Trust-driven consideration' },
+                  { service: 'Landing Pages', bpc_score: 40 },
+                  { service: 'Consulting', bpc_score: 55 },
+                ],
+              },
+            },
+          },
+        },
+      } as unknown as Campaign),
+    } as never)
+  })
+
+  it('shows ONLY the selected service as the primary card; others stay collapsed', async () => {
+    const wrapper = await mountView()
+
+    const cards = wrapper.findAll('[data-testid="ppc-service-card"]')
+    expect(cards).toHaveLength(1)
+    expect(wrapper.find('[data-testid="ppc-service-name"]').text()).toBe('Consulting')
+
+    // Other analyzed services are behind the collapsed toggle.
+    expect(wrapper.find('[data-testid="ppc-other-services"]').exists()).toBe(false)
+    await wrapper.find('[data-testid="ppc-other-services-toggle"]').trigger('click')
+    expect(wrapper.findAll('[data-testid="ppc-other-services"] [data-testid="ppc-service-card"]')).toHaveLength(2)
+  })
+
+  it('counts the analyzed rows, not the brand total service count', async () => {
+    const wrapper = await mountView()
+
+    // Selected (1) + other analyzed (2) = 3 rows actually analyzed.
+    expect(wrapper.find('[data-testid="ppc-analyzed-count"]').text()).toContain('3')
+  })
+})

@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQueryClient } from '@tanstack/vue-query'
-import { Target, ArrowLeft, ArrowRight, RefreshCw, Shield, TrendingUp, Check, ChevronDown, ChevronUp } from 'lucide-vue-next'
+import { Target, ArrowLeft, ArrowRight, RefreshCw, Shield, Check, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import StepExportButton from '@/shared/components/StepExportButton.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import ErrorState from '@/shared/components/ErrorState.vue'
@@ -12,7 +12,8 @@ import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { useCampaign } from '../queries'
-import { mergePpcBlueprints, ppcServiceList, ppcServiceDetailRows, hasPpcServiceDetails } from '../types'
+import { mergePpcBlueprints, ppcServiceList, campaignSelectedServices, splitPpcServicesBySelected } from '../types'
+import PpcServiceCard from '../components/PpcServiceCard.vue'
 import { useBrandServices } from '@/features/brands/queries'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
@@ -64,8 +65,31 @@ const services = computed<Record<string, any>[]>(() => {
   return ppcServiceList(viabilityData.value)
 })
 
+// QA round 3 fix 4: the rows the run actually analyzed (run payload), used
+// for the truth-in-numbers header count and the selected-services split.
+const analyzedRows = computed<Record<string, any>[]>(() => ppcServiceList(viabilityData.value))
+
+// Selected-only primary cards: when the campaign has selected_services, those
+// become the primary cards; other analyzed rows collapse under a toggle.
+const selectedServiceNames = computed(() => campaignSelectedServices(campaign.value))
+const serviceSplit = computed(() => {
+  if (!selectedServiceNames.value.length) return { primary: services.value, others: [] as Record<string, unknown>[] }
+  const candidates = analyzedRows.value.length ? analyzedRows.value : services.value
+  return splitPpcServicesBySelected(candidates, selectedServiceNames.value)
+})
+const primaryServices = computed(() => serviceSplit.value.primary)
+const otherServices = computed(() => serviceSplit.value.others)
+
+// The header counts rows actually analyzed (run payload rows) — never the
+// brand's total service count; falls back to the displayed rows when the run
+// payload carries no service list.
+const analyzedCount = computed(() =>
+  analyzedRows.value.length || primaryServices.value.length + otherServices.value.length,
+)
+
 // Expandable cards (MOM 11.2): one card open at a time, collapsed by default.
 const expandedService = ref<number | null>(null)
+const showOtherServices = ref(false)
 
 function toggleService(idx: number) {
   expandedService.value = expandedService.value === idx ? null : idx
@@ -211,7 +235,7 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx') {
         <!-- Results -->
         <div v-if="stepData && !loading">
           <div class="flex items-center justify-between mb-4">
-            <div class="text-xs text-muted-foreground">{{ t('ppc.servicesFound', { count: services.length }) }}</div>
+            <div class="text-xs text-muted-foreground" data-testid="ppc-analyzed-count">{{ t('ppc.servicesFound', { count: analyzedCount }) }}</div>
             <div class="flex items-center gap-2">
               <StepExportButton :disabled="!hasExportData || exporting" @export="handleExport" />
               <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="runPPC">
@@ -220,71 +244,39 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx') {
             </div>
           </div>
 
+          <!-- Primary cards: the campaign's selected services (QA fix 4) -->
           <div class="space-y-3 mb-6">
-            <div
-              v-for="(svc, idx) in services"
-              :key="idx"
-              class="surface-card overflow-hidden"
-              data-testid="ppc-service-card"
-            >
-              <!-- Collapsed summary: name + classification + score -->
-              <div class="p-4 sm:p-5">
-                <div class="flex items-start justify-between gap-3">
-                  <div class="flex items-start gap-3 min-w-0">
-                    <div class="h-8 w-8 rounded-lg bg-overlay-light grid place-items-center shrink-0">
-                      <TrendingUp class="h-4 w-4 text-primary" />
-                    </div>
-                    <div class="min-w-0">
-                      <div class="text-sm font-semibold truncate">{{ svc.name || svc.platform || svc.service || `${t('ppc.service')} ${idx + 1}` }}</div>
-                      <div v-if="svc.type || svc.category || svc.classification" class="text-[11px] text-muted-foreground truncate">{{ svc.type || svc.category || svc.classification }}</div>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-1.5 shrink-0">
-                    <div v-if="svc.score || svc.bpc_score || svc.viability_score || svc.opportunity_score || svc.priority" class="flex items-center gap-1">
-                      <span class="h-1.5 w-1.5 rounded-full bg-success" />
-                      <span class="text-xs font-semibold text-success">
-                        {{ svc.score ?? svc.bpc_score ?? svc.viability_score ?? svc.opportunity_score ?? svc.priority }}
-                      </span>
-                    </div>
-                    <button
-                      v-if="hasPpcServiceDetails(svc)"
-                      type="button"
-                      :data-testid="`ppc-service-toggle-${idx}`"
-                      :aria-expanded="expandedService === idx"
-                      class="h-8 w-8 rounded-lg border border-border/40 grid place-items-center hover:bg-overlay-subtle transition"
-                      @click="toggleService(idx)"
-                    >
-                      <ChevronDown v-if="expandedService !== idx" class="h-3.5 w-3.5 text-muted-foreground" />
-                      <ChevronUp v-else class="h-3.5 w-3.5 text-muted-foreground" />
-                    </button>
-                  </div>
-                </div>
-              </div>
+            <PpcServiceCard
+              v-for="(svc, idx) in primaryServices"
+              :key="`primary-${idx}`"
+              :svc="svc"
+              :idx="idx"
+              :expanded="expandedService === idx"
+              @toggle="toggleService(idx)"
+            />
+          </div>
 
-              <!-- Expandable details (MOM 11.2): whatever the payload carries -->
-              <div
-                v-if="expandedService === idx"
-                :data-testid="`ppc-service-details-${idx}`"
-                class="border-t border-border/30 px-4 sm:px-5 py-4 space-y-3 bg-overlay-subtle/30"
-              >
-                <p v-if="svc.description || svc.recommendation || svc.reasoning" class="text-xs text-muted-foreground leading-relaxed">
-                  {{ svc.description || svc.recommendation || svc.reasoning }}
-                </p>
-                <div v-for="row in ppcServiceDetailRows(svc)" :key="row.labelKey" class="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-2">
-                  <span class="text-[11px] uppercase tracking-wider text-muted-foreground shrink-0">{{ t(row.labelKey) }}</span>
-                  <span class="text-xs leading-relaxed">{{ row.text }}</span>
-                </div>
-                <div v-if="svc.pros?.length" class="flex flex-wrap gap-1">
-                  <span v-for="pro in (svc.pros ?? [])" :key="pro" class="text-[11px] px-2 py-0.5 rounded bg-success/10 text-success/80">
-                    {{ pro }}
-                  </span>
-                </div>
-                <div v-if="svc.cons?.length" class="flex flex-wrap gap-1">
-                  <span v-for="con in svc.cons" :key="con" class="text-[11px] px-2 py-0.5 rounded bg-destructive/10 text-destructive/80">
-                    {{ con }}
-                  </span>
-                </div>
-              </div>
+          <!-- Other analyzed services (QA fix 4): available, but collapsed -->
+          <div v-if="otherServices.length" class="mb-6">
+            <button
+              type="button"
+              class="h-8 px-3 rounded-lg border border-border/60 text-xs text-muted-foreground hover:text-foreground hover:bg-overlay-subtle transition flex items-center gap-1.5"
+              data-testid="ppc-other-services-toggle"
+              :aria-expanded="showOtherServices"
+              @click="showOtherServices = !showOtherServices"
+            >
+              <component :is="showOtherServices ? ChevronUp : ChevronDown" class="h-3.5 w-3.5" />
+              {{ t('ppc.otherServices') }} ({{ otherServices.length }})
+            </button>
+            <div v-if="showOtherServices" data-testid="ppc-other-services" class="space-y-3 mt-3">
+              <PpcServiceCard
+                v-for="(svc, i) in otherServices"
+                :key="`other-${i}`"
+                :svc="svc"
+                :idx="primaryServices.length + i"
+                :expanded="expandedService === primaryServices.length + i"
+                @toggle="toggleService(primaryServices.length + i)"
+              />
             </div>
           </div>
 

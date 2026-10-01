@@ -146,7 +146,11 @@ export function useCreateManagedBrandService(brandUuid: Ref<string>) {
     mutationFn: (payload: CreateManagedServicePayload) =>
       brandsApi.createManagedService(brandUuid.value, payload),
     onSuccess: () => {
-      // Prefix match also refreshes the read-only merged list ('services').
+      // Both lists (QA round 3 fix 5): the editable managed list AND the
+      // read-only merged scan/analysis list. Query keys are matched per
+      // element, so the 'services-managed' key needs its own invalidation —
+      // the bare ['brands', uuid, 'services'] key does NOT prefix-match it.
+      queryClient.invalidateQueries({ queryKey: ['brands', brandUuid, 'services-managed'] })
       queryClient.invalidateQueries({ queryKey: ['brands', brandUuid, 'services'] })
     },
   })
@@ -157,8 +161,18 @@ export function useDeleteManagedBrandService(brandUuid: Ref<string>) {
   return useMutation({
     mutationFn: (serviceUuid: string) => brandsApi.deleteManagedService(brandUuid.value, serviceUuid),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['brands', brandUuid, 'services-managed'] })
       queryClient.invalidateQueries({ queryKey: ['brands', brandUuid, 'services'] })
     },
+  })
+}
+
+// Relatedness check (QA round 3 fix 1): one-shot mutation — a `related:false`
+// answer only WARNS; the user can still force-add.
+export function useCheckServiceRelatedness(brandUuid: Ref<string>) {
+  return useMutation({
+    mutationFn: (name: string) =>
+      brandsApi.checkServiceRelatedness(brandUuid.value, name).then(r => r.data),
   })
 }
 

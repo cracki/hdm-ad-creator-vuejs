@@ -5,8 +5,10 @@ import { useI18n } from '@/shared/utils/i18n'
 import {
   payloadLabelKey,
   prettifyPayloadKey,
+  prettifyPayloadValue,
   shouldHidePayloadEntry,
   filterPlaceholderItems,
+  isPlaceholderObject,
 } from '@/shared/utils/payloadDisplay'
 
 const props = defineProps<{
@@ -69,7 +71,9 @@ function classify(key: string, val: unknown): TreeNode | null {
     return { key, label: labelFor(key), value: String(val), type: 'text' }
   }
   if (typeof val === 'string') {
-    return { key, label: labelFor(key), value: val, type: 'text' }
+    // Leaf strings: untouched snake_case VALUES render Title Case
+    // ("trust_and_results" → "Trust And Results") — QA round 3 fix 3.
+    return { key, label: labelFor(key), value: prettifyPayloadValue(val), type: 'text' }
   }
   if (Array.isArray(val)) {
     if (val.length === 0) return null
@@ -78,12 +82,15 @@ function classify(key: string, val: unknown): TreeNode | null {
       if (entries.length === 0) return null
       return { key, label: labelFor(key), value: entries, type: 'list' }
     }
+    // Drop unfilled template-like objects (all-placeholder entries).
+    const objectItems = (val as unknown[]).filter((o) => !isPlaceholderObject(o))
+    if (objectItems.length === 0) return null
     return {
       key,
       label: labelFor(key),
       value: val,
       type: 'object_list',
-      objectItems: val as Record<string, unknown>[],
+      objectItems: objectItems as Record<string, unknown>[],
     }
   }
   if (typeof val === 'object') {
@@ -164,7 +171,10 @@ function getPrimitiveFields(obj: Record<string, unknown>): { label: string; valu
     if (shouldHidePayloadEntry(k, v)) continue
     if (k === 'name' || k === 'title' || k === 'hook' || k === 'theme' || k === 'concept') continue
     if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
-      result.push({ label: labelFor(k), value: typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v) })
+      result.push({
+        label: labelFor(k),
+        value: typeof v === 'boolean' ? (v ? 'Yes' : 'No') : prettifyPayloadValue(String(v)),
+      })
     }
   }
   return result
