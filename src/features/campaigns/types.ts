@@ -499,6 +499,55 @@ export function mergePpcBlueprints(
   })
 }
 
+// ── Selected-only primary service cards (QA round 3 fix 4) ──
+
+/** The services the user picked at campaign creation (context_payload). */
+export function campaignSelectedServices(
+  campaign: Pick<Campaign, 'context_payload'> | null | undefined,
+): string[] {
+  const raw = (campaign?.context_payload as { selected_services?: unknown } | undefined)?.selected_services
+  if (!Array.isArray(raw)) return []
+  return raw
+    .filter((s): s is string => typeof s === 'string' && s.trim().length > 0)
+    .map((s) => s.trim())
+}
+
+function ppcRowName(row: Record<string, unknown>): string {
+  return String((row as any).service ?? (row as any).name ?? '').trim().toLowerCase()
+}
+
+export interface PpcServiceSplit {
+  /** The campaign's selected services — the PRIMARY cards. */
+  primary: Record<string, unknown>[]
+  /** Analyzed rows that were NOT selected — rendered collapsed. */
+  others: Record<string, unknown>[]
+}
+
+/**
+ * Split analyzed rows so the campaign's selected services become the primary
+ * cards (matched case-insensitively by name); unmatched selections still get
+ * a card (name only), and every other analyzed row moves to `others`.
+ * With no selection, everything stays primary and `others` is empty.
+ */
+export function splitPpcServicesBySelected(
+  rows: Record<string, unknown>[],
+  selectedNames: string[],
+): PpcServiceSplit {
+  if (!selectedNames.length) return { primary: rows, others: [] }
+  const byName = new Map(rows.map((row) => [ppcRowName(row), row]))
+  const matched = new Set<string>()
+  const primary = selectedNames.map((name) => {
+    const row = byName.get(name.toLowerCase())
+    if (row) {
+      matched.add(ppcRowName(row))
+      return row
+    }
+    return { name }
+  })
+  const others = rows.filter((row) => !matched.has(ppcRowName(row)))
+  return { primary, others }
+}
+
 export function getCampaignStepStatuses(campaign: Campaign): Record<CampaignStepType, 'completed' | 'pending'> {
   return {
     segmentation: campaign.segmentation_completed ? 'completed' : 'pending',

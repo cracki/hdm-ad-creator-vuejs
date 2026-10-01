@@ -6,6 +6,8 @@ import {
   getFunnelBudgetSplit,
   resolveTargetMarket,
   composeLocation,
+  campaignSelectedServices,
+  splitPpcServicesBySelected,
   type Campaign,
 } from './types'
 
@@ -233,5 +235,40 @@ describe('composeLocation (F19)', () => {
     expect(composeLocation({ country: 'Oman', city: '' })).toBe('Oman')
     expect(composeLocation({ country: '', city: 'Muscat' })).toBe('Muscat')
     expect(composeLocation({ country: '', city: '' })).toBe('')
+  })
+})
+
+// ── Selected-only primary service cards (QA round 3 fix 4) ──
+
+describe('campaignSelectedServices + splitPpcServicesBySelected (QA r3 fix 4)', () => {
+  const rows = [
+    { service: 'Implants', bpc_score: 72 },
+    { service: 'Landing Pages', bpc_score: 40 },
+    { service: 'Consulting', bpc_score: 55 },
+  ]
+
+  it('reads the trimmed selected_services list from context_payload', () => {
+    expect(campaignSelectedServices({ context_payload: { selected_services: [' Implants ', 'Consulting', 42, null] } }))
+      .toEqual(['Implants', 'Consulting'])
+    expect(campaignSelectedServices({ context_payload: {} })).toEqual([])
+    expect(campaignSelectedServices(null)).toEqual([])
+  })
+
+  it('makes the selected services the primary cards, case-insensitive on name', () => {
+    const { primary, others } = splitPpcServicesBySelected(rows, ['implants', 'Consulting'])
+    expect(primary.map((r) => r.service)).toEqual(['Implants', 'Consulting'])
+    expect(others.map((r) => r.service)).toEqual(['Landing Pages'])
+  })
+
+  it('keeps unmatched selections as name-only primary cards', () => {
+    const { primary, others } = splitPpcServicesBySelected(rows, ['Whitening'])
+    expect(primary).toEqual([{ name: 'Whitening' }])
+    expect(others).toHaveLength(3)
+  })
+
+  it('returns everything as primary (nothing collapsed) with no selection', () => {
+    const { primary, others } = splitPpcServicesBySelected(rows, [])
+    expect(primary).toBe(rows)
+    expect(others).toEqual([])
   })
 })
