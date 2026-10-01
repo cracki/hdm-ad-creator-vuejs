@@ -11,6 +11,8 @@ export interface Brand {
   selected_industry_id: string | null
   location: string | null
   brand_color: string | null
+  /** Managed service rows exposed by BrandSerializer (QA round 3 fix 2). */
+  services?: Array<{ name: string; source?: string }> | string[]
   created_at: string
   updated_at: string
 }
@@ -106,6 +108,14 @@ export interface ManagedBrandServiceResult {
 
 export interface CreateManagedServicePayload {
   name: string
+}
+
+// ---------- Service relatedness check (POST /brands/{uuid}/services/check/) ----------
+
+export interface ServiceRelatednessResult {
+  related: boolean
+  /** English, backend-authored explanation — never shown raw (we localize). */
+  reason?: string
 }
 
 export interface UpdateManagedServicePayload {

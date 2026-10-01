@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { Check, Plus } from 'lucide-vue-next'
+import { computed, ref, watch } from 'vue'
+import { Check, Plus, AlertTriangle } from 'lucide-vue-next'
 import { useI18n } from '@/shared/utils/i18n'
+// Direct api call (not a vue-query mutation): this shared component must not
+// hard-require a VueQueryPlugin context.
+import { brandsApi } from '@/features/brands/api'
 
 interface ServiceOption {
   name: string
@@ -15,9 +18,12 @@ const props = withDefaults(defineProps<{
   modelValue: string[]
   services?: ServiceOption[]
   disabled?: boolean
+  /** When set, brand-unrelated custom services trigger a warning before add. */
+  brandUuid?: string | null
 }>(), {
   services: () => [],
   disabled: false,
+  brandUuid: null,
 })
 
 const emit = defineEmits<{ 'update:modelValue': [value: string[]] }>()
@@ -50,9 +56,42 @@ function toggle(name: string) {
 
 const newName = ref('')
 
+// ── Relatedness check (QA round 3 fix 1) ──
+// A NEW custom service is checked against the brand first; `related:false`
+// shows a localized amber warning and the SECOND submit force-adds.
+const checkPending = ref(false)
+const unrelatedWarning = ref('')
+const warnedName = ref('')
+
+watch(newName, () => {
+  unrelatedWarning.value = ''
+})
+
 function addService() {
   const name = newName.value.trim()
   if (!name || props.disabled) return
+  commitAdd(name)
+}
+
+async function commitAdd(name: string) {
+  const known = options.value.some((s) => s.name.toLowerCase() === name.toLowerCase())
+  if (props.brandUuid && !known && warnedName.value !== name.toLowerCase()) {
+    unrelatedWarning.value = ''
+    checkPending.value = true
+    try {
+      const res = await brandsApi.checkServiceRelatedness(props.brandUuid, name)
+      if (res?.data?.related === false) {
+        warnedName.value = name.toLowerCase()
+        unrelatedWarning.value = t('serviceSelector.unrelatedWarning')
+        return // first submit only warns — a second click force-adds
+      }
+    } catch {
+      // Check unavailable — never block the add on it.
+    } finally {
+      checkPending.value = false
+    }
+  }
+  unrelatedWarning.value = ''
   if (!isSelected(name)) {
     emit('update:modelValue', [...props.modelValue, name])
   }
@@ -103,6 +142,17 @@ function addService() {
       {{ t('serviceSelector.empty') }}
     </div>
 
+    <!-- QA round 3 fix 1: localized warning for brand-unrelated custom services -->
+    <div
+      v-if="unrelatedWarning"
+      class="flex items-start gap-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning leading-relaxed"
+      data-testid="service-warning"
+      role="alert"
+    >
+      <AlertTriangle class="h-3.5 w-3.5 shrink-0 mt-0.5" />
+      <span>{{ unrelatedWarning }}</span>
+    </div>
+
     <div class="flex items-center gap-2">
       <input
         v-model="newName"
@@ -114,7 +164,7 @@ function addService() {
       />
       <button
         type="button"
-        :disabled="disabled || !newName.trim()"
+        :disabled="disabled || !newName.trim() || checkPending"
         class="h-10 px-3 rounded-lg border border-border/60 text-xs font-medium hover:bg-overlay-subtle transition flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
         data-testid="service-add-btn"
         @click="addService"

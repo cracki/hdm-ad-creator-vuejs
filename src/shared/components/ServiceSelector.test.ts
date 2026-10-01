@@ -1,6 +1,11 @@
-import { describe, it, expect } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { mount, flushPromises } from '@vue/test-utils'
 import ServiceSelector from './ServiceSelector.vue'
+import { brandsApi } from '@/features/brands/api'
+
+vi.mock('@/features/brands/api', () => ({
+  brandsApi: { checkServiceRelatedness: vi.fn() },
+}))
 
 const services = [
   { name: 'Web Design', score: 88, classification: 'core', recommendation: null, source: 'scraped' },
@@ -76,5 +81,78 @@ describe('ServiceSelector', () => {
     await wrapper.find('[data-testid="service-add-input"]').setValue('X')
     await wrapper.find('[data-testid="service-add-btn"]').trigger('click')
     expect(wrapper.emitted('update:modelValue')).toBeUndefined()
+  })
+})
+
+// ── Relatedness check (QA round 3 fix 1) ──
+
+describe('ServiceSelector — unrelated-service warning', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('warns on an unrelated custom service and force-adds on the second submit', async () => {
+    vi.mocked(brandsApi.checkServiceRelatedness).mockResolvedValue({
+      data: { related: false, reason: 'not found on website or analysis' },
+    })
+    const wrapper = mountSelector([], { brandUuid: 'b1' })
+
+    await wrapper.find('[data-testid="service-add-input"]').setValue('Car Tyre Replacement')
+    await wrapper.find('[data-testid="service-add-btn"]').trigger('click')
+    await flushPromises()
+
+    // First submit: checked against the brand, warned, NOT added.
+    expect(brandsApi.checkServiceRelatedness).toHaveBeenCalledWith('b1', 'Car Tyre Replacement')
+    expect(wrapper.emitted('update:modelValue')).toBeUndefined()
+    const warning = wrapper.find('[data-testid="service-warning"]')
+    expect(warning.exists()).toBe(true)
+    expect(warning.text()).toContain("wasn't found")
+
+    // Second submit: force-add without another check call.
+    await wrapper.find('[data-testid="service-add-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(emittedNames(wrapper).at(-1)).toEqual(['Car Tyre Replacement'])
+    expect(brandsApi.checkServiceRelatedness).toHaveBeenCalledTimes(1)
+    expect(wrapper.find('[data-testid="service-warning"]').exists()).toBe(false)
+  })
+
+  it('adds a related custom service immediately with no warning', async () => {
+    vi.mocked(brandsApi.checkServiceRelatedness).mockResolvedValue({
+      data: { related: true },
+    })
+    const wrapper = mountSelector([], { brandUuid: 'b1' })
+
+    await wrapper.find('[data-testid="service-add-input"]').setValue('Life Coaching')
+    await wrapper.find('[data-testid="service-add-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(emittedNames(wrapper).at(-1)).toEqual(['Life Coaching'])
+    expect(wrapper.find('[data-testid="service-warning"]').exists()).toBe(false)
+  })
+
+  it('does not check services that are already suggested for the brand', async () => {
+    vi.mocked(brandsApi.checkServiceRelatedness).mockResolvedValue({
+      data: { related: false },
+    })
+    const wrapper = mountSelector([], { brandUuid: 'b1' })
+
+    await wrapper.find('[data-testid="service-add-input"]').setValue('SEO')
+    await wrapper.find('[data-testid="service-add-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(brandsApi.checkServiceRelatedness).not.toHaveBeenCalled()
+    expect(wrapper.find('[data-testid="service-warning"]').exists()).toBe(false)
+  })
+
+  it('skips the check entirely when no brand context is known', async () => {
+    const wrapper = mountSelector()
+
+    await wrapper.find('[data-testid="service-add-input"]').setValue('Branding')
+    await wrapper.find('[data-testid="service-add-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(brandsApi.checkServiceRelatedness).not.toHaveBeenCalled()
+    expect(emittedNames(wrapper).at(-1)).toEqual(['Branding'])
   })
 })

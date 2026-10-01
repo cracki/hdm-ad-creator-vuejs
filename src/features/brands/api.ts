@@ -1,5 +1,5 @@
 import apiClient from '@/shared/api/client'
-import type { Brand, BrandCreatePayload, Industry, BrandAsset, BrandSocialMedia, AnalysisRun, AnalysisStartPayload, BrandScanPayload, BrandScanResult, BrandServicesResponse, ManagedBrandServicesResponse, ManagedBrandServiceResult, CreateManagedServicePayload, UpdateManagedServicePayload } from './types'
+import type { Brand, BrandCreatePayload, Industry, BrandAsset, BrandSocialMedia, AnalysisRun, AnalysisStartPayload, BrandScanPayload, BrandScanResult, BrandServicesResponse, ManagedBrandServicesResponse, ManagedBrandServiceResult, CreateManagedServicePayload, UpdateManagedServicePayload, ServiceRelatednessResult } from './types'
 
 type SignalConfig = { signal?: AbortSignal }
 
@@ -68,6 +68,12 @@ export const brandsApi = {
 
   deleteManagedService(brandUuid: string, serviceUuid: string): Promise<void> {
     return apiClient.delete(`/brands/${brandUuid}/services/manage/${serviceUuid}/`)
+  },
+
+  // Relatedness check (QA round 3 fix 1): warn before a brand-unrelated
+  // custom service is force-added. Owner-only backend endpoint.
+  checkServiceRelatedness(brandUuid: string, name: string): Promise<{ data: ServiceRelatednessResult }> {
+    return apiClient.post(`/brands/${brandUuid}/services/check/`, { name })
   },
 
   listAssets(brandUuid: string, config?: SignalConfig): Promise<{ data: BrandAsset[] }> {

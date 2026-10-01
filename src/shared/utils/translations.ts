@@ -53,6 +53,11 @@ export const translations = {
   'brandServices.source.manual': { en: 'Manual', ar: 'يدوي', fa: 'دستی' },
   'brandServices.source.scanned': { en: 'Scan', ar: 'مسح', fa: 'اسکن' },
   'brandServices.source.campaign': { en: 'Campaign', ar: 'حملة', fa: 'کمپین' },
+  // QA round 3 fix 5: edit page shows managed AND scan/analysis-detected services.
+  'brandServices.yoursTitle': { en: 'Your services', ar: 'خدماتك', fa: 'خدمت‌های شما' },
+  'brandServices.detectedTitle': { en: 'Detected by scan/analysis', ar: 'تم اكتشافها بالمسح/التحليل', fa: 'کشف‌شده توسط اسکن/تحلیل' },
+  // QA round 3 fix 1: same localized unrelated-service warning as the selector.
+  'brandServices.unrelatedWarning': { en: 'This service wasn\'t found on the brand\'s website or analysis — add it only if the brand really offers it.', ar: 'لم يتم العثور على هذه الخدمة في موقع العلامة أو تحليلها — أضفها فقط إذا كانت العلامة تقدّمها فعلاً.', fa: 'این خدمت در وب‌سایت یا تحلیل برند پیدا نشد — تنها در صورتی اضافه کنید که برند واقعاً آن را ارائه می‌دهد.' },
 
   // Industries
   'ind.beauty': { en: 'Beauty', ar: 'تجميل', fa: 'زیبایی' },
@@ -132,6 +137,9 @@ export const translations = {
   'serviceSelector.addPlaceholder': { en: 'Add another service…', ar: 'أضف خدمة أخرى…', fa: 'افزودن خدمت دیگر…' },
   'serviceSelector.add': { en: 'Add', ar: 'إضافة', fa: 'افزودن' },
   'serviceSelector.custom': { en: 'New', ar: 'جديد', fa: 'جدید' },
+  // QA round 3 fix 1: backend `reason` is English — we show this localized
+  // generic warning instead, then let the user force-add with a second click.
+  'serviceSelector.unrelatedWarning': { en: 'This service wasn\'t found on the brand\'s website or analysis — add it only if the brand really offers it.', ar: 'لم يتم العثور على هذه الخدمة في موقع العلامة أو تحليلها — أضفها فقط إذا كانت العلامة تقدّمها فعلاً.', fa: 'این خدمت در وب‌سایت یا تحلیل برند پیدا نشد — تنها در صورتی اضافه کنید که برند واقعاً آن را ارائه می‌دهد.' },
   'camp.servicesLabel': { en: 'Services to advertise', ar: 'الخدمات للإعلان عنها', fa: 'خدمات برای تبلیغ' },
   'camp.servicesHint': { en: 'Detected from your brand — deselect what you don\'t want, or add your own.', ar: 'تم اكتشافها من علامتك — أزل ما لا تريده أو أضف خدماتك.', fa: 'از برند شما کشف شده — موارد ناخواسته را حذف یا موارد خود را اضافه کنید.' },
 
@@ -322,6 +330,8 @@ export const translations = {
   'ppc.analyzing': { en: 'Analyzing PPC viability…', ar: 'جارٍ تحليل جدوى PPC…', fa: 'در حال تحلیل امکان‌سنجی PPC…' },
   'ppc.analyzingDesc': { en: 'Evaluating platform fit, cost estimates and competition.', ar: 'تقييم ملاءمة المنصة والتكاليف والمنافسة.', fa: 'ارزیابی تناسب پلتفرم، هزینه‌ها و رقابت.' },
   'ppc.servicesFound': { en: '{count} services analyzed', ar: '{count} خدمات تم تحليلها', fa: '{count} سرویس تحلیل شد' },
+  // QA round 3 fix 4: non-selected services stay available but collapsed.
+  'ppc.otherServices': { en: 'Other brand services analyzed', ar: 'خدمات أخرى تم تحليلها للعلامة', fa: 'سایر خدمات تحلیل‌شده برند' },
   'ppc.service': { en: 'Service', ar: 'خدمة', fa: 'سرویس' },
   'ppc.detail.priority': { en: 'Priority', ar: 'الأولوية', fa: 'اولویت' },
   'ppc.detail.platforms': { en: 'Key platforms', ar: 'المنصات الرئيسية', fa: 'پلتفرم‌های کلیدی' },
@@ -1137,6 +1147,9 @@ export const translations = {
   'common.deleted': { en: 'Deleted successfully', ar: 'تم الحذف بنجاح', fa: 'با موفقیت حذف شد' },
   'common.operationFailed': { en: 'Operation failed', ar: 'فشلت العملية', fa: 'عملیات ناموفق بود' },
   'common.somethingWrong': { en: 'Something went wrong', ar: 'حدث خطأ ما', fa: 'مشکلی پیش آمد' },
+  // QA round 3 fix 2: capped fallback service suggestions.
+  'common.showMore': { en: 'Show more', ar: 'عرض المزيد', fa: 'نمایش بیشتر' },
+  'common.showLess': { en: 'Show less', ar: 'عرض أقل', fa: 'نمایش کمتر' },
 
   // Breadcrumbs
   'breadcrumb.home': { en: 'Home', ar: 'الرئيسية', fa: 'خانه' },
