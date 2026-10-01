@@ -9,11 +9,17 @@ import Topbar from '@/layout/Topbar.vue'
 import AdReviewCard from '../components/AdReviewCard.vue'
 import { useI18n, languageNativeLabel } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
-import { useCampaign, useCampaignAds, useCampaignVisuals, useCompleteCampaign } from '../queries'
+import { useCampaign, useCampaignAds, useCampaignVisuals, useCompleteCampaign, useAdsStrategy } from '../queries'
 import { operationManager } from '@/infrastructure/operations/operationManager'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { exportReview } from '@/shared/utils/exportStep'
-import { formatCampaignBudget, getFunnelBudgetSplit, getAdCopy } from '../types'
+import {
+  formatCampaignBudget,
+  getFunnelBudgetSplit,
+  getAdCopy,
+  getPlatformBudgetShares,
+  getStrategyBudgetSplit,
+} from '../types'
 import { campaignStepLabel } from '../stepLabels'
 import type { CampaignAd } from '../types'
 
@@ -24,6 +30,9 @@ const { t } = useI18n()
 const campaignUuid = computed(() => route.params.campaignUuid as string)
 const { data: campaign, isLoading } = useCampaign(campaignUuid)
 const { data: adsData } = useCampaignAds(campaignUuid)
+// Ads-strategy steps (QA round 3, MOM §12.4): the source for the truthful
+// budget split — the funnel-step split alone can contradict the strategies.
+const { data: strategiesData } = useAdsStrategy(campaignUuid)
 
 const ads = computed<CampaignAd[]>(() => adsData.value?.ads ?? [])
 
@@ -74,6 +83,63 @@ const budgetSplitRows = computed(() => {
     { key: 'mofu', label: t('cd.mofu'), entry: split.mofu, bar: 'bg-accent-amber' },
     { key: 'bofu', label: t('cd.bofu'), entry: split.bofu, bar: 'bg-accent-magenta' },
   ]
+})
+
+// ── Unified split from the actual strategies (QA round 3, MOM §12.4) ──
+const PLATFORM_LABELS_MAP: Record<string, () => string> = {
+  meta: () => t('platform.meta'),
+  google: () => t('platform.google'),
+  linkedin: () => t('platform.linkedin'),
+}
+
+/**
+ * Split computed from the actual ads-strategy steps, weighted by the
+ * recommended platform shares (equal when absent). Null when no strategy
+ * carries funnel data — the view then falls back to the funnel-step split.
+ */
+const strategySplit = computed(() => {
+  if (!campaign.value) return null
+  const strategies = (strategiesData.value?.strategies ?? []).map((s) => ({
+    platform: s.platform,
+    response_payload: s.response_payload,
+  }))
+  return getStrategyBudgetSplit(strategies, getPlatformBudgetShares(campaign.value))
+})
+
+const strategyStageRows = computed(() => {
+  const split = strategySplit.value
+  if (!split) return []
+  const stageColors: Record<string, string> = {
+    tofu: 'bg-accent-cyan',
+    mofu: 'bg-accent-amber',
+    bofu: 'bg-accent-magenta',
+  }
+  const stageLabels: Record<string, string> = {
+    tofu: t('cd.tofu'),
+    mofu: t('cd.mofu'),
+    bofu: t('cd.bofu'),
+  }
+  return (['tofu', 'mofu', 'bofu'] as const).map((key) => {
+    const percent = split.byStage[key]
+    const amount = Number(campaign.value?.total_budget)
+    const hasAmount = campaign.value?.total_budget != null && Number.isFinite(amount)
+    return {
+      key,
+      label: stageLabels[key],
+      percent,
+      amount: hasAmount ? Math.round(amount * percent) / 100 : null,
+      bar: stageColors[key],
+    }
+  })
+})
+
+const strategyPlatformRows = computed(() => {
+  const split = strategySplit.value
+  if (!split) return []
+  return split.byPlatform.map((p) => ({
+    ...p,
+    label: PLATFORM_LABELS_MAP[p.platform]?.() ?? p.platform,
+  }))
 })
 
 const selectedPlatforms = computed<string[]>(() => {
@@ -252,8 +318,48 @@ async function handleReviewExport(format: 'csv' | 'pdf' | 'pptx') {
           </div>
         </div>
 
-        <!-- Budget split by funnel stage (F16) -->
-        <div v-if="budgetSplit" class="surface-card p-5 mb-6" data-testid="funnel-budget-split">
+        <!-- Budget split unified with the actual ads strategies (QA round 3, MOM §12.4) -->
+        <div v-if="strategySplit" class="surface-card p-5 mb-6" data-testid="strategy-budget-split">
+          <div class="flex items-center gap-2 mb-3">
+            <Wallet class="h-4 w-4 text-primary" />
+            <div class="text-sm font-semibold">{{ t('review.budgetSplit') }}</div>
+            <div v-if="totalBudgetText" class="text-xs text-muted-foreground ms-auto">{{ totalBudgetText }}</div>
+          </div>
+
+          <!-- By platform -->
+          <div class="text-xs text-muted-foreground mb-2">{{ t('review.budgetSplitByPlatform') }}</div>
+          <div class="space-y-3 mb-5">
+            <div v-for="row in strategyPlatformRows" :key="row.platform" class="flex items-center gap-3">
+              <span class="text-xs w-32 sm:w-40 text-muted-foreground shrink-0">{{ row.label }}</span>
+              <div class="flex-1 h-2 rounded-full bg-overlay-subtle overflow-hidden">
+                <div class="h-full rounded-full bg-primary" :style="{ width: `${Math.min(row.share, 100)}%` }" />
+              </div>
+              <span
+                class="text-xs font-medium w-24 text-end shrink-0"
+                :data-testid="`budget-split-platform-${row.platform}`"
+              >
+                {{ row.share }}%
+              </span>
+            </div>
+          </div>
+
+          <!-- By funnel stage (aggregated from the strategies) -->
+          <div class="text-xs text-muted-foreground mb-2">{{ t('review.budgetSplitByStage') }}</div>
+          <div class="space-y-3">
+            <div v-for="row in strategyStageRows" :key="row.key" class="flex items-center gap-3">
+              <span class="text-xs w-32 sm:w-40 text-muted-foreground shrink-0">{{ row.label }}</span>
+              <div class="flex-1 h-2 rounded-full bg-overlay-subtle overflow-hidden">
+                <div class="h-full rounded-full" :class="row.bar" :style="{ width: `${Math.min(row.percent, 100)}%` }" />
+              </div>
+              <span class="text-xs font-medium w-24 text-end shrink-0" :data-testid="`budget-split-${row.key}`">
+                {{ row.percent }}%<template v-if="row.amount != null"> · {{ row.amount.toLocaleString() }}</template>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Budget split by funnel stage (F16 fallback — no strategies yet) -->
+        <div v-else-if="budgetSplit" class="surface-card p-5 mb-6" data-testid="funnel-budget-split">
           <div class="flex items-center gap-2 mb-3">
             <Wallet class="h-4 w-4 text-primary" />
             <div class="text-sm font-semibold">{{ t('review.budgetSplit') }}</div>

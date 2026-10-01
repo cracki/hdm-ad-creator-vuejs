@@ -533,6 +533,8 @@ export const translations = {
   'review.completeFailed': { en: 'Could not complete the campaign. Please try again.', ar: 'تعذّر إكمال الحملة. حاول مرة أخرى.', fa: 'تکمیل کمپین ممکن نشد. دوباره تلاش کنید.' },
   'review.missingSteps': { en: 'Missing steps:', ar: 'الخطوات الناقصة:', fa: 'مراحل ناقص:' },
   'review.budgetSplit': { en: 'Budget split by funnel stage', ar: 'توزيع الميزانية على مراحل القمع', fa: 'تقسیم بودجه بین مراحل قیف' },
+  'review.budgetSplitByPlatform': { en: 'By platform', ar: 'حسب المنصة', fa: 'بر اساس پلتفرم' },
+  'review.budgetSplitByStage': { en: 'By funnel stage', ar: 'حسب مرحلة القمع', fa: 'بر اساس مرحله قیف' },
   'review.adsSection': { en: 'Generated Ads', ar: 'الإعلانات المولّدة', fa: 'آگهی‌های تولیدشده' },
   'review.adsSectionDesc': { en: 'Approve, reject, refine or edit each ad before completing the campaign.', ar: 'وافق على كل إعلان أو ارفضه أو حسّنه أو عدّله قبل إكمال الحملة.', fa: 'قبل از تکمیل کمپین، هر آگهی را تأیید، رد، بهبود یا ویرایش کن.' },
 

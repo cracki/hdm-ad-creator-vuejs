@@ -10,6 +10,7 @@ vi.mock('@/features/campaigns/queries', () => ({
   useCampaignAds: vi.fn(),
   useCampaignVisuals: vi.fn(),
   useCompleteCampaign: vi.fn(),
+  useAdsStrategy: vi.fn(),
   useReviewAd: vi.fn(),
   usePatchAd: vi.fn(),
   useRefineAd: vi.fn(),
@@ -20,7 +21,7 @@ vi.mock('@/shared/components/AiLoadingAnimation.vue', () => ({
   default: { name: 'AiLoadingAnimation', template: '<div />' },
 }))
 
-import { useCampaign, useCampaignAds, useCampaignVisuals, useCompleteCampaign, useReviewAd, usePatchAd, useRefineAd } from '../queries'
+import { useCampaign, useCampaignAds, useCampaignVisuals, useCompleteCampaign, useAdsStrategy, useReviewAd, usePatchAd, useRefineAd } from '../queries'
 import type { CampaignAd, GeneratedVisual } from '../types'
 
 function fakeMutation() {
@@ -120,6 +121,9 @@ describe('CampaignReviewView — total budget + funnel split (F16)', () => {
     vi.mocked(useCampaignVisuals).mockReturnValue({
       data: ref({ success: true, results: [] }),
     } as never)
+    vi.mocked(useAdsStrategy).mockReturnValue({
+      data: ref({ success: true, strategies: [] }),
+    } as never)
     vi.mocked(useReviewAd).mockReturnValue(fakeMutation())
     vi.mocked(usePatchAd).mockReturnValue(fakeMutation())
     vi.mocked(useRefineAd).mockReturnValue(fakeMutation())
@@ -188,6 +192,9 @@ describe('CampaignReviewView — complete error surfacing (F17)', () => {
     } as never)
     vi.mocked(useCampaignVisuals).mockReturnValue({
       data: ref({ success: true, results: [] }),
+    } as never)
+    vi.mocked(useAdsStrategy).mockReturnValue({
+      data: ref({ success: true, strategies: [] }),
     } as never)
     vi.mocked(useReviewAd).mockReturnValue(fakeMutation())
     vi.mocked(usePatchAd).mockReturnValue(fakeMutation())
@@ -280,6 +287,9 @@ describe('CampaignReviewView — generated ads with review actions (F13)', () =>
     vi.mocked(useCompleteCampaign).mockReturnValue({ mutateAsync } as never)
     vi.mocked(useCampaignVisuals).mockReturnValue({
       data: ref({ success: true, results: [] }),
+    } as never)
+    vi.mocked(useAdsStrategy).mockReturnValue({
+      data: ref({ success: true, strategies: [] }),
     } as never)
   })
 
@@ -440,11 +450,143 @@ describe('CampaignReviewView — ad visuals on review (QA photo 28)', () => {
     vi.mocked(useCampaignVisuals).mockReturnValue({
       data: ref({ success: true, results: [] }),
     } as never)
+    vi.mocked(useAdsStrategy).mockReturnValue({
+      data: ref({ success: true, strategies: [] }),
+    } as never)
 
     const wrapper = await mountView()
 
     expect(wrapper.find('[data-testid="review-ads-section"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="review-ad-visual"]').exists()).toBe(false)
     wrapper.unmount()
+  })
+})
+
+// ── Unified split from the actual ads strategies (QA round 3, MOM §12.4) ──
+
+const STRATEGY_META = {
+  campaign_step_uuid: 's1',
+  step_type: 'meta_ads' as const,
+  platform: 'meta' as const,
+  status: 'completed' as const,
+  request_payload: {},
+  response_payload: {
+    funnel_campaigns: [
+      { funnel_stage: 'ToFu', campaign_type: 'Traffic', budget_percent: 50 },
+      { funnel_stage: 'BoFu', campaign_type: 'Conversions', budget_percent: 50 },
+    ],
+  },
+  summary: {},
+  started_at: null,
+  completed_at: null,
+  error_message: null,
+  created_at: '',
+  updated_at: '',
+}
+
+const STRATEGY_GOOGLE = {
+  ...STRATEGY_META,
+  campaign_step_uuid: 's2',
+  step_type: 'google_ads' as const,
+  platform: 'google' as const,
+  response_payload: {
+    funnel_campaigns: [
+      { funnel_stage: 'ToFu', campaign_type: 'Display', budget_percent: 30 },
+      { funnel_stage: 'MoFu', campaign_type: 'Demand Gen', budget_percent: 30 },
+      { funnel_stage: 'BoFu', campaign_type: 'Search', budget_percent: 40 },
+    ],
+  },
+}
+
+describe('CampaignReviewView — unified budget split from strategies (QA3)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: CampaignReviewView },
+        { path: '/campaigns', component: { template: '<div />' } },
+        { path: '/campaigns/:campaignUuid/review', component: CampaignReviewView },
+      ],
+    })
+    vi.mocked(useCampaignAds).mockReturnValue({
+      data: ref({ success: true, ads: [] }),
+    } as never)
+    vi.mocked(useCampaignVisuals).mockReturnValue({
+      data: ref({ success: true, results: [] }),
+    } as never)
+    vi.mocked(useCompleteCampaign).mockReturnValue({ mutateAsync } as never)
+    vi.mocked(useReviewAd).mockReturnValue(fakeMutation())
+    vi.mocked(usePatchAd).mockReturnValue(fakeMutation())
+    vi.mocked(useRefineAd).mockReturnValue(fakeMutation())
+  })
+
+  it('aggregates the funnel-stage split from the strategies, weighted by recommended platform shares', async () => {
+    vi.mocked(useCampaign).mockReturnValue({
+      data: ref(
+        buildCampaign({
+          context_payload: {
+            selected_platforms: ['meta', 'google'],
+            platform_recommendations: { budget_share: { meta: 60, google: 40 } },
+          },
+        }),
+      ),
+      isLoading: ref(false),
+    } as never)
+    vi.mocked(useAdsStrategy).mockReturnValue({
+      data: ref({ success: true, strategies: [STRATEGY_META, STRATEGY_GOOGLE] }),
+    } as never)
+
+    const wrapper = await mountView()
+
+    expect(wrapper.find('[data-testid="strategy-budget-split"]').exists()).toBe(true)
+    // No funnel-step fallback when strategies exist.
+    expect(wrapper.find('[data-testid="funnel-budget-split"]').exists()).toBe(false)
+
+    // Platform shares come from the recommendation's budget_share.
+    expect(wrapper.find('[data-testid="budget-split-platform-meta"]').text()).toBe('60%')
+    expect(wrapper.find('[data-testid="budget-split-platform-google"]').text()).toBe('40%')
+
+    // Stage split: 0.6×meta + 0.4×google → tofu 42, mofu 12, bofu 46 (×1000 budget).
+    expect(wrapper.find('[data-testid="budget-split-tofu"]').text()).toBe('42% · 420')
+    expect(wrapper.find('[data-testid="budget-split-mofu"]').text()).toBe('12% · 120')
+    expect(wrapper.find('[data-testid="budget-split-bofu"]').text()).toBe('46% · 460')
+  })
+
+  it('weights platforms equally when no recommendation shares exist', async () => {
+    vi.mocked(useCampaign).mockReturnValue({
+      data: ref(
+        buildCampaign({ context_payload: { selected_platforms: ['meta', 'google'] } }),
+      ),
+      isLoading: ref(false),
+    } as never)
+    vi.mocked(useAdsStrategy).mockReturnValue({
+      data: ref({ success: true, strategies: [STRATEGY_META, STRATEGY_GOOGLE] }),
+    } as never)
+
+    const wrapper = await mountView()
+
+    expect(wrapper.find('[data-testid="budget-split-platform-meta"]').text()).toBe('50%')
+    expect(wrapper.find('[data-testid="budget-split-platform-google"]').text()).toBe('50%')
+    // 0.5×meta(tofu 50) + 0.5×google(tofu 30) = 40; mofu 15; bofu 45.
+    expect(wrapper.find('[data-testid="budget-split-tofu"]').text()).toBe('40% · 400')
+    expect(wrapper.find('[data-testid="budget-split-mofu"]').text()).toBe('15% · 150')
+    expect(wrapper.find('[data-testid="budget-split-bofu"]').text()).toBe('45% · 450')
+  })
+
+  it('falls back to the funnel-step split when no strategies exist', async () => {
+    vi.mocked(useCampaign).mockReturnValue({
+      data: ref(buildCampaign()),
+      isLoading: ref(false),
+    } as never)
+    vi.mocked(useAdsStrategy).mockReturnValue({
+      data: ref({ success: true, strategies: [] }),
+    } as never)
+
+    const wrapper = await mountView()
+
+    expect(wrapper.find('[data-testid="strategy-budget-split"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="funnel-budget-split"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="budget-split-tofu"]').text()).toBe('40% · 400')
   })
 })
