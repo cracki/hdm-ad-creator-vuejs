@@ -538,6 +538,9 @@ export const translations = {
 
   // Shared status
   'status.completed': { en: 'Completed', ar: 'مكتمل', fa: 'تکمیل‌شده' },
+  'status.inProgress': { en: 'In Progress', ar: 'قيد التنفيذ', fa: 'در حال انجام' },
+  'status.draft': { en: 'Draft', ar: 'مسودة', fa: 'پیش‌نویس' },
+  'status.archived': { en: 'Archived', ar: 'مؤرشفة', fa: 'بایگانی' },
 
   // ---------- Analysis ----------
   'analysis.title': { en: 'Brand Analysis', ar: 'تحليل العلامة', fa: 'تحلیل برند' },

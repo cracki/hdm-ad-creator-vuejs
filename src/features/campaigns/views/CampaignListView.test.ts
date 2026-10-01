@@ -131,4 +131,42 @@ describe('CampaignListView — truthful card status (MOM باگ۶)', () => {
     // All three platform flags count before selection: 0 / 7.
     expect(wrapper.find('[data-testid="campaign-card-steps"]').text()).toContain('0 / 7')
   })
+
+  it('keeps In Progress on an open campaign even when every step flag is done (QA3)', async () => {
+    // Backend no longer auto-completes: all flags done (progress reads 100%)
+    // but the campaign was never explicitly completed.
+    mockCampaigns([
+      buildCampaign({
+        status: 'in_progress',
+        segmentation_completed: true,
+        ppc_viability_completed: true,
+        funnel_completed: true,
+        content_strategy_completed: true,
+        meta_ads_completed: true,
+        google_ads_completed: true,
+        linkedin_ads_completed: true,
+        context_payload: { selected_platforms: ['meta', 'google', 'linkedin'] },
+      }),
+    ])
+    const wrapper = await mountView()
+
+    expect(wrapper.find('[data-testid="campaign-card-status"]').text()).toBe('In Progress')
+    expect(wrapper.find('[data-testid="campaign-card-status"]').text()).not.toBe('Completed')
+    // Steps cell shows the work is done; the status badge stays truthful.
+    expect(wrapper.find('[data-testid="campaign-card-steps"]').text()).toContain('7 / 7')
+  })
+
+  it('shows Completed only for a completed status (QA3)', async () => {
+    mockCampaigns([buildCampaign({ status: 'completed' })])
+    const wrapper = await mountView()
+
+    expect(wrapper.find('[data-testid="campaign-card-status"]').text()).toBe('Completed')
+  })
+
+  it('shows Draft for a draft campaign', async () => {
+    mockCampaigns([buildCampaign({ status: 'draft' })])
+    const wrapper = await mountView()
+
+    expect(wrapper.find('[data-testid="campaign-card-status"]').text()).toBe('Draft')
+  })
 })
