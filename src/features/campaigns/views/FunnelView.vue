@@ -7,6 +7,7 @@ import StepExportButton from '@/shared/components/StepExportButton.vue'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import ErrorState from '@/shared/components/ErrorState.vue'
 import StepReviewActions from '../components/StepReviewActions.vue'
+import FunnelPersonaStages from '../components/FunnelPersonaStages.vue'
 import Topbar from '@/layout/Topbar.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
@@ -269,6 +270,13 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx') {
                 </div>
               </div>
             </div>
+          </div>
+
+          <!-- Per-persona detail (QA round 3): expandable cards surfacing the
+               additive per stage×persona CTA / KPI / budget_share fields. -->
+          <div v-if="stages.length" class="mb-6">
+            <div class="text-xs font-semibold mb-2">{{ t('funnel.personaBreakdown') }}</div>
+            <FunnelPersonaStages :stages="stages" />
           </div>
 
           <!-- Approve / Reject / Refine -->

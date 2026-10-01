@@ -7,6 +7,7 @@ import { campaignsApi } from '@/features/campaigns/api'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
 import StepReviewActions from '@/features/campaigns/components/StepReviewActions.vue'
+import FunnelPersonaStages from '@/features/campaigns/components/FunnelPersonaStages.vue'
 import type { Campaign } from '@/features/campaigns/types'
 
 const props = defineProps<{ campaign: Campaign; campaignUuid: string }>()
@@ -125,16 +126,9 @@ async function runFunnel(feedback?: string | Event) {
             <RefreshCw class="h-3 w-3" /> {{ t('seg.reRun') }}
           </button>
         </div>
-        <div class="grid sm:grid-cols-3 gap-3">
-          <div v-for="(stage, idx) in stages" :key="idx" class="surface-card p-5 space-y-2">
-            <div class="flex items-center gap-2">
-              <span :class="['text-[11px] px-2 py-0.5 rounded font-semibold', stage.stage === 'TOFU' || stage.name === 'Awareness' ? 'bg-info/15 text-info' : stage.stage === 'MOFU' || stage.name === 'Consideration' ? 'bg-warning/15 text-warning' : 'bg-success/15 text-success']">
-                {{ stage.stage || stage.name || `${t('funnel.stage')} ${idx + 1}` }}
-              </span>
-            </div>
-            <p v-if="stage.description || stage.content_strategy" class="text-xs text-muted-foreground leading-relaxed line-clamp-4">{{ stage.description || stage.content_strategy }}</p>
-          </div>
-        </div>
+        <!-- Per-persona detail (QA round 3): expandable cards surfacing the
+             additive per stage×persona CTA / KPI / budget_share fields. -->
+        <FunnelPersonaStages :stages="stages" />
       </div>
 
       <!-- Approve / Reject / Refine -->

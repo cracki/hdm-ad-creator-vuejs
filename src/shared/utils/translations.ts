@@ -344,6 +344,12 @@ export const translations = {
   'funnel.stagesFound': { en: '{count} funnel stages identified', ar: '{count} مراحل قمع تم تحديدها', fa: '{count} مرحله قیف شناسایی شد' },
   'funnel.stage': { en: 'Stage', ar: 'مرحلة', fa: 'مرحله' },
   'funnel.alreadyCompletedDesc': { en: 'Funnel analysis was completed previously. Re-run to update.', ar: 'تم تحليل القمع مسبقاً. أعد التشغيل للتحديث.', fa: 'تحلیل قیف قبلاً تکمیل شده. برای به‌روزرسانی مجدد اجرا کن.' },
+  'funnel.personaBreakdown': { en: 'Persona breakdown', ar: 'تفصيل الشخصيات', fa: 'تفکیک پرسوناها' },
+  'funnel.cta': { en: 'CTA', ar: 'دعوة للتفاعل', fa: 'دعوت به اقدام' },
+  'funnel.kpi': { en: 'KPI', ar: 'مؤشر الأداء', fa: 'شاخص کلیدی عملکرد' },
+  'funnel.budgetShare': { en: 'Budget share', ar: 'حصة الميزانية', fa: 'سهم بودجه' },
+  'funnel.expand': { en: 'Show persona details', ar: 'إظهار تفاصيل الشخصية', fa: 'نمایش جزئیات پرسونا' },
+  'funnel.collapse': { en: 'Hide persona details', ar: 'إخفاء تفاصيل الشخصية', fa: 'پنهان کردن جزئیات پرسونا' },
 
   // Content Strategy
   'content.description': { en: 'Generate a content matrix across personas and funnel stages.', ar: 'أنشئ مصفوفة محتوى عبر الشخصيات ومراحل القمع.', fa: 'ماتریس محتوا در پرسوناها و مراحل قیف تولید کن.' },

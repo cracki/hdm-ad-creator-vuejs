@@ -555,6 +555,55 @@ export function getFunnelBudgetSplit(
   return { tofu: entry(tofu), mofu: entry(mofu), bofu: entry(bofu) }
 }
 
+// ── Funnel per-persona stage fields (additive backend contract) ──
+
+/**
+ * One stage×persona message inside funnel_context.persona_profiles[].messages.
+ * `cta`, `kpi` and `budget_share` are ADDITIVE fields from FunnelResultSerializer —
+ * older runs don't have them, so readers must treat them as optional/unknown.
+ */
+export interface FunnelPersonaStageMessage {
+  headline_angle?: string | null
+  body_approach?: string | null
+  /** Call to action for this persona at this stage (string or { text }). */
+  cta?: unknown
+  /** Key performance indicator for this persona at this stage. */
+  kpi?: unknown
+  /** Percent (0–100) of that stage's budget allocated to this persona. */
+  budget_share?: number | string | null
+  [key: string]: unknown
+}
+
+export interface FunnelPersonaProfile {
+  persona_name?: string | null
+  persona_summary?: string | null
+  messages?: Record<string, FunnelPersonaStageMessage | null | undefined>
+}
+
+/**
+ * Defensive reader for the additive funnel text fields (cta / kpi): accepts a
+ * plain string or a { text | value | name | description } object; null when
+ * absent/empty so callers can hide the chip on older runs.
+ */
+export function readFunnelTextField(value: unknown): string | null {
+  if (typeof value === 'string') return value.trim() ? value : null
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>
+    for (const key of ['text', 'value', 'name', 'description']) {
+      const candidate = record[key]
+      if (typeof candidate === 'string' && candidate.trim()) return candidate
+    }
+  }
+  return null
+}
+
+/** Defensive reader for budget_share: 0–100 number (numeric strings tolerated); null when absent/invalid. */
+export function readFunnelBudgetShare(value: unknown): number | null {
+  const n = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN
+  if (!Number.isFinite(n) || n < 0 || n > 100) return null
+  return n
+}
+
 // ── Target market (country/city, F19) ─────────────────────
 
 export interface TargetMarket {

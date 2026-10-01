@@ -235,3 +235,29 @@ describe('composeLocation (F19)', () => {
     expect(composeLocation({ country: '', city: '' })).toBe('')
   })
 })
+
+describe('funnel additive field readers (QA round 3)', () => {
+  it('readFunnelTextField accepts strings and { text } objects, null otherwise', async () => {
+    const { readFunnelTextField } = await import('./types')
+    expect(readFunnelTextField('Start free trial')).toBe('Start free trial')
+    expect(readFunnelTextField({ text: 'Book a demo' })).toBe('Book a demo')
+    expect(readFunnelTextField({ value: 'Book a demo' })).toBe('Book a demo')
+    expect(readFunnelTextField('')).toBeNull()
+    expect(readFunnelTextField('   ')).toBeNull()
+    expect(readFunnelTextField(undefined)).toBeNull()
+    expect(readFunnelTextField({ other: 1 })).toBeNull()
+    expect(readFunnelTextField(42)).toBeNull()
+  })
+
+  it('readFunnelBudgetShare accepts 0-100 numbers/strings, null otherwise', async () => {
+    const { readFunnelBudgetShare } = await import('./types')
+    expect(readFunnelBudgetShare(30)).toBe(30)
+    expect(readFunnelBudgetShare(0)).toBe(0)
+    expect(readFunnelBudgetShare('45')).toBe(45)
+    expect(readFunnelBudgetShare(-1)).toBeNull()
+    expect(readFunnelBudgetShare(101)).toBeNull()
+    expect(readFunnelBudgetShare('abc')).toBeNull()
+    expect(readFunnelBudgetShare(null)).toBeNull()
+    expect(readFunnelBudgetShare(undefined)).toBeNull()
+  })
+})
