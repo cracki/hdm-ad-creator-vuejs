@@ -604,6 +604,16 @@ export function readFunnelBudgetShare(value: unknown): number | null {
   return n
 }
 
+/**
+ * Backend-computed content item count (content strategy payload's
+ * content_pieces_count); null when absent so callers can fall back to counting
+ * the rendered items themselves.
+ */
+export function readContentPiecesCount(data: unknown): number | null {
+  const n = Number((data as { content_pieces_count?: unknown } | null | undefined)?.content_pieces_count)
+  return Number.isFinite(n) && n > 0 ? Math.round(n) : null
+}
+
 // ── Target market (country/city, F19) ─────────────────────
 
 export interface TargetMarket {

@@ -12,6 +12,7 @@ import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { useCampaign } from '../queries'
+import { readContentPiecesCount } from '../types'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
 import { exportContentStrategy } from '@/shared/utils/exportStep'
@@ -98,6 +99,24 @@ const personas = computed(() => {
   return Array.isArray(raw) ? raw : []
 })
 const funnelStages = computed(() => ['TOFU', 'MOFU', 'BOFU'])
+
+// Header count (QA round 3): must count CONTENT ITEMS, not persona rows.
+// Prefer the backend-computed content_pieces_count, else count the actual
+// items in the rendered payload (content_plan entries / matrix cells).
+const contentItemsCount = computed<number>(() => {
+  const declared = readContentPiecesCount(contentData.value)
+  if (declared != null) return declared
+  const d = contentData.value as { content_plan?: unknown } | null
+  if (Array.isArray(d?.content_plan) && d.content_plan.length) return d.content_plan.length
+  let count = 0
+  for (const row of matrix.value as Record<string, unknown>[]) {
+    for (const stage of funnelStages.value) {
+      const items = row[stage] ?? row[stage.toLowerCase()]
+      if (Array.isArray(items)) count += items.length
+    }
+  }
+  return count || matrix.value.length
+})
 
 // Review state restore: prefer the run just returned, else the persisted
 // latest content_strategy step on the campaign (latest_steps).
@@ -230,7 +249,7 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx') {
         <!-- Content matrix results -->
         <div v-if="stepData && !loading">
           <div class="flex items-center justify-between mb-4">
-            <div class="text-xs text-muted-foreground">{{ t('content.itemsFound', { count: matrix.length }) }}</div>
+            <div class="text-xs text-muted-foreground" data-testid="content-items-count">{{ t('content.itemsFound', { count: contentItemsCount }) }}</div>
             <div class="flex items-center gap-2">
               <StepExportButton :disabled="!hasExportData || exporting" @export="handleExport" />
               <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="runContentStrategy">

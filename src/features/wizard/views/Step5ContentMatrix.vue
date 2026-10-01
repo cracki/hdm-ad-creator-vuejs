@@ -7,7 +7,7 @@ import { campaignsApi } from '@/features/campaigns/api'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
 import StepReviewActions from '@/features/campaigns/components/StepReviewActions.vue'
-import type { Campaign } from '@/features/campaigns/types'
+import { readContentPiecesCount, type Campaign } from '@/features/campaigns/types'
 
 const props = defineProps<{ campaign: Campaign; campaignUuid: string }>()
 const emit = defineEmits<{ (e: 'completed'): void }>()
@@ -36,6 +36,15 @@ const items = computed(() => {
   }
   const data = payload.items ?? d.items ?? d.content_matrix ?? d.matrix ?? []
   return Array.isArray(data) ? data : []
+})
+
+// Header count (QA round 3): must count CONTENT ITEMS, not persona rows.
+// Prefer the backend-computed content_pieces_count, else the rendered items.
+const itemsCount = computed<number>(() => {
+  const payload = stepData.value?.response_payload
+  const declared = readContentPiecesCount(payload ? (payload.data ?? payload) : null)
+  if (declared != null) return declared
+  return items.value.length
 })
 
 // Review state restore: prefer the run just returned, else the persisted
@@ -114,7 +123,7 @@ async function runContentStrategy(feedback?: string | Event) {
 
       <div v-if="stepData && !loading">
         <div class="flex items-center justify-between mb-4">
-          <div class="text-xs text-muted-foreground">{{ t('content.itemsFound', { count: items.length }) }}</div>
+          <div class="text-xs text-muted-foreground" data-testid="content-items-count">{{ t('content.itemsFound', { count: itemsCount }) }}</div>
           <button class="h-8 px-3 rounded-lg border border-border/60 text-xs flex items-center gap-1.5 hover:bg-overlay-subtle transition" @click="runContentStrategy">
             <RefreshCw class="h-3 w-3" /> {{ t('seg.reRun') }}
           </button>
