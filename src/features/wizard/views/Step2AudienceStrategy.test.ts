@@ -112,6 +112,10 @@ describe('Step2AudienceStrategy — persona targeting (MOM)', () => {
     await flushPromises()
 
     expect(vi.mocked(campaignsApi.runSegmentation).mock.calls[1][1]?.personas).toEqual(['Budget Buyer'])
+
+    // Unmount so the debounced persist timer is cancelled (onBeforeUnmount)
+    // and cannot fire mid-way through a later test.
+    wrapper.unmount()
   })
 
   it('prefills the selection from context_payload.selected_personas', async () => {
@@ -146,6 +150,10 @@ describe('Step2AudienceStrategy — persona targeting (MOM)', () => {
     await rerun!.trigger('click')
     await flushPromises()
     expect(vi.mocked(campaignsApi.runSegmentation).mock.calls[1][1]?.personas).toEqual([])
+
+    // Unmount so the debounced persist timer is cancelled (onBeforeUnmount)
+    // and cannot fire mid-way through a later test.
+    wrapper.unmount()
   })
 })
 
@@ -168,14 +176,15 @@ describe('Step2AudienceStrategy — immediate persona persistence (QA round 3)',
       await flushPromises()
 
       const chips = wrapper.findAll('[data-testid="persona-chip"]')
+      const baseline = vi.mocked(campaignsApi.update).mock.calls.length
       await chips[1].trigger('click')
 
       // Debounced: nothing is sent synchronously.
-      expect(campaignsApi.update).not.toHaveBeenCalled()
+      expect(vi.mocked(campaignsApi.update).mock.calls.length).toBe(baseline)
 
       await vi.advanceTimersByTimeAsync(500)
-      expect(campaignsApi.update).toHaveBeenCalledTimes(1)
-      const [uuid, payload] = vi.mocked(campaignsApi.update).mock.calls[0]
+      expect(vi.mocked(campaignsApi.update).mock.calls.length).toBe(baseline + 1)
+      const [uuid, payload] = vi.mocked(campaignsApi.update).mock.calls[baseline]
       expect(uuid).toBe('c1')
       // Sibling keys stay intact and the selection is persisted immediately.
       expect(payload?.context_payload).toEqual({
@@ -195,13 +204,14 @@ describe('Step2AudienceStrategy — immediate persona persistence (QA round 3)',
       await flushPromises()
 
       const chips = wrapper.findAll('[data-testid="persona-chip"]')
+      const baseline = vi.mocked(campaignsApi.update).mock.calls.length
       await chips[0].trigger('click')
       await chips[1].trigger('click')
       await chips[0].trigger('click') // deselect again → final selection: Premium Seeker
 
       await vi.advanceTimersByTimeAsync(500)
-      expect(campaignsApi.update).toHaveBeenCalledTimes(1)
-      expect(vi.mocked(campaignsApi.update).mock.calls[0][1]?.context_payload).toEqual({
+      expect(vi.mocked(campaignsApi.update).mock.calls.length).toBe(baseline + 1)
+      expect(vi.mocked(campaignsApi.update).mock.calls[baseline][1]?.context_payload).toEqual({
         selected_personas: ['Premium Seeker'],
       })
     } finally {
