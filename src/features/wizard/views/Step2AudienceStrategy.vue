@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { Users, AlertCircle, RefreshCw, Check, ShoppingBag } from 'lucide-vue-next'
 import AiLoadingAnimation from '@/shared/components/AiLoadingAnimation.vue'
 import SegmentDeepResearchRenderer from '@/shared/components/renderers/SegmentDeepResearchRenderer.vue'
@@ -104,6 +104,44 @@ function personasPayload(): string[] | undefined {
   if (selectionTouched.value && initialSelection.value.length) return []
   return undefined
 }
+
+// Immediate persistence (QA round 3): the selection used to survive only when
+// segmentation was RE-RUN, so deselected personas kept feeding Funnel / Content
+// / Platform / Ads. Any change once a segmentation exists is PATCHed into
+// context_payload right away (debounced) — merged over the LATEST campaign
+// context the view knows about, so sibling keys (target_market,
+// segmentation_data, …) are never clobbered. An explicit [] is sent as-is (the
+// backend clears the stored selection); the run payload still carries
+// `personas` via personasPayload() as belt & braces.
+const PERSONA_PERSIST_DEBOUNCE_MS = 500
+let persistTimer: ReturnType<typeof setTimeout> | undefined
+
+function persistSelection(value: string[]) {
+  if (!personas.value.length) return // no segmentation results to persist against yet
+  if (persistTimer) clearTimeout(persistTimer)
+  persistTimer = setTimeout(async () => {
+    persistTimer = undefined
+    try {
+      await campaignsApi.update(props.campaignUuid, {
+        context_payload: {
+          ...(props.campaign.context_payload ?? {}),
+          selected_personas: value,
+        },
+      })
+    } catch {
+      // Non-fatal: the next run still carries `personas` in its payload.
+    }
+  }, PERSONA_PERSIST_DEBOUNCE_MS)
+}
+
+function onSelectionChange(value: string[]) {
+  selectionTouched.value = true
+  persistSelection(value)
+}
+
+onBeforeUnmount(() => {
+  if (persistTimer) clearTimeout(persistTimer)
+})
 
 // Review state restore: prefer the run just returned, else the persisted
 // latest segmentation step on the campaign.
@@ -232,7 +270,7 @@ async function runSegmentation(feedback?: string | Event) {
         <PersonaSelector
           v-model="selectedPersonas"
           :personas="personas"
-          @update:model-value="selectionTouched = true"
+          @update:model-value="onSelectionChange"
         />
         <div class="text-[11px] text-muted-foreground" data-testid="persona-all-note">{{ t('seg.personaPickerAll') }}</div>
       </div>

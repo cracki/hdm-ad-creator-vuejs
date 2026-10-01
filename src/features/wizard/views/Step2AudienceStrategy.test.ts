@@ -149,6 +149,67 @@ describe('Step2AudienceStrategy — persona targeting (MOM)', () => {
   })
 })
 
+describe('Step2AudienceStrategy — immediate persona persistence (QA round 3)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(campaignsApi.runSegmentation).mockResolvedValue(SEGMENTS_RESPONSE)
+    vi.mocked(campaignsApi.update).mockResolvedValue({ data: {} } as never)
+  })
+
+  it('PATCHes context_payload with the merged selection as soon as a persona is toggled', async () => {
+    vi.useFakeTimers()
+    try {
+      const wrapper = await mountStep(
+        buildCampaign({ context_payload: { target_market: { country: 'Oman', city: 'Muscat' } } }),
+      )
+
+      // Produce segmentation results so the picker (and persistence) is live.
+      await wrapper.find('button').trigger('click')
+      await flushPromises()
+
+      const chips = wrapper.findAll('[data-testid="persona-chip"]')
+      await chips[1].trigger('click')
+
+      // Debounced: nothing is sent synchronously.
+      expect(campaignsApi.update).not.toHaveBeenCalled()
+
+      await vi.advanceTimersByTimeAsync(500)
+      expect(campaignsApi.update).toHaveBeenCalledTimes(1)
+      const [uuid, payload] = vi.mocked(campaignsApi.update).mock.calls[0]
+      expect(uuid).toBe('c1')
+      // Sibling keys stay intact and the selection is persisted immediately.
+      expect(payload?.context_payload).toEqual({
+        target_market: { country: 'Oman', city: 'Muscat' },
+        selected_personas: ['Premium Seeker'],
+      })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('coalesces rapid toggles into a single debounced PATCH with the final selection', async () => {
+    vi.useFakeTimers()
+    try {
+      const wrapper = await mountStep(buildCampaign())
+      await wrapper.find('button').trigger('click')
+      await flushPromises()
+
+      const chips = wrapper.findAll('[data-testid="persona-chip"]')
+      await chips[0].trigger('click')
+      await chips[1].trigger('click')
+      await chips[0].trigger('click') // deselect again → final selection: Premium Seeker
+
+      await vi.advanceTimersByTimeAsync(500)
+      expect(campaignsApi.update).toHaveBeenCalledTimes(1)
+      expect(vi.mocked(campaignsApi.update).mock.calls[0][1]?.context_payload).toEqual({
+        selected_personas: ['Premium Seeker'],
+      })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+})
+
 describe('Step2AudienceStrategy — prefill from brand analysis (MOM 10.1)', () => {
   beforeEach(() => {
     vi.clearAllMocks()

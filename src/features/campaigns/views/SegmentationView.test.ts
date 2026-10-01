@@ -281,6 +281,78 @@ describe('SegmentationView — persona targeting (MOM)', () => {
   })
 })
 
+// ── Immediate persona persistence (QA round 3) ──
+
+describe('SegmentationView — immediate persona persistence', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(campaignsApi.runSegmentation).mockResolvedValue(SEGMENTS_RESPONSE)
+    vi.mocked(campaignsApi.update).mockResolvedValue({ data: {} } as never)
+  })
+
+  function completedCampaign() {
+    return buildCampaign({
+      segmentation_completed: true,
+      context_payload: { target_market: { country: 'Oman', city: 'Muscat' } },
+      latest_steps: {
+        segmentation: {
+          status: 'completed',
+          response_payload: { segments: [{ name: 'Budget Buyer' }, { name: 'Premium Seeker' }] },
+        },
+      },
+    } as unknown as Campaign)
+  }
+
+  it('PATCHes the LATEST campaign context with merged selected_personas on toggle', async () => {
+    vi.useFakeTimers()
+    try {
+      mockCampaign(completedCampaign())
+      const wrapper = await mountView()
+
+      const chips = wrapper.findAll('[data-testid="persona-chip"]')
+      await chips[1].trigger('click')
+
+      // Debounced: nothing is sent synchronously.
+      expect(campaignsApi.update).not.toHaveBeenCalled()
+
+      await vi.advanceTimersByTimeAsync(500)
+      expect(campaignsApi.update).toHaveBeenCalledTimes(1)
+      const [uuid, payload] = vi.mocked(campaignsApi.update).mock.calls[0]
+      expect(uuid).toBe('c1')
+      // Sibling keys stay intact and the selection is persisted immediately
+      // (no re-run needed) so downstream steps see the deselection.
+      expect(payload?.context_payload).toEqual({
+        target_market: { country: 'Oman', city: 'Muscat' },
+        selected_personas: ['Premium Seeker'],
+      })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('coalesces rapid toggles into a single debounced PATCH with the final selection', async () => {
+    vi.useFakeTimers()
+    try {
+      mockCampaign(completedCampaign())
+      const wrapper = await mountView()
+
+      const chips = wrapper.findAll('[data-testid="persona-chip"]')
+      await chips[0].trigger('click')
+      await chips[1].trigger('click')
+      await chips[1].trigger('click') // deselect → final selection: Budget Buyer
+
+      await vi.advanceTimersByTimeAsync(500)
+      expect(campaignsApi.update).toHaveBeenCalledTimes(1)
+      expect(vi.mocked(campaignsApi.update).mock.calls[0][1]?.context_payload).toEqual({
+        target_market: { country: 'Oman', city: 'Muscat' },
+        selected_personas: ['Budget Buyer'],
+      })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+})
+
 // ── Prefill from brand analysis (MOM 10.1 / باگ۱۰) ──
 
 describe('SegmentationView — prefill from brand analysis', () => {
