@@ -72,11 +72,18 @@ describe('FunnelPersonaStages', () => {
     expect(budgets.map((b) => b.text())).toEqual(['30%', '45%'])
   })
 
-  it('sums the persona budget_share on the collapsed header badge', () => {
+  it('does not sum budget_share on the collapsed header (it is per-stage)', async () => {
     const wrapper = mountComponent(WITH_FIELDS)
 
-    const badge = wrapper.findAll('[data-testid="funnel-persona-card"]')[0].find('.bg-primary\\/10')
-    expect(badge.text()).toBe('Budget share 75%')
+    // budget_share sums to 100 WITHIN each stage, so a cross-stage total is
+    // meaningless — the collapsed header must not display one.
+    const card = wrapper.findAll('[data-testid="funnel-persona-card"]')[0]
+    expect(card.text()).not.toContain('Budget share')
+    // Per-stage badges stay inside the expanded card.
+    await wrapper.findAll('[data-testid="funnel-persona-toggle"]')[0].trigger('click')
+    expect(
+      wrapper.findAll('[data-testid="funnel-persona-budget"]').length,
+    ).toBeGreaterThan(0)
   })
 
   it('hides the additive chips for personas whose run predates them', async () => {

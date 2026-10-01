@@ -82,16 +82,12 @@ function stageClass(stage: string): string {
         class="w-full flex items-center gap-2 p-4 text-start hover:bg-overlay-subtle/60 transition"
         :data-testid="'funnel-persona-toggle'"
         :aria-expanded="isOpen(card.name)"
-        :aria-label="isOpen(card.name) ? t('funnel.collapse') : t('funnel.expand')"
+        :aria-label="(isOpen(card.name) ? t('funnel.collapse') : t('funnel.expand')) + ' — ' + card.name"
         @click="toggle(card.name)"
       >
         <span class="text-sm font-semibold flex-1 min-w-0 truncate">{{ card.name }}</span>
-        <span
-          v-if="card.stages.some((s) => s.budgetShare != null)"
-          class="text-[11px] px-2 py-0.5 rounded bg-primary/10 text-primary font-medium shrink-0"
-        >
-          {{ t('funnel.budgetShare') }} {{ card.stages.reduce((sum, s) => sum + (s.budgetShare ?? 0), 0).toFixed(0) }}%
-        </span>
+        <!-- budget_share is per-stage (sums to 100 WITHIN each stage), so no
+             cross-stage total is shown here — per-stage badges live inside. -->
         <ChevronDown
           class="h-4 w-4 text-muted-foreground shrink-0 transition-transform"
           :class="isOpen(card.name) ? 'rotate-180' : ''"
