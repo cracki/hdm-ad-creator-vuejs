@@ -73,7 +73,7 @@ function buildAd(overrides: Partial<CampaignAd> = {}): CampaignAd {
 /** Campaign data ref the test controls — resolves async like the real query. */
 let campaignRef: Ref<Campaign | null>
 
-function mockQueries(campaign: Campaign, ads: CampaignAd[], visuals: unknown[]) {
+function mockQueries(_campaign: Campaign, ads: CampaignAd[], visuals: unknown[]) {
   campaignRef = ref<Campaign | null>(null)
   vi.mocked(useCampaign).mockReturnValue({
     data: campaignRef,
