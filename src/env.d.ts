@@ -1,5 +1,8 @@
 /// <reference types="vite/client" />
 
+/** Injected at build time via `define` in vite.config.ts (QA4-E0 build badge). */
+declare const __BUILD_INFO__: { commit: string; builtAt: string }
+
 interface ImportMetaEnv {
   readonly VITE_API_URL: string
   readonly VITE_GOOGLE_CLIENT_ID: string

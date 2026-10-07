@@ -9,14 +9,48 @@ import Logo from './Logo.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { useAuthStore } from '@/features/auth/store'
 import { useMobileDrawer } from '@/shared/composables/useMobileDrawer'
+import { getCreditsSummary } from '@/shared/api/credits'
+import { getBuildLabel } from '@/shared/utils/buildInfo'
+import { useQuery } from '@tanstack/vue-query'
 import { computed, watch, onUnmounted, ref } from 'vue'
 import type { TKey } from '@/shared/utils/translations'
 
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
-const { t, dir } = useI18n()
+const { t, lang, dir } = useI18n()
 const { isOpen, close } = useMobileDrawer()
+
+// QA4-E0: small build badge at the bottom of the sidebar (e.g. "2ebf850 · Oct 7").
+const buildLabel = getBuildLabel()
+
+// QA4-img5: real AI-credits usage from /credits/summary/. Falls back to the
+// static display while loading or when the fetch fails.
+const creditsQuery = useQuery({
+  queryKey: ['credits', 'summary'],
+  queryFn: getCreditsSummary,
+  staleTime: 60_000,
+  retry: 1,
+})
+
+function formatNumber(value: number): string {
+  return new Intl.NumberFormat(lang.value || 'en').format(value)
+}
+
+const creditsDisplay = computed<string>(() => {
+  const summary = creditsQuery.data.value
+  if (!summary) return t('sidebar.creditsUsed')
+  const used = formatNumber(summary.used_month)
+  if (summary.quota_month == null) return `${used} used`
+  return t('sidebar.creditsUsage', { used, quota: formatNumber(summary.quota_month) })
+})
+
+const creditsBarWidth = computed<string>(() => {
+  const summary = creditsQuery.data.value
+  if (!summary || summary.quota_month == null || summary.quota_month <= 0) return '50%'
+  const pct = Math.min(100, Math.round((summary.used_month / summary.quota_month) * 100))
+  return `${pct}%`
+})
 
 const drawerRef = ref<HTMLElement | null>(null)
 let previousFocusEl: HTMLElement | null = null
@@ -190,9 +224,9 @@ function isActive(item: NavItem): boolean {
         <div class="absolute -top-8 -end-8 h-24 w-24 rounded-full bg-[image:var(--gradient-brand)] opacity-30 blur-2xl" />
         <div class="relative">
           <div class="text-xs font-semibold mb-1">{{ t('sidebar.aiCredits') }}</div>
-          <div class="text-[11px] text-muted-foreground mb-2">{{ t('sidebar.creditsUsed') }}</div>
+          <div class="text-[11px] text-muted-foreground mb-2" data-testid="credits-usage">{{ creditsDisplay }}</div>
           <div class="h-1.5 rounded-full bg-overlay-subtle overflow-hidden">
-            <div class="h-full w-1/2 rounded-full bg-[image:var(--gradient-brand)]" />
+            <div class="h-full rounded-full bg-[image:var(--gradient-brand)] transition-[width]" :style="{ width: creditsBarWidth }" />
           </div>
         </div>
       </div>
@@ -212,6 +246,9 @@ function isActive(item: NavItem): boolean {
         <LogOut class="h-4 w-4" />
         <span class="font-medium">{{ t('nav.logout') }}</span>
       </button>
+      <div class="pt-1 text-center text-[10px] text-muted-foreground/40 select-none" data-testid="app-version">
+        {{ buildLabel }}
+      </div>
     </div>
   </aside>
 
@@ -257,9 +294,9 @@ function isActive(item: NavItem): boolean {
               <div class="absolute -top-8 -end-8 h-24 w-24 rounded-full bg-[image:var(--gradient-brand)] opacity-30 blur-2xl" />
               <div class="relative">
                 <div class="text-xs font-semibold mb-1">{{ t('sidebar.aiCredits') }}</div>
-                <div class="text-[11px] text-muted-foreground mb-2">{{ t('sidebar.creditsUsed') }}</div>
+                <div class="text-[11px] text-muted-foreground mb-2" data-testid="credits-usage-mobile">{{ creditsDisplay }}</div>
                 <div class="h-1.5 rounded-full bg-overlay-subtle overflow-hidden">
-                  <div class="h-full w-1/2 rounded-full bg-[image:var(--gradient-brand)]" />
+                  <div class="h-full rounded-full bg-[image:var(--gradient-brand)] transition-[width]" :style="{ width: creditsBarWidth }" />
                 </div>
               </div>
             </div>
