@@ -41,6 +41,20 @@ function clearStoredRefresh() {
   } catch {}
 }
 
+/**
+ * Module-level single-flight refresh (QA4-P0). The backend rotates and
+ * blacklists refresh tokens, so concurrent refresh calls would 401 the second
+ * one and deadlock the API client's 401 interceptor. initAuth (router guard),
+ * the interceptor and any caller must share ONE refresh promise.
+ */
+let refreshInFlight: Promise<string> | null = null
+
+/**
+ * Single-flight init: concurrent router-guard invocations must not run the
+ * refresh + fetchUser sequence twice.
+ */
+let initInFlight: Promise<void> | null = null
+
 export const useAuthStore = defineStore('auth', () => {
   const accessToken = ref<string | null>(null)
   const user = ref<User | null>(null)
@@ -75,12 +89,22 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = data
   }
 
-  async function refreshAccessToken(): Promise<string> {
+  async function requestNewAccessToken(): Promise<string> {
     const refresh = getStoredRefresh()
     if (!refresh) throw new Error('No refresh token')
     const { data } = await authApi.refreshToken(refresh)
     setTokens(data)
     return data.access
+  }
+
+  /** Single-flight: concurrent callers share one in-flight refresh. */
+  function refreshAccessToken(): Promise<string> {
+    if (!refreshInFlight) {
+      refreshInFlight = requestNewAccessToken().finally(() => {
+        refreshInFlight = null
+      })
+    }
+    return refreshInFlight
   }
 
   function logout() {
@@ -89,7 +113,7 @@ export const useAuthStore = defineStore('auth', () => {
     clearStoredRefresh()
   }
 
-  async function initAuth() {
+  async function runInitAuth() {
     const refresh = getStoredRefresh()
     if (!refresh) {
       isInitialized.value = true
@@ -102,6 +126,16 @@ export const useAuthStore = defineStore('auth', () => {
       logout()
     }
     isInitialized.value = true
+  }
+
+  /** Single-flight so concurrent guard navigations share one init sequence. */
+  function initAuth(): Promise<void> {
+    if (!initInFlight) {
+      initInFlight = runInitAuth().finally(() => {
+        initInFlight = null
+      })
+    }
+    return initInFlight
   }
 
   return {
