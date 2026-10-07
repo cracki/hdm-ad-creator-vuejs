@@ -63,13 +63,21 @@ const checkPending = ref(false)
 const unrelatedWarning = ref('')
 const warnedName = ref('')
 
-watch(newName, () => {
-  unrelatedWarning.value = ''
+watch(newName, (value) => {
+  // Keep the warning while the input holds the warned pending name (it is
+  // programmatically restored for the force-add second submit).
+  if (value.trim().toLowerCase() !== warnedName.value) {
+    unrelatedWarning.value = ''
+  }
 })
 
 function addService() {
   const name = newName.value.trim()
-  if (!name || props.disabled) return
+  // QA4 (test-4 bug 2): re-entry guard + immediate clear — while the
+  // relatedness check is in flight the input must be empty, otherwise a
+  // second Enter concatenates the stale text into one merged label.
+  if (!name || props.disabled || checkPending.value) return
+  newName.value = ''
   commitAdd(name)
 }
 
@@ -83,6 +91,7 @@ async function commitAdd(name: string) {
       if (res?.data?.related === false) {
         warnedName.value = name.toLowerCase()
         unrelatedWarning.value = t('serviceSelector.unrelatedWarning')
+        newName.value = name // restore so the second submit force-adds
         return // first submit only warns — a second click force-adds
       }
     } catch {
@@ -98,7 +107,6 @@ async function commitAdd(name: string) {
   if (!options.value.some((s) => s.name === name)) {
     customNames.value.push(name)
   }
-  newName.value = ''
 }
 </script>
 
@@ -156,7 +164,7 @@ async function commitAdd(name: string) {
     <div class="flex items-center gap-2">
       <input
         v-model="newName"
-        :disabled="disabled"
+        :disabled="disabled || checkPending"
         :placeholder="t('serviceSelector.addPlaceholder')"
         class="flex-1 min-w-0 h-10 px-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 transition disabled:opacity-50"
         data-testid="service-add-input"

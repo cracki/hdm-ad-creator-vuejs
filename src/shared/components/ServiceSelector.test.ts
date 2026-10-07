@@ -156,3 +156,84 @@ describe('ServiceSelector — unrelated-service warning', () => {
     expect(emittedNames(wrapper).at(-1)).toEqual(['Branding'])
   })
 })
+
+// ── QA4 (client test-4 bug 2): rapid Enter merged two services into one label ──
+
+describe('ServiceSelector — quick-add merge guard (QA4)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('clears the input immediately on submit so a second Enter cannot merge two services', async () => {
+    let resolveCheck: (value: { data: { related: boolean } }) => void = () => {}
+    let firstCall = true
+    vi.mocked(brandsApi.checkServiceRelatedness).mockImplementation(() => {
+      if (firstCall) {
+        firstCall = false
+        return new Promise((resolve) => { resolveCheck = resolve })
+      }
+      return Promise.resolve({ data: { related: true } })
+    })
+    const wrapper = mountSelector([], { brandUuid: 'b1' })
+    const field = wrapper.find('[data-testid="service-add-input"]')
+
+    await field.setValue('AC Cleaning')
+    await field.trigger('keydown.enter')
+    // while the check is in flight the input must already be empty and locked
+    expect((field.element as HTMLInputElement).value).toBe('')
+    expect((field.element as HTMLInputElement).disabled).toBe(true)
+
+    resolveCheck({ data: { related: true } })
+    await flushPromises()
+
+    // the user now types the second service fresh (the stale text is gone)
+    await field.setValue('Handyman Services')
+    await field.trigger('keydown.enter')
+    await flushPromises()
+
+    const chipTexts = wrapper.findAll('[data-testid="service-chip"]').map((c) => c.text())
+    expect(chipTexts.some((text) => text.includes('AC Cleaning'))).toBe(true)
+    expect(chipTexts.some((text) => text.includes('Handyman Services'))).toBe(true)
+    expect(chipTexts.some((text) => text.includes('AC CleaningHandyman Services'))).toBe(false)
+  })
+
+  it('blocks re-entry while a relatedness check is pending (no second submit mid-check)', async () => {
+    let resolveCheck: (value: { data: { related: boolean } }) => void = () => {}
+    vi.mocked(brandsApi.checkServiceRelatedness).mockImplementation(
+      () => new Promise((resolve) => { resolveCheck = resolve }),
+    )
+    const wrapper = mountSelector([], { brandUuid: 'b1' })
+
+    await wrapper.find('[data-testid="service-add-input"]').setValue('AC Cleaning')
+    await wrapper.find('[data-testid="service-add-input"]').trigger('keydown.enter')
+    // second Enter while pending must be a no-op
+    await wrapper.find('[data-testid="service-add-input"]').trigger('keydown.enter')
+
+    resolveCheck({ data: { related: true } })
+    await flushPromises()
+
+    expect(brandsApi.checkServiceRelatedness).toHaveBeenCalledTimes(1)
+    expect(emittedNames(wrapper)?.length ?? 0).toBeLessThanOrEqual(1)
+  })
+
+  it('restores the typed name when the check warns, so the force-add second submit still works', async () => {
+    vi.mocked(brandsApi.checkServiceRelatedness).mockResolvedValue({
+      data: { related: false },
+    })
+    const wrapper = mountSelector([], { brandUuid: 'b1' })
+    const field = wrapper.find('[data-testid="service-add-input"]')
+
+    await field.setValue('Car Engine Repair')
+    await field.trigger('keydown.enter')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="service-warning"]').exists()).toBe(true)
+    expect((field.element as HTMLInputElement).value).toBe('Car Engine Repair')
+
+    await field.trigger('keydown.enter')
+    await flushPromises()
+
+    expect(emittedNames(wrapper).at(-1)).toEqual(['Car Engine Repair'])
+    expect(brandsApi.checkServiceRelatedness).toHaveBeenCalledTimes(1)
+  })
+})
