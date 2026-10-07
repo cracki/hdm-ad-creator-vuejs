@@ -11,6 +11,17 @@ export interface Brand {
   selected_industry_id: string | null
   location: string | null
   brand_color: string | null
+  /**
+   * Latest analysis-run status on the list endpoint
+   * ("none" | "pending" | "running" | "completed" | "failed"). Optional so
+   * payloads from the old backend shape keep parsing.
+   */
+  analysis_status?: 'none' | 'pending' | 'running' | 'completed' | 'failed'
+  /**
+   * True when ANY completed analysis run exists, even if a newer run is
+   * pending/failed. Optional for old payloads.
+   */
+  has_completed_analysis?: boolean
   /** Managed service rows exposed by BrandSerializer (QA round 3 fix 2). */
   services?: Array<{ name: string; source?: string }> | string[]
   created_at: string

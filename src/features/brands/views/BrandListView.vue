@@ -4,7 +4,7 @@ import { RouterLink, useRoute } from 'vue-router'
 import Topbar from '@/layout/Topbar.vue'
 import { useBrands } from '@/features/brands/queries'
 import { brandsApi } from '@/features/brands/api'
-import type { Industry } from '@/features/brands/types'
+import type { Brand, Industry } from '@/features/brands/types'
 import { useI18n } from '@/shared/utils/i18n'
 import { usePageActions } from '@/shared/composables/usePageActions'
 import SkeletonLoader from '@/shared/components/SkeletonLoader.vue'
@@ -103,6 +103,32 @@ const COLORS = [
 
 function getColor(index: number): string {
   return COLORS[index % COLORS.length]
+}
+
+// QA4-new1: the analysis badge used to hardcode "Not analyzed". Backend now
+// reports `has_completed_analysis` (ANY completed run, even if a newer run is
+// pending/failed) and `analysis_status` of the latest run. Both are optional —
+// payloads without them keep the previous "Not analyzed" badge.
+const ANALYSIS_BADGE_TONES: Record<'analyzed' | 'analyzing' | 'failed' | 'notAnalyzed', string> = {
+  analyzed: 'text-success bg-success/10',
+  analyzing: 'text-primary bg-primary/10',
+  failed: 'text-destructive bg-destructive/10',
+  notAnalyzed: 'text-muted-foreground bg-overlay-subtle',
+}
+
+function analysisBadge(brand: Brand): { label: string; tone: string } {
+  if (brand.has_completed_analysis === true) {
+    return { label: t('status.analyzed'), tone: ANALYSIS_BADGE_TONES.analyzed }
+  }
+  switch (brand.analysis_status) {
+    case 'running':
+    case 'pending':
+      return { label: t('status.analyzing'), tone: ANALYSIS_BADGE_TONES.analyzing }
+    case 'failed':
+      return { label: t('status.analysisFailed'), tone: ANALYSIS_BADGE_TONES.failed }
+    default:
+      return { label: t('status.notAnalyzed'), tone: ANALYSIS_BADGE_TONES.notAnalyzed }
+  }
 }
 
 setActions([
@@ -247,8 +273,8 @@ setActions([
           <span v-if="brand.selected_industry" class="text-[11px] px-2 py-0.5 rounded-full border border-border/60 text-muted-foreground">
             {{ brand.selected_industry.name }}
           </span>
-          <span class="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full text-muted-foreground bg-overlay-subtle">
-            <Sparkles class="h-2.5 w-2.5" /> {{ t('status.notAnalyzed') }}
+          <span :class="['inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full', analysisBadge(brand).tone]">
+            <Sparkles class="h-2.5 w-2.5" /> {{ analysisBadge(brand).label }}
           </span>
         </div>
       </RouterLink>
