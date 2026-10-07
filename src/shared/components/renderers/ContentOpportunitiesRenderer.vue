@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { ExternalLink, Globe, BarChart3, Tag, TrendingUp } from 'lucide-vue-next'
 import type { ContentOpportunities, ContentOpportunityTopic } from '@/features/market/types'
+import InsightItemActions from '@/features/market/components/InsightItemActions.vue'
 import { useI18n } from '@/shared/utils/i18n'
 
 const { t } = useI18n()
@@ -59,26 +60,40 @@ function typeName(key: string): string {
         <div
           v-for="(item, idx) in topContent.slice(0, 10)"
           :key="idx"
-          class="rounded-lg border border-border/30 bg-overlay-subtle p-3 flex items-start gap-2.5"
+          class="rounded-lg border border-border/30 bg-overlay-subtle p-3 space-y-2"
         >
-          <span class="shrink-0 h-5 w-5 rounded bg-[image:var(--gradient-brand)] text-primary-foreground text-[10px] font-bold grid place-items-center">
-            {{ item.position ?? idx + 1 }}
-          </span>
-          <div class="min-w-0 flex-1 space-y-1">
-            <div class="text-sm font-medium text-foreground leading-snug truncate">{{ item.title }}</div>
-            <div v-if="item.snippet" class="text-xs text-muted-foreground line-clamp-2">{{ item.snippet }}</div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <span v-if="item.domain" class="text-[10px] text-muted-foreground/60 flex items-center gap-0.5">
-                <Globe class="h-2.5 w-2.5" /> {{ item.domain }}
-              </span>
-              <span v-if="item.query" class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground">
-                {{ item.query }}
-              </span>
+          <div class="flex items-start gap-2.5">
+            <span class="shrink-0 h-5 w-5 rounded bg-[image:var(--gradient-brand)] text-primary-foreground text-[10px] font-bold grid place-items-center">
+              {{ item.position ?? idx + 1 }}
+            </span>
+            <div class="min-w-0 flex-1 space-y-1">
+              <div class="text-sm font-medium text-foreground leading-snug truncate">{{ item.title }}</div>
+              <div v-if="item.snippet" class="text-xs text-muted-foreground line-clamp-2">{{ item.snippet }}</div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span v-if="item.domain" class="text-[10px] text-muted-foreground/60 flex items-center gap-0.5">
+                  <Globe class="h-2.5 w-2.5" /> {{ item.domain }}
+                </span>
+                <span v-if="item.query" class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground">
+                  {{ item.query }}
+                </span>
+              </div>
             </div>
+            <a v-if="item.url" :href="item.url" target="_blank" rel="noopener" class="shrink-0 h-6 w-6 rounded flex items-center justify-center hover:bg-overlay-light transition">
+              <ExternalLink class="h-3 w-3 text-muted-foreground" />
+            </a>
           </div>
-          <a v-if="item.url" :href="item.url" target="_blank" rel="noopener" class="shrink-0 h-6 w-6 rounded flex items-center justify-center hover:bg-overlay-light transition">
-            <ExternalLink class="h-3 w-3 text-muted-foreground" />
-          </a>
+
+          <!-- Per-item actions (Add to Campaign / Generate Brief). QA4-img31:
+               a parent-supplied #item-actions wins; otherwise the built-in
+               actions render. These are scraped top-performing items, so they
+               map like the top_performers view (title / snippet / query). -->
+          <slot name="item-actions" :item="item" :index="idx">
+            <InsightItemActions
+              view="top_performers"
+              :title="item.title || ''"
+              :snippet="item.snippet || item.query || ''"
+            />
+          </slot>
         </div>
       </div>
     </div>
@@ -105,24 +120,35 @@ function typeName(key: string): string {
         <div
           v-for="(item, idx) in (contentByType[activeType] as ContentOpportunityTopic[])"
           :key="idx"
-          class="rounded-lg border border-border/30 bg-overlay-subtle p-3 flex items-start gap-2"
+          class="rounded-lg border border-border/30 bg-overlay-subtle p-3 space-y-2"
         >
-          <span class="shrink-0 text-[10px] text-muted-foreground/50 w-4 text-end">{{ idx + 1 }}</span>
-          <div class="min-w-0 flex-1">
-            <div class="text-xs font-medium text-foreground leading-snug truncate">{{ item.title }}</div>
-            <div v-if="item.snippet" class="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">{{ item.snippet }}</div>
-            <div class="flex items-center gap-2 mt-1">
-              <span v-if="item.domain" class="text-[10px] text-muted-foreground/60 flex items-center gap-0.5">
-                <Globe class="h-2.5 w-2.5" /> {{ item.domain }}
-              </span>
-              <span v-if="item.query" class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground">
-                <Tag class="h-2 w-2 inline" /> {{ item.query }}
-              </span>
+          <div class="flex items-start gap-2">
+            <span class="shrink-0 text-[10px] text-muted-foreground/50 w-4 text-end">{{ idx + 1 }}</span>
+            <div class="min-w-0 flex-1">
+              <div class="text-xs font-medium text-foreground leading-snug truncate">{{ item.title }}</div>
+              <div v-if="item.snippet" class="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">{{ item.snippet }}</div>
+              <div class="flex items-center gap-2 mt-1">
+                <span v-if="item.domain" class="text-[10px] text-muted-foreground/60 flex items-center gap-0.5">
+                  <Globe class="h-2.5 w-2.5" /> {{ item.domain }}
+                </span>
+                <span v-if="item.query" class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground">
+                  <Tag class="h-2 w-2 inline" /> {{ item.query }}
+                </span>
+              </div>
             </div>
+            <a v-if="item.url" :href="item.url" target="_blank" rel="noopener" class="shrink-0 h-5 w-5 rounded flex items-center justify-center hover:bg-overlay-light transition">
+              <ExternalLink class="h-2.5 w-2.5 text-muted-foreground" />
+            </a>
           </div>
-          <a v-if="item.url" :href="item.url" target="_blank" rel="noopener" class="shrink-0 h-5 w-5 rounded flex items-center justify-center hover:bg-overlay-light transition">
-            <ExternalLink class="h-2.5 w-2.5 text-muted-foreground" />
-          </a>
+
+          <!-- Same per-item actions as the top-content rows above -->
+          <slot name="item-actions" :item="item" :index="idx">
+            <InsightItemActions
+              view="top_performers"
+              :title="item.title || ''"
+              :snippet="item.snippet || item.query || ''"
+            />
+          </slot>
         </div>
       </div>
     </div>

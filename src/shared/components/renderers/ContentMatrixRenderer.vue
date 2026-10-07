@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { Target, Lightbulb, Layers, Tag, Users } from 'lucide-vue-next'
 import type { ContentMatrixResponse, ContentMatrixStage } from '@/features/market/types'
 import AnalysisPayloadRenderer from '@/shared/components/renderers/AnalysisPayloadRenderer.vue'
+import InsightItemActions from '@/features/market/components/InsightItemActions.vue'
 import { useI18n } from '@/shared/utils/i18n'
 
 const { t } = useI18n()
@@ -135,8 +136,18 @@ const stageLabels: Record<string, string> = {
             {{ t('matrix.topic') }}: {{ idea.topic }}
           </div>
 
-          <!-- Optional per-idea actions (Add to Campaign / Generate Brief) -->
-          <slot name="item-actions" :item="idea" :index="idx" />
+          <!-- Per-idea actions (Add to Campaign / Generate Brief). QA4-img31:
+               when the parent supplies #item-actions (standalone views) it
+               wins; otherwise fall back to the built-in actions with the same
+               item-shape mapping MarketMatrixView uses. -->
+          <slot name="item-actions" :item="idea" :index="idx">
+            <InsightItemActions
+              view="matrix"
+              :title="idea.suggested_title || idea.title_inspiration || idea.topic || ''"
+              :snippet="idea.content_angle || idea.topic || ''"
+              :angle="idea.content_angle"
+            />
+          </slot>
         </div>
       </div>
     </div>

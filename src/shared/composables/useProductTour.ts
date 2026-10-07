@@ -91,13 +91,51 @@ const totalSteps = computed(() => activeSteps.value.length)
 
 // --- Tour lifecycle ---
 
+// --- Target lookup (QA4-img30: robust tour highlighting) ---
+
+/**
+ * How long the overlay keeps looking for a late-rendered / late-visible tour
+ * target before giving up and clearing the highlight (QA4-img30). Beats the
+ * old single querySelector attempt that left the ring stale or misplaced.
+ */
+export const TOUR_TARGET_TIMEOUT_MS = 2500
+/** Interval between target re-checks while waiting (QA4-img30). */
+export const TOUR_TARGET_POLL_MS = 50
+
+/** querySelector that never throws on invalid selectors. */
+export function queryTourTarget(selector: string): Element | null {
+  try {
+    return document.querySelector(selector)
+  } catch {
+    return null
+  }
+}
+
+/** True when the element currently has a non-zero box (display:none → false). */
+export function isTourTargetVisible(el: Element): boolean {
+  const rect = (el as HTMLElement).getBoundingClientRect?.()
+  return !!rect && rect.width > 0 && rect.height > 0
+}
+
+/**
+ * Wait until `selector` matches a VISIBLE element (non-zero box), re-checking
+ * every ~50ms up to `timeoutMs` (default 2.5s — QA4-img30). Resolves null
+ * when the deadline passes so the overlay can clear the ring instead of
+ * highlighting a stale or hidden (zero-rect) element.
+ */
+export async function waitForTourTarget(selector: string, timeoutMs: number = TOUR_TARGET_TIMEOUT_MS): Promise<Element | null> {
+  const deadline = Date.now() + Math.max(0, timeoutMs)
+  for (;;) {
+    const el = queryTourTarget(selector)
+    if (el && isTourTargetVisible(el)) return el
+    if (Date.now() >= deadline) return null
+    await new Promise((resolve) => setTimeout(resolve, TOUR_TARGET_POLL_MS))
+  }
+}
+
 /** True when a CSS selector currently matches an element in the DOM. */
 export function tourTargetExists(selector: string): boolean {
-  try {
-    return !!document.querySelector(selector)
-  } catch {
-    return false
-  }
+  return !!queryTourTarget(selector)
 }
 
 function registerTour(def: TourDefinition) {

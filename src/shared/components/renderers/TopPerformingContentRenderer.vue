@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { Globe, BarChart3, TrendingUp, Lightbulb, CheckCircle2 } from 'lucide-vue-next'
 import type { TopPerformingContentResponse } from '@/features/market/types'
 import AnalysisPayloadRenderer from '@/shared/components/renderers/AnalysisPayloadRenderer.vue'
+import InsightItemActions from '@/features/market/components/InsightItemActions.vue'
 import { useI18n } from '@/shared/utils/i18n'
 
 const { t } = useI18n()
@@ -100,8 +101,18 @@ function getTypeClass(type: string): string {
             </div>
           </div>
 
-          <!-- Optional per-item actions (Add to Campaign / Generate Brief) -->
-          <slot name="item-actions" :item="item" :index="idx" />
+          <!-- Per-item actions (Add to Campaign / Generate Brief). QA4-img31:
+               when the parent supplies #item-actions (standalone views) it
+               wins; otherwise fall back to the built-in actions with the same
+               item-shape mapping MarketTopPerformingView uses. -->
+          <slot name="item-actions" :item="item" :index="idx">
+            <InsightItemActions
+              view="top_performers"
+              :title="item.title || ''"
+              :snippet="item.why_it_ranks || item.snippet || ''"
+              :angle="item.your_opportunity"
+            />
+          </slot>
         </div>
       </div>
     </div>

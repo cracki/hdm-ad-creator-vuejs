@@ -2,7 +2,7 @@
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { X, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import { useI18n } from '@/shared/utils/i18n'
-import { useProductTour } from '@/shared/composables/useProductTour'
+import { useProductTour, waitForTourTarget, queryTourTarget } from '@/shared/composables/useProductTour'
 
 const { isActive, currentStep, currentStepIndex, totalSteps, isLastStep, dismiss, finish, next, prev } = useProductTour()
 const { t } = useI18n()
@@ -19,39 +19,91 @@ const prevStepIndex = ref(-1)
 
 let waitTimer: ReturnType<typeof setTimeout> | null = null
 
-async function waitForElement(step: typeof currentStep.value): Promise<Element | null> {
-  if (!step) return null
-  const maxWait = step.waitFor ?? 0
-  if (maxWait <= 0) return document.querySelector(step.target)
+// QA4-img30: measurements are async — a monotonically increasing token lets an
+// in-flight measurement abort when a newer one (step change, scroll, resize)
+// supersedes it.
+let measureToken = 0
+let measureRaf: number | null = null
 
-  const start = Date.now()
-  while (Date.now() - start < maxWait) {
-    const el = document.querySelector(step.target)
-    if (el) return el
-    await new Promise(r => setTimeout(r, 100))
+/** One animation frame (rAF when available, short timer otherwise). */
+function nextFrame(): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => resolve())
+    else setTimeout(resolve, 16)
+  })
+}
+
+function cancelScheduledMeasure() {
+  if (measureRaf !== null) {
+    cancelAnimationFrame(measureRaf)
+    measureRaf = null
   }
-  return document.querySelector(step.target)
+}
+
+/**
+ * Re-measure at most once per animation frame while a step is active, so the
+ * ring follows the target on window resize AND scroll (including inner
+ * containers — capture phase) instead of going stale (QA4-img30).
+ */
+function scheduleReMeasure() {
+  if (!isActive.value || measureRaf !== null) return
+  measureRaf = requestAnimationFrame(() => {
+    measureRaf = null
+    updatePosition()
+  })
+}
+
+function clearHighlight() {
+  // Target not in the DOM (conditionally rendered section, hidden form…) or
+  // hidden (display:none → zero box). Never keep the previous step's
+  // highlight — that made the tooltip point at the wrong element (QA fix 4).
+  // Clear the ring/cutout and pin the tooltip top-center instead.
+  const fallbackWidth = window.innerWidth < 768 ? window.innerWidth - 16 : 320
+  highlightRect.value = { top: -20, left: -20, width: 0, height: 0 }
+  cutoutPath.value = 'M0,0 L0,0 Z'
+  tooltipStyle.value = {
+    top: '24px',
+    left: `${Math.max(8, window.innerWidth / 2 - fallbackWidth / 2)}px`,
+    width: `${fallbackWidth}px`,
+  }
+}
+
+function waitForElement(step: typeof currentStep.value): Promise<Element | null> {
+  if (!step) return Promise.resolve(null)
+  // QA4-img30 (a): keep polling (~50ms) for late-rendered targets — default
+  // 2.5s, or the step's explicit waitFor — instead of a single attempt.
+  return waitForTourTarget(step.target, step.waitFor ?? undefined)
+}
+
+/**
+ * Give a smooth scrollIntoView a bounded window to finish before the first
+ * precise measure. The scroll listener keeps re-measuring meanwhile, so this
+ * only needs to detect "scrolling stopped" (or time out at 400ms).
+ */
+async function waitForScrollSettle(token: number): Promise<void> {
+  const deadline = Date.now() + 400
+  let lastY = window.scrollY
+  let lastX = window.scrollX
+  while (Date.now() < deadline) {
+    await nextFrame()
+    if (!isActive.value || token !== measureToken) return
+    const moved = window.scrollY !== lastY || window.scrollX !== lastX
+    lastY = window.scrollY
+    lastX = window.scrollX
+    if (!moved) return
+  }
 }
 
 async function updatePosition() {
   if (!currentStep.value || !isActive.value) return
+  const step = currentStep.value
+  const token = ++measureToken
 
-  const el = await waitForElement(currentStep.value)
-  if (!isActive.value) return
+  const el = await waitForElement(step)
+  if (!isActive.value || token !== measureToken) return
 
   if (!el) {
-    // Target not in the DOM (conditionally rendered section, hidden form…).
-    // Never keep the previous step's highlight — that made the tooltip point
-    // at the wrong element (QA fix 4). Clear the ring/cutout and pin the
-    // tooltip top-center instead.
-    const fallbackWidth = window.innerWidth < 768 ? window.innerWidth - 16 : 320
-    highlightRect.value = { top: -20, left: -20, width: 0, height: 0 }
-    cutoutPath.value = 'M0,0 L0,0 Z'
-    tooltipStyle.value = {
-      top: '24px',
-      left: `${Math.max(8, window.innerWidth / 2 - fallbackWidth / 2)}px`,
-      width: `${fallbackWidth}px`,
-    }
+    clearHighlight()
     return
   }
 
@@ -59,12 +111,23 @@ async function updatePosition() {
   if (prevStepIndex.value !== currentStepIndex.value) {
     prevStepIndex.value = currentStepIndex.value
     el.scrollIntoView({ block: 'center', behavior: 'smooth' })
-    // Wait for scroll to settle before measuring
-    await new Promise(r => setTimeout(r, 300))
-    if (!isActive.value) return
+    // QA4-img30: no fixed 300ms sleep — wait (bounded) for the scroll to
+    // settle; the resize/scroll listeners keep the ring glued meanwhile.
+    await waitForScrollSettle(token)
+    if (!isActive.value || token !== measureToken) return
   }
 
-  const rect = el.getBoundingClientRect()
+  // Re-query right before measuring: the element may have been re-created
+  // while waiting (v-if re-render, list swap).
+  const target = queryTourTarget(step.target) ?? el
+  const rect = target.getBoundingClientRect()
+  // QA4-img30 (b): never draw a ring around a zero box (display:none,
+  // collapsed element) — retrying already happened in waitForElement.
+  if (!rect || rect.width <= 0 || rect.height <= 0) {
+    clearHighlight()
+    return
+  }
+
   const pad = 10
   const r = 8
 
@@ -133,17 +196,32 @@ function handleDismiss() {
 
 watch([currentStepIndex, isActive], () => {
   if (waitTimer) { clearTimeout(waitTimer); waitTimer = null }
+  // Invalidate any in-flight measurement for the previous step and drop any
+  // scheduled re-measure — the new step re-measures from scratch (QA4-img30).
+  measureToken++
+  cancelScheduledMeasure()
   waitTimer = setTimeout(() => nextTick(updatePosition), 50) as unknown as typeof waitTimer
 }, { immediate: true })
 
 onMounted(() => {
   const observer = new MutationObserver(onDirChange)
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ['dir'] })
-  onUnmounted(() => observer.disconnect())
+  // QA4-img30 (c): keep the ring glued to the target while a step is active —
+  // re-measure (rAF-throttled) on window resize AND scroll. `capture` catches
+  // scrolls of inner containers, which don't bubble.
+  window.addEventListener('resize', scheduleReMeasure, { passive: true })
+  window.addEventListener('scroll', scheduleReMeasure, { passive: true, capture: true })
+  onUnmounted(() => {
+    observer.disconnect()
+    window.removeEventListener('resize', scheduleReMeasure)
+    window.removeEventListener('scroll', scheduleReMeasure, { capture: true })
+    cancelScheduledMeasure()
+  })
 })
 
 onUnmounted(() => {
   if (waitTimer) clearTimeout(waitTimer)
+  cancelScheduledMeasure()
 })
 </script>
 
@@ -162,6 +240,7 @@ onUnmounted(() => {
 
       <!-- Highlight ring -->
       <div
+        data-testid="tour-highlight-ring"
         class="absolute rounded-lg ring-2 ring-primary transition-all duration-300 pointer-events-none"
         :style="{
           top: `${highlightRect.top}px`,
@@ -174,6 +253,7 @@ onUnmounted(() => {
       <!-- Tooltip -->
       <div
         dir="auto"
+        data-testid="tour-tooltip"
         class="fixed p-5 z-[10000] transition-all duration-300 rounded-xl border border-border/60 shadow-2xl bg-popover"
         :style="tooltipStyle"
       >
