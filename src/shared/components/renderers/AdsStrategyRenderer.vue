@@ -68,6 +68,70 @@ function renderValue(val: unknown): string {
   if (Array.isArray(val)) return val.map((v) => (typeof v === 'string' ? v : JSON.stringify(v))).join(', ')
   return ''
 }
+
+// ── Audience / Targeting ─────────────────────────────────────────────
+// The backend guarantees a `targeting` object on every funnel_campaign
+// entry ({ audience_summary, age_range, locations, interests,
+// exclusions }). Google campaigns carry ONLY `targeting`; Meta also has
+// a legacy `audience` (sometimes thin/empty — `audience: {}`); LinkedIn
+// uses `audience_targeting`. Match on the fields actually present (not
+// on key presence) so an empty legacy object falls through the source
+// chain `audience ?? audience_targeting ?? targeting` instead of
+// rendering a labeled section with an empty body.
+interface TargetingView {
+  kind: 'targeting' | 'legacy'
+  summary?: string
+  ageRange?: string
+  locations?: string[]
+  interests?: string[]
+  exclusions?: string[]
+  type?: string
+  details?: string[]
+  approach?: string
+}
+
+function asNonEmptyString(v: unknown): string {
+  return typeof v === 'string' && v.trim() ? v.trim() : ''
+}
+
+function asStringArray(v: unknown): string[] {
+  return Array.isArray(v)
+    ? v.filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
+    : []
+}
+
+function asTargetingView(value: unknown): TargetingView | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+  const obj = value as Record<string, unknown>
+  const type = asNonEmptyString(obj.type)
+  const approach = asNonEmptyString(obj.targeting_approach)
+  const exclusions = asStringArray(obj.exclusions)
+  // Legacy shapes are unambiguous via `type` / `targeting_approach`.
+  if (type || approach) {
+    return { kind: 'legacy', type, details: asStringArray(obj.details), approach, exclusions }
+  }
+  const summary = asNonEmptyString(obj.audience_summary)
+  const ageRange = asNonEmptyString(obj.age_range)
+  const locations = asStringArray(obj.locations)
+  const interests = asStringArray(obj.interests)
+  if (summary || ageRange || locations.length || interests.length || exclusions.length) {
+    return { kind: 'targeting', summary, ageRange, locations, interests, exclusions }
+  }
+  return null
+}
+
+function getTargetingView(camp: unknown): TargetingView | null {
+  const c = (camp ?? {}) as Record<string, unknown>
+  for (const candidate of [c.audience, c.audience_targeting, c.targeting]) {
+    const view = asTargetingView(candidate)
+    if (view) return view
+  }
+  return null
+}
+
+const targetingViews = computed<(TargetingView | null)[]>(() =>
+  funnelCampaigns.value.map((camp) => getTargetingView(camp)),
+)
 </script>
 
 <template>
@@ -146,20 +210,45 @@ function renderValue(val: unknown): string {
           </div>
 
           <!-- Audience / Targeting -->
-          <div v-if="camp.audience ?? camp.audience_targeting" class="space-y-1.5 text-xs">
+          <div v-if="targetingViews[idx]" class="space-y-1.5 text-xs" data-testid="camp-targeting">
             <div class="text-[10px] uppercase tracking-wider text-muted-foreground/60">{{ t('strategy.targeting') }}</div>
-            <div class="text-muted-foreground">
-              <template v-if="camp.audience?.type">
-                <span class="font-medium">{{ camp.audience.type }}</span>
-                <span v-if="camp.audience.details?.length"> — {{ camp.audience.details.join(', ') }}</span>
-              </template>
-              <template v-else-if="camp.audience_targeting?.targeting_approach">
-                {{ camp.audience_targeting.targeting_approach }}
-              </template>
-            </div>
-            <div v-if="camp.audience?.exclusions?.length" class="text-muted-foreground/60">
-              {{ t('strategy.exclusions') }}: {{ camp.audience.exclusions.join(', ') }}
-            </div>
+
+            <!-- Structured `targeting` shape (audience_summary + labeled fields) -->
+            <template v-if="targetingViews[idx]?.kind === 'targeting'">
+              <div v-if="targetingViews[idx]?.summary" class="text-muted-foreground" data-testid="targeting-summary">
+                {{ targetingViews[idx]?.summary }}
+              </div>
+              <div class="space-y-1">
+                <div v-if="targetingViews[idx]?.ageRange" class="text-muted-foreground/60" data-testid="targeting-age-range">
+                  {{ formatLabel('age_range') }}: {{ targetingViews[idx]?.ageRange }}
+                </div>
+                <div v-if="targetingViews[idx]?.locations?.length" class="text-muted-foreground/60" data-testid="targeting-locations">
+                  {{ formatLabel('locations') }}: {{ targetingViews[idx]?.locations?.join(', ') }}
+                </div>
+                <div v-if="targetingViews[idx]?.interests?.length" class="text-muted-foreground/60" data-testid="targeting-interests">
+                  {{ formatLabel('interests') }}: {{ targetingViews[idx]?.interests?.join(', ') }}
+                </div>
+                <div v-if="targetingViews[idx]?.exclusions?.length" class="text-muted-foreground/60" data-testid="targeting-exclusions">
+                  {{ t('strategy.exclusions') }}: {{ targetingViews[idx]?.exclusions?.join(', ') }}
+                </div>
+              </div>
+            </template>
+
+            <!-- Legacy shapes (Meta `audience`, LinkedIn `audience_targeting`) -->
+            <template v-else>
+              <div class="text-muted-foreground">
+                <template v-if="targetingViews[idx]?.type">
+                  <span class="font-medium">{{ targetingViews[idx]?.type }}</span>
+                  <span v-if="targetingViews[idx]?.details?.length"> — {{ targetingViews[idx]?.details?.join(', ') }}</span>
+                </template>
+                <template v-else-if="targetingViews[idx]?.approach">
+                  {{ targetingViews[idx]?.approach }}
+                </template>
+              </div>
+              <div v-if="targetingViews[idx]?.exclusions?.length" class="text-muted-foreground/60">
+                {{ t('strategy.exclusions') }}: {{ targetingViews[idx]?.exclusions?.join(', ') }}
+              </div>
+            </template>
           </div>
 
           <!-- Creative -->

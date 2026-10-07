@@ -11,6 +11,25 @@ const warnings = computed(() => props.result.warnings ?? [])
 const roles = computed(() => props.result.channel_strategy?.platform_roles ?? [])
 const relationships = computed(() => props.result.channel_strategy?.cross_platform_relationships ?? [])
 const budgetFit = computed(() => props.result.budget_fit ?? null)
+
+// Warnings carry a normalized platform slug (or null); render a human
+// label chip instead of raw "[slug]" text.
+const PLATFORM_WARNING_LABELS: Record<string, string> = {
+  google: 'Google',
+  meta: 'Meta',
+  linkedin: 'LinkedIn',
+  facebook: 'Facebook',
+  instagram: 'Instagram',
+  tiktok: 'TikTok',
+  youtube: 'YouTube',
+  x: 'X',
+  bing: 'Bing',
+}
+
+function platformWarningLabel(slug: string | null | undefined): string {
+  if (!slug) return ''
+  return PLATFORM_WARNING_LABELS[slug] ?? slug.charAt(0).toUpperCase() + slug.slice(1)
+}
 </script>
 
 <template>
@@ -91,7 +110,11 @@ const budgetFit = computed(() => props.result.budget_fit ?? null)
         >
           <span class="text-accent-amber shrink-0">•</span>
           <span>
-            <template v-if="w.platform">[{{ w.platform }}] </template>{{ w.message }}
+            <span
+              v-if="w.platform"
+              class="text-[11px] px-2 py-0.5 rounded-full bg-overlay-light text-muted-foreground font-medium me-1.5"
+              data-testid="platform-warning-chip"
+            >{{ platformWarningLabel(w.platform) }}</span>{{ w.message }}
           </span>
         </div>
       </div>
