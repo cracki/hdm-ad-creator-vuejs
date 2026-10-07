@@ -31,6 +31,7 @@ import {
   extractSectionStatus,
   sectionStageStates,
   firstSectionError,
+  sectionStuckGuard,
 } from '../sectionProgress'
 import {
   Play, Loader2, RefreshCw, Users, BarChart3,
@@ -90,16 +91,26 @@ const isFailed = computed(() =>
 )
 const isLoading = computed(() => brandLoading.value || runLoading.value)
 
-function startAnalysis() {
-  if (!operationManager.canStart(opKey.value)) return
-  operationManager.start(opKey.value)
-  tracker.start()
+function watchTrackerTerminal() {
   const unwatch = watch(() => tracker.status.value, (s) => {
     if (s === 'completed' || s === 'failed') {
       operationManager.finish(opKey.value)
       unwatch()
     }
   })
+  // The tracker can already BE terminal at registration (e.g. a retry/resume
+  // that settled synchronously) — release the operation lock right away.
+  if (tracker.status.value === 'completed' || tracker.status.value === 'failed') {
+    operationManager.finish(opKey.value)
+    unwatch()
+  }
+}
+
+function startAnalysis() {
+  if (!operationManager.canStart(opKey.value)) return
+  operationManager.start(opKey.value)
+  tracker.start()
+  watchTrackerTerminal()
 }
 
 // QA round 3: when the tracker reaches terminal success, invalidate the run
@@ -112,21 +123,38 @@ watch(tracker.status, (s) => {
   }
 })
 
-function retryAnalysis() {
-  operationManager.finish(opKey.value)
-  startAnalysis()
+// QA4-taza1: a retry starts a NEW run. The route used to stay on the old run
+// uuid, so `existingRun` kept serving the old run's stale sections_status and
+// the progress bar stayed stuck on the previous state. Start the new run
+// first, move the route to it, then track the new run from a cleared state.
+async function retryAnalysis() {
+  if (!operationManager.canStart(opKey.value)) return
+  operationManager.start(opKey.value)
+  try {
+    const res = await startMutation.mutateAsync({ previousRunUuid: runUuid.value || undefined })
+    const newRunUuid = res.data?.analysis_run_uuid ?? ''
+    // Clear the old run from the tracker so the bar restarts from zero.
+    tracker.reset()
+    if (newRunUuid && newRunUuid !== runUuid.value) {
+      await router.replace(`/brands/${brandUuid.value}/analysis/${newRunUuid}`)
+    }
+    tracker.resume(newRunUuid || runUuid.value)
+    watchTrackerTerminal()
+  } catch {
+    // Start failed — surface it through the tracker's failed state (same UX
+    // as a failed tracker.start()) and release the operation lock.
+    tracker.reset()
+    tracker.status.value = 'failed'
+    tracker.error.value = t('jobTracker.startFailed')
+    operationManager.finish(opKey.value)
+  }
 }
 
 onMounted(() => {
   if (runUuid.value && !TERMINAL_STATUSES.has(existingRun.value?.status ?? '')) {
     operationManager.start(opKey.value)
     tracker.resume(runUuid.value)
-    const unwatch = watch(() => tracker.status.value, (s) => {
-      if (s === 'completed' || s === 'failed') {
-        operationManager.finish(opKey.value)
-        unwatch()
-      }
-    })
+    watchTrackerTerminal()
   }
 })
 
@@ -168,6 +196,12 @@ const sectionStates = computed(() =>
 
 const sectionError = computed(() =>
   sectionStatuses.value ? firstSectionError(sectionStatuses.value) : null,
+)
+
+// QA4-taza1: a section stuck in 'running' for many polls gets a muted hint
+// while polling continues. Plain inline text — no new translation keys.
+const analysisStuck = computed(() =>
+  sectionStuckGuard(sectionStatuses.value, tracker.attempts.value).stuck,
 )
 
 const progressStages = computed(() =>
@@ -297,6 +331,9 @@ setActions([
         class="justify-center"
       />
       <p class="text-xs text-muted-foreground">{{ t('analysis.runningHint') }}</p>
+      <p v-if="analysisStuck" data-testid="analysis-stuck-hint" class="text-xs text-muted-foreground/70">
+        Still processing — this is taking longer than usual.
+      </p>
     </div>
 
     <!-- Failed state -->

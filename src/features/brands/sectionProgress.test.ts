@@ -4,6 +4,8 @@ import {
   extractSectionStatus,
   sectionStageStates,
   firstSectionError,
+  sectionStuckGuard,
+  STUCK_SECTION_ATTEMPT_THRESHOLD,
 } from './sectionProgress'
 
 const fullStatus = {
@@ -93,5 +95,47 @@ describe('firstSectionError', () => {
       extra_step: { status: 'failed', error: 'boom' },
       website_scrape: { status: 'completed' },
     })).toBe('boom')
+  })
+})
+
+describe('sectionStuckGuard', () => {
+  const runningStatuses = {
+    website_scrape: { status: 'completed' },
+    core_analysis: { status: 'running' },
+  } as const
+
+  it('flags stuck only past the attempt threshold (12)', () => {
+    expect(STUCK_SECTION_ATTEMPT_THRESHOLD).toBe(12)
+    expect(sectionStuckGuard(runningStatuses, STUCK_SECTION_ATTEMPT_THRESHOLD - 1)).toEqual({
+      stuck: false,
+      stuckSections: [],
+    })
+    expect(sectionStuckGuard(runningStatuses, STUCK_SECTION_ATTEMPT_THRESHOLD)).toEqual({
+      stuck: false,
+      stuckSections: [],
+    })
+    expect(sectionStuckGuard(runningStatuses, STUCK_SECTION_ATTEMPT_THRESHOLD + 1)).toEqual({
+      stuck: true,
+      stuckSections: ['core_analysis'],
+    })
+  })
+
+  it('names every section still reported as running past the threshold', () => {
+    const guard = sectionStuckGuard({
+      website_scrape: { status: 'running' },
+      core_analysis: { status: 'completed' },
+      audience: { status: 'running' },
+    }, STUCK_SECTION_ATTEMPT_THRESHOLD + 5)
+    expect(guard.stuck).toBe(true)
+    expect(guard.stuckSections).toEqual(['website_scrape', 'audience'])
+  })
+
+  it('never reports stuck without a running section or without section progress', () => {
+    expect(sectionStuckGuard({ website_scrape: { status: 'completed' } }, 500)).toEqual({
+      stuck: false,
+      stuckSections: [],
+    })
+    // Older runs lack sections_status — the poll-count fallback applies instead.
+    expect(sectionStuckGuard(null, 500)).toEqual({ stuck: false, stuckSections: [] })
   })
 })

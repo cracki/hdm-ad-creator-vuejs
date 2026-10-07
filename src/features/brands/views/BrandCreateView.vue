@@ -197,18 +197,25 @@ async function handleScan() {
     applyScanResult(res.data)
   } catch (e: any) {
     const data = e?.response?.data
-    const detail = data?.detail
-    scanError.value = data?.website_url?.[0]
+    // QA4-N1: the scan endpoint answers 400 with {"detail": "<human reason>"};
+    // legacy DRF bodies were a bare array or field-keyed lists — handle all
+    // defensively, generic fallback last.
+    const body = Array.isArray(data) ? { detail: data[0] } : data
+    const detail = body?.detail
+    scanError.value = body?.website_url?.[0]
       || (Array.isArray(detail) ? detail.join(' ') : typeof detail === 'string' ? detail : '')
-      || data?.non_field_errors?.[0]
+      || body?.non_field_errors?.[0]
       || t('newbrand.scan.failed')
   }
 }
 
-// Fields the user has typed into. Scan prefill never clobbers manual input,
-// so it only fills fields that are untouched AND still empty (industry keeps
-// its own guard in the candidates watch above).
+// Fields the user has typed into. Scan prefill never clobbers manual input.
 const userEditedFields = new Set<string>()
+
+// QA4-new3e: fields the (last) scan filled. A rescan may refresh its own
+// detections — a previously scan-filled value is not user data — while
+// user-typed values are never clobbered (markUserEdited wins forever).
+const scanFilledFields = new Set<string>()
 
 function markUserEdited(key: string) {
   userEditedFields.add(key)
@@ -216,26 +223,27 @@ function markUserEdited(key: string) {
 
 function applyScanResult(result: BrandScanResult) {
   const detected = result.detected
-  // Review-then-confirm (MOM 5.2): fill only untouched, still-empty fields;
-  // the user reviews and can edit anything before submitting. Never auto-submit.
-  const shouldFill = (key: string, current: string) => !userEditedFields.has(key) && !current.trim()
-  if (detected.company_name.value && shouldFill('company_name', form.value.company_name)) {
-    form.value.company_name = detected.company_name.value
+  // Review-then-confirm (MOM 5.2): fill only untouched fields — still-empty
+  // ones and ones a previous scan filled (so a rescan updates its own
+  // detections instead of discarding them). User-edited fields always win.
+  // The user reviews and can edit anything before submitting. Never auto-submit.
+  const shouldFill = (key: string, current: string) =>
+    !userEditedFields.has(key) && (!current.trim() || scanFilledFields.has(key))
+  const fill = (key: string, value: string | null | undefined, current: () => string, assign: (v: string) => void) => {
+    if (!value || !shouldFill(key, current())) return
+    assign(value)
+    scanFilledFields.add(key)
   }
-  if (detected.location.value && shouldFill('location', form.value.location)) {
-    form.value.location = detected.location.value
-  }
-  const colors = detected.brand_colors.value
-  if (colors?.length && shouldFill('brand_color', form.value.brand_color)) {
-    form.value.brand_color = colors[0]
-  }
-  const profiles = detected.social_profiles.value
-  if (profiles?.length) {
-    for (const p of profiles) {
-      if (p.platform in socialLinks.value && p.url && shouldFill(`social:${p.platform}`, socialLinks.value[p.platform])) {
-        socialLinks.value[p.platform] = p.url
-      }
-    }
+  fill('company_name', detected.company_name.value,
+    () => form.value.company_name, (v) => { form.value.company_name = v })
+  fill('location', detected.location.value,
+    () => form.value.location, (v) => { form.value.location = v })
+  fill('brand_color', detected.brand_colors.value?.[0],
+    () => form.value.brand_color, (v) => { form.value.brand_color = v })
+  for (const p of detected.social_profiles.value ?? []) {
+    if (!(p.platform in socialLinks.value)) continue
+    fill(`social:${p.platform}`, p.url,
+      () => socialLinks.value[p.platform], (v) => { socialLinks.value[p.platform] = v })
   }
 }
 

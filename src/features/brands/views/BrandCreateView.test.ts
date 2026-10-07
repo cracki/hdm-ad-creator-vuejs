@@ -55,6 +55,20 @@ const scanResponse: { data: BrandScanResult } = {
   },
 }
 
+/** A scan payload identical to `scanResponse` but with a different company name. */
+function scanWithCompany(name: string): { data: BrandScanResult } {
+  return {
+    data: {
+      success: true,
+      detected: {
+        ...scanResponse.data.detected,
+        company_name: { value: name, confidence: 'high', source: 'og_site_name' },
+      },
+      warnings: [],
+    },
+  }
+}
+
 let router: Router
 let queryClient: QueryClient
 
@@ -196,6 +210,72 @@ describe('BrandCreateView — website auto-scan (F18)', () => {
 
     expect(wrapper.find('[data-testid="scan-error"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="scan-error"]').text()).toContain('Enter a valid URL.')
+  })
+
+  it('shows the backend {"detail": ...} reason verbatim when the scan fails (QA4-N1)', async () => {
+    vi.mocked(brandsApi.scanWebsite).mockRejectedValue({
+      response: { status: 400, data: { detail: 'The website responded with HTTP 404' } },
+    })
+    const wrapper = await mountView()
+    await flushPromises()
+
+    await wrapper.find('[data-testid="website-url-input"]').setValue('https://lumen.test')
+    await wrapper.find('[data-testid="scan-button"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="scan-error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="scan-error"]').text()).toContain('The website responded with HTTP 404')
+  })
+
+  it('falls back to the first entry of a legacy bare-array error body (QA4-N1)', async () => {
+    vi.mocked(brandsApi.scanWebsite).mockRejectedValue({
+      response: { status: 400, data: ['Could not scan…'] },
+    })
+    const wrapper = await mountView()
+    await flushPromises()
+
+    await wrapper.find('[data-testid="website-url-input"]').setValue('https://lumen.test')
+    await wrapper.find('[data-testid="scan-button"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="scan-error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="scan-error"]').text()).toContain('Could not scan…')
+  })
+
+  it('a rescan replaces a scan-filled company name instead of discarding it (QA4-new3e)', async () => {
+    vi.mocked(brandsApi.scanWebsite)
+      .mockResolvedValueOnce(scanWithCompany('Alpha'))
+      .mockResolvedValueOnce(scanWithCompany('Beta'))
+    const wrapper = await mountView()
+    await flushPromises()
+
+    await wrapper.find('[data-testid="website-url-input"]').setValue('https://lumen.test')
+    await wrapper.find('[data-testid="scan-button"]').trigger('click')
+    await flushPromises()
+    expect((wrapper.find('[data-testid="company-input"]').element as HTMLInputElement).value).toBe('Alpha')
+
+    await wrapper.find('[data-testid="scan-button"]').trigger('click')
+    await flushPromises()
+    expect((wrapper.find('[data-testid="company-input"]').element as HTMLInputElement).value).toBe('Beta')
+  })
+
+  it('a rescan never overwrites a user-edited company name (QA4-new3e)', async () => {
+    vi.mocked(brandsApi.scanWebsite)
+      .mockResolvedValueOnce(scanWithCompany('Alpha'))
+      .mockResolvedValueOnce(scanWithCompany('Delta'))
+    const wrapper = await mountView()
+    await flushPromises()
+
+    await wrapper.find('[data-testid="website-url-input"]').setValue('https://lumen.test')
+    await wrapper.find('[data-testid="scan-button"]').trigger('click')
+    await flushPromises()
+    expect((wrapper.find('[data-testid="company-input"]').element as HTMLInputElement).value).toBe('Alpha')
+
+    // User replaces the scan prefill with their own text — it must win forever
+    await wrapper.find('[data-testid="company-input"]').setValue('Gamma')
+    await wrapper.find('[data-testid="scan-button"]').trigger('click')
+    await flushPromises()
+    expect((wrapper.find('[data-testid="company-input"]').element as HTMLInputElement).value).toBe('Gamma')
   })
 
   it('includes location and brand_color in the create payload (drop-field fix)', async () => {

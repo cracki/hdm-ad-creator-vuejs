@@ -38,12 +38,13 @@ function mockTracker() {
     attempts: ref(0),
     start: vi.fn(),
     resume: vi.fn(),
+    reset: vi.fn(),
   }
   vi.mocked(useJobTracker).mockReturnValue(tracker as never)
   return tracker
 }
 
-function mockQueries() {
+function mockQueries(startMutateAsync?: (...args: unknown[]) => Promise<unknown>) {
   vi.mocked(useBrand).mockReturnValue({
     data: ref({ brand_uuid: 'b1', company_name: 'Lumen', website_url: 'https://lumen.test' }),
     isLoading: ref(false),
@@ -53,14 +54,20 @@ function mockQueries() {
     data: ref({ status: 'running' }),
     isLoading: ref(false),
   } as never)
-  vi.mocked(useStartAnalysis).mockReturnValue({ mutateAsync: vi.fn() } as never)
+  vi.mocked(useStartAnalysis).mockReturnValue({
+    mutateAsync: (startMutateAsync ?? vi.fn()) as never,
+  } as never)
 }
 
-async function mountView(invalidateSpy: () => void): Promise<{ wrapper: VueWrapper; tracker: ReturnType<typeof mockTracker> }> {
+async function mountView(
+  invalidateSpy: () => void,
+  startMutateAsync?: (...args: unknown[]) => Promise<unknown>,
+): Promise<{ wrapper: VueWrapper; tracker: ReturnType<typeof mockTracker>; router: ReturnType<typeof createRouter> }> {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
       { path: '/brands/:brandUuid/analysis', component: BrandAnalysisView },
+      { path: '/brands/:brandUuid/analysis/:runUuid', component: BrandAnalysisView },
       { path: '/brands/:brandUuid', component: { template: '<div />' } },
     ],
   })
@@ -71,7 +78,7 @@ async function mountView(invalidateSpy: () => void): Promise<{ wrapper: VueWrapp
   vi.spyOn(queryClient, 'invalidateQueries').mockImplementation(invalidateSpy as never)
 
   const tracker = mockTracker()
-  mockQueries()
+  mockQueries(startMutateAsync)
 
   const wrapper = mount(BrandAnalysisView, {
     global: {
@@ -90,7 +97,7 @@ async function mountView(invalidateSpy: () => void): Promise<{ wrapper: VueWrapp
     },
   })
   await flushPromises()
-  return { wrapper, tracker }
+  return { wrapper, tracker, router }
 }
 
 describe('BrandAnalysisView — refetch on terminal success (QA3)', () => {
@@ -120,6 +127,50 @@ describe('BrandAnalysisView — refetch on terminal success (QA3)', () => {
     tracker.status.value = 'polling'
     await flushPromises()
     expect(invalidated.length).toBe(0)
+    wrapper.unmount()
+  })
+})
+
+describe('BrandAnalysisView — retry navigates to the new run (QA4-taza1)', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('starts a new run, replaces the route with its uuid, and resumes tracking from a cleared state', async () => {
+    const mutateAsync = vi.fn().mockResolvedValue({
+      data: { analysis_run_uuid: 'run-2', status: 'pending' },
+    })
+    const { wrapper, tracker, router } = await mountView(() => {}, mutateAsync)
+
+    // Failed state renders the retry button
+    tracker.status.value = 'failed'
+    await flushPromises()
+    expect(wrapper.find('[data-loc="brands.analysis.retry-btn"]').exists()).toBe(true)
+
+    await wrapper.find('[data-loc="brands.analysis.retry-btn"]').trigger('click')
+    await flushPromises()
+
+    // The old run uuid (none in this route) travels with the start mutation so
+    // its single-run cache can be invalidated
+    expect(mutateAsync).toHaveBeenCalledWith({ previousRunUuid: undefined })
+    // Tracker state is cleared, the route moves to the NEW run, and tracking
+    // resumes against it instead of the old uuid
+    expect(tracker.reset).toHaveBeenCalled()
+    expect(tracker.resume).toHaveBeenCalledWith('run-2')
+    expect(router.currentRoute.value.path).toBe('/brands/b1/analysis/run-2')
+    wrapper.unmount()
+  })
+
+  it('keeps the failed state (no navigation) when starting the new run fails', async () => {
+    const mutateAsync = vi.fn().mockRejectedValue(new Error('boom'))
+    const { wrapper, tracker, router } = await mountView(() => {}, mutateAsync)
+
+    tracker.status.value = 'failed'
+    await flushPromises()
+    await wrapper.find('[data-loc="brands.analysis.retry-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(tracker.reset).toHaveBeenCalled()
+    expect(tracker.resume).not.toHaveBeenCalled()
+    expect(router.currentRoute.value.path).toBe('/brands/b1/analysis')
     wrapper.unmount()
   })
 })

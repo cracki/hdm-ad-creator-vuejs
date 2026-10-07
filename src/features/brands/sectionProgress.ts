@@ -101,3 +101,38 @@ export function firstSectionError(statuses: SectionStatusMap): string | null {
   }
   return null
 }
+
+// ---- Stuck-guard (QA4-taza1) ----
+
+/**
+ * Tracker polls after which a section still reported as 'running' is
+ * considered wedged (the poll interval starts at 2s and grows to 10s, so 12
+ * attempts is comfortably over a minute in one state).
+ */
+export const STUCK_SECTION_ATTEMPT_THRESHOLD = 12
+
+export interface SectionStuckGuard {
+  /** True when a section has been 'running' for more than the attempt threshold. */
+  stuck: boolean
+  /** Section keys currently reported as 'running' past the threshold. */
+  stuckSections: string[]
+}
+
+/**
+ * Stuck-guard for the live progress bar: given the current sections_status
+ * snapshot and the tracker's poll-attempt count, flag when a section has been
+ * 'running' for more than STUCK_SECTION_ATTEMPT_THRESHOLD tracker attempts.
+ * The caller keeps polling either way — this only drives a muted hint.
+ * Without section progress (older runs) it never reports stuck.
+ */
+export function sectionStuckGuard(
+  statuses: SectionStatusMap | null,
+  attempts: number,
+): SectionStuckGuard {
+  const none: SectionStuckGuard = { stuck: false, stuckSections: [] }
+  if (!statuses || attempts <= STUCK_SECTION_ATTEMPT_THRESHOLD) return none
+  const running = Object.keys(statuses).filter(
+    (section) => statuses[section]?.status === 'running',
+  )
+  return running.length > 0 ? { stuck: true, stuckSections: running } : none
+}

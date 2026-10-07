@@ -85,13 +85,27 @@ export function useAnalysisRun(brandUuid: Ref<string>, runUuid: Ref<string>) {
   })
 }
 
+// QA4-taza1: a retry/re-analysis replaces the previous run. Variables may
+// carry `previousRunUuid` (the run being retried) so BOTH single-run caches
+// can be invalidated explicitly — the stale previous run must not keep
+// rendering its old sections_status after a retry.
+type StartAnalysisVariables = AnalysisStartPayload & { previousRunUuid?: string }
+
 export function useStartAnalysis(brandUuid: Ref<string>) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (payload: AnalysisStartPayload = {}) =>
+    mutationFn: (payload: StartAnalysisVariables = {}) =>
       brandsApi.startAnalysis(brandUuid.value, payload),
-    onSuccess: () => {
+    onSuccess: (res, variables) => {
       queryClient.invalidateQueries({ queryKey: ['brands', brandUuid, 'analysis-runs'] })
+      const previousRunUuid = variables?.previousRunUuid
+      if (previousRunUuid) {
+        queryClient.invalidateQueries({ queryKey: ['brands', brandUuid, 'analysis-runs', previousRunUuid] })
+      }
+      const newRunUuid = res.data?.analysis_run_uuid
+      if (newRunUuid) {
+        queryClient.invalidateQueries({ queryKey: ['brands', brandUuid, 'analysis-runs', newRunUuid] })
+      }
     },
   })
 }
