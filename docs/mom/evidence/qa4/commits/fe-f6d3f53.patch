@@ -1,0 +1,581 @@
+commit f6d3f538d8beb5b796cd913abffbffcde611857f
+Author: cracki <cracki@gmail.com>
+Date:   Wed Oct 7 15:03:36 2026 +0330
+
+    fix(qa4-new4,qa4-img18): targeting section renders camp.targeting; platform warning chips
+    
+    - new4: AdsStrategyRenderer targeting chain audience ??
+      audience_targeting ?? targeting with field-based shape detection;
+      renders audience_summary/age_range/locations/interests/exclusions
+      (skipping empties) so Meta campaigns with thin audience{} and
+      Google (targeting-only) show a filled TARGETING section
+      (AdsStrategyRenderer.vue:72-134,212-244). normalizeResponse keeps
+      'targeting' passthrough (test pins the contract).
+    - img18: PlatformRecommendationSummary renders w.platform as a labeled
+      chip (PLATFORM_WARNING_LABELS map + capitalized fallback,
+      data-testid=platform-warning-chip) instead of the raw '[linkedin]'
+      bracket interpolation (PlatformRecommendationSummary.vue:15-32,111-118).
+    - AdsStrategyRenderer.test.ts (8), PlatformRecommendationSummary.test.ts (4),
+      useNormalizeResponse.test.ts (5).
+
+diff --git a/src/features/campaigns/components/PlatformRecommendationSummary.test.ts b/src/features/campaigns/components/PlatformRecommendationSummary.test.ts
+new file mode 100644
+index 0000000..a79f9c9
+--- /dev/null
++++ b/src/features/campaigns/components/PlatformRecommendationSummary.test.ts
+@@ -0,0 +1,90 @@
++import { describe, it, expect, beforeEach, afterEach } from 'vitest'
++import { mount } from '@vue/test-utils'
++import PlatformRecommendationSummary from './PlatformRecommendationSummary.vue'
++import { useI18n } from '@/shared/utils/i18n'
++import type { PlatformRecommendationsResult } from '../types'
++
++/**
++ * QA4-img18: warning platform slugs must render as a human-label chip
++ * (e.g. "LinkedIn"), never as raw "[linkedin]" bracket text.
++ */
++
++function buildResult(overrides: Partial<PlatformRecommendationsResult> = {}): PlatformRecommendationsResult {
++  return {
++    success: true,
++    recommendations: [],
++    ...overrides,
++  } as PlatformRecommendationsResult
++}
++
++describe('PlatformRecommendationSummary — warning platform chips (QA4-img18)', () => {
++  const { setLang } = useI18n()
++
++  beforeEach(() => setLang('en'))
++  afterEach(() => setLang('en'))
++
++  it('shows a "LinkedIn" chip for a platform slug and no chip for a null platform', () => {
++    const wrapper = mount(PlatformRecommendationSummary, {
++      props: {
++        result: buildResult({
++          warnings: [
++            { type: 'reach', platform: 'linkedin', message: 'B2B reach is lower on LinkedIn for this objective' },
++            { type: 'budget', platform: null, message: 'Budget may be tight across three platforms' },
++          ],
++        }),
++      },
++    })
++
++    const warningsCard = wrapper.find('[data-testid="rec-warnings"]')
++    expect(warningsCard.exists()).toBe(true)
++
++    const chips = wrapper.findAll('[data-testid="platform-warning-chip"]')
++    expect(chips.map((c) => c.text())).toEqual(['LinkedIn'])
++
++    // The message text is untouched and the first warning carries its chip
++    expect(wrapper.find('[data-testid="rec-warning-0"]').text())
++      .toContain('B2B reach is lower on LinkedIn for this objective')
++    expect(wrapper.find('[data-testid="rec-warning-1"]').text())
++      .toContain('Budget may be tight across three platforms')
++    expect(wrapper.find('[data-testid="rec-warning-1"]').find('[data-testid="platform-warning-chip"]').exists())
++      .toBe(false)
++
++    // No literal bracket text anywhere in the warnings card
++    expect(warningsCard.text()).not.toContain('[')
++    expect(warningsCard.text()).not.toContain(']')
++  })
++
++  it('falls back to a capitalized label for unknown slugs', () => {
++    const wrapper = mount(PlatformRecommendationSummary, {
++      props: {
++        result: buildResult({
++          warnings: [{ type: 'note', platform: 'pinterest', message: 'Consider Pinterest boards' }],
++        }),
++      },
++    })
++
++    expect(wrapper.find('[data-testid="platform-warning-chip"]').text()).toBe('Pinterest')
++  })
++
++  it('maps known slugs to their human labels', () => {
++    const wrapper = mount(PlatformRecommendationSummary, {
++      props: {
++        result: buildResult({
++          warnings: [
++            { type: 'note', platform: 'google', message: 'A' },
++            { type: 'note', platform: 'meta', message: 'B' },
++          ],
++        }),
++      },
++    })
++
++    expect(wrapper.findAll('[data-testid="platform-warning-chip"]').map((c) => c.text()))
++      .toEqual(['Google', 'Meta'])
++  })
++
++  it('renders no warnings card when there are no warnings', () => {
++    const wrapper = mount(PlatformRecommendationSummary, { props: { result: buildResult() } })
++
++    expect(wrapper.find('[data-testid="rec-warnings"]').exists()).toBe(false)
++  })
++})
+diff --git a/src/features/campaigns/components/PlatformRecommendationSummary.vue b/src/features/campaigns/components/PlatformRecommendationSummary.vue
+index cf995fe..5b4254f 100644
+--- a/src/features/campaigns/components/PlatformRecommendationSummary.vue
++++ b/src/features/campaigns/components/PlatformRecommendationSummary.vue
+@@ -11,6 +11,25 @@ const warnings = computed(() => props.result.warnings ?? [])
+ const roles = computed(() => props.result.channel_strategy?.platform_roles ?? [])
+ const relationships = computed(() => props.result.channel_strategy?.cross_platform_relationships ?? [])
+ const budgetFit = computed(() => props.result.budget_fit ?? null)
++
++// Warnings carry a normalized platform slug (or null); render a human
++// label chip instead of raw "[slug]" text.
++const PLATFORM_WARNING_LABELS: Record<string, string> = {
++  google: 'Google',
++  meta: 'Meta',
++  linkedin: 'LinkedIn',
++  facebook: 'Facebook',
++  instagram: 'Instagram',
++  tiktok: 'TikTok',
++  youtube: 'YouTube',
++  x: 'X',
++  bing: 'Bing',
++}
++
++function platformWarningLabel(slug: string | null | undefined): string {
++  if (!slug) return ''
++  return PLATFORM_WARNING_LABELS[slug] ?? slug.charAt(0).toUpperCase() + slug.slice(1)
++}
+ </script>
+ 
+ <template>
+@@ -91,7 +110,11 @@ const budgetFit = computed(() => props.result.budget_fit ?? null)
+         >
+           <span class="text-accent-amber shrink-0">•</span>
+           <span>
+-            <template v-if="w.platform">[{{ w.platform }}] </template>{{ w.message }}
++            <span
++              v-if="w.platform"
++              class="text-[11px] px-2 py-0.5 rounded-full bg-overlay-light text-muted-foreground font-medium me-1.5"
++              data-testid="platform-warning-chip"
++            >{{ platformWarningLabel(w.platform) }}</span>{{ w.message }}
+           </span>
+         </div>
+       </div>
+diff --git a/src/shared/components/renderers/AdsStrategyRenderer.test.ts b/src/shared/components/renderers/AdsStrategyRenderer.test.ts
+new file mode 100644
+index 0000000..4157654
+--- /dev/null
++++ b/src/shared/components/renderers/AdsStrategyRenderer.test.ts
+@@ -0,0 +1,188 @@
++import { describe, it, expect, beforeEach, afterEach } from 'vitest'
++import { mount } from '@vue/test-utils'
++import AdsStrategyRenderer from './AdsStrategyRenderer.vue'
++import { useI18n } from '@/shared/utils/i18n'
++
++/**
++ * QA4-new4: the TARGETING section must render for every funnel campaign.
++ * The backend guarantees a `targeting` object ({ audience_summary,
++ * age_range, locations, interests, exclusions }) on every entry — Google
++ * campaigns carry ONLY `targeting`, while Meta also carries a legacy
++ * `audience` that can be thin/empty (`audience: {}`). The section must
++ * show a structured view of whichever source has real content, and stay
++ * hidden when there is none.
++ */
++
++/** Shape produced by the backend `targeting` object. */
++const targeting = {
++  audience_summary: 'Urban professionals interested in wellness',
++  age_range: '28-45',
++  locations: ['Dubai', 'Abu Dhabi'],
++  interests: ['fitness', 'wellness'],
++  exclusions: ['existing customers'],
++}
++
++const metaLikePayload = {
++  campaign_overview: { total_campaigns: 1 },
++  funnel_campaigns: [
++    {
++      funnel_stage: 'tofu',
++      campaign_name: 'Awareness — Meta',
++      audience: {},
++      targeting,
++    },
++  ],
++}
++
++const googleLikePayload = {
++  campaign_overview: { total_campaigns: 1 },
++  funnel_campaigns: [
++    {
++      funnel_stage: 'bofu',
++      campaign_name: 'Search — Google',
++      targeting,
++    },
++  ],
++}
++
++/** What useNormalizeResponse (ads-strategy) yields for the Meta payload:
++ * `audience` is aliased onto the empty `audience_targeting`, and the
++ * unknown `targeting` key passes through untouched. */
++const normalizedMetaPayload = {
++  campaign_overview: { total_campaigns: 1 },
++  funnel_campaigns: [
++    {
++      funnel_stage: 'tofu',
++      campaign_name: 'Awareness — Meta',
++      audience_targeting: {},
++      targeting,
++    },
++  ],
++}
++
++describe('AdsStrategyRenderer — targeting section (QA4-new4)', () => {
++  const { setLang } = useI18n()
++
++  beforeEach(() => setLang('en'))
++  afterEach(() => setLang('en'))
++
++  it('renders the structured targeting view for a Meta-like payload (empty audience + full targeting)', () => {
++    const wrapper = mount(AdsStrategyRenderer, { props: { data: metaLikePayload } })
++
++    const section = wrapper.find('[data-testid="camp-targeting"]')
++    expect(section.exists()).toBe(true)
++    expect(section.text()).toContain('Targeting')
++    expect(wrapper.find('[data-testid="targeting-summary"]').text())
++      .toContain('Urban professionals interested in wellness')
++    expect(wrapper.find('[data-testid="targeting-locations"]').text())
++      .toContain('Dubai, Abu Dhabi')
++    expect(wrapper.find('[data-testid="targeting-interests"]').text())
++      .toContain('fitness, wellness')
++    expect(wrapper.find('[data-testid="targeting-age-range"]').text())
++      .toContain('28-45')
++    expect(wrapper.find('[data-testid="targeting-exclusions"]').text())
++      .toContain('existing customers')
++  })
++
++  it('renders the same structured view for a Google-like payload (targeting only)', () => {
++    const wrapper = mount(AdsStrategyRenderer, { props: { data: googleLikePayload } })
++
++    const section = wrapper.find('[data-testid="camp-targeting"]')
++    expect(section.exists()).toBe(true)
++    expect(wrapper.find('[data-testid="targeting-summary"]').text())
++      .toContain('Urban professionals interested in wellness')
++    expect(wrapper.find('[data-testid="targeting-locations"]').text())
++      .toContain('Dubai, Abu Dhabi')
++  })
++
++  it('renders the targeting view for the normalized Meta payload (empty aliased audience_targeting + passthrough targeting)', () => {
++    const wrapper = mount(AdsStrategyRenderer, { props: { data: normalizedMetaPayload } })
++
++    expect(wrapper.find('[data-testid="camp-targeting"]').exists()).toBe(true)
++    expect(wrapper.find('[data-testid="targeting-summary"]').text())
++      .toContain('Urban professionals interested in wellness')
++  })
++
++  it('skips empty labeled rows in the targeting view', () => {
++    const wrapper = mount(AdsStrategyRenderer, {
++      props: {
++        data: {
++          funnel_campaigns: [
++            { funnel_stage: 'tofu', targeting: { ...targeting, age_range: '', interests: [], exclusions: [] } },
++          ],
++        },
++      },
++    })
++
++    expect(wrapper.find('[data-testid="camp-targeting"]').exists()).toBe(true)
++    expect(wrapper.find('[data-testid="targeting-age-range"]').exists()).toBe(false)
++    expect(wrapper.find('[data-testid="targeting-interests"]').exists()).toBe(false)
++    expect(wrapper.find('[data-testid="targeting-exclusions"]').exists()).toBe(false)
++    expect(wrapper.find('[data-testid="targeting-locations"]').exists()).toBe(true)
++  })
++
++  it('hides the section entirely when a campaign has no audience/targeting data', () => {
++    const wrapper = mount(AdsStrategyRenderer, {
++      props: {
++        data: {
++          funnel_campaigns: [{ funnel_stage: 'tofu', campaign_name: 'Bare campaign' }],
++        },
++      },
++    })
++
++    expect(wrapper.find('[data-testid="camp-targeting"]').exists()).toBe(false)
++    expect(wrapper.text()).not.toContain('Urban professionals')
++  })
++
++  it('does not render a labeled section with an empty body for a thin audience alone', () => {
++    const wrapper = mount(AdsStrategyRenderer, {
++      props: {
++        data: {
++          funnel_campaigns: [{ funnel_stage: 'tofu', audience: {} }],
++        },
++      },
++    })
++
++    expect(wrapper.find('[data-testid="camp-targeting"]').exists()).toBe(false)
++  })
++
++  it('still renders the legacy audience shape (type + details + exclusions)', () => {
++    const wrapper = mount(AdsStrategyRenderer, {
++      props: {
++        data: {
++          funnel_campaigns: [
++            {
++              funnel_stage: 'mofu',
++              audience: { type: 'Custom audience', details: ['lookalike 1%'], exclusions: ['purchasers'] },
++            },
++          ],
++        },
++      },
++    })
++
++    const section = wrapper.find('[data-testid="camp-targeting"]')
++    expect(section.exists()).toBe(true)
++    expect(section.text()).toContain('Custom audience')
++    expect(section.text()).toContain('lookalike 1%')
++    expect(section.text()).toContain('Exclusions')
++    expect(section.text()).toContain('purchasers')
++    // Legacy shape never renders the structured targeting rows
++    expect(wrapper.find('[data-testid="targeting-summary"]').exists()).toBe(false)
++  })
++
++  it('still renders the LinkedIn audience_targeting approach', () => {
++    const wrapper = mount(AdsStrategyRenderer, {
++      props: {
++        data: {
++          funnel_campaigns: [
++            { funnel_stage: 'bofu', audience_targeting: { targeting_approach: 'Job-title targeting on LinkedIn' } },
++          ],
++        },
++      },
++    })
++
++    const section = wrapper.find('[data-testid="camp-targeting"]')
++    expect(section.exists()).toBe(true)
++    expect(section.text()).toContain('Job-title targeting on LinkedIn')
++  })
++})
+diff --git a/src/shared/components/renderers/AdsStrategyRenderer.vue b/src/shared/components/renderers/AdsStrategyRenderer.vue
+index efd5cc0..e3e9e4e 100644
+--- a/src/shared/components/renderers/AdsStrategyRenderer.vue
++++ b/src/shared/components/renderers/AdsStrategyRenderer.vue
+@@ -68,6 +68,70 @@ function renderValue(val: unknown): string {
+   if (Array.isArray(val)) return val.map((v) => (typeof v === 'string' ? v : JSON.stringify(v))).join(', ')
+   return ''
+ }
++
++// ── Audience / Targeting ─────────────────────────────────────────────
++// The backend guarantees a `targeting` object on every funnel_campaign
++// entry ({ audience_summary, age_range, locations, interests,
++// exclusions }). Google campaigns carry ONLY `targeting`; Meta also has
++// a legacy `audience` (sometimes thin/empty — `audience: {}`); LinkedIn
++// uses `audience_targeting`. Match on the fields actually present (not
++// on key presence) so an empty legacy object falls through the source
++// chain `audience ?? audience_targeting ?? targeting` instead of
++// rendering a labeled section with an empty body.
++interface TargetingView {
++  kind: 'targeting' | 'legacy'
++  summary?: string
++  ageRange?: string
++  locations?: string[]
++  interests?: string[]
++  exclusions?: string[]
++  type?: string
++  details?: string[]
++  approach?: string
++}
++
++function asNonEmptyString(v: unknown): string {
++  return typeof v === 'string' && v.trim() ? v.trim() : ''
++}
++
++function asStringArray(v: unknown): string[] {
++  return Array.isArray(v)
++    ? v.filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
++    : []
++}
++
++function asTargetingView(value: unknown): TargetingView | null {
++  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
++  const obj = value as Record<string, unknown>
++  const type = asNonEmptyString(obj.type)
++  const approach = asNonEmptyString(obj.targeting_approach)
++  const exclusions = asStringArray(obj.exclusions)
++  // Legacy shapes are unambiguous via `type` / `targeting_approach`.
++  if (type || approach) {
++    return { kind: 'legacy', type, details: asStringArray(obj.details), approach, exclusions }
++  }
++  const summary = asNonEmptyString(obj.audience_summary)
++  const ageRange = asNonEmptyString(obj.age_range)
++  const locations = asStringArray(obj.locations)
++  const interests = asStringArray(obj.interests)
++  if (summary || ageRange || locations.length || interests.length || exclusions.length) {
++    return { kind: 'targeting', summary, ageRange, locations, interests, exclusions }
++  }
++  return null
++}
++
++function getTargetingView(camp: unknown): TargetingView | null {
++  const c = (camp ?? {}) as Record<string, unknown>
++  for (const candidate of [c.audience, c.audience_targeting, c.targeting]) {
++    const view = asTargetingView(candidate)
++    if (view) return view
++  }
++  return null
++}
++
++const targetingViews = computed<(TargetingView | null)[]>(() =>
++  funnelCampaigns.value.map((camp) => getTargetingView(camp)),
++)
+ </script>
+ 
+ <template>
+@@ -146,20 +210,45 @@ function renderValue(val: unknown): string {
+           </div>
+ 
+           <!-- Audience / Targeting -->
+-          <div v-if="camp.audience ?? camp.audience_targeting" class="space-y-1.5 text-xs">
++          <div v-if="targetingViews[idx]" class="space-y-1.5 text-xs" data-testid="camp-targeting">
+             <div class="text-[10px] uppercase tracking-wider text-muted-foreground/60">{{ t('strategy.targeting') }}</div>
+-            <div class="text-muted-foreground">
+-              <template v-if="camp.audience?.type">
+-                <span class="font-medium">{{ camp.audience.type }}</span>
+-                <span v-if="camp.audience.details?.length"> — {{ camp.audience.details.join(', ') }}</span>
+-              </template>
+-              <template v-else-if="camp.audience_targeting?.targeting_approach">
+-                {{ camp.audience_targeting.targeting_approach }}
+-              </template>
+-            </div>
+-            <div v-if="camp.audience?.exclusions?.length" class="text-muted-foreground/60">
+-              {{ t('strategy.exclusions') }}: {{ camp.audience.exclusions.join(', ') }}
+-            </div>
++
++            <!-- Structured `targeting` shape (audience_summary + labeled fields) -->
++            <template v-if="targetingViews[idx]?.kind === 'targeting'">
++              <div v-if="targetingViews[idx]?.summary" class="text-muted-foreground" data-testid="targeting-summary">
++                {{ targetingViews[idx]?.summary }}
++              </div>
++              <div class="space-y-1">
++                <div v-if="targetingViews[idx]?.ageRange" class="text-muted-foreground/60" data-testid="targeting-age-range">
++                  {{ formatLabel('age_range') }}: {{ targetingViews[idx]?.ageRange }}
++                </div>
++                <div v-if="targetingViews[idx]?.locations?.length" class="text-muted-foreground/60" data-testid="targeting-locations">
++                  {{ formatLabel('locations') }}: {{ targetingViews[idx]?.locations?.join(', ') }}
++                </div>
++                <div v-if="targetingViews[idx]?.interests?.length" class="text-muted-foreground/60" data-testid="targeting-interests">
++                  {{ formatLabel('interests') }}: {{ targetingViews[idx]?.interests?.join(', ') }}
++                </div>
++                <div v-if="targetingViews[idx]?.exclusions?.length" class="text-muted-foreground/60" data-testid="targeting-exclusions">
++                  {{ t('strategy.exclusions') }}: {{ targetingViews[idx]?.exclusions?.join(', ') }}
++                </div>
++              </div>
++            </template>
++
++            <!-- Legacy shapes (Meta `audience`, LinkedIn `audience_targeting`) -->
++            <template v-else>
++              <div class="text-muted-foreground">
++                <template v-if="targetingViews[idx]?.type">
++                  <span class="font-medium">{{ targetingViews[idx]?.type }}</span>
++                  <span v-if="targetingViews[idx]?.details?.length"> — {{ targetingViews[idx]?.details?.join(', ') }}</span>
++                </template>
++                <template v-else-if="targetingViews[idx]?.approach">
++                  {{ targetingViews[idx]?.approach }}
++                </template>
++              </div>
++              <div v-if="targetingViews[idx]?.exclusions?.length" class="text-muted-foreground/60">
++                {{ t('strategy.exclusions') }}: {{ targetingViews[idx]?.exclusions?.join(', ') }}
++              </div>
++            </template>
+           </div>
+ 
+           <!-- Creative -->
+diff --git a/src/shared/composables/useNormalizeResponse.test.ts b/src/shared/composables/useNormalizeResponse.test.ts
+new file mode 100644
+index 0000000..955f5d2
+--- /dev/null
++++ b/src/shared/composables/useNormalizeResponse.test.ts
+@@ -0,0 +1,88 @@
++import { describe, it, expect } from 'vitest'
++import { useNormalizeResponse } from './useNormalizeResponse'
++
++/**
++ * Contract tests for the ads-strategy normalizer, pinned down by the
++ * AdsStrategyRenderer targeting fix (QA4-new4): the backend guarantees a
++ * `targeting` object on every funnel_campaign, while Meta campaigns also
++ * carry a legacy `audience`. The normalizer must keep `targeting` intact
++ * (unknown keys pass through untouched) so the renderer can pick the
++ * source with real content via `audience ?? audience_targeting ?? targeting`.
++ */
++
++const fullTargeting = {
++  audience_summary: 'Urban professionals interested in wellness',
++  age_range: '28-45',
++  locations: ['Dubai'],
++  interests: ['fitness'],
++  exclusions: [],
++}
++
++describe('useNormalizeResponse — ads-strategy', () => {
++  const { normalize } = useNormalizeResponse()
++
++  it('aliases legacy audience keys onto audience_targeting', () => {
++    const result = normalize(
++      { funnel_campaigns: [{ audience: { type: 'Custom audience', details: ['lookalike 1%'] } }] },
++      'ads-strategy',
++    )
++    const camp = (result.funnel_campaigns as Record<string, unknown>[])[0]
++    expect(camp).toMatchObject({
++      audience_targeting: { type: 'Custom audience', details: ['lookalike 1%'] },
++    })
++    expect(camp).not.toHaveProperty('audience')
++  })
++
++  it('passes the backend `targeting` object through untouched', () => {
++    const result = normalize(
++      { funnel_campaigns: [{ targeting: fullTargeting }] },
++      'ads-strategy',
++    )
++    const camp = (result.funnel_campaigns as Record<string, unknown>[])[0]
++    expect(camp).toMatchObject({ targeting: fullTargeting })
++  })
++
++  it('keeps `targeting` alongside the aliased empty `audience` (Meta-style payload)', () => {
++    const result = normalize(
++      { funnel_campaigns: [{ audience: {}, targeting: fullTargeting }] },
++      'ads-strategy',
++    )
++    const camp = (result.funnel_campaigns as Record<string, unknown>[])[0]
++    expect(camp).toMatchObject({
++      audience_targeting: {},
++      targeting: fullTargeting,
++    })
++    expect(camp).not.toHaveProperty('audience')
++  })
++
++  it('still applies top-level and nested aliases', () => {
++    const result = normalize(
++      {
++        campaigns: [
++          {
++            name: 'Retargeting',
++            bidding: 'Maximize Conversions',
++            budget_allocation_percent: 40,
++          },
++        ],
++      },
++      'ads-strategy',
++    )
++    expect(result).toMatchObject({
++      funnel_campaigns: [
++        { campaign_name: 'Retargeting', bidding_strategy: 'Maximize Conversions', budget_percent: 40 },
++      ],
++    })
++  })
++
++  it('unwraps a nested data layer before normalizing', () => {
++    const result = normalize(
++      { data: { campaigns: [{ name: 'TOFU push' }] }, success: true },
++      'ads-strategy',
++    )
++    expect(result).toMatchObject({
++      success: true,
++      funnel_campaigns: [{ campaign_name: 'TOFU push' }],
++    })
++  })
++})

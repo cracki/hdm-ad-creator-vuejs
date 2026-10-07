@@ -1,0 +1,46 @@
+commit 9423c7c42ad5b4ec4329ca05d0a7d66fc2311ca0
+Author: cracki <cracki@gmail.com>
+Date:   Wed Oct 7 15:00:11 2026 +0330
+
+    fix(qa4-new1): expose has_completed_analysis on brand serializer
+    
+    A queued/failed newest analysis run masked a previously completed
+    analysis (brand list showed 'Not analyzed'). The list/detail serializer
+    now also returns has_completed_analysis=True when ANY completed
+    BrandAnalysisRun exists (brand/serializers.py:105-141).
+
+diff --git a/django-backend/brand/serializers.py b/django-backend/brand/serializers.py
+index 84fc337..725475c 100644
+--- a/django-backend/brand/serializers.py
++++ b/django-backend/brand/serializers.py
+@@ -102,6 +102,10 @@ class BrandSerializer(serializers.ModelSerializer):
+     # annotates `latest_analysis_run_status` via a Subquery to keep the
+     # list endpoint N+1-free; nested usages fall back to a per-brand query.
+     analysis_status = serializers.SerializerMethodField(read_only=True)
++    # QA4-new1: True iff the brand has at least one COMPLETED analysis run.
++    # `analysis_status` only reflects the newest run, so a queued/failed
++    # newer run would otherwise hide a previously completed analysis.
++    has_completed_analysis = serializers.SerializerMethodField(read_only=True)
+ 
+     class Meta:
+         model = Brand
+@@ -115,6 +119,7 @@ class BrandSerializer(serializers.ModelSerializer):
+             "selected_industry_id",
+             "services",
+             "analysis_status",
++            "has_completed_analysis",
+             "created_at",
+             "updated_at",
+         )
+@@ -130,6 +135,11 @@ class BrandSerializer(serializers.ModelSerializer):
+             )
+         return status_value or "none"
+ 
++    def get_has_completed_analysis(self, obj) -> bool:
++        return obj.analysis_runs.filter(
++            status=BrandAnalysisRun.StatusChoices.COMPLETED
++        ).exists()
++
+     def validate_brand_color(self, value):
+         """Accept hex colors with/without '#' (3 or 6 digits), normalize to '#rrggbb'."""
+         raw = (value or "").strip()

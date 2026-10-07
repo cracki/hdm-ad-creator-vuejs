@@ -1,0 +1,1254 @@
+commit 357f62005758fb5f44d7aeb74b19787876c53873
+Author: cracki <cracki@gmail.com>
+Date:   Wed Oct 7 15:03:37 2026 +0330
+
+    feat(qa4-img31,qa4-img30): insight actions in intelligence tabs + robust tour highlight
+    
+    - img31: every insight row in /market/intelligence now offers actions
+      via the existing InsightItemActions (Add to Campaign via
+      useUpdateCampaign PATCH context_payload.content_insights cap 20,
+      client-side Generate Brief modal/copy). The four renderers expose an
+      #item-actions slot whose built-in fallback adds actions for the
+      intelligence route while standalone views keep their custom slot
+      (ContentOpportunitiesRenderer.vue:86-96,144-151; ContentGapsRenderer
+      125-136; ContentMatrixRenderer 139-150; TopPerformingContentRenderer
+      104-115).
+    - img30: tour targets are waited for (rAF poll up to 2.5s), measured
+      only when visible (non-zero rect), re-measured on resize/scroll
+      (rAF-throttled), and a hidden/absent target clears the ring instead
+      of a collapsed one (useProductTour.ts:94-139, ProductTourOverlay.vue
+      48-76,83-95,126-129,197-220). Dismiss persistence unchanged.
+    - Renderer tests 6+3+4+4; useProductTour.test.ts 19.
+
+diff --git a/src/shared/components/ProductTourOverlay.vue b/src/shared/components/ProductTourOverlay.vue
+index 4208853..ab64196 100644
+--- a/src/shared/components/ProductTourOverlay.vue
++++ b/src/shared/components/ProductTourOverlay.vue
+@@ -2,7 +2,7 @@
+ import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
+ import { X, ChevronLeft, ChevronRight } from 'lucide-vue-next'
+ import { useI18n } from '@/shared/utils/i18n'
+-import { useProductTour } from '@/shared/composables/useProductTour'
++import { useProductTour, waitForTourTarget, queryTourTarget } from '@/shared/composables/useProductTour'
+ 
+ const { isActive, currentStep, currentStepIndex, totalSteps, isLastStep, dismiss, finish, next, prev } = useProductTour()
+ const { t } = useI18n()
+@@ -19,39 +19,91 @@ const prevStepIndex = ref(-1)
+ 
+ let waitTimer: ReturnType<typeof setTimeout> | null = null
+ 
+-async function waitForElement(step: typeof currentStep.value): Promise<Element | null> {
+-  if (!step) return null
+-  const maxWait = step.waitFor ?? 0
+-  if (maxWait <= 0) return document.querySelector(step.target)
++// QA4-img30: measurements are async — a monotonically increasing token lets an
++// in-flight measurement abort when a newer one (step change, scroll, resize)
++// supersedes it.
++let measureToken = 0
++let measureRaf: number | null = null
+ 
+-  const start = Date.now()
+-  while (Date.now() - start < maxWait) {
+-    const el = document.querySelector(step.target)
+-    if (el) return el
+-    await new Promise(r => setTimeout(r, 100))
++/** One animation frame (rAF when available, short timer otherwise). */
++function nextFrame(): Promise<void> {
++  return new Promise((resolve) => {
++    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => resolve())
++    else setTimeout(resolve, 16)
++  })
++}
++
++function cancelScheduledMeasure() {
++  if (measureRaf !== null) {
++    cancelAnimationFrame(measureRaf)
++    measureRaf = null
++  }
++}
++
++/**
++ * Re-measure at most once per animation frame while a step is active, so the
++ * ring follows the target on window resize AND scroll (including inner
++ * containers — capture phase) instead of going stale (QA4-img30).
++ */
++function scheduleReMeasure() {
++  if (!isActive.value || measureRaf !== null) return
++  measureRaf = requestAnimationFrame(() => {
++    measureRaf = null
++    updatePosition()
++  })
++}
++
++function clearHighlight() {
++  // Target not in the DOM (conditionally rendered section, hidden form…) or
++  // hidden (display:none → zero box). Never keep the previous step's
++  // highlight — that made the tooltip point at the wrong element (QA fix 4).
++  // Clear the ring/cutout and pin the tooltip top-center instead.
++  const fallbackWidth = window.innerWidth < 768 ? window.innerWidth - 16 : 320
++  highlightRect.value = { top: -20, left: -20, width: 0, height: 0 }
++  cutoutPath.value = 'M0,0 L0,0 Z'
++  tooltipStyle.value = {
++    top: '24px',
++    left: `${Math.max(8, window.innerWidth / 2 - fallbackWidth / 2)}px`,
++    width: `${fallbackWidth}px`,
++  }
++}
++
++function waitForElement(step: typeof currentStep.value): Promise<Element | null> {
++  if (!step) return Promise.resolve(null)
++  // QA4-img30 (a): keep polling (~50ms) for late-rendered targets — default
++  // 2.5s, or the step's explicit waitFor — instead of a single attempt.
++  return waitForTourTarget(step.target, step.waitFor ?? undefined)
++}
++
++/**
++ * Give a smooth scrollIntoView a bounded window to finish before the first
++ * precise measure. The scroll listener keeps re-measuring meanwhile, so this
++ * only needs to detect "scrolling stopped" (or time out at 400ms).
++ */
++async function waitForScrollSettle(token: number): Promise<void> {
++  const deadline = Date.now() + 400
++  let lastY = window.scrollY
++  let lastX = window.scrollX
++  while (Date.now() < deadline) {
++    await nextFrame()
++    if (!isActive.value || token !== measureToken) return
++    const moved = window.scrollY !== lastY || window.scrollX !== lastX
++    lastY = window.scrollY
++    lastX = window.scrollX
++    if (!moved) return
+   }
+-  return document.querySelector(step.target)
+ }
+ 
+ async function updatePosition() {
+   if (!currentStep.value || !isActive.value) return
++  const step = currentStep.value
++  const token = ++measureToken
+ 
+-  const el = await waitForElement(currentStep.value)
+-  if (!isActive.value) return
++  const el = await waitForElement(step)
++  if (!isActive.value || token !== measureToken) return
+ 
+   if (!el) {
+-    // Target not in the DOM (conditionally rendered section, hidden form…).
+-    // Never keep the previous step's highlight — that made the tooltip point
+-    // at the wrong element (QA fix 4). Clear the ring/cutout and pin the
+-    // tooltip top-center instead.
+-    const fallbackWidth = window.innerWidth < 768 ? window.innerWidth - 16 : 320
+-    highlightRect.value = { top: -20, left: -20, width: 0, height: 0 }
+-    cutoutPath.value = 'M0,0 L0,0 Z'
+-    tooltipStyle.value = {
+-      top: '24px',
+-      left: `${Math.max(8, window.innerWidth / 2 - fallbackWidth / 2)}px`,
+-      width: `${fallbackWidth}px`,
+-    }
++    clearHighlight()
+     return
+   }
+ 
+@@ -59,12 +111,23 @@ async function updatePosition() {
+   if (prevStepIndex.value !== currentStepIndex.value) {
+     prevStepIndex.value = currentStepIndex.value
+     el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+-    // Wait for scroll to settle before measuring
+-    await new Promise(r => setTimeout(r, 300))
+-    if (!isActive.value) return
++    // QA4-img30: no fixed 300ms sleep — wait (bounded) for the scroll to
++    // settle; the resize/scroll listeners keep the ring glued meanwhile.
++    await waitForScrollSettle(token)
++    if (!isActive.value || token !== measureToken) return
++  }
++
++  // Re-query right before measuring: the element may have been re-created
++  // while waiting (v-if re-render, list swap).
++  const target = queryTourTarget(step.target) ?? el
++  const rect = target.getBoundingClientRect()
++  // QA4-img30 (b): never draw a ring around a zero box (display:none,
++  // collapsed element) — retrying already happened in waitForElement.
++  if (!rect || rect.width <= 0 || rect.height <= 0) {
++    clearHighlight()
++    return
+   }
+ 
+-  const rect = el.getBoundingClientRect()
+   const pad = 10
+   const r = 8
+ 
+@@ -133,17 +196,32 @@ function handleDismiss() {
+ 
+ watch([currentStepIndex, isActive], () => {
+   if (waitTimer) { clearTimeout(waitTimer); waitTimer = null }
++  // Invalidate any in-flight measurement for the previous step and drop any
++  // scheduled re-measure — the new step re-measures from scratch (QA4-img30).
++  measureToken++
++  cancelScheduledMeasure()
+   waitTimer = setTimeout(() => nextTick(updatePosition), 50) as unknown as typeof waitTimer
+ }, { immediate: true })
+ 
+ onMounted(() => {
+   const observer = new MutationObserver(onDirChange)
+   observer.observe(document.documentElement, { attributes: true, attributeFilter: ['dir'] })
+-  onUnmounted(() => observer.disconnect())
++  // QA4-img30 (c): keep the ring glued to the target while a step is active —
++  // re-measure (rAF-throttled) on window resize AND scroll. `capture` catches
++  // scrolls of inner containers, which don't bubble.
++  window.addEventListener('resize', scheduleReMeasure, { passive: true })
++  window.addEventListener('scroll', scheduleReMeasure, { passive: true, capture: true })
++  onUnmounted(() => {
++    observer.disconnect()
++    window.removeEventListener('resize', scheduleReMeasure)
++    window.removeEventListener('scroll', scheduleReMeasure, { capture: true })
++    cancelScheduledMeasure()
++  })
+ })
+ 
+ onUnmounted(() => {
+   if (waitTimer) clearTimeout(waitTimer)
++  cancelScheduledMeasure()
+ })
+ </script>
+ 
+@@ -162,6 +240,7 @@ onUnmounted(() => {
+ 
+       <!-- Highlight ring -->
+       <div
++        data-testid="tour-highlight-ring"
+         class="absolute rounded-lg ring-2 ring-primary transition-all duration-300 pointer-events-none"
+         :style="{
+           top: `${highlightRect.top}px`,
+@@ -174,6 +253,7 @@ onUnmounted(() => {
+       <!-- Tooltip -->
+       <div
+         dir="auto"
++        data-testid="tour-tooltip"
+         class="fixed p-5 z-[10000] transition-all duration-300 rounded-xl border border-border/60 shadow-2xl bg-popover"
+         :style="tooltipStyle"
+       >
+diff --git a/src/shared/components/renderers/ContentGapsRenderer.test.ts b/src/shared/components/renderers/ContentGapsRenderer.test.ts
+new file mode 100644
+index 0000000..97782ad
+--- /dev/null
++++ b/src/shared/components/renderers/ContentGapsRenderer.test.ts
+@@ -0,0 +1,105 @@
++import { describe, it, expect, vi, beforeEach } from 'vitest'
++import { mount } from '@vue/test-utils'
++import type { Slot } from 'vue'
++import { ref } from 'vue'
++import ContentGapsRenderer from './ContentGapsRenderer.vue'
++import { useCampaigns, useUpdateCampaign } from '@/features/campaigns/queries'
++import type { Campaign } from '@/features/campaigns/types'
++
++/**
++ * QA4-img31: the gaps tab of /market/intelligence renders this renderer
++ * WITHOUT a parent-supplied #item-actions slot — the built-in fallback
++ * (InsightItemActions) must give every gap the same Add to Campaign /
++ * Generate Brief actions the standalone MarketGapsView provides.
++ */
++
++const updateMutate = vi.fn()
++
++vi.mock('@/features/campaigns/queries', () => ({
++  useCampaigns: vi.fn(),
++  useUpdateCampaign: vi.fn(),
++}))
++
++function buildCampaign(overrides: Partial<Campaign> = {}): Campaign {
++  return {
++    campaign_uuid: 'c1',
++    name: 'Summer Launch',
++    status: 'in_progress',
++    context_payload: {},
++    ...overrides,
++  } as Campaign
++}
++
++function mountRenderer(gaps: unknown[] = [], slots: Record<string, Slot | string> = {}) {
++  return mount(ContentGapsRenderer, {
++    props: {
++      data: {
++        industry: 'skincare',
++        content_gaps: gaps,
++        total_gaps_found: gaps.length,
++        recommendation: 'Prioritize the top two gaps.',
++      },
++    },
++    slots,
++  })
++}
++
++describe('ContentGapsRenderer — per-item insight actions (QA4-img31)', () => {
++  beforeEach(() => {
++    vi.clearAllMocks()
++    vi.mocked(useCampaigns).mockReturnValue({
++      data: ref([buildCampaign()]),
++      isLoading: ref(false),
++    } as never)
++    vi.mocked(useUpdateCampaign).mockReturnValue({
++      mutate: updateMutate,
++      isPending: ref(false),
++    } as never)
++  })
++
++  it('renders one Add to Campaign / Generate Brief action pair per gap', () => {
++    const wrapper = mountRenderer([
++      { topic: 'AI tutors', opportunity_score: 7, reason: 'Underserved topic' },
++      { topic: 'Pricing transparency', opportunity_score: 4, reason: 'No competitor publishes prices' },
++    ])
++
++    expect(wrapper.findAll('[data-testid="insight-add-btn"]')).toHaveLength(2)
++    expect(wrapper.findAll('[data-testid="insight-brief-btn"]')).toHaveLength(2)
++  })
++
++  it('clicking Add to Campaign opens the campaign picker and saves the gap with the standalone-view mapping', async () => {
++    const wrapper = mountRenderer([
++      { topic: 'AI tutors', opportunity_score: 7, reason: 'Underserved topic', suggested_content_type: 'comparison_article' },
++    ])
++
++    await wrapper.find('[data-testid="insight-add-btn"]').trigger('click')
++    const modal = wrapper.find('[data-testid="insight-campaign-modal"]')
++    expect(modal.exists()).toBe(true)
++
++    const options = wrapper.findAll('[data-testid="insight-campaign-option"]')
++    expect(options).toHaveLength(1)
++    await options[0].trigger('click')
++
++    expect(updateMutate).toHaveBeenCalledTimes(1)
++    const call = updateMutate.mock.calls[0][0]
++    expect(call.uuid).toBe('c1')
++    const insights = call.payload.context_payload.content_insights
++    expect(insights).toHaveLength(1)
++    // Same mapping MarketGapsView uses: topic → title, reason → snippet.
++    expect(insights[0]).toMatchObject({
++      source: 'market',
++      view: 'gaps',
++      title: 'AI tutors',
++      snippet: 'Underserved topic',
++    })
++  })
++
++  it('a parent-supplied #item-actions slot still replaces the built-in actions', () => {
++    const wrapper = mountRenderer([{ topic: 'AI tutors', opportunity_score: 7, reason: 'Underserved topic' }], {
++      'item-actions': `<div data-testid="custom-actions">Custom</div>`,
++    })
++
++    expect(wrapper.find('[data-testid="custom-actions"]').exists()).toBe(true)
++    expect(wrapper.find('[data-testid="insight-add-btn"]').exists()).toBe(false)
++  })
++})
+diff --git a/src/shared/components/renderers/ContentGapsRenderer.vue b/src/shared/components/renderers/ContentGapsRenderer.vue
+index 9a42f4d..9816c9a 100644
+--- a/src/shared/components/renderers/ContentGapsRenderer.vue
++++ b/src/shared/components/renderers/ContentGapsRenderer.vue
+@@ -3,6 +3,7 @@ import { computed } from 'vue'
+ import { AlertTriangle, Lightbulb, ExternalLink, HelpCircle } from 'lucide-vue-next'
+ import type { ContentGapsResponse } from '@/features/market/types'
+ import AnalysisPayloadRenderer from '@/shared/components/renderers/AnalysisPayloadRenderer.vue'
++import InsightItemActions from '@/features/market/components/InsightItemActions.vue'
+ import { useI18n } from '@/shared/utils/i18n'
+ 
+ const { t } = useI18n()
+@@ -121,8 +122,18 @@ function contentTypeName(type: string): string {
+           </div>
+         </div>
+ 
+-        <!-- Optional per-item actions (Add to Campaign / Generate Brief) -->
+-        <slot name="item-actions" :item="gap" :index="idx" />
++        <!-- Per-item actions (Add to Campaign / Generate Brief). QA4-img31:
++             when the parent supplies #item-actions (standalone views) it wins;
++             otherwise fall back to the built-in actions with the same
++             item-shape mapping MarketGapsView uses. -->
++        <slot name="item-actions" :item="gap" :index="idx">
++          <InsightItemActions
++            view="gaps"
++            :title="gap.topic"
++            :snippet="gap.reason || gap.suggested_content_type || ''"
++            :angle="gap.suggested_content_type ? `${gap.suggested_content_type} — ${gap.reason}` : gap.reason"
++          />
++        </slot>
+       </div>
+     </div>
+   </div>
+diff --git a/src/shared/components/renderers/ContentMatrixRenderer.test.ts b/src/shared/components/renderers/ContentMatrixRenderer.test.ts
+new file mode 100644
+index 0000000..ef5d62b
+--- /dev/null
++++ b/src/shared/components/renderers/ContentMatrixRenderer.test.ts
+@@ -0,0 +1,127 @@
++import { describe, it, expect, vi, beforeEach } from 'vitest'
++import { mount } from '@vue/test-utils'
++import type { Slot } from 'vue'
++import { ref } from 'vue'
++import ContentMatrixRenderer from './ContentMatrixRenderer.vue'
++import { useCampaigns, useUpdateCampaign } from '@/features/campaigns/queries'
++import type { Campaign } from '@/features/campaigns/types'
++
++/**
++ * QA4-img31: the matrix tab of /market/intelligence renders this renderer
++ * WITHOUT a parent-supplied #item-actions slot — the built-in fallback
++ * (InsightItemActions) must give every content idea the same Add to Campaign /
++ * Generate Brief actions the standalone MarketMatrixView provides.
++ */
++
++const updateMutate = vi.fn()
++
++vi.mock('@/features/campaigns/queries', () => ({
++  useCampaigns: vi.fn(),
++  useUpdateCampaign: vi.fn(),
++}))
++
++function buildCampaign(overrides: Partial<Campaign> = {}): Campaign {
++  return {
++    campaign_uuid: 'c1',
++    name: 'Summer Launch',
++    status: 'in_progress',
++    context_payload: {},
++    ...overrides,
++  } as Campaign
++}
++
++function makeStage(ideas: unknown[]) {
++  return { stage: 'TOFU', goal: 'Build awareness', content_ideas: ideas, recommended_formats: [], total_ideas: ideas.length }
++}
++
++function mountRenderer(ideas: unknown[], slots: Record<string, Slot | string> = {}) {
++  return mount(ContentMatrixRenderer, {
++    props: {
++      data: {
++        industry: 'skincare',
++        location: 'Muscat',
++        content_matrix: {
++          TOFU: makeStage(ideas),
++          MOFU: makeStage([]),
++          BOFU: makeStage([]),
++        },
++        total_content_ideas: ideas.length,
++        priority_recommendation: 'Start with TOFU',
++      },
++    },
++    slots,
++  })
++}
++
++describe('ContentMatrixRenderer — per-idea insight actions (QA4-img31)', () => {
++  beforeEach(() => {
++    vi.clearAllMocks()
++    vi.mocked(useCampaigns).mockReturnValue({
++      data: ref([buildCampaign()]),
++      isLoading: ref(false),
++    } as never)
++    vi.mocked(useUpdateCampaign).mockReturnValue({
++      mutate: updateMutate,
++      isPending: ref(false),
++    } as never)
++  })
++
++  it('renders one Add to Campaign / Generate Brief action pair per idea in the active stage', () => {
++    const wrapper = mountRenderer([
++      { suggested_title: 'Guide to vitamin C', title_inspiration: 'vitamin c article', topic: 'vitamin c', content_angle: 'Beginner-friendly explainer' },
++      { title_inspiration: 'FAQ: retinol', topic: 'FAQ', suggested_title: '' },
++    ])
++
++    expect(wrapper.findAll('[data-testid="insight-add-btn"]')).toHaveLength(2)
++    expect(wrapper.findAll('[data-testid="insight-brief-btn"]')).toHaveLength(2)
++  })
++
++  it('clicking Add to Campaign opens the campaign picker and saves the idea with the standalone-view mapping', async () => {
++    const wrapper = mountRenderer([
++      { suggested_title: 'Guide to vitamin C', title_inspiration: 'vitamin c article', topic: 'vitamin c', content_angle: 'Beginner-friendly explainer' },
++    ])
++
++    await wrapper.find('[data-testid="insight-add-btn"]').trigger('click')
++    const modal = wrapper.find('[data-testid="insight-campaign-modal"]')
++    expect(modal.exists()).toBe(true)
++
++    const options = wrapper.findAll('[data-testid="insight-campaign-option"]')
++    expect(options).toHaveLength(1)
++    await options[0].trigger('click')
++
++    expect(updateMutate).toHaveBeenCalledTimes(1)
++    const call = updateMutate.mock.calls[0][0]
++    expect(call.uuid).toBe('c1')
++    const insights = call.payload.context_payload.content_insights
++    expect(insights).toHaveLength(1)
++    // Same mapping MarketMatrixView uses: suggested_title → title,
++    // content_angle → snippet.
++    expect(insights[0]).toMatchObject({
++      source: 'market',
++      view: 'matrix',
++      title: 'Guide to vitamin C',
++      snippet: 'Beginner-friendly explainer',
++    })
++  })
++
++  it('falls back to title_inspiration / topic when suggested_title and content_angle are empty', async () => {
++    const wrapper = mountRenderer([
++      { suggested_title: '', title_inspiration: 'FAQ: retinol', topic: 'FAQ', content_angle: '' },
++    ])
++
++    await wrapper.find('[data-testid="insight-add-btn"]').trigger('click')
++    await wrapper.findAll('[data-testid="insight-campaign-option"]')[0].trigger('click')
++
++    const insights = updateMutate.mock.calls[0][0].payload.context_payload.content_insights
++    expect(insights[0]).toMatchObject({ view: 'matrix', title: 'FAQ: retinol', snippet: 'FAQ' })
++  })
++
++  it('a parent-supplied #item-actions slot still replaces the built-in actions', () => {
++    const wrapper = mountRenderer([{ suggested_title: 'X', topic: 'x', content_angle: '' }], {
++      'item-actions': `<div data-testid="custom-actions">Custom</div>`,
++    })
++
++    expect(wrapper.find('[data-testid="custom-actions"]').exists()).toBe(true)
++    expect(wrapper.find('[data-testid="insight-add-btn"]').exists()).toBe(false)
++  })
++})
+diff --git a/src/shared/components/renderers/ContentMatrixRenderer.vue b/src/shared/components/renderers/ContentMatrixRenderer.vue
+index 9814180..57a8341 100644
+--- a/src/shared/components/renderers/ContentMatrixRenderer.vue
++++ b/src/shared/components/renderers/ContentMatrixRenderer.vue
+@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
+ import { Target, Lightbulb, Layers, Tag, Users } from 'lucide-vue-next'
+ import type { ContentMatrixResponse, ContentMatrixStage } from '@/features/market/types'
+ import AnalysisPayloadRenderer from '@/shared/components/renderers/AnalysisPayloadRenderer.vue'
++import InsightItemActions from '@/features/market/components/InsightItemActions.vue'
+ import { useI18n } from '@/shared/utils/i18n'
+ 
+ const { t } = useI18n()
+@@ -135,8 +136,18 @@ const stageLabels: Record<string, string> = {
+             {{ t('matrix.topic') }}: {{ idea.topic }}
+           </div>
+ 
+-          <!-- Optional per-idea actions (Add to Campaign / Generate Brief) -->
+-          <slot name="item-actions" :item="idea" :index="idx" />
++          <!-- Per-idea actions (Add to Campaign / Generate Brief). QA4-img31:
++               when the parent supplies #item-actions (standalone views) it
++               wins; otherwise fall back to the built-in actions with the same
++               item-shape mapping MarketMatrixView uses. -->
++          <slot name="item-actions" :item="idea" :index="idx">
++            <InsightItemActions
++              view="matrix"
++              :title="idea.suggested_title || idea.title_inspiration || idea.topic || ''"
++              :snippet="idea.content_angle || idea.topic || ''"
++              :angle="idea.content_angle"
++            />
++          </slot>
+         </div>
+       </div>
+     </div>
+diff --git a/src/shared/components/renderers/ContentOpportunitiesRenderer.test.ts b/src/shared/components/renderers/ContentOpportunitiesRenderer.test.ts
+index efce92d..67877e1 100644
+--- a/src/shared/components/renderers/ContentOpportunitiesRenderer.test.ts
++++ b/src/shared/components/renderers/ContentOpportunitiesRenderer.test.ts
+@@ -1,6 +1,39 @@
+-import { describe, it, expect } from 'vitest'
++import { describe, it, expect, vi, beforeEach } from 'vitest'
+ import { mount } from '@vue/test-utils'
++import { ref } from 'vue'
+ import ContentOpportunitiesRenderer from './ContentOpportunitiesRenderer.vue'
++import { useCampaigns, useUpdateCampaign } from '@/features/campaigns/queries'
++import type { Campaign } from '@/features/campaigns/types'
++
++const updateMutate = vi.fn()
++
++// The built-in per-item actions (QA4-img31) pull the campaigns list; mock the
++// queries module so mounting never needs a vue-query plugin.
++vi.mock('@/features/campaigns/queries', () => ({
++  useCampaigns: vi.fn(),
++  useUpdateCampaign: vi.fn(),
++}))
++
++beforeEach(() => {
++  vi.mocked(useCampaigns).mockReturnValue({
++    data: ref([buildCampaign()]),
++    isLoading: ref(false),
++  } as never)
++  vi.mocked(useUpdateCampaign).mockReturnValue({
++    mutate: updateMutate,
++    isPending: ref(false),
++  } as never)
++})
++
++function buildCampaign(overrides: Partial<Campaign> = {}): Campaign {
++  return {
++    campaign_uuid: 'c1',
++    name: 'Summer Launch',
++    status: 'in_progress',
++    context_payload: {},
++    ...overrides,
++  } as Campaign
++}
+ 
+ describe('ContentOpportunitiesRenderer — honest empty state (QA photo 31)', () => {
+   it('renders the rich layout when core opportunity fields exist', () => {
+@@ -51,3 +84,86 @@ describe('ContentOpportunitiesRenderer — honest empty state (QA photo 31)', ()
+     expect(wrapper.find('[data-testid="opportunities-empty-state"]').exists()).toBe(true)
+   })
+ })
++
++describe('ContentOpportunitiesRenderer — per-item insight actions (QA4-img31)', () => {
++  beforeEach(() => {
++    vi.clearAllMocks()
++    vi.mocked(useCampaigns).mockReturnValue({
++      data: ref([buildCampaign()]),
++      isLoading: ref(false),
++    } as never)
++    vi.mocked(useUpdateCampaign).mockReturnValue({
++      mutate: updateMutate,
++      isPending: ref(false),
++    } as never)
++  })
++
++  function mountRenderer() {
++    return mount(ContentOpportunitiesRenderer, {
++      props: {
++        data: {
++          total_topics_found: 3,
++          top_performing_content: [
++            { title: 'Best serums 2026', snippet: 'A roundup', domain: 'example.com', url: 'https://example.com/a', query: 'best serums' },
++          ],
++          content_by_type: {
++            guides: [
++              { title: 'Vitamin C guide', snippet: 'Deep dive', domain: 'example.com', query: 'vitamin c' },
++              { title: 'Retinol guide', snippet: 'Basics', domain: 'example.com', query: 'retinol' },
++            ],
++          },
++          top_competing_domains: [{ domain: 'example.com', content_count: 4 }],
++        },
++      },
++    })
++  }
++
++  it('renders one Add to Campaign / Generate Brief action pair per opportunity row (top content + by-type topics)', () => {
++    const wrapper = mountRenderer()
++
++    // 1 top-performing row + 2 by-type topic rows in the active "guides" tab.
++    expect(wrapper.findAll('[data-testid="insight-add-btn"]')).toHaveLength(3)
++    expect(wrapper.findAll('[data-testid="insight-brief-btn"]')).toHaveLength(3)
++  })
++
++  it('clicking Add to Campaign opens the campaign picker and saves the item with the opportunities mapping', async () => {
++    const wrapper = mountRenderer()
++
++    await wrapper.find('[data-testid="insight-add-btn"]').trigger('click')
++    const modal = wrapper.find('[data-testid="insight-campaign-modal"]')
++    expect(modal.exists()).toBe(true)
++
++    const options = wrapper.findAll('[data-testid="insight-campaign-option"]')
++    expect(options).toHaveLength(1)
++    await options[0].trigger('click')
++
++    expect(updateMutate).toHaveBeenCalledTimes(1)
++    const call = updateMutate.mock.calls[0][0]
++    expect(call.uuid).toBe('c1')
++    const insights = call.payload.context_payload.content_insights
++    expect(insights).toHaveLength(1)
++    // Opportunity items are scraped top-performing content, so they save with
++    // the top_performers view and title / snippet (falling back to query).
++    expect(insights[0]).toMatchObject({
++      source: 'market',
++      view: 'top_performers',
++      title: 'Best serums 2026',
++      snippet: 'A roundup',
++    })
++  })
++
++  it('a parent-supplied #item-actions slot still replaces the built-in actions', () => {
++    const wrapper = mount(ContentOpportunitiesRenderer, {
++      props: {
++        data: {
++          total_topics_found: 1,
++          top_performing_content: [{ title: 'Best serums 2026', snippet: 'A roundup' }],
++        },
++      },
++      slots: { 'item-actions': `<div data-testid="custom-actions">Custom</div>` },
++    })
++
++    expect(wrapper.find('[data-testid="custom-actions"]').exists()).toBe(true)
++    expect(wrapper.find('[data-testid="insight-add-btn"]').exists()).toBe(false)
++  })
++})
+diff --git a/src/shared/components/renderers/ContentOpportunitiesRenderer.vue b/src/shared/components/renderers/ContentOpportunitiesRenderer.vue
+index ddee30a..c124a15 100644
+--- a/src/shared/components/renderers/ContentOpportunitiesRenderer.vue
++++ b/src/shared/components/renderers/ContentOpportunitiesRenderer.vue
+@@ -2,6 +2,7 @@
+ import { computed, ref } from 'vue'
+ import { ExternalLink, Globe, BarChart3, Tag, TrendingUp } from 'lucide-vue-next'
+ import type { ContentOpportunities, ContentOpportunityTopic } from '@/features/market/types'
++import InsightItemActions from '@/features/market/components/InsightItemActions.vue'
+ import { useI18n } from '@/shared/utils/i18n'
+ 
+ const { t } = useI18n()
+@@ -59,26 +60,40 @@ function typeName(key: string): string {
+         <div
+           v-for="(item, idx) in topContent.slice(0, 10)"
+           :key="idx"
+-          class="rounded-lg border border-border/30 bg-overlay-subtle p-3 flex items-start gap-2.5"
++          class="rounded-lg border border-border/30 bg-overlay-subtle p-3 space-y-2"
+         >
+-          <span class="shrink-0 h-5 w-5 rounded bg-[image:var(--gradient-brand)] text-primary-foreground text-[10px] font-bold grid place-items-center">
+-            {{ item.position ?? idx + 1 }}
+-          </span>
+-          <div class="min-w-0 flex-1 space-y-1">
+-            <div class="text-sm font-medium text-foreground leading-snug truncate">{{ item.title }}</div>
+-            <div v-if="item.snippet" class="text-xs text-muted-foreground line-clamp-2">{{ item.snippet }}</div>
+-            <div class="flex items-center gap-2 flex-wrap">
+-              <span v-if="item.domain" class="text-[10px] text-muted-foreground/60 flex items-center gap-0.5">
+-                <Globe class="h-2.5 w-2.5" /> {{ item.domain }}
+-              </span>
+-              <span v-if="item.query" class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground">
+-                {{ item.query }}
+-              </span>
++          <div class="flex items-start gap-2.5">
++            <span class="shrink-0 h-5 w-5 rounded bg-[image:var(--gradient-brand)] text-primary-foreground text-[10px] font-bold grid place-items-center">
++              {{ item.position ?? idx + 1 }}
++            </span>
++            <div class="min-w-0 flex-1 space-y-1">
++              <div class="text-sm font-medium text-foreground leading-snug truncate">{{ item.title }}</div>
++              <div v-if="item.snippet" class="text-xs text-muted-foreground line-clamp-2">{{ item.snippet }}</div>
++              <div class="flex items-center gap-2 flex-wrap">
++                <span v-if="item.domain" class="text-[10px] text-muted-foreground/60 flex items-center gap-0.5">
++                  <Globe class="h-2.5 w-2.5" /> {{ item.domain }}
++                </span>
++                <span v-if="item.query" class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground">
++                  {{ item.query }}
++                </span>
++              </div>
+             </div>
++            <a v-if="item.url" :href="item.url" target="_blank" rel="noopener" class="shrink-0 h-6 w-6 rounded flex items-center justify-center hover:bg-overlay-light transition">
++              <ExternalLink class="h-3 w-3 text-muted-foreground" />
++            </a>
+           </div>
+-          <a v-if="item.url" :href="item.url" target="_blank" rel="noopener" class="shrink-0 h-6 w-6 rounded flex items-center justify-center hover:bg-overlay-light transition">
+-            <ExternalLink class="h-3 w-3 text-muted-foreground" />
+-          </a>
++
++          <!-- Per-item actions (Add to Campaign / Generate Brief). QA4-img31:
++               a parent-supplied #item-actions wins; otherwise the built-in
++               actions render. These are scraped top-performing items, so they
++               map like the top_performers view (title / snippet / query). -->
++          <slot name="item-actions" :item="item" :index="idx">
++            <InsightItemActions
++              view="top_performers"
++              :title="item.title || ''"
++              :snippet="item.snippet || item.query || ''"
++            />
++          </slot>
+         </div>
+       </div>
+     </div>
+@@ -105,24 +120,35 @@ function typeName(key: string): string {
+         <div
+           v-for="(item, idx) in (contentByType[activeType] as ContentOpportunityTopic[])"
+           :key="idx"
+-          class="rounded-lg border border-border/30 bg-overlay-subtle p-3 flex items-start gap-2"
++          class="rounded-lg border border-border/30 bg-overlay-subtle p-3 space-y-2"
+         >
+-          <span class="shrink-0 text-[10px] text-muted-foreground/50 w-4 text-end">{{ idx + 1 }}</span>
+-          <div class="min-w-0 flex-1">
+-            <div class="text-xs font-medium text-foreground leading-snug truncate">{{ item.title }}</div>
+-            <div v-if="item.snippet" class="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">{{ item.snippet }}</div>
+-            <div class="flex items-center gap-2 mt-1">
+-              <span v-if="item.domain" class="text-[10px] text-muted-foreground/60 flex items-center gap-0.5">
+-                <Globe class="h-2.5 w-2.5" /> {{ item.domain }}
+-              </span>
+-              <span v-if="item.query" class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground">
+-                <Tag class="h-2 w-2 inline" /> {{ item.query }}
+-              </span>
++          <div class="flex items-start gap-2">
++            <span class="shrink-0 text-[10px] text-muted-foreground/50 w-4 text-end">{{ idx + 1 }}</span>
++            <div class="min-w-0 flex-1">
++              <div class="text-xs font-medium text-foreground leading-snug truncate">{{ item.title }}</div>
++              <div v-if="item.snippet" class="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">{{ item.snippet }}</div>
++              <div class="flex items-center gap-2 mt-1">
++                <span v-if="item.domain" class="text-[10px] text-muted-foreground/60 flex items-center gap-0.5">
++                  <Globe class="h-2.5 w-2.5" /> {{ item.domain }}
++                </span>
++                <span v-if="item.query" class="text-[10px] px-1.5 py-0.5 rounded bg-overlay-medium text-muted-foreground">
++                  <Tag class="h-2 w-2 inline" /> {{ item.query }}
++                </span>
++              </div>
+             </div>
++            <a v-if="item.url" :href="item.url" target="_blank" rel="noopener" class="shrink-0 h-5 w-5 rounded flex items-center justify-center hover:bg-overlay-light transition">
++              <ExternalLink class="h-2.5 w-2.5 text-muted-foreground" />
++            </a>
+           </div>
+-          <a v-if="item.url" :href="item.url" target="_blank" rel="noopener" class="shrink-0 h-5 w-5 rounded flex items-center justify-center hover:bg-overlay-light transition">
+-            <ExternalLink class="h-2.5 w-2.5 text-muted-foreground" />
+-          </a>
++
++          <!-- Same per-item actions as the top-content rows above -->
++          <slot name="item-actions" :item="item" :index="idx">
++            <InsightItemActions
++              view="top_performers"
++              :title="item.title || ''"
++              :snippet="item.snippet || item.query || ''"
++            />
++          </slot>
+         </div>
+       </div>
+     </div>
+diff --git a/src/shared/components/renderers/TopPerformingContentRenderer.test.ts b/src/shared/components/renderers/TopPerformingContentRenderer.test.ts
+new file mode 100644
+index 0000000..8143640
+--- /dev/null
++++ b/src/shared/components/renderers/TopPerformingContentRenderer.test.ts
+@@ -0,0 +1,120 @@
++import { describe, it, expect, vi, beforeEach } from 'vitest'
++import { mount } from '@vue/test-utils'
++import type { Slot } from 'vue'
++import { ref } from 'vue'
++import TopPerformingContentRenderer from './TopPerformingContentRenderer.vue'
++import { useCampaigns, useUpdateCampaign } from '@/features/campaigns/queries'
++import type { Campaign } from '@/features/campaigns/types'
++
++/**
++ * QA4-img31: the top-performers tab of /market/intelligence renders this
++ * renderer WITHOUT a parent-supplied #item-actions slot — the built-in
++ * fallback (InsightItemActions) must give every performer the same Add to
++ * Campaign / Generate Brief actions the standalone MarketTopPerformingView
++ * provides.
++ */
++
++const updateMutate = vi.fn()
++
++vi.mock('@/features/campaigns/queries', () => ({
++  useCampaigns: vi.fn(),
++  useUpdateCampaign: vi.fn(),
++}))
++
++function buildCampaign(overrides: Partial<Campaign> = {}): Campaign {
++  return {
++    campaign_uuid: 'c1',
++    name: 'Summer Launch',
++    status: 'in_progress',
++    context_payload: {},
++    ...overrides,
++  } as Campaign
++}
++
++function mountRenderer(performers: unknown[], slots: Record<string, Slot | string> = {}) {
++  return mount(TopPerformingContentRenderer, {
++    props: {
++      data: {
++        industry: 'skincare',
++        top_performers: performers,
++        total_found: performers.length,
++        common_patterns: { most_common_type: null, dominant_domains: [], average_position: 1.5 },
++        action_items: [],
++      },
++    },
++    slots,
++  })
++}
++
++describe('TopPerformingContentRenderer — per-item insight actions (QA4-img31)', () => {
++  beforeEach(() => {
++    vi.clearAllMocks()
++    vi.mocked(useCampaigns).mockReturnValue({
++      data: ref([buildCampaign()]),
++      isLoading: ref(false),
++    } as never)
++    vi.mocked(useUpdateCampaign).mockReturnValue({
++      mutate: updateMutate,
++      isPending: ref(false),
++    } as never)
++  })
++
++  it('renders one Add to Campaign / Generate Brief action pair per performer', () => {
++    const wrapper = mountRenderer([
++      { title: 'Best serums 2026', snippet: 'A roundup', why_it_ranks: 'Strong backlinks', your_opportunity: 'Outdo with a comparison', content_type: 'article' },
++      { title: 'Retinol myths', snippet: 'Debunked', why_it_ranks: '', your_opportunity: '', content_type: 'guide' },
++    ])
++
++    expect(wrapper.findAll('[data-testid="insight-add-btn"]')).toHaveLength(2)
++    expect(wrapper.findAll('[data-testid="insight-brief-btn"]')).toHaveLength(2)
++  })
++
++  it('clicking Add to Campaign opens the campaign picker and saves the performer with the standalone-view mapping', async () => {
++    const wrapper = mountRenderer([
++      { title: 'Best serums 2026', snippet: 'A roundup', why_it_ranks: 'Strong backlinks', your_opportunity: 'Outdo with a comparison', content_type: 'article' },
++    ])
++
++    await wrapper.find('[data-testid="insight-add-btn"]').trigger('click')
++    const modal = wrapper.find('[data-testid="insight-campaign-modal"]')
++    expect(modal.exists()).toBe(true)
++
++    const options = wrapper.findAll('[data-testid="insight-campaign-option"]')
++    expect(options).toHaveLength(1)
++    await options[0].trigger('click')
++
++    expect(updateMutate).toHaveBeenCalledTimes(1)
++    const call = updateMutate.mock.calls[0][0]
++    expect(call.uuid).toBe('c1')
++    const insights = call.payload.context_payload.content_insights
++    expect(insights).toHaveLength(1)
++    // Same mapping MarketTopPerformingView uses: title → title,
++    // why_it_ranks (falling back to snippet) → snippet.
++    expect(insights[0]).toMatchObject({
++      source: 'market',
++      view: 'top_performers',
++      title: 'Best serums 2026',
++      snippet: 'Strong backlinks',
++    })
++  })
++
++  it('falls back to snippet when why_it_ranks is missing', async () => {
++    const wrapper = mountRenderer([
++      { title: 'Retinol myths', snippet: 'Debunked', why_it_ranks: '', your_opportunity: '', content_type: 'guide' },
++    ])
++
++    await wrapper.find('[data-testid="insight-add-btn"]').trigger('click')
++    await wrapper.findAll('[data-testid="insight-campaign-option"]')[0].trigger('click')
++
++    const insights = updateMutate.mock.calls[0][0].payload.context_payload.content_insights
++    expect(insights[0]).toMatchObject({ view: 'top_performers', title: 'Retinol myths', snippet: 'Debunked' })
++  })
++
++  it('a parent-supplied #item-actions slot still replaces the built-in actions', () => {
++    const wrapper = mountRenderer([{ title: 'X', snippet: '', why_it_ranks: '', content_type: 'article' }], {
++      'item-actions': `<div data-testid="custom-actions">Custom</div>`,
++    })
++
++    expect(wrapper.find('[data-testid="custom-actions"]').exists()).toBe(true)
++    expect(wrapper.find('[data-testid="insight-add-btn"]').exists()).toBe(false)
++  })
++})
+diff --git a/src/shared/components/renderers/TopPerformingContentRenderer.vue b/src/shared/components/renderers/TopPerformingContentRenderer.vue
+index 339bd88..9076b94 100644
+--- a/src/shared/components/renderers/TopPerformingContentRenderer.vue
++++ b/src/shared/components/renderers/TopPerformingContentRenderer.vue
+@@ -3,6 +3,7 @@ import { computed } from 'vue'
+ import { Globe, BarChart3, TrendingUp, Lightbulb, CheckCircle2 } from 'lucide-vue-next'
+ import type { TopPerformingContentResponse } from '@/features/market/types'
+ import AnalysisPayloadRenderer from '@/shared/components/renderers/AnalysisPayloadRenderer.vue'
++import InsightItemActions from '@/features/market/components/InsightItemActions.vue'
+ import { useI18n } from '@/shared/utils/i18n'
+ 
+ const { t } = useI18n()
+@@ -100,8 +101,18 @@ function getTypeClass(type: string): string {
+             </div>
+           </div>
+ 
+-          <!-- Optional per-item actions (Add to Campaign / Generate Brief) -->
+-          <slot name="item-actions" :item="item" :index="idx" />
++          <!-- Per-item actions (Add to Campaign / Generate Brief). QA4-img31:
++               when the parent supplies #item-actions (standalone views) it
++               wins; otherwise fall back to the built-in actions with the same
++               item-shape mapping MarketTopPerformingView uses. -->
++          <slot name="item-actions" :item="item" :index="idx">
++            <InsightItemActions
++              view="top_performers"
++              :title="item.title || ''"
++              :snippet="item.why_it_ranks || item.snippet || ''"
++              :angle="item.your_opportunity"
++            />
++          </slot>
+         </div>
+       </div>
+     </div>
+diff --git a/src/shared/composables/useProductTour.test.ts b/src/shared/composables/useProductTour.test.ts
+index a82df1c..e2e172a 100644
+--- a/src/shared/composables/useProductTour.test.ts
++++ b/src/shared/composables/useProductTour.test.ts
+@@ -1,6 +1,15 @@
+-import { describe, it, expect, beforeEach } from 'vitest'
+-import { useProductTour, tourTargetExists } from './useProductTour'
+-import type { TourDefinition } from './useProductTour'
++import { describe, it, expect, beforeEach, afterEach, vi, type MockInstance } from 'vitest'
++import { mount, type VueWrapper } from '@vue/test-utils'
++import {
++  useProductTour,
++  tourTargetExists,
++  waitForTourTarget,
++  isTourTargetVisible,
++  TOUR_TARGET_TIMEOUT_MS,
++  TOUR_TARGET_POLL_MS,
++} from './useProductTour'
++import type { TourDefinition, TourStep } from './useProductTour'
++import ProductTourOverlay from '@/shared/components/ProductTourOverlay.vue'
+ 
+ /**
+  * QA fix 4: dismissing a tour (X / backdrop / skip) must persist completion
+@@ -140,3 +149,217 @@ describe('tourTargetExists', () => {
+     expect(tourTargetExists('<<<')).toBe(false)
+   })
+ })
++
++// ── QA4-img30: robust target lookup + overlay highlight ────────────────────
++//
++// The overlay used to measure the target after a FIXED 300ms sleep with a
++// single querySelector attempt: late-rendered targets left the ring stale and
++// hidden targets (display:none → zero rect) produced a collapsed ring.
++
++type Box = { top: number; left: number; width: number; height: number }
++
++function zeroRect(): DOMRect {
++  return { top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0, toJSON: () => ({}) } as unknown as DOMRect
++}
++
++/** Fake bounding boxes by element id; elements without an entry have a zero box. */
++let boxes: Map<string, Box>
++let rectSpy: MockInstance
++
++function installBoxStub() {
++  boxes = new Map()
++  rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
++    const box = boxes.get(this.id)
++    if (!box) return zeroRect()
++    return {
++      top: box.top,
++      left: box.left,
++      width: box.width,
++      height: box.height,
++      right: box.left + box.width,
++      bottom: box.top + box.height,
++      x: box.left,
++      y: box.top,
++      toJSON: () => ({}),
++    } as unknown as DOMRect
++  } as unknown as () => DOMRect)
++}
++
++function appendTarget(id: string, box?: Box): HTMLElement {
++  const el = document.createElement('div')
++  el.id = id
++  document.body.appendChild(el)
++  if (box) boxes.set(id, box)
++  return el
++}
++
++/**
++ * Manual rAF queue — deterministic frame control (vitest's default fake
++ * timers don't fake requestAnimationFrame). Returns an async flusher that
++ * runs queued frame callbacks and their microtask continuations n times.
++ */
++function stubFrames(): (n?: number) => Promise<void> {
++  const queue: FrameRequestCallback[] = []
++  vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
++    queue.push(cb)
++    return queue.length
++  })
++  vi.stubGlobal('cancelAnimationFrame', vi.fn())
++  return async (n = 1) => {
++    for (let i = 0; i < n; i++) {
++      const cbs = queue.splice(0, queue.length)
++      cbs.forEach((cb) => cb(0))
++      await Promise.resolve()
++      await Promise.resolve()
++    }
++  }
++}
++
++describe('waitForTourTarget — visible-target polling (QA4-img30)', () => {
++  beforeEach(() => {
++    // Explicit toFake: Date MUST be faked — the polling loop checks
++    // Date.now() against its deadline.
++    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] })
++    installBoxStub()
++  })
++
++  afterEach(() => {
++    rectSpy.mockRestore()
++    document.body.innerHTML = ''
++    vi.useRealTimers()
++  })
++
++  it('resolves immediately with a visible element', async () => {
++    const el = appendTarget('vis', { top: 10, left: 10, width: 40, height: 20 })
++    await expect(waitForTourTarget('#vis')).resolves.toBe(el)
++  })
++
++  it('keeps polling until a target that only appears after ~300ms becomes visible', async () => {
++    const promise = waitForTourTarget('#late')
++    await vi.advanceTimersByTimeAsync(300) // ~6 polls — element still absent
++    const el = appendTarget('late', { top: 0, left: 0, width: 120, height: 40 })
++    await vi.advanceTimersByTimeAsync(TOUR_TARGET_POLL_MS)
++    await expect(promise).resolves.toBe(el)
++  })
++
++  it('resolves null when the deadline passes with no matching element', async () => {
++    const promise = waitForTourTarget('#ghost', 500)
++    await vi.advanceTimersByTimeAsync(700)
++    await expect(promise).resolves.toBeNull()
++  })
++
++  it('resolves null when the element exists but stays hidden (zero rect)', async () => {
++    appendTarget('hidden') // in the DOM, but zero box (e.g. display:none)
++    const promise = waitForTourTarget('#hidden', 500)
++    await vi.advanceTimersByTimeAsync(700)
++    await expect(promise).resolves.toBeNull()
++  })
++
++  it('resolves null for invalid selectors instead of throwing', async () => {
++    const promise = waitForTourTarget('<<<', 100)
++    await vi.advanceTimersByTimeAsync(150)
++    await expect(promise).resolves.toBeNull()
++  })
++
++  it('isTourTargetVisible requires a non-zero box', () => {
++    const el = appendTarget('boxy', { top: 0, left: 0, width: 10, height: 10 })
++    expect(isTourTargetVisible(el)).toBe(true)
++    boxes.set('boxy', { top: 0, left: 0, width: 0, height: 40 })
++    expect(isTourTargetVisible(el)).toBe(false)
++  })
++
++  it('uses the QA4-img30 defaults (2.5s max wait, ~50ms polls)', () => {
++    expect(TOUR_TARGET_TIMEOUT_MS).toBe(2500)
++    expect(TOUR_TARGET_POLL_MS).toBe(50)
++  })
++})
++
++describe('ProductTourOverlay — highlight robustness (QA4-img30)', () => {
++  const tour = useProductTour()
++  let wrapper: VueWrapper | null = null
++  let flushFrames: (n?: number) => Promise<void>
++  let restoreScrollIntoView: () => void = () => {}
++  let def: TourDefinition | null = null
++
++  beforeEach(() => {
++    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] })
++    installBoxStub()
++    localStorage.clear()
++    tour.resetAllTours()
++    flushFrames = stubFrames()
++    // jsdom does not implement scrollIntoView at all — provide a no-op.
++    const proto = Element.prototype as unknown as { scrollIntoView?: () => void }
++    const original = proto.scrollIntoView
++    proto.scrollIntoView = () => {}
++    restoreScrollIntoView = () => {
++      if (original) proto.scrollIntoView = original
++      else delete (Element.prototype as unknown as { scrollIntoView?: () => void }).scrollIntoView
++    }
++  })
++
++  afterEach(() => {
++    wrapper?.unmount()
++    wrapper = null
++    document.body.innerHTML = ''
++    tour.stopTour()
++    if (def) tour.unregisterTour(def.id)
++    def = null
++    restoreScrollIntoView()
++    vi.unstubAllGlobals()
++    rectSpy.mockRestore()
++    vi.useRealTimers()
++  })
++
++  function startOverlayTour(steps: TourStep[]) {
++    def = { id: 'overlay-robustness', routeNames: ['test-robust'], steps }
++    tour.registerTour(def)
++    wrapper = mount(ProductTourOverlay, { attachTo: document.body })
++    tour.startTour(def.id)
++  }
++
++  const ring = () => document.querySelector('[data-testid="tour-highlight-ring"]') as HTMLElement | null
++  const tooltip = () => document.querySelector('[data-testid="tour-tooltip"]') as HTMLElement | null
++
++  it('eventually highlights a target that only renders after ~300ms', async () => {
++    startOverlayTour([{ target: '#tour-late', titleKey: 'tour.next', descriptionKey: 'tour.next' }])
++
++    await vi.advanceTimersByTimeAsync(300) // debounce + polls — target still absent
++    appendTarget('tour-late', { top: 100, left: 50, width: 200, height: 60 })
++    await vi.advanceTimersByTimeAsync(TOUR_TARGET_POLL_MS) // next poll picks it up
++    await flushFrames(3) // scroll-settle frame(s) + continuations
++
++    const r = ring()
++    expect(r).toBeTruthy()
++    expect(r!.style.width).toBe('220px') // 200 + 2 × 10 padding
++    expect(r!.style.top).toBe('90px') // 100 − 10 padding
++  })
++
++  it('clears the ring and pins the tooltip top-center when the target stays hidden (zero rect)', async () => {
++    appendTarget('tour-ghost') // in the DOM but zero box (e.g. display:none)
++
++    startOverlayTour([{ target: '#tour-ghost', titleKey: 'tour.next', descriptionKey: 'tour.next' }])
++    await vi.advanceTimersByTimeAsync(TOUR_TARGET_TIMEOUT_MS + 300) // past the default deadline
++
++    const r = ring()
++    expect(r).toBeTruthy() // overlay is active, but no stale highlight
++    expect(r!.style.width).toBe('0px')
++    expect(r!.style.height).toBe('0px')
++    expect(r!.style.top).toBe('-20px')
++    expect(tooltip()?.style.top).toBe('24px')
++  })
++
++  it('re-measures on window resize so the ring follows the target', async () => {
++    appendTarget('tour-move', { top: 100, left: 50, width: 200, height: 60 })
++
++    startOverlayTour([{ target: '#tour-move', titleKey: 'tour.next', descriptionKey: 'tour.next' }])
++    await vi.advanceTimersByTimeAsync(50)
++    await flushFrames(2)
++    expect(ring()!.style.top).toBe('90px')
++
++    boxes.set('tour-move', { top: 300, left: 50, width: 200, height: 60 })
++    window.dispatchEvent(new Event('resize'))
++    await flushFrames(2)
++
++    expect(ring()!.style.top).toBe('290px')
++  })
++})
+diff --git a/src/shared/composables/useProductTour.ts b/src/shared/composables/useProductTour.ts
+index a885b2f..a3b71ff 100644
+--- a/src/shared/composables/useProductTour.ts
++++ b/src/shared/composables/useProductTour.ts
+@@ -91,15 +91,53 @@ const totalSteps = computed(() => activeSteps.value.length)
+ 
+ // --- Tour lifecycle ---
+ 
+-/** True when a CSS selector currently matches an element in the DOM. */
+-export function tourTargetExists(selector: string): boolean {
++// --- Target lookup (QA4-img30: robust tour highlighting) ---
++
++/**
++ * How long the overlay keeps looking for a late-rendered / late-visible tour
++ * target before giving up and clearing the highlight (QA4-img30). Beats the
++ * old single querySelector attempt that left the ring stale or misplaced.
++ */
++export const TOUR_TARGET_TIMEOUT_MS = 2500
++/** Interval between target re-checks while waiting (QA4-img30). */
++export const TOUR_TARGET_POLL_MS = 50
++
++/** querySelector that never throws on invalid selectors. */
++export function queryTourTarget(selector: string): Element | null {
+   try {
+-    return !!document.querySelector(selector)
++    return document.querySelector(selector)
+   } catch {
+-    return false
++    return null
+   }
+ }
+ 
++/** True when the element currently has a non-zero box (display:none → false). */
++export function isTourTargetVisible(el: Element): boolean {
++  const rect = (el as HTMLElement).getBoundingClientRect?.()
++  return !!rect && rect.width > 0 && rect.height > 0
++}
++
++/**
++ * Wait until `selector` matches a VISIBLE element (non-zero box), re-checking
++ * every ~50ms up to `timeoutMs` (default 2.5s — QA4-img30). Resolves null
++ * when the deadline passes so the overlay can clear the ring instead of
++ * highlighting a stale or hidden (zero-rect) element.
++ */
++export async function waitForTourTarget(selector: string, timeoutMs: number = TOUR_TARGET_TIMEOUT_MS): Promise<Element | null> {
++  const deadline = Date.now() + Math.max(0, timeoutMs)
++  for (;;) {
++    const el = queryTourTarget(selector)
++    if (el && isTourTargetVisible(el)) return el
++    if (Date.now() >= deadline) return null
++    await new Promise((resolve) => setTimeout(resolve, TOUR_TARGET_POLL_MS))
++  }
++}
++
++/** True when a CSS selector currently matches an element in the DOM. */
++export function tourTargetExists(selector: string): boolean {
++  return !!queryTourTarget(selector)
++}
++
+ function registerTour(def: TourDefinition) {
+   registry.set(def.id, def)
+ }

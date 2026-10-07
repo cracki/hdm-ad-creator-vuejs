@@ -1,0 +1,564 @@
+commit 0dc9220d48b2194bf71b8f2cc53c712667ec5cb0
+Author: cracki <cracki@gmail.com>
+Date:   Wed Oct 7 15:03:00 2026 +0330
+
+    fix(qa4-N1,qa4-new3,qa4-taza1): scan error detail, rescan refill, progress retry
+    
+    - N1: BrandCreateView normalizes the scan error body (legacy bare array
+      or {detail}) and shows the backend reason verbatim instead of the
+      generic 'Website scan failed' (BrandCreateView.vue:196-209).
+    - new3 (FE half): rescan updates scan-filled fields - scanFilledFields
+      tracks which fields the scan filled; shouldFill applies when the field
+      is empty OR scan-filled, user edits still always win
+      (BrandCreateView.vue:214-243).
+    - taza1: retryAnalysis starts the new run, resets the tracker,
+      invalidates the stale single-run query keys and router.replace()s to
+      the new run uuid so the bar restarts instead of sticking on the old
+      run's 'Website scan' (queries.ts:88-113, BrandAnalysisView.vue:94-150);
+      sectionStuckGuard flags sections running >12 attempts and shows a
+      'still processing' hint while polling continues (sectionProgress.ts:107-137).
+    - BrandCreateView.test.ts 17 (5 new), BrandAnalysisView.test.ts 4 (2 new),
+      sectionProgress.test.ts +3.
+
+diff --git a/src/features/brands/queries.ts b/src/features/brands/queries.ts
+index ff17315..16579c6 100644
+--- a/src/features/brands/queries.ts
++++ b/src/features/brands/queries.ts
+@@ -85,13 +85,27 @@ export function useAnalysisRun(brandUuid: Ref<string>, runUuid: Ref<string>) {
+   })
+ }
+ 
++// QA4-taza1: a retry/re-analysis replaces the previous run. Variables may
++// carry `previousRunUuid` (the run being retried) so BOTH single-run caches
++// can be invalidated explicitly — the stale previous run must not keep
++// rendering its old sections_status after a retry.
++type StartAnalysisVariables = AnalysisStartPayload & { previousRunUuid?: string }
++
+ export function useStartAnalysis(brandUuid: Ref<string>) {
+   const queryClient = useQueryClient()
+   return useMutation({
+-    mutationFn: (payload: AnalysisStartPayload = {}) =>
++    mutationFn: (payload: StartAnalysisVariables = {}) =>
+       brandsApi.startAnalysis(brandUuid.value, payload),
+-    onSuccess: () => {
++    onSuccess: (res, variables) => {
+       queryClient.invalidateQueries({ queryKey: ['brands', brandUuid, 'analysis-runs'] })
++      const previousRunUuid = variables?.previousRunUuid
++      if (previousRunUuid) {
++        queryClient.invalidateQueries({ queryKey: ['brands', brandUuid, 'analysis-runs', previousRunUuid] })
++      }
++      const newRunUuid = res.data?.analysis_run_uuid
++      if (newRunUuid) {
++        queryClient.invalidateQueries({ queryKey: ['brands', brandUuid, 'analysis-runs', newRunUuid] })
++      }
+     },
+   })
+ }
+diff --git a/src/features/brands/sectionProgress.test.ts b/src/features/brands/sectionProgress.test.ts
+index 017201f..2d78614 100644
+--- a/src/features/brands/sectionProgress.test.ts
++++ b/src/features/brands/sectionProgress.test.ts
+@@ -4,6 +4,8 @@ import {
+   extractSectionStatus,
+   sectionStageStates,
+   firstSectionError,
++  sectionStuckGuard,
++  STUCK_SECTION_ATTEMPT_THRESHOLD,
+ } from './sectionProgress'
+ 
+ const fullStatus = {
+@@ -95,3 +97,45 @@ describe('firstSectionError', () => {
+     })).toBe('boom')
+   })
+ })
++
++describe('sectionStuckGuard', () => {
++  const runningStatuses = {
++    website_scrape: { status: 'completed' },
++    core_analysis: { status: 'running' },
++  } as const
++
++  it('flags stuck only past the attempt threshold (12)', () => {
++    expect(STUCK_SECTION_ATTEMPT_THRESHOLD).toBe(12)
++    expect(sectionStuckGuard(runningStatuses, STUCK_SECTION_ATTEMPT_THRESHOLD - 1)).toEqual({
++      stuck: false,
++      stuckSections: [],
++    })
++    expect(sectionStuckGuard(runningStatuses, STUCK_SECTION_ATTEMPT_THRESHOLD)).toEqual({
++      stuck: false,
++      stuckSections: [],
++    })
++    expect(sectionStuckGuard(runningStatuses, STUCK_SECTION_ATTEMPT_THRESHOLD + 1)).toEqual({
++      stuck: true,
++      stuckSections: ['core_analysis'],
++    })
++  })
++
++  it('names every section still reported as running past the threshold', () => {
++    const guard = sectionStuckGuard({
++      website_scrape: { status: 'running' },
++      core_analysis: { status: 'completed' },
++      audience: { status: 'running' },
++    }, STUCK_SECTION_ATTEMPT_THRESHOLD + 5)
++    expect(guard.stuck).toBe(true)
++    expect(guard.stuckSections).toEqual(['website_scrape', 'audience'])
++  })
++
++  it('never reports stuck without a running section or without section progress', () => {
++    expect(sectionStuckGuard({ website_scrape: { status: 'completed' } }, 500)).toEqual({
++      stuck: false,
++      stuckSections: [],
++    })
++    // Older runs lack sections_status — the poll-count fallback applies instead.
++    expect(sectionStuckGuard(null, 500)).toEqual({ stuck: false, stuckSections: [] })
++  })
++})
+diff --git a/src/features/brands/sectionProgress.ts b/src/features/brands/sectionProgress.ts
+index 2466281..695dbcf 100644
+--- a/src/features/brands/sectionProgress.ts
++++ b/src/features/brands/sectionProgress.ts
+@@ -101,3 +101,38 @@ export function firstSectionError(statuses: SectionStatusMap): string | null {
+   }
+   return null
+ }
++
++// ---- Stuck-guard (QA4-taza1) ----
++
++/**
++ * Tracker polls after which a section still reported as 'running' is
++ * considered wedged (the poll interval starts at 2s and grows to 10s, so 12
++ * attempts is comfortably over a minute in one state).
++ */
++export const STUCK_SECTION_ATTEMPT_THRESHOLD = 12
++
++export interface SectionStuckGuard {
++  /** True when a section has been 'running' for more than the attempt threshold. */
++  stuck: boolean
++  /** Section keys currently reported as 'running' past the threshold. */
++  stuckSections: string[]
++}
++
++/**
++ * Stuck-guard for the live progress bar: given the current sections_status
++ * snapshot and the tracker's poll-attempt count, flag when a section has been
++ * 'running' for more than STUCK_SECTION_ATTEMPT_THRESHOLD tracker attempts.
++ * The caller keeps polling either way — this only drives a muted hint.
++ * Without section progress (older runs) it never reports stuck.
++ */
++export function sectionStuckGuard(
++  statuses: SectionStatusMap | null,
++  attempts: number,
++): SectionStuckGuard {
++  const none: SectionStuckGuard = { stuck: false, stuckSections: [] }
++  if (!statuses || attempts <= STUCK_SECTION_ATTEMPT_THRESHOLD) return none
++  const running = Object.keys(statuses).filter(
++    (section) => statuses[section]?.status === 'running',
++  )
++  return running.length > 0 ? { stuck: true, stuckSections: running } : none
++}
+diff --git a/src/features/brands/views/BrandAnalysisView.test.ts b/src/features/brands/views/BrandAnalysisView.test.ts
+index 4a88035..3ba900a 100644
+--- a/src/features/brands/views/BrandAnalysisView.test.ts
++++ b/src/features/brands/views/BrandAnalysisView.test.ts
+@@ -38,12 +38,13 @@ function mockTracker() {
+     attempts: ref(0),
+     start: vi.fn(),
+     resume: vi.fn(),
++    reset: vi.fn(),
+   }
+   vi.mocked(useJobTracker).mockReturnValue(tracker as never)
+   return tracker
+ }
+ 
+-function mockQueries() {
++function mockQueries(startMutateAsync?: (...args: unknown[]) => Promise<unknown>) {
+   vi.mocked(useBrand).mockReturnValue({
+     data: ref({ brand_uuid: 'b1', company_name: 'Lumen', website_url: 'https://lumen.test' }),
+     isLoading: ref(false),
+@@ -53,14 +54,20 @@ function mockQueries() {
+     data: ref({ status: 'running' }),
+     isLoading: ref(false),
+   } as never)
+-  vi.mocked(useStartAnalysis).mockReturnValue({ mutateAsync: vi.fn() } as never)
++  vi.mocked(useStartAnalysis).mockReturnValue({
++    mutateAsync: (startMutateAsync ?? vi.fn()) as never,
++  } as never)
+ }
+ 
+-async function mountView(invalidateSpy: () => void): Promise<{ wrapper: VueWrapper; tracker: ReturnType<typeof mockTracker> }> {
++async function mountView(
++  invalidateSpy: () => void,
++  startMutateAsync?: (...args: unknown[]) => Promise<unknown>,
++): Promise<{ wrapper: VueWrapper; tracker: ReturnType<typeof mockTracker>; router: ReturnType<typeof createRouter> }> {
+   const router = createRouter({
+     history: createMemoryHistory(),
+     routes: [
+       { path: '/brands/:brandUuid/analysis', component: BrandAnalysisView },
++      { path: '/brands/:brandUuid/analysis/:runUuid', component: BrandAnalysisView },
+       { path: '/brands/:brandUuid', component: { template: '<div />' } },
+     ],
+   })
+@@ -71,7 +78,7 @@ async function mountView(invalidateSpy: () => void): Promise<{ wrapper: VueWrapp
+   vi.spyOn(queryClient, 'invalidateQueries').mockImplementation(invalidateSpy as never)
+ 
+   const tracker = mockTracker()
+-  mockQueries()
++  mockQueries(startMutateAsync)
+ 
+   const wrapper = mount(BrandAnalysisView, {
+     global: {
+@@ -90,7 +97,7 @@ async function mountView(invalidateSpy: () => void): Promise<{ wrapper: VueWrapp
+     },
+   })
+   await flushPromises()
+-  return { wrapper, tracker }
++  return { wrapper, tracker, router }
+ }
+ 
+ describe('BrandAnalysisView — refetch on terminal success (QA3)', () => {
+@@ -124,6 +131,50 @@ describe('BrandAnalysisView — refetch on terminal success (QA3)', () => {
+   })
+ })
+ 
++describe('BrandAnalysisView — retry navigates to the new run (QA4-taza1)', () => {
++  beforeEach(() => vi.clearAllMocks())
++
++  it('starts a new run, replaces the route with its uuid, and resumes tracking from a cleared state', async () => {
++    const mutateAsync = vi.fn().mockResolvedValue({
++      data: { analysis_run_uuid: 'run-2', status: 'pending' },
++    })
++    const { wrapper, tracker, router } = await mountView(() => {}, mutateAsync)
++
++    // Failed state renders the retry button
++    tracker.status.value = 'failed'
++    await flushPromises()
++    expect(wrapper.find('[data-loc="brands.analysis.retry-btn"]').exists()).toBe(true)
++
++    await wrapper.find('[data-loc="brands.analysis.retry-btn"]').trigger('click')
++    await flushPromises()
++
++    // The old run uuid (none in this route) travels with the start mutation so
++    // its single-run cache can be invalidated
++    expect(mutateAsync).toHaveBeenCalledWith({ previousRunUuid: undefined })
++    // Tracker state is cleared, the route moves to the NEW run, and tracking
++    // resumes against it instead of the old uuid
++    expect(tracker.reset).toHaveBeenCalled()
++    expect(tracker.resume).toHaveBeenCalledWith('run-2')
++    expect(router.currentRoute.value.path).toBe('/brands/b1/analysis/run-2')
++    wrapper.unmount()
++  })
++
++  it('keeps the failed state (no navigation) when starting the new run fails', async () => {
++    const mutateAsync = vi.fn().mockRejectedValue(new Error('boom'))
++    const { wrapper, tracker, router } = await mountView(() => {}, mutateAsync)
++
++    tracker.status.value = 'failed'
++    await flushPromises()
++    await wrapper.find('[data-loc="brands.analysis.retry-btn"]').trigger('click')
++    await flushPromises()
++
++    expect(tracker.reset).toHaveBeenCalled()
++    expect(tracker.resume).not.toHaveBeenCalled()
++    expect(router.currentRoute.value.path).toBe('/brands/b1/analysis')
++    wrapper.unmount()
++  })
++})
++
+ /** The view's tracker is created inside setup; grab the shared mock instance. */
+ function trackerRef(_wrapper: VueWrapper) {
+   return vi.mocked(useJobTracker).mock.results.at(-1)!.value as ReturnType<typeof mockTracker>
+diff --git a/src/features/brands/views/BrandAnalysisView.vue b/src/features/brands/views/BrandAnalysisView.vue
+index fbad3a4..2173b93 100644
+--- a/src/features/brands/views/BrandAnalysisView.vue
++++ b/src/features/brands/views/BrandAnalysisView.vue
+@@ -31,6 +31,7 @@ import {
+   extractSectionStatus,
+   sectionStageStates,
+   firstSectionError,
++  sectionStuckGuard,
+ } from '../sectionProgress'
+ import {
+   Play, Loader2, RefreshCw, Users, BarChart3,
+@@ -90,16 +91,26 @@ const isFailed = computed(() =>
+ )
+ const isLoading = computed(() => brandLoading.value || runLoading.value)
+ 
+-function startAnalysis() {
+-  if (!operationManager.canStart(opKey.value)) return
+-  operationManager.start(opKey.value)
+-  tracker.start()
++function watchTrackerTerminal() {
+   const unwatch = watch(() => tracker.status.value, (s) => {
+     if (s === 'completed' || s === 'failed') {
+       operationManager.finish(opKey.value)
+       unwatch()
+     }
+   })
++  // The tracker can already BE terminal at registration (e.g. a retry/resume
++  // that settled synchronously) — release the operation lock right away.
++  if (tracker.status.value === 'completed' || tracker.status.value === 'failed') {
++    operationManager.finish(opKey.value)
++    unwatch()
++  }
++}
++
++function startAnalysis() {
++  if (!operationManager.canStart(opKey.value)) return
++  operationManager.start(opKey.value)
++  tracker.start()
++  watchTrackerTerminal()
+ }
+ 
+ // QA round 3: when the tracker reaches terminal success, invalidate the run
+@@ -112,21 +123,38 @@ watch(tracker.status, (s) => {
+   }
+ })
+ 
+-function retryAnalysis() {
+-  operationManager.finish(opKey.value)
+-  startAnalysis()
++// QA4-taza1: a retry starts a NEW run. The route used to stay on the old run
++// uuid, so `existingRun` kept serving the old run's stale sections_status and
++// the progress bar stayed stuck on the previous state. Start the new run
++// first, move the route to it, then track the new run from a cleared state.
++async function retryAnalysis() {
++  if (!operationManager.canStart(opKey.value)) return
++  operationManager.start(opKey.value)
++  try {
++    const res = await startMutation.mutateAsync({ previousRunUuid: runUuid.value || undefined })
++    const newRunUuid = res.data?.analysis_run_uuid ?? ''
++    // Clear the old run from the tracker so the bar restarts from zero.
++    tracker.reset()
++    if (newRunUuid && newRunUuid !== runUuid.value) {
++      await router.replace(`/brands/${brandUuid.value}/analysis/${newRunUuid}`)
++    }
++    tracker.resume(newRunUuid || runUuid.value)
++    watchTrackerTerminal()
++  } catch {
++    // Start failed — surface it through the tracker's failed state (same UX
++    // as a failed tracker.start()) and release the operation lock.
++    tracker.reset()
++    tracker.status.value = 'failed'
++    tracker.error.value = t('jobTracker.startFailed')
++    operationManager.finish(opKey.value)
++  }
+ }
+ 
+ onMounted(() => {
+   if (runUuid.value && !TERMINAL_STATUSES.has(existingRun.value?.status ?? '')) {
+     operationManager.start(opKey.value)
+     tracker.resume(runUuid.value)
+-    const unwatch = watch(() => tracker.status.value, (s) => {
+-      if (s === 'completed' || s === 'failed') {
+-        operationManager.finish(opKey.value)
+-        unwatch()
+-      }
+-    })
++    watchTrackerTerminal()
+   }
+ })
+ 
+@@ -170,6 +198,12 @@ const sectionError = computed(() =>
+   sectionStatuses.value ? firstSectionError(sectionStatuses.value) : null,
+ )
+ 
++// QA4-taza1: a section stuck in 'running' for many polls gets a muted hint
++// while polling continues. Plain inline text — no new translation keys.
++const analysisStuck = computed(() =>
++  sectionStuckGuard(sectionStatuses.value, tracker.attempts.value).stuck,
++)
++
+ const progressStages = computed(() =>
+   hasSectionProgress.value ? sectionLabels.value : progressMessages.value,
+ )
+@@ -297,6 +331,9 @@ setActions([
+         class="justify-center"
+       />
+       <p class="text-xs text-muted-foreground">{{ t('analysis.runningHint') }}</p>
++      <p v-if="analysisStuck" data-testid="analysis-stuck-hint" class="text-xs text-muted-foreground/70">
++        Still processing — this is taking longer than usual.
++      </p>
+     </div>
+ 
+     <!-- Failed state -->
+diff --git a/src/features/brands/views/BrandCreateView.test.ts b/src/features/brands/views/BrandCreateView.test.ts
+index f205416..289bc5b 100644
+--- a/src/features/brands/views/BrandCreateView.test.ts
++++ b/src/features/brands/views/BrandCreateView.test.ts
+@@ -55,6 +55,20 @@ const scanResponse: { data: BrandScanResult } = {
+   },
+ }
+ 
++/** A scan payload identical to `scanResponse` but with a different company name. */
++function scanWithCompany(name: string): { data: BrandScanResult } {
++  return {
++    data: {
++      success: true,
++      detected: {
++        ...scanResponse.data.detected,
++        company_name: { value: name, confidence: 'high', source: 'og_site_name' },
++      },
++      warnings: [],
++    },
++  }
++}
++
+ let router: Router
+ let queryClient: QueryClient
+ 
+@@ -198,6 +212,72 @@ describe('BrandCreateView — website auto-scan (F18)', () => {
+     expect(wrapper.find('[data-testid="scan-error"]').text()).toContain('Enter a valid URL.')
+   })
+ 
++  it('shows the backend {"detail": ...} reason verbatim when the scan fails (QA4-N1)', async () => {
++    vi.mocked(brandsApi.scanWebsite).mockRejectedValue({
++      response: { status: 400, data: { detail: 'The website responded with HTTP 404' } },
++    })
++    const wrapper = await mountView()
++    await flushPromises()
++
++    await wrapper.find('[data-testid="website-url-input"]').setValue('https://lumen.test')
++    await wrapper.find('[data-testid="scan-button"]').trigger('click')
++    await flushPromises()
++
++    expect(wrapper.find('[data-testid="scan-error"]').exists()).toBe(true)
++    expect(wrapper.find('[data-testid="scan-error"]').text()).toContain('The website responded with HTTP 404')
++  })
++
++  it('falls back to the first entry of a legacy bare-array error body (QA4-N1)', async () => {
++    vi.mocked(brandsApi.scanWebsite).mockRejectedValue({
++      response: { status: 400, data: ['Could not scan…'] },
++    })
++    const wrapper = await mountView()
++    await flushPromises()
++
++    await wrapper.find('[data-testid="website-url-input"]').setValue('https://lumen.test')
++    await wrapper.find('[data-testid="scan-button"]').trigger('click')
++    await flushPromises()
++
++    expect(wrapper.find('[data-testid="scan-error"]').exists()).toBe(true)
++    expect(wrapper.find('[data-testid="scan-error"]').text()).toContain('Could not scan…')
++  })
++
++  it('a rescan replaces a scan-filled company name instead of discarding it (QA4-new3e)', async () => {
++    vi.mocked(brandsApi.scanWebsite)
++      .mockResolvedValueOnce(scanWithCompany('Alpha'))
++      .mockResolvedValueOnce(scanWithCompany('Beta'))
++    const wrapper = await mountView()
++    await flushPromises()
++
++    await wrapper.find('[data-testid="website-url-input"]').setValue('https://lumen.test')
++    await wrapper.find('[data-testid="scan-button"]').trigger('click')
++    await flushPromises()
++    expect((wrapper.find('[data-testid="company-input"]').element as HTMLInputElement).value).toBe('Alpha')
++
++    await wrapper.find('[data-testid="scan-button"]').trigger('click')
++    await flushPromises()
++    expect((wrapper.find('[data-testid="company-input"]').element as HTMLInputElement).value).toBe('Beta')
++  })
++
++  it('a rescan never overwrites a user-edited company name (QA4-new3e)', async () => {
++    vi.mocked(brandsApi.scanWebsite)
++      .mockResolvedValueOnce(scanWithCompany('Alpha'))
++      .mockResolvedValueOnce(scanWithCompany('Delta'))
++    const wrapper = await mountView()
++    await flushPromises()
++
++    await wrapper.find('[data-testid="website-url-input"]').setValue('https://lumen.test')
++    await wrapper.find('[data-testid="scan-button"]').trigger('click')
++    await flushPromises()
++    expect((wrapper.find('[data-testid="company-input"]').element as HTMLInputElement).value).toBe('Alpha')
++
++    // User replaces the scan prefill with their own text — it must win forever
++    await wrapper.find('[data-testid="company-input"]').setValue('Gamma')
++    await wrapper.find('[data-testid="scan-button"]').trigger('click')
++    await flushPromises()
++    expect((wrapper.find('[data-testid="company-input"]').element as HTMLInputElement).value).toBe('Gamma')
++  })
++
+   it('includes location and brand_color in the create payload (drop-field fix)', async () => {
+     vi.mocked(brandsApi.scanWebsite).mockResolvedValue(scanResponse)
+     const wrapper = await mountView()
+diff --git a/src/features/brands/views/BrandCreateView.vue b/src/features/brands/views/BrandCreateView.vue
+index ec09a87..a31754f 100644
+--- a/src/features/brands/views/BrandCreateView.vue
++++ b/src/features/brands/views/BrandCreateView.vue
+@@ -197,45 +197,53 @@ async function handleScan() {
+     applyScanResult(res.data)
+   } catch (e: any) {
+     const data = e?.response?.data
+-    const detail = data?.detail
+-    scanError.value = data?.website_url?.[0]
++    // QA4-N1: the scan endpoint answers 400 with {"detail": "<human reason>"};
++    // legacy DRF bodies were a bare array or field-keyed lists — handle all
++    // defensively, generic fallback last.
++    const body = Array.isArray(data) ? { detail: data[0] } : data
++    const detail = body?.detail
++    scanError.value = body?.website_url?.[0]
+       || (Array.isArray(detail) ? detail.join(' ') : typeof detail === 'string' ? detail : '')
+-      || data?.non_field_errors?.[0]
++      || body?.non_field_errors?.[0]
+       || t('newbrand.scan.failed')
+   }
+ }
+ 
+-// Fields the user has typed into. Scan prefill never clobbers manual input,
+-// so it only fills fields that are untouched AND still empty (industry keeps
+-// its own guard in the candidates watch above).
++// Fields the user has typed into. Scan prefill never clobbers manual input.
+ const userEditedFields = new Set<string>()
+ 
++// QA4-new3e: fields the (last) scan filled. A rescan may refresh its own
++// detections — a previously scan-filled value is not user data — while
++// user-typed values are never clobbered (markUserEdited wins forever).
++const scanFilledFields = new Set<string>()
++
+ function markUserEdited(key: string) {
+   userEditedFields.add(key)
+ }
+ 
+ function applyScanResult(result: BrandScanResult) {
+   const detected = result.detected
+-  // Review-then-confirm (MOM 5.2): fill only untouched, still-empty fields;
+-  // the user reviews and can edit anything before submitting. Never auto-submit.
+-  const shouldFill = (key: string, current: string) => !userEditedFields.has(key) && !current.trim()
+-  if (detected.company_name.value && shouldFill('company_name', form.value.company_name)) {
+-    form.value.company_name = detected.company_name.value
+-  }
+-  if (detected.location.value && shouldFill('location', form.value.location)) {
+-    form.value.location = detected.location.value
+-  }
+-  const colors = detected.brand_colors.value
+-  if (colors?.length && shouldFill('brand_color', form.value.brand_color)) {
+-    form.value.brand_color = colors[0]
++  // Review-then-confirm (MOM 5.2): fill only untouched fields — still-empty
++  // ones and ones a previous scan filled (so a rescan updates its own
++  // detections instead of discarding them). User-edited fields always win.
++  // The user reviews and can edit anything before submitting. Never auto-submit.
++  const shouldFill = (key: string, current: string) =>
++    !userEditedFields.has(key) && (!current.trim() || scanFilledFields.has(key))
++  const fill = (key: string, value: string | null | undefined, current: () => string, assign: (v: string) => void) => {
++    if (!value || !shouldFill(key, current())) return
++    assign(value)
++    scanFilledFields.add(key)
+   }
+-  const profiles = detected.social_profiles.value
+-  if (profiles?.length) {
+-    for (const p of profiles) {
+-      if (p.platform in socialLinks.value && p.url && shouldFill(`social:${p.platform}`, socialLinks.value[p.platform])) {
+-        socialLinks.value[p.platform] = p.url
+-      }
+-    }
++  fill('company_name', detected.company_name.value,
++    () => form.value.company_name, (v) => { form.value.company_name = v })
++  fill('location', detected.location.value,
++    () => form.value.location, (v) => { form.value.location = v })
++  fill('brand_color', detected.brand_colors.value?.[0],
++    () => form.value.brand_color, (v) => { form.value.brand_color = v })
++  for (const p of detected.social_profiles.value ?? []) {
++    if (!(p.platform in socialLinks.value)) continue
++    fill(`social:${p.platform}`, p.url,
++      () => socialLinks.value[p.platform], (v) => { socialLinks.value[p.platform] = v })
+   }
+ }
+ 

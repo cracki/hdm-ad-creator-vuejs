@@ -1,0 +1,379 @@
+commit 61ed163d955fb59575ac60961b129abf067ea3c6
+Author: cracki <cracki@gmail.com>
+Date:   Wed Oct 7 15:00:11 2026 +0330
+
+    fix(qa4-N1): detail-shaped scan errors + standard DRF exception handler
+    
+    brand/views.py raised ValidationError(str(exc)) for scan failures so DRF
+    returned a bare JSON array body the frontend could not parse (generic
+    'Website scan failed' message). All 6 bare-string raises in scan/analyze
+    flows now raise ValidationError({'detail': ...}) (brand/views.py:184,321,
+    354,635,653). New core/exception_handler.py:qa_exception_handler
+    (wired via settings in the SEC commit) normalizes bare str/list bodies to
+    {'detail': ...} while preserving field-error dicts. Tests in
+    brand/tests_qa4_status_errors.py (12) also cover QA4-new1 serializer.
+
+diff --git a/django-backend/brand/tests_qa4_status_errors.py b/django-backend/brand/tests_qa4_status_errors.py
+new file mode 100644
+index 0000000..ccf9fe1
+--- /dev/null
++++ b/django-backend/brand/tests_qa4_status_errors.py
+@@ -0,0 +1,228 @@
++"""
++QA4 regression tests:
++
++- QA4-new1: ``BrandSerializer.has_completed_analysis`` stays True even when
++  the NEWEST analysis run is queued/failed, while ``analysis_status``
++  keeps reflecting the newest run.
++- QA4-N1: auto-scan failures return ``{"detail": "..."}`` object bodies
++  (not the bare JSON array DRF produces for plain-string ValidationErrors).
++- MOM item: ``core.exception_handler.qa_exception_handler`` normalizes bare
++  string/list DRF error bodies to ``{"detail": ...}`` and keeps field-error
++  dicts intact.
++"""
++
++from datetime import timedelta
++from unittest.mock import patch
++
++from django.test import SimpleTestCase
++from django.urls import reverse
++from django.utils import timezone
++from rest_framework import status
++from rest_framework.exceptions import ValidationError
++from rest_framework.test import APITestCase
++
++from authentication.models import User
++from brand.models import Brand, BrandAnalysisRun, Industry
++from brand.serializers import BrandSerializer
++from brand.services.auto_scan import AutoScanError, BrandAutoScanService
++from core.exception_handler import qa_exception_handler
++
++
++def _make_brand(created_by, name, url):
++    industry = Industry.objects.create(name=f"{name} Industry")
++    return Brand.objects.create(
++        website_url=url,
++        company_name=name,
++        selected_industry=industry,
++        created_by=created_by,
++    )
++
++
++def _make_run(brand, status_value, minutes_ago=0):
++    run = BrandAnalysisRun.objects.create(brand=brand, status=status_value)
++    if minutes_ago:
++        # created_at is auto_now_add, so pin it via queryset update to make
++        # the "newest run" ordering deterministic regardless of clock
++        # resolution (ordering is -created_at, -pk).
++        BrandAnalysisRun.objects.filter(pk=run.pk).update(
++            created_at=timezone.now() - timedelta(minutes=minutes_ago)
++        )
++    return run
++
++
++class HasCompletedAnalysisSerializerTests(APITestCase):
++    """QA4-new1: a newer queued/failed run must not hide a completed analysis."""
++
++    def setUp(self):
++        self.user = User.objects.create_user(
++            email="has-completed@example.com",
++            password="StrongPass123!",
++        )
++
++    def _serialize(self, brand):
++        return BrandSerializer(brand).data
++
++    def test_no_runs_means_false(self):
++        brand = _make_brand(
++            self.user, "No Runs Co", "https://no-runs.example.com"
++        )
++        data = self._serialize(brand)
++        self.assertFalse(data["has_completed_analysis"])
++        self.assertEqual(data["analysis_status"], "none")
++
++    def test_completed_run_means_true(self):
++        brand = _make_brand(
++            self.user, "Completed Co", "https://completed.example.com"
++        )
++        _make_run(
++            brand, BrandAnalysisRun.StatusChoices.COMPLETED, minutes_ago=5
++        )
++        data = self._serialize(brand)
++        self.assertTrue(data["has_completed_analysis"])
++        self.assertEqual(data["analysis_status"], "completed")
++
++    def test_newer_failed_run_hides_status_but_not_completed_flag(self):
++        brand = _make_brand(self.user, "Failed Co", "https://failed.example.com")
++        _make_run(
++            brand, BrandAnalysisRun.StatusChoices.COMPLETED, minutes_ago=30
++        )
++        _make_run(brand, BrandAnalysisRun.StatusChoices.FAILED, minutes_ago=1)
++
++        data = self._serialize(brand)
++        self.assertTrue(data["has_completed_analysis"])
++        # analysis_status still reflects the newest (failed) run.
++        self.assertEqual(data["analysis_status"], "failed")
++
++    def test_newer_pending_run_hides_status_but_not_completed_flag(self):
++        brand = _make_brand(
++            self.user, "Pending Co", "https://pending.example.com"
++        )
++        _make_run(
++            brand, BrandAnalysisRun.StatusChoices.COMPLETED, minutes_ago=30
++        )
++        _make_run(brand, BrandAnalysisRun.StatusChoices.PENDING, minutes_ago=1)
++
++        data = self._serialize(brand)
++        self.assertTrue(data["has_completed_analysis"])
++        self.assertEqual(data["analysis_status"], "pending")
++
++    def test_only_failed_run_means_false(self):
++        brand = _make_brand(
++            self.user, "Only Failed Co", "https://only-failed.example.com"
++        )
++        _make_run(brand, BrandAnalysisRun.StatusChoices.FAILED, minutes_ago=5)
++        data = self._serialize(brand)
++        self.assertFalse(data["has_completed_analysis"])
++        self.assertEqual(data["analysis_status"], "failed")
++
++    def test_list_endpoint_exposes_field(self):
++        brand = _make_brand(self.user, "List Co", "https://list.example.com")
++        _make_run(
++            brand, BrandAnalysisRun.StatusChoices.COMPLETED, minutes_ago=5
++        )
++        _make_run(brand, BrandAnalysisRun.StatusChoices.PENDING, minutes_ago=1)
++
++        self.client.force_authenticate(user=self.user)
++        response = self.client.get(reverse("brand-list"))
++        self.assertEqual(response.status_code, status.HTTP_200_OK)
++
++        results = (
++            response.data["results"]
++            if isinstance(response.data, dict) and "results" in response.data
++            else response.data
++        )
++        row = next(
++            item
++            for item in results
++            if item["brand_uuid"] == str(brand.brand_uuid)
++        )
++        self.assertTrue(row["has_completed_analysis"])
++        self.assertEqual(row["analysis_status"], "pending")
++
++
++class BrandAutoScanErrorBodyTests(APITestCase):
++    """QA4-N1: scan errors must produce a {"detail": ...} body."""
++
++    def setUp(self):
++        self.user = User.objects.create_user(
++            email="scan-error@example.com",
++            password="StrongPass123!",
++        )
++        self.client.force_authenticate(user=self.user)
++        self.scan_url = reverse("brand-auto-scan")
++
++    def test_auto_scan_error_returns_detail_object(self):
++        with patch.object(
++            BrandAutoScanService,
++            "run_auto_scan",
++            side_effect=AutoScanError(
++                "The website responded with HTTP 404; the page could not be scanned."
++            ),
++        ):
++            response = self.client.post(
++                self.scan_url,
++                {"website_url": "https://example.com"},
++                format="json",
++            )
++
++        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
++        # Body must be an object with `detail`, not a bare JSON array.
++        self.assertIsInstance(response.data, dict)
++        self.assertIn("detail", response.data)
++        self.assertIn("HTTP 404", str(response.data["detail"]))
++
++    def test_auto_scan_happy_path_unaffected(self):
++        payload = {"success": True, "detected": {}, "warnings": []}
++        with patch.object(
++            BrandAutoScanService,
++            "run_auto_scan",
++            return_value=payload,
++        ):
++            response = self.client.post(
++                self.scan_url,
++                {"website_url": "https://example.com"},
++                format="json",
++            )
++
++        self.assertEqual(response.status_code, status.HTTP_200_OK)
++        self.assertEqual(response.data, payload)
++
++
++class QAExceptionHandlerTests(SimpleTestCase):
++    """Unit tests for the shared exception handler (MOM item)."""
++
++    @staticmethod
++    def _context():
++        return {"view": None, "request": None, "args": (), "kwargs": {}}
++
++    def test_bare_string_validation_error_becomes_detail(self):
++        response = qa_exception_handler(
++            ValidationError("plain"), self._context()
++        )
++        self.assertIsNotNone(response)
++        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
++        self.assertEqual(response.data, {"detail": "plain"})
++
++    def test_bare_list_validation_error_becomes_joined_detail(self):
++        response = qa_exception_handler(
++            ValidationError(["first problem", "second problem"]),
++            self._context(),
++        )
++        self.assertIsNotNone(response)
++        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
++        self.assertEqual(
++            response.data, {"detail": "first problem; second problem"}
++        )
++
++    def test_field_error_dict_is_preserved(self):
++        response = qa_exception_handler(
++            ValidationError({"website_url": ["bad"]}), self._context()
++        )
++        self.assertIsNotNone(response)
++        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
++        self.assertEqual(response.data, {"website_url": ["bad"]})
++
++    def test_non_api_exception_returns_none(self):
++        self.assertIsNone(
++            qa_exception_handler(ValueError("boom"), self._context())
++        )
+diff --git a/django-backend/brand/views.py b/django-backend/brand/views.py
+index fb77683..e71b6a4 100644
+--- a/django-backend/brand/views.py
++++ b/django-backend/brand/views.py
+@@ -177,7 +177,11 @@ class BrandAutoScanView(APIView):
+                 website_url=request_serializer.validated_data["website_url"],
+             )
+         except AutoScanError as exc:
+-            raise ValidationError(str(exc))
++            # QA4-N1: wrap as {"detail": ...} so the response body is an
++            # object the frontend can read `data.detail` from, not a bare
++            # JSON array (DRF renders a plain-string ValidationError as a
++            # top-level list).
++            raise ValidationError({"detail": str(exc)})
+ 
+         return Response(payload)
+ 
+@@ -315,7 +319,7 @@ class BrandLogoAnalysisView(BrandAccessMixin, APIView):
+ 
+         if logo_asset is None:
+             raise ValidationError(
+-                "No logo asset found for this brand. Upload a logo asset first."
++                {"detail": "No logo asset found for this brand. Upload a logo asset first."}
+             )
+ 
+         if not logo_asset.analysis_data:
+@@ -348,13 +352,17 @@ class BrandSocialMediaAuditView(BrandAccessMixin, APIView):
+         )
+         if latest_completed_run is None:
+             raise ValidationError(
+-                "No completed analysis run found for this brand. Complete a full analysis run first."
++                {
++                    "detail": "No completed analysis run found for this brand. Complete a full analysis run first."
++                }
+             )
+ 
+         brand_profile = latest_completed_run.brand_profile
+         if not isinstance(brand_profile, dict) or not brand_profile:
+             raise ValidationError(
+-                "Completed analysis run does not contain a valid brand_profile payload."
++                {
++                    "detail": "Completed analysis run does not contain a valid brand_profile payload."
++                }
+             )
+ 
+         social_profiles = list(
+@@ -625,7 +633,9 @@ class BrandCompetitiveInsightsView(BrandAccessMixin, APIView):
+         )
+         if core_analysis is None:
+             raise ValidationError(
+-                "No core analysis found for this brand. Generate core analysis first."
++                {
++                    "detail": "No core analysis found for this brand. Generate core analysis first."
++                }
+             )
+ 
+         raw_names = list(
+@@ -641,7 +651,9 @@ class BrandCompetitiveInsightsView(BrandAccessMixin, APIView):
+ 
+         if not competitor_names:
+             raise ValidationError(
+-                "No competitors found for this brand. Identify or create competitors first."
++                {
++                    "detail": "No competitors found for this brand. Identify or create competitors first."
++                }
+             )
+ 
+         analyzer = CompetitorAnalyzer()
+diff --git a/django-backend/core/exception_handler.py b/django-backend/core/exception_handler.py
+new file mode 100644
+index 0000000..2c1e7da
+--- /dev/null
++++ b/django-backend/core/exception_handler.py
+@@ -0,0 +1,56 @@
++"""
++Shared DRF exception handler (QA4 MOM item).
++
++DRF renders ``ValidationError("some message")`` as a bare JSON array body
++(``["some message"]``) and ``ValidationError(["a", "b"])`` as a bare list
++body. Frontends that read ``data.detail`` then fall back to a generic
++error message, losing the real reason.
++
++This handler normalizes ONLY those confusing bare string/list bodies into
++``{"detail": ...}`` objects while leaving everything else untouched:
++
++- ``None`` responses (non-API exceptions) pass through so Django's
++  standard 500 handling proceeds unchanged.
++- Dict payloads (field errors like ``{"website_url": ["..."]}`` and
++  bodies that already carry ``detail``) are kept exactly as-is.
++- Status codes are preserved.
++
++Wire it in ``configuration/settings.py`` via::
++
++    REST_FRAMEWORK = {
++        ...,
++        "EXCEPTION_HANDLER": "core.exception_handler.qa_exception_handler",
++    }
++"""
++
++from rest_framework.views import exception_handler as drf_exception_handler
++
++
++def _as_detail_value(data):
++    """Collapse a bare string/list body into a single ``detail`` value."""
++    if isinstance(data, str):
++        return data
++    if isinstance(data, (list, tuple)):
++        if data and all(isinstance(item, str) for item in data):
++            return "; ".join(str(item) for item in data)
++        # Structured list (e.g. per-item errors from many=True
++        # serializers): keep the items intact, just move them under
++        # `detail` so no information is lost.
++        return list(data)
++    return data
++
++
++def qa_exception_handler(exc, context):
++    response = drf_exception_handler(exc, context)
++    if response is None:
++        # Not a DRF-handled API exception: defer to Django's 500 path.
++        return None
++
++    if isinstance(response.data, dict):
++        # Field-error payloads ({"website_url": ["..."]}) and bodies that
++        # already carry `detail` stay as-is; only bare string/list bodies
++        # are confusing to the frontend.
++        return response
++
++    response.data = {"detail": _as_detail_value(response.data)}
++    return response

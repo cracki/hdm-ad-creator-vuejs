@@ -1,0 +1,784 @@
+commit 8c155b8d25b4d8610f5d5a20d4ab864b10f88a9d
+Author: cracki <cracki@gmail.com>
+Date:   Wed Oct 7 15:02:04 2026 +0330
+
+    fix(qa4-img15): persona-specific funnel stage texts (AI tier + rotation fallback)
+    
+    The three hardcoded stage sentences (smart_funnel_engine.py:492,508,520)
+    made every persona's TOFU/MOFU/BOFU cards identical. Now:
+    - AI tier: one batched JSON call per persona (capped 4) generates
+      headline_angle/body_approach from that persona's pains/fears/goals;
+      15s timeout, malformed/empty -> fallback; FUNNEL_AI_TEXT=0 kill-switch.
+    - Deterministic tier: 4 distinct templates per stage (12 total) rotated
+      by persona index so two personas never share a template, each
+      referencing the persona's own pain/fear/goal.
+    - campaign/tests_qa4_funnel_texts.py: 12 tests (differentiation, prompt
+      content, fallback paths, kill-switch).
+
+diff --git a/django-backend/campaign/engines/smart_funnel_engine.py b/django-backend/campaign/engines/smart_funnel_engine.py
+index 3988245..bb3fa79 100644
+--- a/django-backend/campaign/engines/smart_funnel_engine.py
++++ b/django-backend/campaign/engines/smart_funnel_engine.py
+@@ -1,4 +1,7 @@
++import asyncio
++import json
+ import logging
++import os
+ from dataclasses import asdict, dataclass
+ from enum import Enum
+ from typing import Any, Dict, List, Optional
+@@ -9,6 +12,21 @@ from core.services.llm_handler import LLMHandler
+ 
+ logger = logging.getLogger(__name__)
+ 
++# ---------------------------------------------------------------------------
++# QA4-img15 — AI text tier for per-persona funnel stage messages.
++#
++# FUNNEL_AI_TEXT defaults to "1" (AI tier enabled); "0"/"false"/"no"/"off"
++# disables it so the deterministic template tier below is always used
++# (recommended for CI, offline runs, or when byte-identical funnel texts are
++# required). When enabled, the tier makes at most ONE batched JSON call per
++# persona and only for the first _FUNNEL_AI_MAX_PERSONAS personas of a build;
++# every failure (LLM error, timeout, malformed/incomplete JSON) falls back to
++# the deterministic templates.
++FUNNEL_AI_TEXT_ENV = "FUNNEL_AI_TEXT"
++_FUNNEL_AI_TRUTHY = {"1", "true", "yes", "on"}
++_FUNNEL_AI_MAX_PERSONAS = 4
++_FUNNEL_AI_TIMEOUT_SECONDS = 15.0
++
+ 
+ class FunnelStage(Enum):
+     TOFU = "tofu"
+@@ -28,6 +46,36 @@ class VisualStyle(Enum):
+     PRODUCT_FOCUSED = "product_focused"
+ 
+ 
++# Four DISTINCT deterministic body-approach templates per stage, rotated by
++# persona index (persona_index % 4) so two personas never share the same
++# sentence in a stage even with byte-identical profiles. Each template anchors
++# the persona's OWN pain/fear/goal differently (v0 pain, v1 fear, v2 pain
++# question/feature angle, v3 goal/insight angle). These replace the three old
++# one-size-fits-all sentences ("Storytelling that connects with ...",
++# "Features vs benefits with social proof ...", "Clear value proposition with
++# risk reversal ...") that every persona used to receive (QA4-img15).
++_STAGE_BODY_TEMPLATES = {
++    FunnelStage.TOFU: (
++        "Open with a story that mirrors how {pain} shows up in {name}'s week",
++        "Lead with the moment {fear} hits {name} hardest, before any product mention",
++        "Hook with the question {name} keeps asking about {pain} but never says out loud",
++        "Open on an insight that reframes {goal} as closer than {name} thinks",
++    ),
++    FunnelStage.MOFU: (
++        "Compare the options side by side and show which one actually dissolves {pain}",
++        "Pair testimonials with a direct answer to {name}'s worry about {fear}",
++        "Weigh features against outcomes, translating each into relief from {pain}",
++        "Anchor the case study on someone who reached {goal} and show what {name} can copy",
++    ),
++    FunnelStage.BOFU: (
++        "Present the offer as the fastest exit from {pain}, with the guarantee up front",
++        "Counter {fear} head-on with a money-back promise {name} can act on today",
++        "State the value proposition in {name}'s own words, tied directly to {pain}",
++        "Close with a deadline-bound path to {goal} so {name} has a reason to decide now",
++    ),
++}
++
++
+ @dataclass
+ class FunnelMessage:
+     stage: str
+@@ -185,10 +233,14 @@ class SmartFunnelEngine:
+             },
+         }
+ 
+-        # Step refinement (M-H18). This engine is deterministic (it never
+-        # calls the LLM), so there is no prompt to append the directive to;
+-        # the directive is persisted on the step's response_payload instead,
+-        # keeping the refinement request auditable. Empty feedback adds no key.
++        # Step refinement (M-H18). The engine is deterministic apart from the
++        # optional per-persona AI text tier (QA4-img15: at most one batched
++        # JSON call per persona, capped at four personas per build and
++        # kill-switched via FUNNEL_AI_TEXT; every failure path falls back to
++        # the deterministic templates), so there is no prompt to append the
++        # directive to; the directive is persisted on the step's
++        # response_payload instead, keeping the refinement request auditable.
++        # Empty feedback adds no key.
+         refinement_section = refinement_directive(
+             refinement_feedback, previous_summary
+         )
+@@ -360,6 +412,15 @@ class SmartFunnelEngine:
+         persona_name = persona.get("persona_name", "Unknown Persona")
+         dominant_stage = self._determine_dominant_stage(persona, research_insights)
+ 
++        # QA4-img15: one optional batched AI call per persona for the
++        # headline/body text; None (kill-switch off, over the per-build cap,
++        # or any AI failure) means the deterministic template tier below.
++        ai_stage_texts = await self._ai_stage_texts(
++            persona=persona,
++            persona_index=persona_index,
++            brand_profile=brand_profile,
++        )
++
+         messages = {}
+         for stage in FunnelStage:
+             messages[stage.value] = self._generate_stage_message(
+@@ -369,6 +430,7 @@ class SmartFunnelEngine:
+                 brand_profile=brand_profile,
+                 persona_index=persona_index,
+                 persona_count=persona_count,
++                ai_stage_texts=ai_stage_texts,
+             )
+ 
+         visual_directions = {}
+@@ -453,18 +515,33 @@ class SmartFunnelEngine:
+         brand_profile: Optional[Dict[str, Any]],
+         persona_index: int = 0,
+         persona_count: int = 1,
++        ai_stage_texts: Optional[Dict[str, Dict[str, str]]] = None,
+     ) -> FunnelMessage:
+         """
+-        Persona-aware stage message (QA BLOCKER: every persona used to get
+-        the identical sentence per stage, with no CTA/KPI/budget fields).
++        Persona-aware stage message (QA BLOCKER + QA4-img15: every persona
++        used to get the identical template sentence per stage).
+ 
+         The persona's own name, pains, fears and motivations seed the
+-        phrasing; pains/goals/fears and the CTA rotate deterministically by
+-        persona index, so two personas never share the same message text
+-        for a stage even when their segmentation profiles are identical.
+-        Per-entry ``cta`` (stage pool rotated by persona index), ``kpi``
+-        (from the stage config) and ``budget_share`` (even split of the
+-        stage budget across the included personas) are additive fields.
++        phrasing; pains/goals/fears, the body-approach template and the CTA
++        rotate deterministically by persona index, so two personas never
++        share the same message text for a stage even when their segmentation
++        profiles are identical. Per-entry ``cta`` (stage pool rotated by
++        persona index), ``kpi`` (from the stage config) and ``budget_share``
++        (even split of the stage budget across the included personas) are
++        additive fields.
++
++        Two tiers feed headline_angle / body_approach:
++        - AI tier (default on, kill-switched by FUNNEL_AI_TEXT): one batched
++          JSON call per persona returns per-stage headline_angle and
++          body_approach derived from that persona's pains/fears/goals and
++          the brand context (see ``_ai_stage_texts``).
++        - Deterministic tier (fallback, always available): four DISTINCT
++          body-approach templates per stage (``_STAGE_BODY_TEMPLATES``),
++          picked by ``persona_index % 4``, each anchoring the persona's own
++          pain, fear or goal differently. The three old one-size-fits-all
++          sentences are gone.
++        The remaining fields (emotional trigger, objection, proof type,
++        CTA/KPI/budget) stay deterministic in both tiers.
+         """
+         config = self.stage_configs[stage]
+         hooks = self._persona_message_hooks(persona, persona_index)
+@@ -488,9 +565,6 @@ class SmartFunnelEngine:
+                 research_insights.get("emotional_triggers"), "curiosity"
+             )
+             headline_angle = f"Problem Awareness / Curiosity for {name}: {pain}"
+-            body_approach = (
+-                f"Storytelling that connects with {name}'s fear of {fear}"
+-            )
+             objection = (
+                 f"They don't know they have a problem — {name} hasn't named "
+                 f"{pain} yet"
+@@ -504,9 +578,6 @@ class SmartFunnelEngine:
+                 research_insights.get("objections"), "uncertainty"
+             )
+             headline_angle = f"Solution Comparison / Benefits for {name}: {goal}"
+-            body_approach = (
+-                f"Features vs benefits with social proof, framed around {pain}"
+-            )
+             objection = f"{objection_source} — {name} weighs it against {goal}"
+             proof_type = (
+                 f"Testimonials and case studies matching {name}'s situation"
+@@ -516,9 +587,6 @@ class SmartFunnelEngine:
+                 research_insights.get("post_purchase_emotions"), "relief"
+             )
+             headline_angle = f"Direct Offer / Urgency for {name}: act on {goal}"
+-            body_approach = (
+-                f"Clear value proposition with risk reversal — remove {pain}"
+-            )
+             objection = (
+                 f"Price or commitment hesitation — {name} needs a reason to "
+                 f"decide now"
+@@ -527,6 +595,19 @@ class SmartFunnelEngine:
+                 f"Guarantees and specific results that de-risk {name}'s decision"
+             )
+ 
++        # QA4-img15: body_approach comes from one of four per-stage templates
++        # rotated by persona index (never the three old shared sentences).
++        templates = _STAGE_BODY_TEMPLATES[stage]
++        body_approach = templates[persona_index % len(templates)].format(
++            name=name, pain=pain, goal=goal, fear=fear
++        )
++
++        # AI tier wins when it produced usable text for this stage.
++        ai_text = (ai_stage_texts or {}).get(stage.value)
++        if ai_text:
++            headline_angle = ai_text["headline_angle"]
++            body_approach = ai_text["body_approach"]
++
+         return FunnelMessage(
+             stage=stage.value,
+             headline_angle=headline_angle,
+@@ -541,6 +622,189 @@ class SmartFunnelEngine:
+             budget_share=self._even_budget_share(persona_index, persona_count),
+         )
+ 
++    @staticmethod
++    def _ai_texts_enabled() -> bool:
++        """
++        Kill-switch for the AI text tier (QA4-img15). FUNNEL_AI_TEXT is
++        "1" by default (tier enabled; every failure still degrades to the
++        deterministic templates). Set FUNNEL_AI_TEXT=0 (or false/no/off)
++        to force the deterministic template tier — recommended for CI,
++        offline runs, or when byte-identical funnel texts are required.
++        """
++        return os.getenv(FUNNEL_AI_TEXT_ENV, "1").strip().lower() in (
++            _FUNNEL_AI_TRUTHY
++        )
++
++    async def _ai_stage_texts(
++        self,
++        persona: Dict[str, Any],
++        persona_index: int,
++        brand_profile: Optional[Dict[str, Any]],
++    ) -> Optional[Dict[str, Dict[str, str]]]:
++        """
++        AI tier (QA4-img15): ONE batched JSON call per persona covering all
++        three stages, capped at the first ``_FUNNEL_AI_MAX_PERSONAS``
++        personas of a funnel build (cost guard). Any failure — kill-switch
++        off, over the cap, LLM error, timeout, malformed or incomplete
++        JSON — returns None so the caller uses the deterministic template
++        tier instead. This method never raises.
++        """
++        if not self._ai_texts_enabled():
++            return None
++        if persona_index >= _FUNNEL_AI_MAX_PERSONAS:
++            return None
++        try:
++            prompt = self._build_ai_texts_prompt(persona, brand_profile)
++            llm_result = await asyncio.wait_for(
++                self.llm_handler._call_llm(
++                    prompt=prompt,
++                    system_message=(
++                        "You are a senior performance marketer writing ad "
++                        "funnel messaging. Return ONLY valid JSON."
++                    ),
++                    temperature=0.7,
++                ),
++                timeout=_FUNNEL_AI_TIMEOUT_SECONDS,
++            )
++        except Exception as exc:
++            logger.info(
++                "Funnel AI text tier unavailable for persona index %d (%s); "
++                "using deterministic templates: %s",
++                persona_index,
++                persona.get("persona_name", "Unknown Persona"),
++                exc,
++            )
++            return None
++        parsed = self._parse_ai_stage_texts(llm_result.get("content", ""))
++        if parsed is None:
++            logger.info(
++                "Funnel AI text tier returned unusable JSON for persona "
++                "index %d (%s); using deterministic templates.",
++                persona_index,
++                persona.get("persona_name", "Unknown Persona"),
++            )
++        return parsed
++
++    def _build_ai_texts_prompt(
++        self,
++        persona: Dict[str, Any],
++        brand_profile: Optional[Dict[str, Any]],
++    ) -> str:
++        """
++        Prompt for the AI text tier (QA4-img15). Embeds this persona's own
++        pains, goals, fears and motivations plus the brand context already
++        available to the engine, so the returned headline_angle /
++        body_approach are persona-specific. The literal phrase
++        "Return ONLY valid JSON" also switches the LLM handler into JSON
++        response mode.
++        """
++
++        def _clean(values: Any) -> List[str]:
++            if values is None:
++                return []
++            if isinstance(values, str):
++                values = [values]
++            return [
++                str(value).strip()
++                for value in values
++                if value is not None and str(value).strip()
++            ]
++
++        pain_points = persona.get("pain_points")
++        if isinstance(pain_points, dict):
++            pains = _clean(pain_points.get("emotional_pains")) + _clean(
++                pain_points.get("functional_pains")
++            )
++        elif isinstance(pain_points, list):
++            pains = _clean(pain_points)
++        else:
++            pains = []
++
++        goals_source = persona.get("goals_motivations")
++        if isinstance(goals_source, dict):
++            goals = _clean([goals_source.get("primary_goal")]) + _clean(
++                goals_source.get("secondary_goals")
++            )
++            fears = _clean(goals_source.get("fears_anti_goals"))
++        elif isinstance(goals_source, list):
++            goals = _clean(goals_source)
++            fears = []
++        else:
++            goals = []
++            fears = []
++
++        name = str(persona.get("persona_name") or "").strip() or "this audience"
++
++        brand_bits: List[str] = []
++        if isinstance(brand_profile, dict):
++            for key, value in brand_profile.items():
++                if isinstance(value, (str, int, float)) and str(value).strip():
++                    brand_bits.append(f"{key}: {value}")
++        brand_context = "; ".join(brand_bits[:12]) if brand_bits else "Not provided"
++
++        return (
++            "Return ONLY valid JSON for funnel stage messaging for ONE "
++            "customer persona.\n\n"
++            f"Persona name: {name}\n"
++            f"Pain points: {'; '.join(pains) if pains else '(none provided)'}\n"
++            "Goals and motivations: "
++            f"{'; '.join(goals) if goals else '(none provided)'}\n"
++            "Fears and anti-goals: "
++            f"{'; '.join(fears) if fears else '(none provided)'}\n"
++            f"Brand context: {brand_context}\n\n"
++            "For each of the three stages \"tofu\" (awareness), \"mofu\" "
++            "(consideration) and \"bofu\" (conversion) write:\n"
++            "- \"headline_angle\": one sentence (max 90 characters) naming "
++            "the ad angle for that stage, built from THIS persona's own "
++            "pains, fears and goals; always mention the persona name.\n"
++            "- \"body_approach\": one sentence (max 140 characters) "
++            "describing how the ad body should speak to this persona in "
++            "that stage, referencing their specific pain, fear or goal.\n\n"
++            "JSON shape:\n"
++            '{"tofu": {"headline_angle": "...", "body_approach": "..."}, '
++            '"mofu": {"headline_angle": "...", "body_approach": "..."}, '
++            '"bofu": {"headline_angle": "...", "body_approach": "..."}}'
++        )
++
++    @staticmethod
++    def _parse_ai_stage_texts(content: Any) -> Optional[Dict[str, Dict[str, str]]]:
++        """
++        Parse + validate the AI tier response (QA4-img15). Returns per-stage
++        {"headline_angle", "body_approach"} only when ALL three stages carry
++        non-empty text for both fields; anything else (prose, markdown
++        fences, missing stages, empty strings, non-JSON) returns None so the
++        caller falls back to the deterministic templates.
++        """
++        if content is None:
++            return None
++        text = str(content).strip()
++        if not text:
++            return None
++        if text.startswith("```"):
++            text = text[3:]
++            newline = text.find("\n")
++            if newline != -1:
++                text = text[newline + 1 :]
++            if text.rstrip().endswith("```"):
++                text = text.rstrip()[:-3]
++        try:
++            data = json.loads(text)
++        except (TypeError, ValueError):
++            return None
++        if not isinstance(data, dict):
++            return None
++        parsed: Dict[str, Dict[str, str]] = {}
++        for stage in ("tofu", "mofu", "bofu"):
++            entry = data.get(stage)
++            if not isinstance(entry, dict):
++                return None
++            headline = str(entry.get("headline_angle") or "").strip()
++            body = str(entry.get("body_approach") or "").strip()
++            if not headline or not body:
++                return None
++            parsed[stage] = {"headline_angle": headline, "body_approach": body}
++        return parsed
++
+     def _persona_message_hooks(
+         self, persona: Dict[str, Any], persona_index: int
+     ) -> Dict[str, str]:
+diff --git a/django-backend/campaign/tests_qa4_funnel_texts.py b/django-backend/campaign/tests_qa4_funnel_texts.py
+new file mode 100644
+index 0000000..5700892
+--- /dev/null
++++ b/django-backend/campaign/tests_qa4_funnel_texts.py
+@@ -0,0 +1,365 @@
++"""QA4-img15 regression tests: per-persona funnel stage texts.
++
++The smart-funnel engine used to hand every persona the identical template
++sentence per stage ("Storytelling that connects with ...", "Features vs
++benefits with social proof ...", "Clear value proposition with risk
++reversal ..."). These tests pin the two-tier replacement:
++
++- Deterministic tier (FUNNEL_AI_TEXT=0, over the per-build AI cap, or any
++  AI failure): four DISTINCT per-stage body-approach templates rotated by
++  persona index, each seeded with the persona's own pain/fear/goal.
++- AI tier (FUNNEL_AI_TEXT=1, the default): ONE batched JSON call per
++  persona whose headline_angle/body_approach override the deterministic
++  text, with graceful fallback on any failure.
++
++Only the deterministic tier runs in these tests' fallback cases because the
++LLM key is a dummy: the handler call fails (or is mocked) and the engine
++falls back without raising.
++"""
++
++import asyncio
++import json
++import os
++from dataclasses import asdict
++from itertools import combinations
++from unittest.mock import AsyncMock, patch
++
++from django.test import SimpleTestCase
++
++from campaign.engines.smart_funnel_engine import (
++    FUNNEL_AI_TEXT_ENV,
++    FunnelStage,
++    SmartFunnelEngine,
++)
++
++# Substrings of the three retired one-size-fits-all sentences (QA4-img15).
++OLD_TOFU_SENTENCE = "Storytelling that connects with"
++OLD_MOFU_SENTENCE = "Features vs benefits with social proof"
++OLD_BOFU_SENTENCE = "Clear value proposition with risk reversal"
++OLD_SENTENCE_MARKERS = (OLD_TOFU_SENTENCE, OLD_MOFU_SENTENCE, OLD_BOFU_SENTENCE)
++
++PERSONA_STELLA = {
++    "persona_name": "Solo Stella",
++    "goals_motivations": {
++        "primary_goal": "Book more clients without discounting",
++        "secondary_goals": ["Look professional online"],
++        "fears_anti_goals": ["Wasting evenings on admin"],
++    },
++    "pain_points": {
++        "emotional_pains": ["Pricing confusion"],
++        "functional_pains": ["Quotes take hours to write"],
++    },
++    "behavioral_traits": {
++        "purchasing_behavior": "does heavy research",
++        "brand_loyalty": "low",
++    },
++}
++
++PERSONA_MARCUS = {
++    "persona_name": "Ops Marcus",
++    "goals_motivations": {
++        "primary_goal": "Keep every job on schedule",
++        "secondary_goals": ["Cut paperwork for the crew"],
++        "fears_anti_goals": ["Losing repeat customers"],
++    },
++    "pain_points": {
++        "emotional_pains": ["Chaos when jobs overlap"],
++        "functional_pains": ["Double data entry"],
++    },
++    "behavioral_traits": {
++        "purchasing_behavior": "quick decisive buyer",
++        "brand_loyalty": "high",
++    },
++}
++
++
++def _persona_variant(base, name, pain):
++    persona = json.loads(json.dumps(base))
++    persona["persona_name"] = name
++    persona["pain_points"]["emotional_pains"] = [pain]
++    return persona
++
++
++class FunnelFallbackPersonaTextTests(SimpleTestCase):
++    """Deterministic tier (QA4-img15): with the AI text tier switched off,
++    the engine must rotate four DISTINCT per-stage templates seeded with
++    each persona's own pains/fears/goals — never the three old shared
++    sentences.
++    """
++
++    def setUp(self):
++        env = patch.dict(
++            os.environ,
++            {"OPENAI_API_KEY": "test-key", FUNNEL_AI_TEXT_ENV: "0"},
++        )
++        env.start()
++        self.addCleanup(env.stop)
++        self.engine = SmartFunnelEngine()
++
++    def _profiles(self, personas):
++        result = asyncio.run(
++            self.engine.generate_funnel_context(personas, [])
++        )
++        self.assertTrue(result["success"])
++        return result["funnel_context"]["persona_profiles"]
++
++    def test_tofu_body_approaches_differ_and_carry_own_pain_or_fear(self):
++        profiles = self._profiles([PERSONA_STELLA, PERSONA_MARCUS])
++        bodies = [
++            profile["messages"]["tofu"]["body_approach"] for profile in profiles
++        ]
++        self.assertNotEqual(bodies[0], bodies[1])
++        # Persona 0 lands on the pain-anchored template, persona 1 on the
++        # fear-anchored one — each carries its OWN token, never the other
++        # persona's.
++        self.assertIn("Pricing confusion", bodies[0])
++        self.assertNotIn("Chaos when jobs overlap", bodies[0])
++        self.assertIn("Losing repeat customers", bodies[1])
++        self.assertNotIn("Pricing confusion", bodies[1])
++
++    def test_no_stage_body_is_one_of_the_three_old_shared_sentences(self):
++        profiles = self._profiles([PERSONA_STELLA, PERSONA_MARCUS])
++        for profile in profiles:
++            for stage in ("tofu", "mofu", "bofu"):
++                body = profile["messages"][stage]["body_approach"]
++                for marker in OLD_SENTENCE_MARKERS:
++                    self.assertNotIn(
++                        marker,
++                        body,
++                        f"{stage} body_approach resurrects an old shared "
++                        f"sentence: {body}",
++                    )
++
++    def test_every_stage_text_is_nonempty_and_distinct_per_persona(self):
++        profiles = self._profiles([PERSONA_STELLA, PERSONA_MARCUS])
++        for profile in profiles:
++            bodies = [
++                profile["messages"][stage]["body_approach"]
++                for stage in ("tofu", "mofu", "bofu")
++            ]
++            headlines = [
++                profile["messages"][stage]["headline_angle"]
++                for stage in ("tofu", "mofu", "bofu")
++            ]
++            for text in bodies + headlines:
++                self.assertTrue(str(text).strip(), "stage text is empty")
++            for text_a, text_b in combinations(bodies, 2):
++                self.assertNotEqual(text_a, text_b)
++            for text_a, text_b in combinations(headlines, 2):
++                self.assertNotEqual(text_a, text_b)
++
++    def test_persona_index_zero_gets_pain_anchored_template_per_stage(self):
++        # The rotation is deterministic: persona 0 lands on template v0 in
++        # every stage, and v0 always anchors the persona's own pain.
++        profile = self._profiles([PERSONA_STELLA])[0]
++        for stage in ("tofu", "mofu", "bofu"):
++            self.assertIn(
++                "Pricing confusion",
++                profile["messages"][stage]["body_approach"],
++            )
++
++    def test_template_rotation_covers_four_distinct_personas(self):
++        # Four personas with identical profiles (name excepted) exercise all
++        # four template slots per stage: every body must still be distinct.
++        roster = [
++            _persona_variant(PERSONA_STELLA, f"Persona {index}", "Pricing confusion")
++            for index in range(4)
++        ]
++        profiles = self._profiles(roster)
++        for stage in ("tofu", "mofu", "bofu"):
++            bodies = [
++                profile["messages"][stage]["body_approach"]
++                for profile in profiles
++            ]
++            self.assertEqual(
++                len(set(bodies)),
++                4,
++                f"{stage} rotation produced fewer than four distinct texts",
++            )
++
++    def test_identical_personas_still_get_different_template_texts(self):
++        twin = json.loads(json.dumps(PERSONA_STELLA))
++        profiles = self._profiles([PERSONA_STELLA, twin])
++        for stage in ("tofu", "mofu", "bofu"):
++            self.assertNotEqual(
++                profiles[0]["messages"][stage]["body_approach"],
++                profiles[1]["messages"][stage]["body_approach"],
++                f"{stage} body_approach is shared between identical personas",
++            )
++
++
++class FunnelAITextTierTests(SimpleTestCase):
++    """AI tier (QA4-img15): one batched JSON call per persona (capped at
++    four per build) overrides headline_angle/body_approach for all three
++    stages; any failure or malformed JSON falls back without raising.
++    """
++
++    def setUp(self):
++        env = patch.dict(
++            os.environ,
++            {"OPENAI_API_KEY": "test-key", FUNNEL_AI_TEXT_ENV: "1"},
++        )
++        env.start()
++        self.addCleanup(env.stop)
++        self.engine = SmartFunnelEngine()
++
++    @staticmethod
++    def _ai_content(name):
++        return json.dumps(
++            {
++                "tofu": {
++                    "headline_angle": f"AI TOFU angle for {name}",
++                    "body_approach": f"AI TOFU body about Pricing confusion for {name}",
++                },
++                "mofu": {
++                    "headline_angle": f"AI MOFU angle for {name}",
++                    "body_approach": f"AI MOFU body comparing options against Pricing confusion for {name}",
++                },
++                "bofu": {
++                    "headline_angle": f"AI BOFU angle for {name}",
++                    "body_approach": f"AI BOFU body closing {name} today despite Pricing confusion",
++                },
++            }
++        )
++
++    def test_ai_texts_override_all_three_stages_and_prompt_names_the_pain(self):
++        payload = json.loads(self._ai_content("Solo Stella"))
++        llm_mock = AsyncMock(return_value={"content": json.dumps(payload)})
++        with patch.object(self.engine.llm_handler, "_call_llm", llm_mock):
++            result = asyncio.run(
++                self.engine.generate_funnel_context([PERSONA_STELLA], [])
++            )
++
++        self.assertTrue(result["success"])
++        profile = result["funnel_context"]["persona_profiles"][0]
++        for stage in ("tofu", "mofu", "bofu"):
++            message = profile["messages"][stage]
++            self.assertEqual(
++                message["headline_angle"], payload[stage]["headline_angle"]
++            )
++            self.assertEqual(
++                message["body_approach"], payload[stage]["body_approach"]
++            )
++            # The AI text carries the persona's own pain from the prompt.
++            self.assertIn("Pricing confusion", message["body_approach"])
++
++        # Exactly ONE batched call per persona covers all three stages.
++        self.assertEqual(llm_mock.await_count, 1)
++        prompt = llm_mock.call_args.kwargs["prompt"]
++        self.assertIn("Solo Stella", prompt)
++        self.assertIn("Pricing confusion", prompt)
++
++    def test_ai_makes_one_call_per_persona_and_caps_at_four(self):
++        roster = [
++            _persona_variant(PERSONA_STELLA, f"Persona {index}", "Pricing confusion")
++            for index in range(4)
++        ]
++        fifth = _persona_variant(PERSONA_STELLA, "Persona 4", "Slow invoicing")
++        roster.append(fifth)
++
++        llm_mock = AsyncMock(
++            return_value={"content": self._ai_content("Solo Stella")}
++        )
++        with patch.object(self.engine.llm_handler, "_call_llm", llm_mock):
++            result = asyncio.run(
++                self.engine.generate_funnel_context(roster, [])
++            )
++
++        # One call per persona, hard-capped at four per funnel build.
++        self.assertEqual(llm_mock.await_count, 4)
++        profiles = result["funnel_context"]["persona_profiles"]
++        for index in range(4):
++            self.assertEqual(
++                profiles[index]["messages"]["tofu"]["body_approach"],
++                "AI TOFU body about Pricing confusion for Solo Stella",
++            )
++        # Persona 5 is over the cap: deterministic template tier, seeded
++        # with her own pain, not the mocked AI text.
++        fifth_body = profiles[4]["messages"]["tofu"]["body_approach"]
++        self.assertNotIn("AI TOFU body", fifth_body)
++        self.assertIn("Slow invoicing", fifth_body)
++
++    def test_ai_malformed_json_falls_back_to_deterministic_templates(self):
++        llm_mock = AsyncMock(
++            return_value={"content": "Sorry, here is prose instead of JSON."}
++        )
++        with patch.object(self.engine.llm_handler, "_call_llm", llm_mock):
++            result = asyncio.run(
++                self.engine.generate_funnel_context([PERSONA_STELLA], [])
++            )
++
++        self.assertTrue(result["success"])
++        profile = result["funnel_context"]["persona_profiles"][0]
++        expected = self.engine._generate_stage_message(
++            stage=FunnelStage.TOFU,
++            persona=PERSONA_STELLA,
++            research_insights=self.engine._get_default_research_insights(),
++            brand_profile=None,
++            persona_index=0,
++            persona_count=1,
++        )
++        self.assertEqual(
++            profile["messages"]["tofu"], asdict(expected)
++        )
++        self.assertIn(
++            "Pricing confusion", profile["messages"]["tofu"]["body_approach"]
++        )
++        self.assertEqual(llm_mock.await_count, 1)
++
++    def test_ai_empty_or_partial_fields_fall_back(self):
++        for broken_content in (
++            json.dumps(
++                {
++                    "tofu": {"headline_angle": "", "body_approach": "x"},
++                    "mofu": {"headline_angle": "a", "body_approach": "b"},
++                    "bofu": {"headline_angle": "c", "body_approach": "d"},
++                }
++            ),
++            json.dumps({"tofu": {"headline_angle": "a", "body_approach": "b"}}),
++        ):
++            llm_mock = AsyncMock(return_value={"content": broken_content})
++            with patch.object(self.engine.llm_handler, "_call_llm", llm_mock):
++                result = asyncio.run(
++                    self.engine.generate_funnel_context([PERSONA_STELLA], [])
++                )
++            self.assertTrue(result["success"])
++            profile = result["funnel_context"]["persona_profiles"][0]
++            for stage in ("tofu", "mofu", "bofu"):
++                self.assertIn(
++                    "Pricing confusion",
++                    profile["messages"][stage]["body_approach"],
++                )
++
++    def test_ai_failure_falls_back_without_raising(self):
++        llm_mock = AsyncMock(side_effect=RuntimeError("LLM provider down"))
++        with patch.object(self.engine.llm_handler, "_call_llm", llm_mock):
++            result = asyncio.run(
++                self.engine.generate_funnel_context([PERSONA_STELLA], [])
++            )
++
++        self.assertTrue(result["success"])
++        profile = result["funnel_context"]["persona_profiles"][0]
++        for stage in ("tofu", "mofu", "bofu"):
++            self.assertIn(
++                "Pricing confusion",
++                profile["messages"][stage]["body_approach"],
++            )
++        self.assertEqual(llm_mock.await_count, 1)
++
++    def test_kill_switch_off_skips_the_llm_call(self):
++        llm_mock = AsyncMock(
++            return_value={"content": self._ai_content("Solo Stella")}
++        )
++        env = patch.dict(os.environ, {FUNNEL_AI_TEXT_ENV: "0"})
++        env.start()
++        self.addCleanup(env.stop)
++        with patch.object(self.engine.llm_handler, "_call_llm", llm_mock):
++            result = asyncio.run(
++                self.engine.generate_funnel_context([PERSONA_STELLA], [])
++            )
++
++        self.assertEqual(llm_mock.await_count, 0)
++        profile = result["funnel_context"]["persona_profiles"][0]
++        tofu_body = profile["messages"]["tofu"]["body_approach"]
++        self.assertIn("Pricing confusion", tofu_body)
++        self.assertNotIn("AI TOFU body", tofu_body)

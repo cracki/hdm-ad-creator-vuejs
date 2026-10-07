@@ -1,0 +1,159 @@
+commit fdbedaf063e789d6befc36a91399bf52998f6ed0
+Author: cracki <cracki@gmail.com>
+Date:   Wed Oct 7 16:57:44 2026 +0330
+
+    fix(qa4-t4-2): quick-add clears input immediately and locks it during the check
+    
+    Client test-4 bug 2: pressing Enter twice quickly merged two services
+    into one label ('AC CleaningHandyman Services') because the input was
+    only cleared AFTER the async relatedness check and had no re-entry
+    guard. Now: addService clears the input at submit time and ignores
+    re-entry while checkPending; the input is disabled during the check;
+    the force-add flow is preserved (on an unrelated verdict the typed name
+    is restored and the warning survives it — the watcher no longer clears
+    a warning whose pending name is still in the input).
+    ServiceSelector.test.ts: +3 QA4 tests (14 total, all green).
+
+diff --git a/src/shared/components/ServiceSelector.test.ts b/src/shared/components/ServiceSelector.test.ts
+index 75ba1ea..f6ccdce 100644
+--- a/src/shared/components/ServiceSelector.test.ts
++++ b/src/shared/components/ServiceSelector.test.ts
+@@ -156,3 +156,84 @@ describe('ServiceSelector — unrelated-service warning', () => {
+     expect(emittedNames(wrapper).at(-1)).toEqual(['Branding'])
+   })
+ })
++
++// ── QA4 (client test-4 bug 2): rapid Enter merged two services into one label ──
++
++describe('ServiceSelector — quick-add merge guard (QA4)', () => {
++  beforeEach(() => {
++    vi.clearAllMocks()
++  })
++
++  it('clears the input immediately on submit so a second Enter cannot merge two services', async () => {
++    let resolveCheck: (value: { data: { related: boolean } }) => void = () => {}
++    let firstCall = true
++    vi.mocked(brandsApi.checkServiceRelatedness).mockImplementation(() => {
++      if (firstCall) {
++        firstCall = false
++        return new Promise((resolve) => { resolveCheck = resolve })
++      }
++      return Promise.resolve({ data: { related: true } })
++    })
++    const wrapper = mountSelector([], { brandUuid: 'b1' })
++    const field = wrapper.find('[data-testid="service-add-input"]')
++
++    await field.setValue('AC Cleaning')
++    await field.trigger('keydown.enter')
++    // while the check is in flight the input must already be empty and locked
++    expect((field.element as HTMLInputElement).value).toBe('')
++    expect((field.element as HTMLInputElement).disabled).toBe(true)
++
++    resolveCheck({ data: { related: true } })
++    await flushPromises()
++
++    // the user now types the second service fresh (the stale text is gone)
++    await field.setValue('Handyman Services')
++    await field.trigger('keydown.enter')
++    await flushPromises()
++
++    const chipTexts = wrapper.findAll('[data-testid="service-chip"]').map((c) => c.text())
++    expect(chipTexts.some((text) => text.includes('AC Cleaning'))).toBe(true)
++    expect(chipTexts.some((text) => text.includes('Handyman Services'))).toBe(true)
++    expect(chipTexts.some((text) => text.includes('AC CleaningHandyman Services'))).toBe(false)
++  })
++
++  it('blocks re-entry while a relatedness check is pending (no second submit mid-check)', async () => {
++    let resolveCheck: (value: { data: { related: boolean } }) => void = () => {}
++    vi.mocked(brandsApi.checkServiceRelatedness).mockImplementation(
++      () => new Promise((resolve) => { resolveCheck = resolve }),
++    )
++    const wrapper = mountSelector([], { brandUuid: 'b1' })
++
++    await wrapper.find('[data-testid="service-add-input"]').setValue('AC Cleaning')
++    await wrapper.find('[data-testid="service-add-input"]').trigger('keydown.enter')
++    // second Enter while pending must be a no-op
++    await wrapper.find('[data-testid="service-add-input"]').trigger('keydown.enter')
++
++    resolveCheck({ data: { related: true } })
++    await flushPromises()
++
++    expect(brandsApi.checkServiceRelatedness).toHaveBeenCalledTimes(1)
++    expect(emittedNames(wrapper)?.length ?? 0).toBeLessThanOrEqual(1)
++  })
++
++  it('restores the typed name when the check warns, so the force-add second submit still works', async () => {
++    vi.mocked(brandsApi.checkServiceRelatedness).mockResolvedValue({
++      data: { related: false },
++    })
++    const wrapper = mountSelector([], { brandUuid: 'b1' })
++    const field = wrapper.find('[data-testid="service-add-input"]')
++
++    await field.setValue('Car Engine Repair')
++    await field.trigger('keydown.enter')
++    await flushPromises()
++
++    expect(wrapper.find('[data-testid="service-warning"]').exists()).toBe(true)
++    expect((field.element as HTMLInputElement).value).toBe('Car Engine Repair')
++
++    await field.trigger('keydown.enter')
++    await flushPromises()
++
++    expect(emittedNames(wrapper).at(-1)).toEqual(['Car Engine Repair'])
++    expect(brandsApi.checkServiceRelatedness).toHaveBeenCalledTimes(1)
++  })
++})
+diff --git a/src/shared/components/ServiceSelector.vue b/src/shared/components/ServiceSelector.vue
+index 707204c..7d2bc38 100644
+--- a/src/shared/components/ServiceSelector.vue
++++ b/src/shared/components/ServiceSelector.vue
+@@ -63,13 +63,21 @@ const checkPending = ref(false)
+ const unrelatedWarning = ref('')
+ const warnedName = ref('')
+ 
+-watch(newName, () => {
+-  unrelatedWarning.value = ''
++watch(newName, (value) => {
++  // Keep the warning while the input holds the warned pending name (it is
++  // programmatically restored for the force-add second submit).
++  if (value.trim().toLowerCase() !== warnedName.value) {
++    unrelatedWarning.value = ''
++  }
+ })
+ 
+ function addService() {
+   const name = newName.value.trim()
+-  if (!name || props.disabled) return
++  // QA4 (test-4 bug 2): re-entry guard + immediate clear — while the
++  // relatedness check is in flight the input must be empty, otherwise a
++  // second Enter concatenates the stale text into one merged label.
++  if (!name || props.disabled || checkPending.value) return
++  newName.value = ''
+   commitAdd(name)
+ }
+ 
+@@ -83,6 +91,7 @@ async function commitAdd(name: string) {
+       if (res?.data?.related === false) {
+         warnedName.value = name.toLowerCase()
+         unrelatedWarning.value = t('serviceSelector.unrelatedWarning')
++        newName.value = name // restore so the second submit force-adds
+         return // first submit only warns — a second click force-adds
+       }
+     } catch {
+@@ -98,7 +107,6 @@ async function commitAdd(name: string) {
+   if (!options.value.some((s) => s.name === name)) {
+     customNames.value.push(name)
+   }
+-  newName.value = ''
+ }
+ </script>
+ 
+@@ -156,7 +164,7 @@ async function commitAdd(name: string) {
+     <div class="flex items-center gap-2">
+       <input
+         v-model="newName"
+-        :disabled="disabled"
++        :disabled="disabled || checkPending"
+         :placeholder="t('serviceSelector.addPlaceholder')"
+         class="flex-1 min-w-0 h-10 px-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm placeholder:text-muted-foreground/60 outline-none focus:border-primary/60 transition disabled:opacity-50"
+         data-testid="service-add-input"

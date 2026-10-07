@@ -1,0 +1,352 @@
+commit d1d7c39dfad82dea744baee58b3b6ade7982680c
+Author: cracki <cracki@gmail.com>
+Date:   Wed Oct 7 15:00:43 2026 +0330
+
+    feat(qa4-SEC,qa4-E0): security hardening + /health/version
+    
+    QA4 security findings, all verified and fixed in configuration/settings.py:
+    - SECRET_KEY: insecure hardcoded fallback only allowed when DEBUG;
+      fail-fast ImproperlyConfigured otherwise (L41-50)
+    - DEBUG defaults OFF (was ON, L35)
+    - CORS_ALLOW_ALL_ORIGINS only in DEBUG; CORS_ALLOWED_ORIGINS env
+      whitelist otherwise (L64-75)
+    - REST_FRAMEWORK: DEFAULT_PERMISSION_CLASSES IsAuthenticated,
+      Anon/User throttles (60/min, 600/min), auth scope 10/min,
+      ai_heavy 60/hour, EXCEPTION_HANDLER qa_exception_handler (L219-232)
+    - SIMPLE_JWT REFRESH_TOKEN_LIFETIME 1d -> 7d (single-use rotation
+      locked users out; QA critical P0) (L268)
+    - authentication/views.py: ScopedRateThrottle(auth) on login/refresh/
+      register/google login + explicit AllowAny on public-by-design views
+    - /health/version (plain Django view, public) exposes
+      {version, commit, build_at} for deployment verification (E0)
+    - .env.example documents the required env vars
+    - authentication/tests_qa4_security.py: 4 tests (401 default, 429
+      auth throttle, health keys, public health)
+
+diff --git a/django-backend/authentication/tests_qa4_security.py b/django-backend/authentication/tests_qa4_security.py
+new file mode 100644
+index 0000000..6991991
+--- /dev/null
++++ b/django-backend/authentication/tests_qa4_security.py
+@@ -0,0 +1,85 @@
++"""QA4 security hardening tests.
++
++Covers:
++- Global default ``IsAuthenticated`` permission: unauthenticated API requests
++  must be rejected with 401.
++- ``auth`` throttle scope on the login (token obtain) endpoint: rapid attempts
++  hit 429.
++- Public ``/health/version/`` build metadata endpoint (QA4-E0).
++"""
++
++import os
++from unittest.mock import patch
++
++from django.core.cache import cache
++from django.test import TestCase
++from rest_framework import status
++from rest_framework.test import APIClient
++from rest_framework.throttling import ScopedRateThrottle
++
++from authentication.views import CustomTokenObtainPairView
++
++LOGIN_URL = "/api/v1/auth/token/"
++PROTECTED_URL = "/api/v1/brands/"
++HEALTH_VERSION_URL = "/health/version/"
++
++
++class DefaultPermissionTests(TestCase):
++    """The REST_FRAMEWORK default permission is IsAuthenticated."""
++
++    def test_unauthenticated_request_to_protected_endpoint_returns_401(self):
++        response = APIClient().get(PROTECTED_URL)
++        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
++
++
++class _TwoPerMinuteAuthThrottle(ScopedRateThrottle):
++    """Test-only ScopedRateThrottle pinned to 2/min regardless of settings.
++
++    THROTTLE_RATES is resolved at class-definition time in DRF, so an explicit
++    subclass (instead of override_settings) keeps this test deterministic.
++    """
++
++    THROTTLE_RATES = {"auth": "2/min"}
++
++
++class AuthThrottleTests(TestCase):
++    """The login endpoint is throttled through the 'auth' scope."""
++
++    def setUp(self):
++        cache.clear()
++
++    def test_rapid_login_attempts_are_rate_limited(self):
++        payload = {"username": "no-such-user", "password": "wrong-password"}
++        with patch.object(
++            CustomTokenObtainPairView,
++            "throttle_classes",
++            [_TwoPerMinuteAuthThrottle],
++        ):
++            first = self.client.post(LOGIN_URL, payload, format="json")
++            second = self.client.post(LOGIN_URL, payload, format="json")
++            third = self.client.post(LOGIN_URL, payload, format="json")
++
++        # The first two attempts pass the throttle and fail authentication
++        # with 400 (invalid credentials); the third is throttled.
++        self.assertEqual(first.status_code, status.HTTP_400_BAD_REQUEST)
++        self.assertEqual(second.status_code, status.HTTP_400_BAD_REQUEST)
++        self.assertEqual(third.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
++
++
++class HealthVersionTests(TestCase):
++    """GET /health/version/ exposes build metadata without authentication."""
++
++    def test_health_version_returns_expected_keys(self):
++        response = self.client.get(HEALTH_VERSION_URL)
++
++        self.assertEqual(response.status_code, status.HTTP_200_OK)
++        body = response.json()
++        self.assertEqual(
++            body["version"], os.getenv("APP_VERSION", "dev")
++        )
++        self.assertIn("commit", body)
++        self.assertIn("build_at", body)
++
++    def test_health_version_is_public(self):
++        response = APIClient().get(HEALTH_VERSION_URL)
++        self.assertEqual(response.status_code, status.HTTP_200_OK)
+diff --git a/django-backend/authentication/views.py b/django-backend/authentication/views.py
+index 635b7d6..d4e6e64 100644
+--- a/django-backend/authentication/views.py
++++ b/django-backend/authentication/views.py
+@@ -2,6 +2,7 @@ from drf_spectacular.utils import extend_schema
+ from rest_framework import status
+ from rest_framework.permissions import AllowAny, IsAuthenticated
+ from rest_framework.response import Response
++from rest_framework.throttling import ScopedRateThrottle
+ from rest_framework.views import APIView
+ from rest_framework_simplejwt.tokens import RefreshToken
+ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+@@ -25,11 +26,16 @@ from authentication.services.google_oauth_service import GoogleOAuthService
+ )
+ class CustomTokenObtainPairView(TokenObtainPairView):
+     serializer_class = CustomTokenObtainPairSerializer
++    permission_classes = [AllowAny]
++    throttle_classes = [ScopedRateThrottle]
++    throttle_scope = "auth"
+ 
+ 
+ @extend_schema(tags=["Authentication"])
+ class CustomTokenRefreshView(TokenRefreshView):
+-    pass
++    permission_classes = [AllowAny]
++    throttle_classes = [ScopedRateThrottle]
++    throttle_scope = "auth"
+ 
+ 
+ @extend_schema(tags=["Authentication"])
+@@ -55,6 +61,8 @@ class UserView(APIView):
+ @extend_schema(tags=["Authentication"])
+ class RegisterView(APIView):
+     permission_classes = [AllowAny]
++    throttle_classes = [ScopedRateThrottle]
++    throttle_scope = "auth"
+     serializer_class = RegisterSerializer
+ 
+     @extend_schema(
+@@ -75,6 +83,8 @@ class RegisterView(APIView):
+ )
+ class GoogleLoginView(APIView):
+     permission_classes = [AllowAny]
++    throttle_classes = [ScopedRateThrottle]
++    throttle_scope = "auth"
+     serializer_class = GoogleLoginSerializer
+     service_class = GoogleOAuthService
+ 
+diff --git a/django-backend/configuration/.env.example b/django-backend/configuration/.env.example
+new file mode 100644
+index 0000000..409027c
+--- /dev/null
++++ b/django-backend/configuration/.env.example
+@@ -0,0 +1,27 @@
++# Django core
++# Unset (or 0/false) means DEBUG=False. Set to 1 only for local development.
++DJANGO_DEBUG=0
++# Required when DJANGO_DEBUG=0. Generate with:
++#   python -c "import secrets; print(secrets.token_urlsafe(64))"
++SECRET_KEY=change-me
++
++# Hosts / CORS
++ALLOWED_HOSTS=localhost,127.0.0.1
++# Comma-separated list. Only used when DJANGO_DEBUG=0 (dev allows all origins).
++CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
++
++# Database
++POSTGRES_DB=ad_creator
++POSTGRES_USER=postgres
++POSTGRES_PASSWORD=postgres
++POSTGRES_HOST=127.0.0.1
++POSTGRES_PORT=5432
++
++# Build metadata surfaced by GET /health/version/
++APP_VERSION=dev
++GIT_COMMIT=
++BUILD_AT=
++
++# Celery
++CELERY_BROKER_URL=redis://localhost:6379/0
++CELERY_RESULT_BACKEND=redis://localhost:6379/0
+diff --git a/django-backend/configuration/settings.py b/django-backend/configuration/settings.py
+index d2969ac..58fe1b6 100644
+--- a/django-backend/configuration/settings.py
++++ b/django-backend/configuration/settings.py
+@@ -14,6 +14,8 @@ import os
+ from pathlib import Path
+ from datetime import timedelta
+ 
++from django.core.exceptions import ImproperlyConfigured
++
+ 
+ def env_bool(name: str, default: bool = False) -> bool:
+     value = os.getenv(name)
+@@ -28,21 +30,25 @@ BASE_DIR = Path(__file__).resolve().parent.parent
+ # Quick-start development settings - unsuitable for production
+ # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+ 
+-# SECURITY WARNING: keep the secret key used in production secret!
+-SECRET_KEY = os.getenv(
+-    "SECRET_KEY",
+-    "django-insecure-2^*m-sa@7j*rb1_z%zikm+li9kdw)01al!u+k4d5_up6h=d-3o",
+-)
+-
+ # SECURITY WARNING: don't run with debug turned on in production!
+-DEBUG = os.getenv("DJANGO_DEBUG", os.getenv("DEBUG", "1")).lower() in (
+-    "1",
+-    "true",
+-    "yes",
+-    "on",
+-)
++# Unset env variables mean DEBUG=False. DJANGO_DEBUG takes precedence over DEBUG.
++DEBUG = env_bool("DJANGO_DEBUG", default=env_bool("DEBUG", default=False))
+ IS_PRODUCTION = env_bool("DJANGO_PRODUCTION", default=not DEBUG)
+ 
++# SECURITY WARNING: keep the secret key used in production secret!
++# A hardcoded insecure fallback is only allowed while DEBUG is on; production
++# boot fails fast when SECRET_KEY is missing from the environment.
++SECRET_KEY = os.getenv("SECRET_KEY")
++if not SECRET_KEY:
++    if DEBUG:
++        SECRET_KEY = (
++            "django-insecure-2^*m-sa@7j*rb1_z%zikm+li9kdw)01al!u+k4d5_up6h=d-3o"
++        )
++    else:
++        raise ImproperlyConfigured(
++            "SECRET_KEY must be set in the environment when DEBUG is False."
++        )
++
+ ALLOWED_HOSTS = [
+     host.strip()
+     for host in os.getenv(
+@@ -53,7 +59,20 @@ ALLOWED_HOSTS = [
+ ]
+ 
+ 
+-CORS_ALLOW_ALL_ORIGINS = True
++# CORS: allow all origins only while DEBUG is on. Otherwise restrict access to
++# the comma-separated CORS_ALLOWED_ORIGINS environment variable.
++CORS_ALLOW_ALL_ORIGINS = DEBUG
++
++CORS_ALLOWED_ORIGINS = [
++    origin.strip()
++    for origin in os.getenv(
++        "CORS_ALLOWED_ORIGINS",
++        "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
++        if DEBUG
++        else "",
++    ).split(",")
++    if origin.strip()
++]
+ 
+ CORS_ALLOW_CREDENTIALS = env_bool("CORS_ALLOW_CREDENTIALS", default=True)
+ 
+@@ -99,6 +118,7 @@ MIDDLEWARE = [
+     "django.contrib.auth.middleware.AuthenticationMiddleware",
+     "django.contrib.messages.middleware.MessageMiddleware",
+     "django.middleware.clickjacking.XFrameOptionsMiddleware",
++    "core.middleware.CurrentUserMiddleware",
+ ]
+ 
+ ROOT_URLCONF = "configuration.urls"
+@@ -196,6 +216,20 @@ REST_FRAMEWORK = {
+     "DEFAULT_AUTHENTICATION_CLASSES": (
+         "rest_framework_simplejwt.authentication.JWTAuthentication",
+     ),
++    "DEFAULT_PERMISSION_CLASSES": [
++        "rest_framework.permissions.IsAuthenticated",
++    ],
++    "DEFAULT_THROTTLE_CLASSES": [
++        "rest_framework.throttling.AnonRateThrottle",
++        "rest_framework.throttling.UserRateThrottle",
++    ],
++    "DEFAULT_THROTTLE_RATES": {
++        "anon": "60/min",
++        "user": "600/min",
++        "auth": "10/min",
++        "ai_heavy": "60/hour",
++    },
++    "EXCEPTION_HANDLER": "core.exception_handler.qa_exception_handler",
+     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+ }
+ 
+@@ -204,6 +238,7 @@ SPECTACULAR_SETTINGS = {
+     "DESCRIPTION": "API documentation for Ad Creator backend.",
+     "VERSION": "1.0.0",
+     "SERVE_INCLUDE_SCHEMA": False,
++    "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
+     "SWAGGER_UI_DIST": "SIDECAR",
+     "SWAGGER_UI_FAVICON_HREF": "SIDECAR",
+     "REDOC_DIST": "SIDECAR",
+@@ -230,7 +265,7 @@ SIMPLE_JWT = {
+     "USER_ID_FIELD": "user_uuid",
+     "USER_ID_CLAIM": "user_uuid",
+     "ACCESS_TOKEN_LIFETIME": timedelta(hours=12),
+-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
++    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+     "ROTATE_REFRESH_TOKENS": True,
+     "BLACKLIST_AFTER_ROTATION": True,
+ }
+diff --git a/django-backend/configuration/urls.py b/django-backend/configuration/urls.py
+index b7996af..4ff3210 100644
+--- a/django-backend/configuration/urls.py
++++ b/django-backend/configuration/urls.py
+@@ -1,6 +1,9 @@
+ """Root URL configuration for the Django backend."""
+ 
++import os
++
+ from django.contrib import admin
++from django.http import JsonResponse
+ from django.urls import include, path
+ from drf_spectacular.views import (
+     SpectacularAPIView,
+@@ -8,8 +11,21 @@ from drf_spectacular.views import (
+     SpectacularSwaggerView,
+ )
+ 
++
++def health_version_view(request):
++    """QA4-E0 build metadata endpoint (plain Django view, outside /api/)."""
++    return JsonResponse(
++        {
++            "version": os.getenv("APP_VERSION", "dev"),
++            "commit": os.getenv("GIT_COMMIT") or None,
++            "build_at": os.getenv("BUILD_AT") or None,
++        }
++    )
++
++
+ urlpatterns = [
+     path("admin/", admin.site.urls),
++    path("health/version/", health_version_view, name="health-version"),
+     path(
+         "api/v1/",
+         include(

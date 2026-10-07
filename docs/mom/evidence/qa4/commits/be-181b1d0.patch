@@ -1,0 +1,1074 @@
+commit 181b1d0ec8a656e35c46f20a17e84b1fd20e4616
+Author: cracki <cracki@gmail.com>
+Date:   Wed Oct 7 15:02:03 2026 +0330
+
+    fix(qa4-img2): dedicated AI services field + strict junk filter + scraper hardening
+    
+    QA4-img2/img8/new6 root causes, all verified and fixed at three layers:
+    1. AI output: brand_core_analyzer prompt now requires a dedicated
+       'services' array (2-10 concrete services, NOT marketing statements)
+       parsed separately from usp_list (build_core_analysis_payload);
+       BrandCoreAnalysis.services persisted (migration 0015).
+    2. Filter: brand/text_utils.py blanket service-keyword bypass limited
+       to <=6-word strings that don't match the new shared blocklist
+       (core/utils/text_patterns.py: auth widgets, CTA labels, blog titles,
+       marketing sentences); services context drops >8-word strings and
+       single words without a service keyword ('Villas').
+    3. Scraper: _strip_junk_regions decomposes nav/form/header/aside/button
+       + role attributes; card strategy skips cards with forms/auth links
+       and junk headings.
+    Choke point: get_merged_service_names filters the final merged list;
+    get_core_service_names returns analysis services (never usp_list);
+    builder no longer merges usp_list into services.
+    Empirically verified: all 7 QA-report junk strings dropped
+    ('with an average rating of 4', 'Book home services in less than 60
+    seconds', 'Sign in or register', 'Reset password', 'renovation company
+    in Dubai', 'Villas', '7 Warning Signs Your Dubai Property'); real
+    services kept. brand/tests_qa4_services.py: 15 tests.
+
+diff --git a/django-backend/brand/analyzers/brand_core_analyzer.py b/django-backend/brand/analyzers/brand_core_analyzer.py
+index 0a904e5..ccfface 100644
+--- a/django-backend/brand/analyzers/brand_core_analyzer.py
++++ b/django-backend/brand/analyzers/brand_core_analyzer.py
+@@ -8,6 +8,34 @@ from core.services.llm_handler import LLMHandler
+ logger = logging.getLogger(__name__)
+ 
+ 
++def build_core_analysis_payload(
++    parsed: Dict[str, Any],
++    *,
++    has_real_content: bool,
++    title: Optional[str],
++    detected_industry: str,
++) -> Dict[str, Any]:
++    """Shape the raw LLM JSON (``parsed``) into the core-analysis result dict.
++
++    QA4: extracted as a module-level function so the parsing rules are
++    unit-testable without an LLM call. ``services`` (concrete productized
++    offerings) is parsed SEPARATELY from ``usp_list`` (marketing
++    differentiators) and never falls back to it.
++    """
++    return {
++        "low_confidence": parsed.get("low_confidence", not has_real_content),
++        "company_name": parsed.get("company_name") or (title or "unknown"),
++        "industry": detected_industry,  # 🎯 Use detected industry, not LLM's guess
++        "detected_industry": detected_industry,  # 🎯 Store for downstream use
++        "services": parsed.get("services") or [],
++        "usp_list": parsed.get("usp_list") or ["N/A - No USP identified"],
++        "brand_voice": parsed.get("brand_voice") or {},
++        "target_audience": parsed.get("target_audience") or {},
++        "key_messages": parsed.get("key_messages") or [],
++        "competitive_advantages": parsed.get("competitive_advantages") or [],
++    }
++
++
+ class BrandCoreAnalyzer:
+     """
+     Brand core analysis engine for Django backend.
+@@ -957,6 +985,11 @@ Return a compact JSON with this exact structure:
+   "low_confidence": {low_confidence_note},
+   "company_name": "exact brand/website name or 'unknown'",
+   "industry": "specific industry/niche (or 'unknown')",
++  "services": [
++    "REQUIRED: 2-10 concrete, productized services this brand actually sells or books (e.g. 'Home Cleaning', 'AC Repair')",
++    "service 2 - short offering name, NOT a marketing sentence",
++    "service 3 if clear from website content"
++  ],
+   "usp_list": [
+     "USP 1 - specific, concrete unique value EXTRACTED from website",
+     "USP 2 - what makes them different BASED on services/about/value_prop",
+@@ -1044,6 +1077,17 @@ any of the junk categories above - downstream persistence handles empty
+ lists.
+ 
+ CRITICAL REQUIREMENTS FOR USPs (🚨 MOST IMPORTANT):
++0. 🚨 SERVICES vs USPs (QA4 - BOTH ARRAYS ARE REQUIRED AND STAY SEPARATE):
++   - "services" = the concrete, productized offerings a customer can
++     book or buy (e.g. "Home Cleaning", "AC Repair", "Deep Cleaning").
++     SHORT offering names ONLY.
++   - NEVER put marketing statements in "services": no ratings/review
++     claims ("with an average rating of 4"), no booking-speed claims
++     ("Book home services in less than 60 seconds"), no SEO headings
++     ("renovation company in Dubai"), no blog titles, no nav/auth links
++     ("Sign in or register", "Reset password").
++   - "usp_list" = differentiators and value propositions ABOUT those
++     services. Do not copy "services" entries into "usp_list".
+ 1. Extract USPs ONLY from these website sources:
+    - Services list: {services}
+    - Value proposition: {value_prop}
+@@ -1113,6 +1157,7 @@ CRITICAL REQUIREMENTS FOR TARGET AUDIENCE:
+ Remember:
+ - Target Audience must ALWAYS be filled with at least basic inferences
+ - Provide 3-5 concrete USPs minimum
++- The "services" array is REQUIRED (2-10 concrete productized offerings; empty ONLY if the website truly lists no bookable/buyable offering)
+ - Do NOT add any extra fields.
+ - Return ONLY valid JSON, no markdown, no comments.
+ """
+@@ -1127,15 +1172,9 @@ Remember:
+ 
+         # اگر چیزی خراب بود، حداقل ساختار پایه را برگردانیم
+         # Use the detected_industry from our detection method, not from website_data
+-
+-        return {
+-            "low_confidence": parsed.get("low_confidence", not has_real_content),
+-            "company_name": parsed.get("company_name") or (title or "unknown"),
+-            "industry": detected_industry,  # 🎯 Use detected industry, not LLM's guess
+-            "detected_industry": detected_industry,  # 🎯 Store for downstream use
+-            "usp_list": parsed.get("usp_list") or ["N/A - No USP identified"],
+-            "brand_voice": parsed.get("brand_voice") or {},
+-            "target_audience": parsed.get("target_audience") or {},
+-            "key_messages": parsed.get("key_messages") or [],
+-            "competitive_advantages": parsed.get("competitive_advantages") or [],
+-        }
++        return build_core_analysis_payload(
++            parsed,
++            has_real_content=has_real_content,
++            title=title,
++            detected_industry=detected_industry,
++        )
+diff --git a/django-backend/brand/migrations/0015_brandcoreanalysis_services.py b/django-backend/brand/migrations/0015_brandcoreanalysis_services.py
+new file mode 100644
+index 0000000..1230389
+--- /dev/null
++++ b/django-backend/brand/migrations/0015_brandcoreanalysis_services.py
+@@ -0,0 +1,19 @@
++# Generated by Django 5.2.12 on 2026-10-07 09:50
++
++import django.contrib.postgres.fields
++from django.db import migrations, models
++
++
++class Migration(migrations.Migration):
++
++    dependencies = [
++        ('brand', '0014_brandservice'),
++    ]
++
++    operations = [
++        migrations.AddField(
++            model_name='brandcoreanalysis',
++            name='services',
++            field=django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=255), blank=True, null=True, size=None),
++        ),
++    ]
+diff --git a/django-backend/brand/models.py b/django-backend/brand/models.py
+index 7a9e658..be36f19 100644
+--- a/django-backend/brand/models.py
++++ b/django-backend/brand/models.py
+@@ -788,6 +788,7 @@ class BrandCoreAnalysis(SerializableModelMixin, TimeStampedModel):
+         "company_name",
+         "industry",
+         "detected_industry",
++        "services",
+         "usp_list",
+         "brand_voice",
+         "target_audience",
+@@ -812,6 +813,10 @@ class BrandCoreAnalysis(SerializableModelMixin, TimeStampedModel):
+     company_name = models.CharField(max_length=255, blank=True, null=True)
+     industry = models.CharField(max_length=255, blank=True, null=True)
+     detected_industry = models.CharField(max_length=255, blank=True, null=True)
++    # QA4: concrete, productized services (e.g. "Home Cleaning", "AC
++    # Repair") — kept separate from ``usp_list`` marketing differentiators
++    # so USP sentences never surface as the brand's services.
++    services = ArrayField(models.CharField(max_length=255), blank=True, null=True)
+     usp_list = ArrayField(models.CharField(max_length=255), blank=True, null=True)
+     brand_voice = models.JSONField(blank=True, null=True)
+     target_audience = models.JSONField(blank=True, null=True)
+diff --git a/django-backend/brand/services/brand_services.py b/django-backend/brand/services/brand_services.py
+index 1165110..f6c9732 100644
+--- a/django-backend/brand/services/brand_services.py
++++ b/django-backend/brand/services/brand_services.py
+@@ -5,7 +5,8 @@ Merges the services/products detected for a brand from four sources:
+   services-manage endpoints or campaign selections — merged first and
+   always winning dedupe),
+ - scraped website data (``BrandWebsiteData.services`` via ``brand.identity``),
+-- brand core analysis (``BrandCoreAnalysis.usp_list`` via ``brand.identity``),
++- brand core analysis (``BrandCoreAnalysis.services`` via ``brand.identity``
++  — QA4: the dedicated concrete-services field, never ``usp_list``),
+ - the latest completed PPC-viability campaign step for the brand's campaigns
+   (``services_bpc_scores`` / ``ppc_opportunity_ranking`` shapes).
+ """
+@@ -15,6 +16,7 @@ from difflib import SequenceMatcher
+ from typing import Any, Dict, Iterable, List, Optional
+ 
+ from brand.models import Brand, BrandCoreAnalysis, BrandService, BrandWebsiteData
++from brand.text_utils import filter_junk_text_list
+ from campaign.models import (
+     CampaignStep,
+     CampaignStepStatusChoices,
+@@ -104,13 +106,22 @@ def get_scraped_service_names(brand: Brand) -> List[str]:
+ 
+ 
+ def get_core_service_names(brand: Brand) -> List[str]:
+-    """Services carried by the brand's latest core analysis (usp_list)."""
++    """Services carried by the brand's latest core analysis.
++
++    QA4: reads the dedicated ``services`` field (concrete productized
++    offerings) — usp_list is marketing copy and is NEVER returned here.
++    Falls back to the user-confirmed managed services when the analysis
++    has no services (e.g. analyses persisted before the QA4 field).
++    """
+     latest_core = (
+         BrandCoreAnalysis.objects.filter(identity=brand.identity)
+         .order_by("-updated_at")
+         .first()
+     )
+-    return clean_service_names(getattr(latest_core, "usp_list", None))
++    services = clean_service_names(getattr(latest_core, "services", None))
++    if services:
++        return services
++    return get_managed_service_names(brand)
+ 
+ 
+ def get_managed_service_names(brand: Brand) -> List[str]:
+@@ -125,13 +136,22 @@ def get_managed_service_names(brand: Brand) -> List[str]:
+ 
+ 
+ def get_merged_service_names(brand: Brand) -> List[str]:
+-    """Managed (user-confirmed) services first, then core-analysis, then scraped."""
+-    return merge_service_names(
+-        get_managed_service_names(brand),
++    """Managed (user-confirmed) services first, then core-analysis, then scraped.
++
++    QA4 choke point: the FINAL merged list runs through
++    ``filter_junk_text_list`` (services context) so scrape/USP junk —
++    auth links, CTA labels, blog titles, marketing sentences — never
++    surfaces as a service. Filtering is idempotent for clean names.
++    """
++    return filter_junk_text_list(
+         merge_service_names(
+-            get_core_service_names(brand),
+-            get_scraped_service_names(brand),
++            get_managed_service_names(brand),
++            merge_service_names(
++                get_core_service_names(brand),
++                get_scraped_service_names(brand),
++            ),
+         ),
++        services_context=True,
+     )
+ 
+ 
+@@ -172,7 +192,13 @@ def build_brand_context(brand: Optional[Brand]) -> Dict[str, Any]:
+         "available": True,
+         "audience_summary": target_audience or None,
+         "personas": personas or None,
+-        "services": clean_service_names(latest_core.usp_list) or None,
++        # QA4: prefer the dedicated services field; usp_list only as a
++        # legacy fallback for analyses persisted before the QA4 field.
++        "services": (
++            clean_service_names(latest_core.services)
++            or clean_service_names(latest_core.usp_list)
++            or None
++        ),
+     }
+ 
+ 
+diff --git a/django-backend/brand/services/builder.py b/django-backend/brand/services/builder.py
+index 97c4814..88a8dff 100644
+--- a/django-backend/brand/services/builder.py
++++ b/django-backend/brand/services/builder.py
+@@ -1,9 +1,14 @@
+ import logging
+-from typing import Any, Dict, Optional
++from typing import Any, Dict, List, Optional
+ 
+-from brand.models import BrandCoreAnalysis, BrandWebsiteData
++from django.core.exceptions import SynchronousOnlyOperation
++
++from brand.models import Brand, BrandCoreAnalysis, BrandWebsiteData
+ from brand.schemas import AudienceSegment, BrandProfile, TargetAudience
+-from brand.services.brand_services import merge_service_names
++from brand.services.brand_services import (
++    get_managed_service_names,
++    merge_service_names,
++)
+ from brand.text_utils import (
+     filter_junk_text_list,
+     filter_placeholder_list,
+@@ -13,6 +18,34 @@ from brand.text_utils import (
+ logger = logging.getLogger(__name__)
+ 
+ 
++def _managed_service_names_for_core(
++    brand_core: BrandCoreAnalysis,
++    managed_service_names: Optional[List[str]] = None,
++) -> List[str]:
++    """User-confirmed BrandService names for the brand behind ``brand_core``.
++
++    QA4: the ads-builder profile services merge includes managed
++    (user-confirmed) services alongside scraped + analysis services.
++    Callers in an async context pass ``managed_service_names`` pre-fetched
++    (the builder itself stays DB-free); the direct-lookup fallback is only
++    for sync callers and returns [] when the ORM is unavailable.
++    """
++    if managed_service_names is not None:
++        return [name for name in managed_service_names if str(name).strip()]
++    identity_id = getattr(brand_core, "identity_id", None)
++    if not identity_id:
++        return []
++    try:
++        brand = Brand.objects.filter(identity_id=identity_id).first()
++        if brand is None:
++            return []
++        return get_managed_service_names(brand)
++    except SynchronousOnlyOperation:
++        # Async context: managed services are merged by the sync choke
++        # point (get_merged_service_names) instead.
++        return []
++
++
+ def detect_brand_archetype(brand_core: BrandCoreAnalysis) -> str:
+     """
+     Detect a best-effort archetype using voice + messaging signals.
+@@ -450,6 +483,7 @@ def brand_profile_for_ads_builder(
+     brand_core: BrandCoreAnalysis,
+     social_data: Optional[Dict[str, Any]] = None,
+     brand_company_name: Optional[str] = None,
++    managed_service_names: Optional[List[str]] = None,
+ ) -> Dict[str, Any]:
+     """
+     Build a normalized ad-ready brand profile payload.
+@@ -458,6 +492,8 @@ def brand_profile_for_ads_builder(
+     non-blank it ALWAYS wins over any extracted/scraped name (QA round 3:
+     the site title must not shadow what the user typed). Extracted values
+     remain the fallback chain.
++    ``managed_service_names`` lets async callers pre-fetch user-confirmed
++    BrandService names (QA4) so this builder stays DB-free.
+     """
+     user_company_name = (brand_company_name or "").strip()
+     brand_voice_raw = strip_placeholder_fields(brand_core.brand_voice or {})
+@@ -522,11 +558,16 @@ def brand_profile_for_ads_builder(
+         ),
+         industry=brand_core.industry or brand_core.detected_industry or "Unknown",
+         usp_list=filter_junk_text_list(brand_core.usp_list or []),
++        # QA4: services merge scraped + the analysis `services` field
++        # (concrete offerings) + managed services. usp_list is NO LONGER
++        # merged into services — it stays its own marketing-copy field.
+         services=filter_junk_text_list(
+             merge_service_names(
+                 website_data.services,
+-                brand_core.usp_list,
+-            )
++                getattr(brand_core, "services", None) or [],
++                _managed_service_names_for_core(brand_core, managed_service_names),
++            ),
++            services_context=True,
+         ),
+         target_audience=target_audience_model,
+         brand_voice=brand_voice_clean,
+diff --git a/django-backend/brand/services/full_analysis.py b/django-backend/brand/services/full_analysis.py
+index 647583e..bf274d9 100644
+--- a/django-backend/brand/services/full_analysis.py
++++ b/django-backend/brand/services/full_analysis.py
+@@ -23,6 +23,7 @@ from brand.models import (
+     Industry,
+ )
+ from brand.quality_validator import QualityValidator
++from brand.services.brand_services import get_managed_service_names
+ from brand.services.builder import brand_profile_for_ads_builder
+ from brand.text_utils import (
+     filter_junk_text_list,
+@@ -274,6 +275,11 @@ class BrandAnalysisOrchestrator:
+             )
+ 
+             stage_started = time.perf_counter()
++            # QA4: pre-fetch user-confirmed services so the (sync) builder
++            # merges them without touching the ORM from an async context.
++            managed_service_names = await sync_to_async(
++                get_managed_service_names
++            )(brand)
+             brand_profile = brand_profile_for_ads_builder(
+                 website_url=brand.website_url,
+                 website_data=website_data,
+@@ -281,6 +287,7 @@ class BrandAnalysisOrchestrator:
+                 social_data=social_presence,
+                 # User-entered name wins over any extracted site title (QA3).
+                 brand_company_name=brand.company_name,
++                managed_service_names=managed_service_names,
+             )
+             logger.info(
+                 "full_analysis.step_done | brand=%s run=%s step=brand_profile elapsed=%.2fs",
+@@ -467,6 +474,11 @@ class BrandAnalysisOrchestrator:
+             "company_name": analysis_result.get("company_name"),
+             "industry": analysis_result.get("industry"),
+             "detected_industry": analysis_result.get("detected_industry"),
++            # QA4: concrete productized services, persisted SEPARATELY from
++            # usp_list so marketing sentences never become "services".
++            "services": filter_junk_text_list(
++                analysis_result.get("services"), services_context=True
++            ),
+             "usp_list": filter_junk_text_list(analysis_result.get("usp_list")),
+             "brand_voice": brand_voice_clean,
+             "target_audience": strip_placeholder_fields(
+diff --git a/django-backend/brand/tests_qa4_services.py b/django-backend/brand/tests_qa4_services.py
+new file mode 100644
+index 0000000..3ad3e56
+--- /dev/null
++++ b/django-backend/brand/tests_qa4_services.py
+@@ -0,0 +1,306 @@
++"""QA4 junk-services regression tests (chain img2 / img8 / new6).
++
++Covers the four layers of the junk-services fix:
++
++1. Text filter (``brand.text_utils.filter_junk_text_list``): the 7 QA
++   strings are dropped, real services survive, and the service-keyword
++   bypass no longer shields marketing sentences.
++2. Scraper (``core.utils.scraper``): auth widgets, nav lists, blog cards
++   and CTA headings never reach the extracted services.
++3. Merge choke point (``brand.services.brand_services``): the final
++   merged service list is junk-filtered and never contains usp_list
++   sentences; the core-analysis ``services`` field wins over usp_list.
++4. Analyzer parse (``brand.analyzers.brand_core_analyzer``): the LLM
++   ``services`` array is parsed separately from ``usp_list``.
++
++No LLM calls are made anywhere in this module.
++"""
++
++from unittest import mock
++
++from bs4 import BeautifulSoup
++from django.test import SimpleTestCase, TestCase
++
++from brand.analyzers.brand_core_analyzer import build_core_analysis_payload
++from brand.models import (
++    Brand,
++    BrandCoreAnalysis,
++    BrandService,
++    BrandWebsiteData,
++    Industry,
++)
++from brand.services.brand_services import (
++    get_core_service_names,
++    get_merged_service_names,
++)
++from brand.text_utils import _has_service_indicator, filter_junk_text_list
++from core.utils.scraper import WebsiteScraper
++
++# The 7 strings from the client QA report that all survived the old filter.
++QA_JUNK_SERVICES = [
++    "with an average rating of 4",
++    "Book home services in less than 60 seconds",
++    "Sign in or register",
++    "Reset password",
++    "renovation company in Dubai",
++    "Villas",
++    "7 Warning Signs Your Dubai Property",
++]
++
++# Real, concrete productized services that MUST survive every layer.
++REAL_SERVICES = [
++    "Home Cleaning",
++    "AC Cleaning",
++    "Deep Cleaning",
++    "AC Repair",
++    "Handyman Services",
++    "Laundry & Ironing",
++    "Villa Renovation",
++    "Deep Cleaning Services",
++    "Car Engine Repair",
++]
++
++# Sign-in widget card, a nav list, a blog card, an auth-linked card and a
++# real services grid — mirrors the QA4 leak sources.
++QA_SCRAPER_HTML = """
++<html><body>
++  <nav class="main-nav">
++    <ul>
++      <li><a href="/services">Services</a></li>
++      <li><a href="/about">About Us</a></li>
++    </ul>
++  </nav>
++  <div class="login-card box">
++    <h3>Sign in or register</h3>
++    <form action="/login"><input type="email"><button>Reset password</button></form>
++  </div>
++  <div class="portal-box item">
++    <h3>Member Portal</h3>
++    <a href="/reset-password">Reset password</a>
++  </div>
++  <div class="blog-card item">
++    <h3>7 Warning Signs Your Dubai Property Needs Maintenance</h3>
++    <a href="/blog">Read more</a>
++  </div>
++  <div class="services-grid service">
++    <div class="service-card item"><h3>Deep Cleaning</h3></div>
++    <div class="service-card item"><h3>AC Repair</h3></div>
++  </div>
++</body></html>
++"""
++
++
++class FilterJunkServicesTests(SimpleTestCase):
++    """Layer 1: the shared text filter drops QA junk, keeps real services."""
++
++    def test_qa4_junk_strings_dropped_in_services_context(self):
++        self.assertEqual(
++            filter_junk_text_list(QA_JUNK_SERVICES, services_context=True),
++            [],
++        )
++
++    def test_reset_password_dropped_in_both_cases(self):
++        # "Reset Password" (title case) used to be caught as a person name;
++        # "Reset password" (sentence case) survived. The AUTH pattern must
++        # drop both explicitly.
++        self.assertEqual(
++            filter_junk_text_list(
++                ["Reset Password", "reset password", "Sign In Or Register"],
++                services_context=True,
++            ),
++            [],
++        )
++
++    def test_real_services_kept_in_services_context(self):
++        self.assertEqual(
++            filter_junk_text_list(REAL_SERVICES, services_context=True),
++            REAL_SERVICES,
++        )
++
++    def test_real_services_kept_in_default_context(self):
++        self.assertEqual(filter_junk_text_list(REAL_SERVICES), REAL_SERVICES)
++
++    def test_services_context_scoping(self):
++        # >8-word strings and service-less single words are dropped ONLY in
++        # the services context (USP/keyword lists keep their own rules).
++        self.assertEqual(
++            filter_junk_text_list(["Villas", "Massage"], services_context=True),
++            ["Massage"],
++        )
++        self.assertEqual(filter_junk_text_list(["Villas"]), ["Villas"])
++        self.assertEqual(
++            filter_junk_text_list(
++                ["We are the leading provider of premium cleaning solutions across the entire region"],
++                services_context=True,
++            ),
++            [],
++        )
++
++    def test_service_keyword_bypass_no_longer_shields_marketing(self):
++        # "services" used to bypass every junk check; long/blocklisted
++        # strings no longer get the exemption.
++        self.assertFalse(
++            _has_service_indicator("Book home services in less than 60 seconds")
++        )
++        self.assertTrue(_has_service_indicator("Home Cleaning"))
++        self.assertTrue(_has_service_indicator("Aromatherapy Session"))
++
++    def test_cta_and_blog_titles_dropped_everywhere(self):
++        junk = ["Get a quote", "7 Tips For A Cleaner Home", "5 Ways To Reset"]
++        self.assertEqual(filter_junk_text_list(junk), [])
++        self.assertEqual(filter_junk_text_list(junk, services_context=True), [])
++
++
++class ScraperServiceExtractionTests(SimpleTestCase):
++    """Layer 2: scraper skips auth/nav/blog regions during extraction."""
++
++    def _extract_services(self, html):
++        scraper = WebsiteScraper()
++        soup = BeautifulSoup(html, "html.parser")
++        # Production flow: extraction reads the junk-free copy of the tree.
++        scraper._strip_junk_regions(soup)
++        full_text = soup.get_text(" ", strip=True)
++        return scraper._extract_services_enhanced(soup, full_text)
++
++    def test_auth_nav_and_blog_junk_absent_real_services_present(self):
++        services = self._extract_services(QA_SCRAPER_HTML)
++        joined = " | ".join(services).lower()
++
++        self.assertNotIn("sign in", joined)
++        self.assertNotIn("register", joined)
++        self.assertNotIn("reset password", joined)
++        self.assertNotIn("member portal", joined)
++        self.assertNotIn("warning signs", joined)
++        self.assertNotIn("about us", joined)
++        self.assertNotIn("read more", joined)
++
++        self.assertIn("Deep Cleaning", services)
++        self.assertIn("AC Repair", services)
++
++    def test_sign_in_card_with_auth_link_is_skipped_without_form(self):
++        html = """
++        <html><body>
++          <div class="info-card item">
++            <h3>Account Access</h3>
++            <a href="/my-account">My account</a>
++          </div>
++          <div class="service-card item"><h3>Handyman Services</h3></div>
++        </body></html>
++        """
++        services = self._extract_services(html)
++        self.assertEqual(services, ["Handyman Services"])
++
++
++class MergedServiceNamesChokePointTests(SimpleTestCase):
++    """Layer 3: get_merged_service_names filters the FINAL merged list."""
++
++    def test_merged_list_never_contains_usp_or_scrape_junk(self):
++        with mock.patch(
++            "brand.services.brand_services.get_managed_service_names",
++            return_value=["Home Cleaning"],
++        ), mock.patch(
++            "brand.services.brand_services.get_core_service_names",
++            return_value=[
++                "with an average rating of 4",
++                "Book home services in less than 60 seconds",
++                "7 Warning Signs Your Dubai Property",
++            ],
++        ), mock.patch(
++            "brand.services.brand_services.get_scraped_service_names",
++            return_value=["Deep Cleaning Services", "Sign in or register"],
++        ):
++            merged = get_merged_service_names(None)  # getters are patched
++
++        self.assertEqual(merged, ["Home Cleaning", "Deep Cleaning Services"])
++
++
++class CoreServicesFieldTests(TestCase):
++    """Layer 3: core analysis `services` field wins; usp_list is never services."""
++
++    def setUp(self):
++        self.industry = Industry.objects.create(name="Cleaning")
++        self.brand = Brand.objects.create(
++            website_url="https://qa4-core-services.example.com",
++            company_name="QA4 Core Services Brand",
++            selected_industry=self.industry,
++        )
++
++    def test_get_core_service_names_reads_services_field_never_usp_list(self):
++        BrandCoreAnalysis.objects.create(
++            identity=self.brand.identity,
++            usp_list=["with an average rating of 4", "Trusted local team"],
++            services=["Home Cleaning", "AC Repair"],
++        )
++        self.assertEqual(
++            get_core_service_names(self.brand), ["Home Cleaning", "AC Repair"]
++        )
++
++    def test_get_core_service_names_falls_back_to_managed_services(self):
++        BrandCoreAnalysis.objects.create(
++            identity=self.brand.identity,
++            usp_list=["Some marketing sentence"],
++            services=[],
++        )
++        BrandService.objects.create(
++            brand=self.brand,
++            name="Handyman Services",
++            source=BrandService.SourceChoices.MANUAL,
++        )
++        self.assertEqual(get_core_service_names(self.brand), ["Handyman Services"])
++
++    def test_merged_service_names_end_to_end(self):
++        BrandWebsiteData.objects.create(
++            identity=self.brand.identity,
++            website_url=self.brand.website_url,
++            services=[
++                "7 Warning Signs Your Dubai Property",
++                "Deep Cleaning Services",
++            ],
++        )
++        BrandCoreAnalysis.objects.create(
++            identity=self.brand.identity,
++            services=["Home Cleaning"],
++            usp_list=["Book home services in less than 60 seconds"],
++        )
++        self.assertEqual(
++            get_merged_service_names(self.brand),
++            ["Home Cleaning", "Deep Cleaning Services"],
++        )
++
++
++class BrandCoreAnalyzerParseTests(SimpleTestCase):
++    """Layer 4: the LLM services array parses separately from usp_list."""
++
++    def test_parse_keeps_services_separate_from_usp_list(self):
++        payload = build_core_analysis_payload(
++            {
++                "company_name": "Sparkle Homes",
++                "services": ["Home Cleaning", "AC Repair"],
++                "usp_list": [
++                    "with an average rating of 4",
++                    "Trusted local team",
++                ],
++            },
++            has_real_content=True,
++            title="Sparkle",
++            detected_industry="cleaning",
++        )
++        self.assertEqual(payload["services"], ["Home Cleaning", "AC Repair"])
++        self.assertEqual(
++            payload["usp_list"],
++            ["with an average rating of 4", "Trusted local team"],
++        )
++        self.assertNotIn("Home Cleaning", payload["usp_list"])
++
++    def test_parse_defaults_services_to_empty_list(self):
++        payload = build_core_analysis_payload(
++            {},
++            has_real_content=False,
++            title=None,
++            detected_industry="unknown",
++        )
++        self.assertEqual(payload["services"], [])
++        self.assertEqual(
++            payload["usp_list"], ["N/A - No USP identified"]
++        )
++        self.assertTrue(payload["low_confidence"])
+diff --git a/django-backend/brand/text_utils.py b/django-backend/brand/text_utils.py
+index 6fb9816..cfdb67e 100644
+--- a/django-backend/brand/text_utils.py
++++ b/django-backend/brand/text_utils.py
+@@ -10,6 +10,8 @@ of storing them as real brand facts.
+ import re
+ from typing import Any
+ 
++from core.utils.text_patterns import matches_service_blocklist
++
+ # ---------------------------------------------------------------------------
+ # Junk heuristics (QA rounds 2+3): website scrapes leak testimonial reviewer
+ # names ("Neelu Mishra"), media/sample titles ("Language in a Glance"),
+@@ -48,6 +50,7 @@ SERVICE_INDICATOR_KEYWORDS = frozenset(
+         "photograph",
+         "package",
+         "program",
++        "renovation",
+         "workshop",
+         "course",
+         "tour",
+@@ -79,8 +82,21 @@ _SERVICE_KEYWORD_PATTERN = re.compile(
+ 
+ 
+ def _has_service_indicator(text: str) -> bool:
+-    """True when ``text`` contains a real-offering keyword."""
+-    return bool(_SERVICE_KEYWORD_PATTERN.search(text))
++    """True when ``text`` contains a real-offering keyword.
++
++    QA4: the keyword only buys exemption from the junk heuristics for
++    SHORT strings (<= 6 words) that do not match a blocklist pattern
++    (auth/CTA/blog-title/marketing). Long marketing sentences such as
++    "Book home services in less than 60 seconds" contain "services" but
++    are no longer shielded from the junk checks.
++    """
++    if not _SERVICE_KEYWORD_PATTERN.search(text):
++        return False
++    if len(text.split()) > 6:
++        return False
++    if matches_service_blocklist(text):
++        return False
++    return True
+ 
+ # Honorific tokens allowed in person names ("Dr. Rakesh Kumar").
+ _PERSON_NAME_PREFIXES = frozenset(
+@@ -301,23 +317,47 @@ def looks_like_text_fragment(value: Any) -> bool:
+     return False
+ 
+ 
+-def filter_junk_text_list(values: Any) -> list:
++# Services context (QA4): service names are short noun phrases; anything
++# longer than this is a marketing sentence, not a bookable offering.
++_SERVICES_MAX_WORDS = 8
++
++
++def filter_junk_text_list(values: Any, services_context: bool = False) -> list:
+     """Drop placeholders, person names, media/credit titles, and fragments.
+ 
+     The single post-filter for brand service/USP/keyword lists: combines
+     ``filter_placeholder_list`` with the junk heuristics so scrape/LLM junk
+     never reaches persisted brand data or campaign-facing suggestions.
++
++    QA4: strings matching the shared blocklist patterns (auth widgets,
++    CTA labels, blog titles, marketing sentences — see
++    ``core.utils.text_patterns``) are always dropped. In
++    ``services_context`` (concrete service-name lists) strings longer
++    than 8 words and single words without a service keyword ("Villas")
++    are additionally dropped.
+     """
+     if not isinstance(values, list):
+         return []
+-    return [
+-        item
+-        for item in values
+-        if not is_placeholder_value(item)
+-        and not looks_like_person_name(item)
+-        and not is_media_or_credit_title(item)
+-        and not looks_like_text_fragment(item)
+-    ]
++    kept = []
++    for item in values:
++        if is_placeholder_value(item):
++            continue
++        if matches_service_blocklist(item):
++            continue
++        if services_context and isinstance(item, str):
++            words = " ".join(item.split()).split()
++            if len(words) > _SERVICES_MAX_WORDS:
++                continue
++            if len(words) < 2 and not _has_service_indicator(item):
++                continue
++        if (
++            looks_like_person_name(item)
++            or is_media_or_credit_title(item)
++            or looks_like_text_fragment(item)
++        ):
++            continue
++        kept.append(item)
++    return kept
+ 
+ 
+ # Unambiguous apology/error phrases: matched as case-insensitive substrings,
+diff --git a/django-backend/core/utils/scraper.py b/django-backend/core/utils/scraper.py
+index e0994aa..79c0389 100644
+--- a/django-backend/core/utils/scraper.py
++++ b/django-backend/core/utils/scraper.py
+@@ -20,6 +20,14 @@ from bs4 import BeautifulSoup
+ from playwright.async_api import TimeoutError as PlaywrightTimeout
+ from playwright.async_api import async_playwright
+ 
++from core.utils.text_patterns import (
++    AUTH_HREF_PATTERN,
++    AUTH_PATTERNS,
++    BLOG_TITLE_PATTERNS,
++    CTA_PATTERNS,
++    MARKETING_SENTENCE_PATTERNS,
++)
++
+ try:
+     import brotli
+ except Exception:  # pragma: no cover - optional dependency
+@@ -662,14 +670,18 @@ class WebsiteScraper:
+         return data
+ 
+     def _strip_junk_regions(self, soup: BeautifulSoup) -> None:
+-        """Remove regions that yield junk text/services (QA rounds 2+3).
++        """Remove regions that yield junk text/services (QA rounds 2+3+4).
+ 
+         Conservative, in-place cleaning applied only to the text/service
+         copy of the tree (see ``_extract_all_data``):
+         (a) ``blockquote``/``figure`` elements, plus their closest marked
+             ancestor (testimonial card/slider), are removed;
+         (b) ``<footer>`` element text is removed;
+-        (c) short credit lines ("Developed by ...", "Powered by ...") are
++        (c) structural UI regions (QA4: ``nav``, ``form``, ``header``,
++            ``aside``, ``button``, ``[role=navigation]``,
++            ``[role=button]``) are removed — nav labels, sign-in widgets
++            and buttons leak as fake services;
++        (d) short credit lines ("Developed by ...", "Powered by ...") are
+             extracted wherever they render next to scripts or plain divs.
+         """
+         # (a) Testimonial/review blocks: drop each quote itself plus the
+@@ -698,7 +710,23 @@ class WebsiteScraper:
+         for footer in soup.find_all("footer"):
+             footer.decompose()
+ 
+-        # (c) Credit lines rendered outside <footer> (script-adjacent
++        # (c) Structural UI regions (QA4): navigation, forms (sign-in /
++        # search widgets), headers, asides and buttons leak nav labels and
++        # auth links as fake services.
++        for tag_name in ("nav", "form", "header", "aside", "button"):
++            for elem in soup.find_all(tag_name):
++                try:
++                    elem.decompose()
++                except Exception:  # pragma: no cover - stale node reference
++                    pass
++        for role_name in ("navigation", "button"):
++            for elem in soup.find_all(attrs={"role": role_name}):
++                try:
++                    elem.decompose()
++                except Exception:  # pragma: no cover - stale node reference
++                    pass
++
++        # (d) Credit lines rendered outside <footer> (script-adjacent
+         # divs, plain text). Only short standalone lines are removed so a
+         # real paragraph merely starting with a credit phrase survives.
+         for text_node in list(soup.find_all(string=True)):
+@@ -718,6 +746,28 @@ class WebsiteScraper:
+         )
+         return bool(_JUNK_REGION_MARKER.search(markers))
+ 
++    @staticmethod
++    def _is_junk_service_heading(text: str) -> bool:
++        """QA4: auth/CTA/blog-title/marketing headings are not services."""
++        if not text:
++            return False
++        return bool(
++            AUTH_PATTERNS.search(text)
++            or CTA_PATTERNS.search(text)
++            or BLOG_TITLE_PATTERNS.search(text)
++            or MARKETING_SENTENCE_PATTERNS.search(text)
++        )
++
++    @staticmethod
++    def _card_has_auth_link(card) -> bool:
++        """QA4: True when the card links to a sign-in/auth destination."""
++        for anchor in card.find_all("a"):
++            if AUTH_PATTERNS.search(anchor.get_text(" ", strip=True) or ""):
++                return True
++            if AUTH_HREF_PATTERN.search(str(anchor.get("href") or "")):
++                return True
++        return False
++
+     def _extract_rich_meta(self, soup: BeautifulSoup) -> Dict:
+         """
+         🏷️ Extract rich metadata: og:, twitter:, schema.org
+@@ -1014,6 +1064,8 @@ class WebsiteScraper:
+                 heading = elem.find(["h2", "h3", "h4", "h5"])
+                 if heading:
+                     text = heading.get_text(strip=True)
++                    if self._is_junk_service_heading(text):
++                        continue
+                     if 5 < len(text) < 100:
+                         services.append(text)
+ 
+@@ -1044,9 +1096,16 @@ class WebsiteScraper:
+         card_classes = ["card", "box", "item", "block", "feature", "icon-box"]
+         for cls in card_classes:
+             for card in soup.find_all(class_=re.compile(cls, re.I)):
++                # QA4: skip auth widgets (sign-in / register cards) — their
++                # headings ("Sign in or register", "Reset password") are
++                # never services.
++                if card.find("form") or self._card_has_auth_link(card):
++                    continue
+                 heading = card.find(["h3", "h4", "h5", "strong"])
+                 if heading:
+                     text = heading.get_text(strip=True)
++                    if self._is_junk_service_heading(text):
++                        continue
+                     if 5 < len(text) < 80:
+                         services.append(text)
+ 
+@@ -1077,6 +1136,8 @@ class WebsiteScraper:
+                 continue
+             if any(skip in service_lower for skip in skip_words):
+                 continue
++            if self._is_junk_service_heading(service):
++                continue
+             if re.match(r"^[\d\s$€£AED,.]+$", service):
+                 continue
+ 
+diff --git a/django-backend/core/utils/text_patterns.py b/django-backend/core/utils/text_patterns.py
+new file mode 100644
+index 0000000..3d3a6ae
+--- /dev/null
++++ b/django-backend/core/utils/text_patterns.py
+@@ -0,0 +1,123 @@
++"""Shared text blocklist patterns for junk service/USP filtering (QA4).
++
++The client QA report (junk-services chain img2/img8/new6) showed website
++chrome leaking into service lists: auth widget headings ("Sign in or
++register", "Reset password"), nav/CTA labels, blog titles ("7 Warning
++Signs Your Dubai Property"), and marketing sentences ("with an average
++rating of 4", "Book home services in less than 60 seconds", "renovation
++company in Dubai").
++
++These compiled patterns are consumed by BOTH ``brand/text_utils.py``
++(list filtering) and ``core/utils/scraper.py`` (heading/card skipping),
++so they live in a dependency-free module — no imports from scraper or
++text_utils here to avoid circular imports.
++"""
++
++import re
++
++# Auth/account widget phrases. Matches heading case and sentence case
++# ("Reset Password" and "Reset password" both match).
++AUTH_PATTERNS = re.compile(
++    r"\b(?:"
++    r"sign[\s-]*in"
++    r"|sign[\s-]*up"
++    r"|log[\s-]*in"
++    r"|log[\s-]*out"
++    r"|login"
++    r"|registr\w*"
++    r"|reset[\s-]+password"
++    r"|forgot[\s-]+password"
++    r"|create[\s-]+account"
++    r"|get[\s-]+started"
++    r"|my[\s-]+account"
++    r")\b",
++    re.IGNORECASE,
++)
++
++# Auth link hrefs (/signin, /login, /reset-password, ...). Used to skip
++# whole sign-in cards during service extraction.
++AUTH_HREF_PATTERN = re.compile(
++    r"(?:"
++    r"sign[-_]?in"
++    r"|sign[-_]?up"
++    r"|log[-_]?in"
++    r"|log[-_]?out"
++    r"|login"
++    r"|signin"
++    r"|signup"
++    r"|register"
++    r"|password"
++    r"|my-account"
++    r")",
++    re.IGNORECASE,
++)
++
++# Nav/CTA button labels that end up as fake "services".
++CTA_PATTERNS = re.compile(
++    r"\b(?:"
++    r"book\s+now"
++    r"|get\s+a\s+quote"
++    r"|contact\s+us"
++    r"|learn\s+more"
++    r"|read\s+more"
++    r"|view\s+all"
++    r"|call\s+now"
++    r"|order\s+now"
++    r"|subscribe"
++    r"|download\s+now"
++    r")\b",
++    re.IGNORECASE,
++)
++
++# Blog/article titles: "7 Warning Signs Your Dubai Property ...",
++# "5 Tips For ...". A leading number plus listicle keyword.
++BLOG_TITLE_PATTERNS = re.compile(
++    r"^\s*\d+\b[^.!?]{0,80}?\b(?:"
++    r"signs"
++    r"|tips"
++    r"|ways"
++    r"|reasons"
++    r"|things"
++    r"|mistakes"
++    r"|questions"
++    r")\b",
++    re.IGNORECASE,
++)
++
++# Marketing sentences/fragments, not productized services:
++# - "with an average rating of 4" / "rating of 4.9"
++# - "trusted by 500+ clients"
++# - "years of experience" claims
++# - "best-in-class"
++# - "Book ... in 60 seconds/minutes" booking-speed claims
++# - "<business type> ... in <place>" SEO headings
++#   ("renovation company in Dubai")
++MARKETING_SENTENCE_PATTERNS = re.compile(
++    r"(?:"
++    r"with\s+an\s+average\s+rating"
++    r"|rating\s+of"
++    r"|trusted\s+by"
++    r"|years\s+of\s+experience"
++    r"|best[-\s]in[-\s]class"
++    r"|\bbook\b[^.!?]{0,60}?\b(?:seconds?|minutes?|mins?|secs?)\b"
++    r"|\b(?:company|agency|firm|contractors?|providers?|specialists?"
++    r"|experts?)\b[^.!?]{0,60}?\bin\s+\w+"
++    r")",
++    re.IGNORECASE,
++)
++
++
++def matches_service_blocklist(text: object) -> bool:
++    """True when ``text`` matches any QA4 junk blocklist pattern.
++
++    Convenience wrapper so filter/scrape call sites need a single check.
++    Non-string values never match.
++    """
++    if not isinstance(text, str):
++        return False
++    return bool(
++        AUTH_PATTERNS.search(text)
++        or CTA_PATTERNS.search(text)
++        or BLOG_TITLE_PATTERNS.search(text)
++        or MARKETING_SENTENCE_PATTERNS.search(text)
++    )

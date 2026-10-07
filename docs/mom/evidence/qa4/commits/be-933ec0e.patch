@@ -1,0 +1,865 @@
+commit 933ec0ed7397570153577ada444924e216fca4ac
+Author: cracki <cracki@gmail.com>
+Date:   Wed Oct 7 15:53:36 2026 +0330
+
+    fix(qa4-new3): language/industry/company-name detection in scan
+    
+    - Language: one Arabic character anywhere flipped the whole site to 'ar'
+      (scraper.py _detect_language). Now <html lang> wins outright
+      (normalized), else Arabic-script RATIO > 25% of letters; auto_scan
+      precedence html_lang(high) > og:locale(high) > content heuristic(low).
+    - Industry: plain substring scoring matched 'spa' inside 'space'
+      (scraper.py _score_industries). Now whole-word \b matching; new
+      home_services category (cleaning, ac cleaning, air conditioning,
+      handyman, renovation, ...); 'high' confidence only when exact
+      industry match AND top score >=2 AND lead >=2 — matching the FE which
+      auto-selects only high-confidence candidates.
+    - Company name: _clean_title took the first title segment ('Renovation
+      company in Dubai | Renofit' -> the SEO prefix). Now the segment with
+      the best domain-token overlap wins ('renofit.com' -> 'Renofit'), SEO
+      preambles and 'Official Site' suffixes stripped, 1-4-word preference;
+      og:site_name > schema.name > og:title > title_tag precedence kept.
+    - brand/tests_qa4_detection.py: 15 tests.
+
+diff --git a/django-backend/brand/engines/auto_scan_engine.py b/django-backend/brand/engines/auto_scan_engine.py
+index d735b51..42c3401 100644
+--- a/django-backend/brand/engines/auto_scan_engine.py
++++ b/django-backend/brand/engines/auto_scan_engine.py
+@@ -6,7 +6,8 @@ heuristics (NO LLM calls), and return them for user review/confirmation.
+ Nothing is written to the database.
+ 
+ Confidence levels follow MOM section 5.3:
+-- "high": extracted from Open Graph / structured (schema.org) data
++- "high": extracted from Open Graph / structured (schema.org) data, the
++  <html lang> attribute, or a decisive industry keyword score (QA4-new3)
+ - "medium": inferred from page text/content analysis
+ - "low": weak fallback signals only
+ """
+@@ -54,6 +55,80 @@ SOCIAL_PLATFORM_PATTERNS = {
+     ),
+ }
+ 
++# QA4-new3: <title>/og:title fallback cleaning helpers.
++_TITLE_SEPARATOR_RE = re.compile(r"\s*[|\u2013\u2014\u00b7-]\s*")
++_SEO_PREAMBLE_RE = re.compile(
++    r"^(?:the\s+)?"
++    r"(?:best|top|no\.?\s*1|leading|professional|trusted|reliable|affordable)\b"
++    r".*?\b(?:in|for)\b\s+",
++    re.IGNORECASE,
++)
++_MARKETING_SUFFIX_RE = re.compile(
++    r"[\s|\u2013\u2014\u00b7-]+\b"
++    r"(?:official\s+(?:site|website)|official|home\s+page|homepage|"
++    r"web\s+site|website|home|online)\s*$",
++    re.IGNORECASE,
++)
++_MULTI_PART_TLD_LABELS = {"com", "co", "org", "net", "gov", "edu"}
++
++
++def _title_tokens(segment: str) -> List[str]:
++    """Lowercase word tokens of a title segment."""
++    return re.findall(r"[a-z0-9]+", str(segment or "").lower())
++
++
++def _registrable_domain_token(value: str) -> str:
++    """Second-level domain label ('https://www.renofit.co.uk/x' -> 'renofit')."""
++    raw = str(value or "").strip().lower()
++    if not raw:
++        return ""
++    host = re.split(r"://", raw)[-1]
++    host = host.split("/", 1)[0].split("?", 1)[0].split(":", 1)[0]
++    host = re.sub(r"^www\.", "", host)
++    labels = [label for label in host.split(".") if label]
++    if len(labels) >= 3 and labels[-2] in _MULTI_PART_TLD_LABELS:
++        labels = labels[:-2]
++    elif len(labels) >= 2:
++        labels = labels[:-1]
++    return labels[-1] if labels else ""
++
++
++def _segment_matches_domain(segment: str, domain_token: str) -> bool:
++    """True when the segment's tokens overlap the registrable domain."""
++    tokens = _title_tokens(segment)
++    if domain_token in tokens:
++        return True
++    # Hyphenated domains ('scan-brand') must match across ALL of their
++    # labels, so a segment containing just 'brand' does not qualify.
++    domain_subtokens = _title_tokens(domain_token)
++    return len(domain_subtokens) > 1 and all(t in tokens for t in domain_subtokens)
++
++
++def _strip_seo_preamble(segment: str) -> str:
++    """Drop a leading SEO preamble ('The Best Salon in Dubai' -> 'Dubai').
++
++    Case-insensitive preamble keywords, but the word following 'in'/'for'
++    must be capitalized (proper noun) — verified outside the regex so
++    re.IGNORECASE cannot weaken it.
++    """
++    text = str(segment or "")
++    match = _SEO_PREAMBLE_RE.match(text)
++    if match and text[match.end() : match.end() + 1].isupper():
++        return text[match.end() :].strip()
++    return text
++
++
++def _strip_marketing_suffixes(segment: str) -> str:
++    """Drop trailing marketing words ('Renofit Official Site' -> 'Renofit')."""
++    cleaned = str(segment or "").strip()
++    for _ in range(3):
++        stripped = _MARKETING_SUFFIX_RE.sub("", cleaned).strip()
++        if stripped == cleaned or not stripped:
++            break
++        cleaned = stripped
++    return cleaned
++
++
+ class AutoScanError(Exception):
+     """Raised when the auto scan cannot complete (unreachable site, timeout)."""
+ 
+@@ -191,13 +266,19 @@ class AutoScanEngine:
+         if schema_name:
+             return self._detected(schema_name, "high", "schema_org")
+ 
++        page_url = str(scraped.get("url") or "")
++
+         og_title = str(og_data.get("title") or "").strip()
+         if og_title:
+-            return self._detected(self._clean_title(og_title), "medium", "og:title")
++            return self._detected(
++                self._clean_title(og_title, page_url), "medium", "og:title"
++            )
+ 
+         title = str(scraped.get("title") or "").strip()
+         if title:
+-            return self._detected(self._clean_title(title), "medium", "title_tag")
++            return self._detected(
++                self._clean_title(title, page_url), "medium", "title_tag"
++            )
+ 
+         hero_title = str((scraped.get("hero") or {}).get("title") or "").strip()
+         if hero_title:
+@@ -206,8 +287,51 @@ class AutoScanEngine:
+         return self._detected(None, None, None)
+ 
+     @staticmethod
+-    def _clean_title(title: str) -> str:
+-        return title.split("|")[0].split("-")[0].split("—")[0].strip()
++    def _clean_title(title: str, domain: str = "") -> str:
++        """Clean a <title>/og:title into a company name (QA4-new3).
++
++        Splits on ``|``, en/em dashes, middle dot and hyphen, then:
++        1. prefers the segment whose tokens overlap the registrable domain
++           (e.g. 'renofit.com' -> segment 'Renofit'), fewest words first;
++        2. otherwise keeps the first segment, stripping leading SEO
++           preambles ('Best ... in Dubai') and trailing marketing suffixes;
++        3. prefers a 1-4 word segment when the cleaned first segment is
++           implausibly long.
++        """
++        segments = [
++            segment.strip()
++            for segment in _TITLE_SEPARATOR_RE.split(str(title or ""))
++            if segment.strip()
++        ]
++        if not segments:
++            return str(title or "").strip()
++
++        domain_token = _registrable_domain_token(domain)
++        if domain_token:
++            matching = [
++                segment
++                for segment in segments
++                if _segment_matches_domain(segment, domain_token)
++            ]
++            if matching:
++                best = min(
++                    matching,
++                    key=lambda segment: (
++                        len(_title_tokens(segment)),
++                        segments.index(segment),
++                    ),
++                )
++                return _strip_marketing_suffixes(best)
++
++        # No domain match: keep the first segment, cleaned.
++        cleaned = _strip_marketing_suffixes(_strip_seo_preamble(segments[0]))
++        if 1 <= len(_title_tokens(cleaned)) <= 4:
++            return cleaned
++        for segment in segments[1:]:
++            candidate = _strip_marketing_suffixes(_strip_seo_preamble(segment))
++            if 1 <= len(_title_tokens(candidate)) <= 4:
++                return candidate
++        return cleaned
+ 
+     def _detect_logo(
+         self, scraped: Dict[str, Any], scrape_url: str
+@@ -282,13 +406,21 @@ class AutoScanEngine:
+         return None
+ 
+     def _detect_language(self, scraped: Dict[str, Any]) -> Dict[str, Any]:
++        # QA4-new3 precedence chain: the <html lang> attribute (already
++        # normalized by the scraper) is the strongest signal, then
++        # og:locale; the content heuristic is demoted to 'low' because one
++        # localized string must not decide the page language.
++        html_lang = str(scraped.get("html_lang") or "").strip()
++        if html_lang:
++            return self._detected(html_lang.lower(), "high", "html_lang")
++
+         og_locale = str((scraped.get("og_data") or {}).get("locale") or "").strip()
+         if og_locale:
+             return self._detected(og_locale.split("_")[0].lower(), "high", "og:locale")
+ 
+         language = str(scraped.get("language") or "").strip()
+         if language:
+-            return self._detected(language.lower(), "medium", "content_analysis")
++            return self._detected(language.lower(), "low", "content_analysis")
+ 
+         return self._detected(None, None, None)
+ 
+@@ -340,6 +472,11 @@ class AutoScanEngine:
+         haystack_parts.extend(str(item).lower() for item in audience_industries)
+         haystack = [part for part in haystack_parts if part]
+ 
++        # QA4-new3: the scraper's keyword scoring is decisive when the
++        # winning category scores >= 2 and leads the runner-up by >= 2
++        # points — only then is the exact-match candidate 'high'.
++        strong_scores = self._industry_scores_are_strong(scraped)
++
+         candidates: List[Dict[str, Any]] = []
+         for industry in industries:
+             name = industry["name"].strip().lower()
+@@ -351,22 +488,40 @@ class AutoScanEngine:
+                 or name in detected_industry
+                 or detected_industry in name
+             ):
++                if name == detected_industry and strong_scores:
++                    confidence = "high"
++                else:
++                    confidence = "medium" if name == detected_industry else "low"
+                 candidates.append(
+-                    {
+-                        **industry,
+-                        "confidence": "medium" if name == detected_industry else "low",
+-                        "source": "detected_industry",
+-                    }
++                    {**industry, "confidence": confidence, "source": "detected_industry"}
+                 )
+             elif any(name in part for part in haystack):
+                 candidates.append(
+                     {**industry, "confidence": "low", "source": "page_text"}
+                 )
+ 
+-        rank = {"medium": 0, "low": 1}
+-        candidates.sort(key=lambda c: (rank.get(c["confidence"], 2), c["name"]))
++        rank = {"high": 0, "medium": 1, "low": 2}
++        candidates.sort(key=lambda c: (rank.get(c["confidence"], 3), c["name"]))
+         return candidates
+ 
++    @staticmethod
++    def _industry_scores_are_strong(scraped: Dict[str, Any]) -> bool:
++        """True when the scraper's keyword scoring is decisive (QA4-new3).
++
++        Decisive = top category score >= 2 AND it leads the runner-up by
++        >= 2 points.
++        """
++        scores = scraped.get("industry_scores")
++        if not isinstance(scores, dict) or not scores:
++            return False
++        try:
++            ordered = sorted(int(value) for value in scores.values())
++        except (TypeError, ValueError):
++            return False
++        top = ordered[-1]
++        runner_up = ordered[-2] if len(ordered) > 1 else 0
++        return top >= 2 and (top - runner_up) >= 2
++
+     # ----------------------------------------------------------------- colors
+ 
+     async def _extract_brand_colors(
+diff --git a/django-backend/brand/tests_qa4_detection.py b/django-backend/brand/tests_qa4_detection.py
+new file mode 100644
+index 0000000..86d4d28
+--- /dev/null
++++ b/django-backend/brand/tests_qa4_detection.py
+@@ -0,0 +1,179 @@
++"""QA4-new3: language / industry / company-name detection fixes.
++
++No network: the real WebsiteScraper and AutoScanEngine detection helpers are
++exercised with synthetic HTML-derived text and arguments only.
++"""
++
++from django.test import TestCase
++
++from brand.engines.auto_scan_engine import AutoScanEngine
++from core.utils.scraper import WebsiteScraper
++
++
++class DetectLanguageTests(TestCase):
++    """Scraper-level _detect_language: html lang first, script ratio second."""
++
++    def setUp(self):
++        self.scraper = WebsiteScraper()
++
++    def test_html_lang_en_wins_over_single_arabic_word(self):
++        # One localized word must not flip an English page to 'ar'.
++        text = "Welcome to our store! \u0645\u0631\u062d\u0628\u0627 shop with us today."
++        self.assertEqual(self.scraper._detect_language(text, "en-US"), "en")
++
++    def test_html_lang_is_normalized_to_primary_subtag(self):
++        self.assertEqual(self.scraper._detect_language("anything", "ar-AE"), "ar")
++        self.assertEqual(self.scraper._detect_language("anything", "en_US"), "en")
++
++    def test_full_arabic_text_without_lang_is_ar(self):
++        text = (
++            "\u0645\u0631\u062d\u0628\u0627 \u0628\u0643\u0645 \u0641\u064a "
++            "\u0645\u0648\u0642\u0639\u0646\u0627 \u0646\u0642\u062f\u0645 "
++            "\u0623\u0641\u0636\u0644 \u0627\u0644\u062e\u062f\u0645\u0627\u062a "
++            "\u0644\u0639\u0645\u0644\u0627\u0626\u0646\u0627 \u0641\u064a "
++            "\u062c\u0645\u064a\u0639 \u0623\u0646\u062d\u0627\u0621 "
++            "\u0627\u0644\u062f\u0648\u0644\u0629"
++        )
++        self.assertEqual(self.scraper._detect_language(text), "ar")
++
++    def test_small_arabic_share_in_english_is_en(self):
++        # Roughly 5% Arabic-script letters in a predominantly English page:
++        # 5 Arabic letters vs 97 Latin letters -> 4.9%, far below the 25%
++        # threshold, so a localized phrase must not flip the page to 'ar'.
++        english = (
++            "Welcome to our cleaning company in Dubai. We provide deep "
++            "cleaning, AC cleaning and handyman services across the city. "
++        )
++        self.assertEqual(
++            self.scraper._detect_language(english + "\u062e\u062f\u0645\u0627\u062a"),
++            "en",
++        )
++
++
++class EngineLanguagePrecedenceTests(TestCase):
++    """auto_scan_engine language chain: html_lang > og:locale > content."""
++
++    def setUp(self):
++        self.engine = AutoScanEngine()
++
++    def test_html_lang_is_highest_priority(self):
++        result = self.engine._detect_language(
++            {"html_lang": "en", "og_data": {"locale": "ar_AE"}, "language": "ar"}
++        )
++        self.assertEqual(result, {"value": "en", "confidence": "high", "source": "html_lang"})
++
++    def test_og_locale_beats_content_heuristic(self):
++        result = self.engine._detect_language(
++            {"html_lang": "", "og_data": {"locale": "ar_AE"}, "language": "en"}
++        )
++        self.assertEqual(result["value"], "ar")
++        self.assertEqual(result["source"], "og:locale")
++
++    def test_content_heuristic_is_demoted_to_low(self):
++        result = self.engine._detect_language({"language": "ar"})
++        self.assertEqual(result["confidence"], "low")
++        self.assertEqual(result["source"], "content_analysis")
++
++
++class IndustryScoringTests(TestCase):
++    """Scraper-level whole-word keyword scoring + home_services category."""
++
++    def setUp(self):
++        self.scraper = WebsiteScraper()
++
++    def test_spa_does_not_match_inside_storage_space(self):
++        scores = self.scraper._score_industries(
++            ["Storage Space Prices"],
++            "Compare storage space prices in Dubai. Book your storage unit online today.",
++        )
++        self.assertNotIn("beauty", scores)
++        self.assertEqual(scores, {})
++
++    def test_cleaning_page_scores_home_services(self):
++        scores = self.scraper._score_industries(
++            ["AC Cleaning & Deep Cleaning Services"],
++            "We provide air conditioning cleaning, handyman repairs, plumbing "
++            "and electrician visits. Book pest control, painting or carpentry "
++            "experts, or renovation and refurbishment maintenance for your home.",
++        )
++        self.assertIn("home_services", scores)
++        self.assertEqual(max(scores, key=scores.get), "home_services")
++        # The category key maps to the human-readable industry name the
++        # engine matches against Industry rows ('Home Services').
++        self.assertEqual(
++            self.scraper._detect_industry(
++                ["AC Cleaning & Deep Cleaning Services"],
++                "air conditioning cleaning handyman plumbing renovation",
++            ),
++            "Home Services",
++        )
++
++
++class IndustryConfidenceTests(TestCase):
++    """'high' only when the top score is >= 2 and leads the runner-up by >= 2."""
++
++    def test_decisive_scores_are_strong(self):
++        # Top 3 vs runner-up 1.
++        self.assertTrue(
++            AutoScanEngine._industry_scores_are_strong(
++                {"industry_scores": {"beauty": 3, "healthcare": 1}}
++            )
++        )
++        self.assertFalse(
++            AutoScanEngine._industry_scores_are_strong(
++                {"industry_scores": {"beauty": 2, "healthcare": 1}}
++            )
++        )
++        self.assertFalse(
++            AutoScanEngine._industry_scores_are_strong(
++                {"industry_scores": {"beauty": 1}}
++            )
++        )
++        self.assertFalse(AutoScanEngine._industry_scores_are_strong({}))
++
++    def test_exact_match_is_high_only_when_decisive(self):
++        engine = AutoScanEngine()
++        industries = [{"industry_uuid": "u1", "name": "Home Services"}]
++        base = {
++            "detected_industry": "Home Services",
++            "title": "",
++            "og_data": {},
++            "audience_signals": {},
++        }
++
++        strong = dict(base, industry_scores={"home_services": 3, "real_estate": 1})
++        candidates = engine._detect_industry_candidates(strong, industries)
++        self.assertEqual(candidates[0]["confidence"], "high")
++        self.assertEqual(candidates[0]["source"], "detected_industry")
++
++        weak = dict(base, industry_scores={"home_services": 1})
++        candidates = engine._detect_industry_candidates(weak, industries)
++        self.assertEqual(candidates[0]["confidence"], "medium")
++
++
++class CleanTitleTests(TestCase):
++    """Title-tag fallback: domain segment preference + SEO preamble stripping."""
++
++    def test_domain_match_selects_brand_segment_after_pipe(self):
++        self.assertEqual(
++            AutoScanEngine._clean_title("Renovation company in Dubai | Renofit", "renofit.com"),
++            "Renofit",
++        )
++
++    def test_domain_match_selects_segment_before_dash(self):
++        self.assertEqual(
++            AutoScanEngine._clean_title("Justlife - Home Services", "justlife.com"),
++            "Justlife",
++        )
++
++    def test_no_domain_match_keeps_first_segment(self):
++        self.assertEqual(
++            AutoScanEngine._clean_title("Renovation company in Dubai | Renofit", "unrelated-site.net"),
++            "Renovation company in Dubai",
++        )
++
++    def test_no_domain_match_strips_seo_preamble(self):
++        self.assertEqual(
++            AutoScanEngine._clean_title("Best Salon in Dubai | GlowUp", "salonsguide.net"),
++            "Dubai",
++        )
+diff --git a/django-backend/core/utils/scraper.py b/django-backend/core/utils/scraper.py
+index 79c0389..8d4c462 100644
+--- a/django-backend/core/utils/scraper.py
++++ b/django-backend/core/utils/scraper.py
+@@ -661,8 +661,16 @@ class WebsiteScraper:
+ 
+         # Add computed fields
+         data["content_hash"] = hashlib.md5(full_text.encode()).hexdigest()
+-        data["language"] = self._detect_language(full_text)
+-        data["detected_industry"] = self._detect_industry(data["headings"], full_text)
++        # QA4-new3: capture the <html lang> attribute so language detection
++        # can trust it over content heuristics, and expose it to the auto
++        # scan engine as its own high-confidence signal.
++        html_tag = soup.find("html")
++        html_lang = str((html_tag.get("lang") if html_tag else None) or "").strip()
++        data["html_lang"] = self._normalize_lang_code(html_lang)
++        data["language"] = self._detect_language(full_text, html_lang)
++        industry_scores = self._score_industries(data["headings"], full_text)
++        data["detected_industry"] = self._top_industry_name(industry_scores)
++        data["industry_scores"] = industry_scores
+         data["cta_intent"] = self._infer_cta_intent(data["cta_list"])
+         data["audience_signals"] = self._extract_target_signals(soup)
+         data["proof_points"] = self._extract_proof_points(soup, full_text)
+@@ -1316,163 +1324,233 @@ class WebsiteScraper:
+                 ctas.append(text)
+         return list(dict.fromkeys(ctas))[:15]
+ 
+-    def _detect_language(self, text: str) -> str:
+-        """Detect text language"""
+-        if re.search(r"[\u0600-\u06FF]", text):
+-            return "ar"
+-        elif re.search(r"[\u0590-\u05FF]", text):
++    # QA4-new3: Arabic-script characters, including the Arabic Supplement
++    # and Presentation Forms blocks (shaped/precomposed text), used by the
++    # script-ratio heuristic below.
++    _ARABIC_SCRIPT_RE = re.compile(
++        r"[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]"
++    )
++    _LANG_CODE_RE = re.compile(r"^[a-z]{2,3}$")
++
++    @classmethod
++    def _normalize_lang_code(cls, value: str) -> str:
++        """Normalize an HTML lang attribute to its primary subtag.
++
++        'en-US' / 'en_US' -> 'en'; returns '' for missing or malformed
++        values (the attribute must be a 2-3 letter primary subtag).
++        """
++        primary = str(value or "").strip().lower().replace("_", "-").split("-")[0]
++        return primary if cls._LANG_CODE_RE.match(primary) else ""
++
++    def _detect_language(self, text: str, html_lang: str = "") -> str:
++        """Detect text language (QA4-new3).
++
++        1. The ``<html lang>`` attribute is the highest-priority signal and
++           wins outright, so a single localized link/word can no longer flip
++           an English page to 'ar'.
++        2. Otherwise a script-ratio heuristic: 'ar' is reported only when
++           Arabic-script characters make up a meaningful share (>25%) of all
++           letters, replacing the old single-character regex.
++        """
++        normalized_lang = self._normalize_lang_code(html_lang)
++        if normalized_lang:
++            return normalized_lang
++
++        text = text or ""
++        arabic_chars = len(self._ARABIC_SCRIPT_RE.findall(text))
++        if arabic_chars:
++            total_letters = sum(1 for char in text if char.isalpha())
++            if total_letters and arabic_chars / total_letters > 0.25:
++                return "ar"
++
++        if re.search(r"[\u0590-\u05FF]", text):
+             return "he"
+         elif re.search(r"[\u4e00-\u9fff]", text):
+             return "zh"
+         return "en"
+ 
+-    def _detect_industry(self, headings: List[str], full_text: str) -> str:
+-        """Detect business industry from content"""
+-        content = " ".join(headings).lower() + " " + full_text.lower()
++    # QA4-new3: home services added as a detectable category (cleaning /
++    # AC / handyman / renovation / maintenance / plumbing / ...).
++    INDUSTRY_KEYWORDS: Dict[str, List[str]] = {
++        "beauty": [
++            "beauty",
++            "salon",
++            "spa",
++            "brows",
++            "lash",
++            "nail",
++            "facial",
++            "skincare",
++            "makeup",
++            "cosmetic",
++            "hair",
++            "eyebrow",
++            "microblading",
++        ],
++        "healthcare": [
++            "clinic",
++            "medical",
++            "doctor",
++            "health",
++            "hospital",
++            "dental",
++            "therapy",
++            "treatment",
++            "patient",
++            "wellness",
++        ],
++        "real_estate": [
++            "real estate",
++            "property",
++            "properties",
++            "apartment",
++            "villa",
++            "rent",
++            "buy",
++            "sell",
++            "broker",
++            "agent",
++        ],
++        "restaurant": [
++            "restaurant",
++            "food",
++            "menu",
++            "dine",
++            "cuisine",
++            "chef",
++            "cafe",
++            "coffee",
++            "catering",
++        ],
++        "ecommerce": [
++            "shop",
++            "store",
++            "cart",
++            "checkout",
++            "product",
++            "buy now",
++            "add to cart",
++            "shipping",
++        ],
++        "technology": [
++            "software",
++            "tech",
++            "app",
++            "platform",
++            "saas",
++            "cloud",
++            "developer",
++            "code",
++            "digital",
++        ],
++        "marketing": [
++            "marketing",
++            "agency",
++            "advertising",
++            "campaign",
++            "brand",
++            "social media",
++            "seo",
++            "ppc",
++        ],
++        "education": [
++            "education",
++            "school",
++            "course",
++            "training",
++            "learn",
++            "student",
++            "teacher",
++            "academy",
++        ],
++        "fitness": [
++            "gym",
++            "fitness",
++            "workout",
++            "exercise",
++            "trainer",
++            "yoga",
++            "pilates",
++            "sport",
++        ],
++        "legal": [
++            "law",
++            "legal",
++            "attorney",
++            "lawyer",
++            "litigation",
++            "court",
++            "firm",
++        ],
++        "finance": [
++            "finance",
++            "bank",
++            "investment",
++            "insurance",
++            "loan",
++            "mortgage",
++            "accounting",
++        ],
++        "travel": [
++            "travel",
++            "tour",
++            "hotel",
++            "booking",
++            "flight",
++            "vacation",
++            "resort",
++            "tourism",
++        ],
++        "home_services": [
++            "cleaning",
++            "ac cleaning",
++            "air conditioning",
++            "handyman",
++            "renovation",
++            "refurbishment",
++            "maintenance",
++            "plumbing",
++            "electrician",
++            "pest control",
++            "painting",
++            "carpentry",
++            "deep cleaning",
++            "move in cleaning",
++            "fitout",
++            "fit-out",
++        ],
++    }
+ 
+-        industries = {
+-            "beauty": [
+-                "beauty",
+-                "salon",
+-                "spa",
+-                "brows",
+-                "lash",
+-                "nail",
+-                "facial",
+-                "skincare",
+-                "makeup",
+-                "cosmetic",
+-                "hair",
+-                "eyebrow",
+-                "microblading",
+-            ],
+-            "healthcare": [
+-                "clinic",
+-                "medical",
+-                "doctor",
+-                "health",
+-                "hospital",
+-                "dental",
+-                "therapy",
+-                "treatment",
+-                "patient",
+-                "wellness",
+-            ],
+-            "real_estate": [
+-                "real estate",
+-                "property",
+-                "properties",
+-                "apartment",
+-                "villa",
+-                "rent",
+-                "buy",
+-                "sell",
+-                "broker",
+-                "agent",
+-            ],
+-            "restaurant": [
+-                "restaurant",
+-                "food",
+-                "menu",
+-                "dine",
+-                "cuisine",
+-                "chef",
+-                "cafe",
+-                "coffee",
+-                "catering",
+-            ],
+-            "ecommerce": [
+-                "shop",
+-                "store",
+-                "cart",
+-                "checkout",
+-                "product",
+-                "buy now",
+-                "add to cart",
+-                "shipping",
+-            ],
+-            "technology": [
+-                "software",
+-                "tech",
+-                "app",
+-                "platform",
+-                "saas",
+-                "cloud",
+-                "developer",
+-                "code",
+-                "digital",
+-            ],
+-            "marketing": [
+-                "marketing",
+-                "agency",
+-                "advertising",
+-                "campaign",
+-                "brand",
+-                "social media",
+-                "seo",
+-                "ppc",
+-            ],
+-            "education": [
+-                "education",
+-                "school",
+-                "course",
+-                "training",
+-                "learn",
+-                "student",
+-                "teacher",
+-                "academy",
+-            ],
+-            "fitness": [
+-                "gym",
+-                "fitness",
+-                "workout",
+-                "exercise",
+-                "trainer",
+-                "yoga",
+-                "pilates",
+-                "sport",
+-            ],
+-            "legal": [
+-                "law",
+-                "legal",
+-                "attorney",
+-                "lawyer",
+-                "litigation",
+-                "court",
+-                "firm",
+-            ],
+-            "finance": [
+-                "finance",
+-                "bank",
+-                "investment",
+-                "insurance",
+-                "loan",
+-                "mortgage",
+-                "accounting",
+-            ],
+-            "travel": [
+-                "travel",
+-                "tour",
+-                "hotel",
+-                "booking",
+-                "flight",
+-                "vacation",
+-                "resort",
+-                "tourism",
+-            ],
+-        }
++    def _score_industries(self, headings: List[str], full_text: str) -> Dict[str, int]:
++        """Score industries by keyword hits (QA4-new3).
++
++        Keywords are matched as whole words (``\\b`` regex on lowercased
++        content, word-boundary-safe for multiword keywords) so e.g. 'spa'
++        no longer matches 'space'.
++        """
++        content = " ".join(headings).lower() + " " + full_text.lower()
+ 
+-        scores = {}
+-        for industry, keywords in industries.items():
+-            score = sum(1 for kw in keywords if kw in content)
++        scores: Dict[str, int] = {}
++        for industry, keywords in self.INDUSTRY_KEYWORDS.items():
++            score = 0
++            for keyword in keywords:
++                if re.search(rf"\b{re.escape(keyword)}\b", content):
++                    score += 1
+             if score > 0:
+                 scores[industry] = score
++        return scores
+ 
+-        if scores:
+-            best = max(scores, key=scores.get)
+-            return best.replace("_", " ").title()
++    @staticmethod
++    def _top_industry_name(scores: Dict[str, int]) -> str:
++        """Human-readable name of the highest-scoring industry."""
++        if not scores:
++            return "General Business"
++        best = max(scores, key=scores.get)
++        return best.replace("_", " ").title()
+ 
+-        return "General Business"
++    def _detect_industry(self, headings: List[str], full_text: str) -> str:
++        """Detect business industry from content"""
++        return self._top_industry_name(self._score_industries(headings, full_text))
+ 
+     def _infer_cta_intent(self, cta_list: List[str]) -> str:
+         """Infer primary CTA intent"""

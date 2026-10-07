@@ -1,0 +1,8 @@
+.........
+----------------------------------------------------------------------
+Ran 510 tests in 436.680s
+
+OK
+Destroying test database for alias 'default'...
+Found 510 test(s).
+System check identified no issues (0 silenced).

@@ -1,0 +1,294 @@
+commit 42068c42d7bcbd41999dda358bc1de7e88d36f0f
+Author: cracki <cracki@gmail.com>
+Date:   Wed Oct 7 15:02:05 2026 +0330
+
+    test(qa4): align legacy assertions with new QA4 contracts
+    
+    - brand/tests.py: usp_list no longer merged into services (dedicated
+      services field); bare-list error bodies now {'detail': ...}.
+    - campaign/tests.py: derive-services tests renamed/updated to the
+      core-services+scraped merge; PPC fallback fixtures provide the new
+      services field; unsuccessful-engine-400 asserts the {'detail': ...}
+      body; premature-COMPLETED test now expects IN_PROGRESS.
+
+diff --git a/django-backend/brand/tests.py b/django-backend/brand/tests.py
+index cb2a870..f4724ef 100644
+--- a/django-backend/brand/tests.py
++++ b/django-backend/brand/tests.py
+@@ -1034,7 +1034,16 @@ class BrandAutoScanViewTests(APITestCase):
+             )
+ 
+         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+-        detail_text = " ".join(str(item) for item in response.data)
++        # QA4-N1: AutoScanError bodies are now {"detail": "..."} objects
++        # instead of bare lists, so join the values (not the keys).
++        detail_text = " ".join(
++            str(item)
++            for item in (
++                response.data.values()
++                if isinstance(response.data, dict)
++                else response.data
++            )
++        )
+         self.assertIn("Could not scan", detail_text)
+         self.assertIn("HTTP 404", detail_text)
+ 
+@@ -1046,9 +1055,18 @@ class BrandAutoScanViewTests(APITestCase):
+                 format="json",
+             )
+         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
++        # QA4-N1: AutoScanError bodies are now {"detail": "..."} objects
++        # instead of bare lists, so join the values (not the keys).
+         self.assertIn(
+             "Could not scan",
+-            " ".join(str(item) for item in response.data),
++            " ".join(
++                str(item)
++                for item in (
++                    response.data.values()
++                    if isinstance(response.data, dict)
++                    else response.data
++                )
++            ),
+         )
+ 
+         with patch_auto_scan_scraper(side_effect=asyncio.TimeoutError()):
+@@ -1060,7 +1078,14 @@ class BrandAutoScanViewTests(APITestCase):
+         self.assertEqual(timeout_response.status_code, status.HTTP_400_BAD_REQUEST)
+         self.assertIn(
+             "took too long to respond",
+-            " ".join(str(item) for item in timeout_response.data),
++            " ".join(
++                str(item)
++                for item in (
++                    timeout_response.data.values()
++                    if isinstance(timeout_response.data, dict)
++                    else timeout_response.data
++                )
++            ),
+         )
+ 
+     def test_scan_requires_authentication(self):
+@@ -1169,6 +1194,9 @@ class BrandServicesResourceTests(APITestCase):
+         )
+         BrandCoreAnalysis.objects.create(
+             identity=self.brand.identity,
++            # QA4: core services come from the dedicated services field
++            # (usp_list is never treated as services).
++            services=["seo", "Brand Strategy"],
+             usp_list=["seo", "Brand Strategy"],
+         )
+         self._completed_ppc_step(
+@@ -1693,6 +1721,9 @@ class BrandProfileServicesTests(SimpleTestCase):
+         brand_core = BrandCoreAnalysis(
+             company_name="Builder Brand",
+             industry="Marketing",
++            # QA4: profile services merge scraped + the analysis services
++            # field (usp_list is no longer merged into services).
++            services=["Fast delivery"],
+             usp_list=["Fast delivery", "seo"],
+         )
+ 
+@@ -1702,7 +1733,7 @@ class BrandProfileServicesTests(SimpleTestCase):
+             brand_core=brand_core,
+         )
+ 
+-        # Scraped services first, then USPs; case-insensitive dedup.
++        # Scraped services first, then analysis services; case-insensitive dedup.
+         self.assertEqual(
+             profile["services"],
+             ["SEO", "paid ads", "Fast delivery"],
+@@ -1710,7 +1741,8 @@ class BrandProfileServicesTests(SimpleTestCase):
+         # Existing usp_list behaviour is unchanged.
+         self.assertEqual(profile["usp_list"], ["Fast delivery", "seo"])
+ 
+-    def test_brand_profile_services_fall_back_to_usp_list(self):
++    def test_brand_profile_services_do_not_fall_back_to_usp_list(self):
++        # QA4: usp_list is never used as a services fallback.
+         website_data = BrandWebsiteData(
+             website_url="https://builder-brand.com",
+             services=None,
+@@ -1727,7 +1759,8 @@ class BrandProfileServicesTests(SimpleTestCase):
+             brand_core=brand_core,
+         )
+ 
+-        self.assertEqual(profile["services"], ["SEO"])
++        self.assertEqual(profile["services"], [])
++        self.assertEqual(profile["usp_list"], ["SEO"])
+ 
+ 
+ class BrandProfileCompanyNameTests(SimpleTestCase):
+@@ -2604,6 +2637,8 @@ class BrandProfilePlaceholderAndWheelTests(SimpleTestCase):
+         brand_core = BrandCoreAnalysis(
+             company_name="Serenity Home Massage",
+             industry="Wellness & Spa",
++            # QA4: services come from the dedicated analysis field.
++            services=["Certified therapists"],
+             usp_list=[
+                 "Limited website content - unable to extract specific USPs",
+                 "Certified therapists",
+@@ -3165,6 +3200,9 @@ class JunkTextHeuristicsTests(SimpleTestCase):
+         brand_core = BrandCoreAnalysis(
+             company_name="Serenity Home Massage",
+             industry="Wellness & Spa",
++            # QA4: profile services come from the dedicated analysis field
++            # now (usp_list is no longer merged into services).
++            services=["Aromatherapy Session"],
+             usp_list=["Aromatherapy Session", "and joy"],
+             brand_voice={
+                 "tone": "warm",
+@@ -3322,6 +3360,8 @@ class CoreAnalysisJunkFilterTests(APITestCase):
+             "industry": "wellness",
+             "detected_industry": "wellness",
+             "low_confidence": False,
++            # QA4: concrete services field (parsed separately from usp_list).
++            "services": ["Aromatherapy Session"],
+             "usp_list": [
+                 "Neelu Mishra",
+                 "Language in a Glance",
+diff --git a/django-backend/campaign/tests.py b/django-backend/campaign/tests.py
+index f200855..dff7979 100644
+--- a/django-backend/campaign/tests.py
++++ b/django-backend/campaign/tests.py
+@@ -2261,14 +2261,23 @@ class SmartFunnelStageMessageDifferentiationTests(SimpleTestCase):
+         bofu = self._message(FunnelStage.BOFU)
+ 
+         self.assertIn("Curiosity", tofu.headline_angle)
+-        self.assertIn("Storytelling", tofu.body_approach)
+         self.assertIn("Comparison", mofu.headline_angle)
+-        self.assertIn("social proof", mofu.body_approach)
+         self.assertIn("Urgency", bofu.headline_angle)
+-        self.assertIn("risk reversal", bofu.body_approach)
+         self.assertIn("Testimonials", mofu.proof_type)
+         self.assertIn("Guarantees", bofu.proof_type)
+ 
++        # QA4-img15: body_approach is per-persona text now (one of four
++        # rotating per-stage templates, or AI-generated when the AI tier is
++        # enabled), never one shared sentence per stage — it must be
++        # non-empty and reference this persona's own pain.
++        own_pain = self.PERSONA["pain_points"]["emotional_pains"][0]
++        for stage_message in (tofu, mofu, bofu):
++            self.assertTrue(
++                str(stage_message.body_approach).strip(),
++                f"{stage_message.stage} body_approach must not be empty",
++            )
++            self.assertIn(own_pain, stage_message.body_approach)
++
+     def test_research_drives_distinct_triggers_per_stage(self):
+         # TOFU pulls emotional triggers, MOFU purchase drivers, BOFU
+         # post-purchase emotions — three different research dimensions.
+@@ -3025,7 +3034,8 @@ class CampaignCompleteGatingTests(APITestCase):
+ 
+ 
+ class CampaignAdsStrategyAutoStatusTests(APITestCase):
+-    """Ads-strategy success must flip status via the completion gate (B6)."""
++    """Ads-strategy success promotes status to IN_PROGRESS, never COMPLETED
++    (QA4-img29/new5: completion stays the explicit POST /complete/ call)."""
+ 
+     def setUp(self):
+         self.user = User.objects.create_user(
+@@ -3077,7 +3087,7 @@ class CampaignAdsStrategyAutoStatusTests(APITestCase):
+         # complete the campaign while the base steps are missing.
+         self.assertEqual(self.campaign.status, CampaignStatusChoices.IN_PROGRESS)
+ 
+-    def test_selected_platforms_with_base_steps_completes(self):
++    def test_selected_platforms_with_base_steps_stays_in_progress_until_complete(self):
+         self.campaign.context_payload = {"selected_platforms": ["meta", "google"]}
+         self.campaign.segmentation_completed = True
+         self.campaign.ppc_viability_completed = True
+@@ -3089,7 +3099,10 @@ class CampaignAdsStrategyAutoStatusTests(APITestCase):
+         self.assertEqual(self.campaign.status, CampaignStatusChoices.IN_PROGRESS)
+ 
+         self._run_platform("google")
+-        self.assertEqual(self.campaign.status, CampaignStatusChoices.COMPLETED)
++        # QA4-img29/new5: finishing the last platform's ads strategy must NOT
++        # auto-complete the campaign — completion stays the explicit
++        # POST /complete/ action.
++        self.assertEqual(self.campaign.status, CampaignStatusChoices.IN_PROGRESS)
+ 
+ 
+ class CampaignAdsStrategyBudgetThreadingTests(APITestCase):
+@@ -3366,8 +3379,8 @@ class CampaignAdsStrategyPersistAndErrorTests(APITestCase):
+         response = self.client.post(self.url, {"platform": "google"}, format="json")
+ 
+         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+-        # ValidationError(str) renders as a bare detail list.
+-        self.assertIn("Failed to parse response", response.data)
++        # qa_exception_handler renders bare string payloads as {"detail": ...}.
++        self.assertEqual(response.data, {"detail": "Failed to parse response"})
+ 
+ 
+ class CampaignStepApproveTests(APITestCase):
+@@ -3582,7 +3595,7 @@ class CampaignPPCViabilityDeriveServicesTests(APITestCase):
+         )
+         self.service = CampaignPPCViabilityService()
+ 
+-    def test_derive_services_merges_usp_and_scraped_services(self):
++    def test_derive_services_merges_core_services_and_scraped_services(self):
+         BrandWebsiteData.objects.create(
+             identity=self.brand.identity,
+             website_url=self.brand.website_url,
+@@ -3591,13 +3604,16 @@ class CampaignPPCViabilityDeriveServicesTests(APITestCase):
+         BrandCoreAnalysis.objects.create(
+             identity=self.brand.identity,
+             usp_list=["Fast delivery", "seo"],
++            services=["Fast delivery"],
+         )
+ 
+         services = self.service._derive_services(self.brand)
+ 
+         # Core-analysis services keep priority, scraped ones are appended,
+-        # duplicates are removed case-insensitively.
+-        self.assertEqual(services, ["Fast delivery", "seo", "Paid Ads"])
++        # duplicates are removed case-insensitively. QA4: USP sentences are
++        # no longer treated as services — only the dedicated services field
++        # merges into the analysis input.
++        self.assertEqual(services, ["Fast delivery", "SEO", "Paid Ads"])
+ 
+     def test_derive_services_without_data_returns_empty_list(self):
+         self.assertEqual(self.service._derive_services(None), [])
+@@ -3621,7 +3637,7 @@ class CampaignPPCViabilitySelectedServicesTests(APITestCase):
+         )
+         BrandCoreAnalysis.objects.create(
+             identity=self.brand.identity,
+-            usp_list=["Brand Service"],
++            services=["Brand Service"],
+         )
+         self.campaign = Campaign.objects.create(
+             brand=self.brand,
+@@ -3700,7 +3716,7 @@ class CampaignContentStrategyDeriveServicesTests(APITestCase):
+         )
+         self.service = CampaignContentStrategyService()
+ 
+-    def test_derive_services_merges_usp_and_scraped_services(self):
++    def test_derive_services_merges_core_services_and_scraped_services(self):
+         BrandWebsiteData.objects.create(
+             identity=self.brand.identity,
+             website_url=self.brand.website_url,
+@@ -3709,13 +3725,16 @@ class CampaignContentStrategyDeriveServicesTests(APITestCase):
+         BrandCoreAnalysis.objects.create(
+             identity=self.brand.identity,
+             usp_list=["Fast delivery", "seo"],
++            services=["Fast delivery"],
+         )
+ 
+         services = self.service._derive_services(self.brand)
+ 
+         # Core-analysis services keep priority, scraped ones are appended,
+-        # duplicates are removed case-insensitively.
+-        self.assertEqual(services, ["Fast delivery", "seo", "Paid Ads"])
++        # duplicates are removed case-insensitively. QA4: USP sentences are
++        # no longer treated as services — only the dedicated services field
++        # merges into the analysis input.
++        self.assertEqual(services, ["Fast delivery", "SEO", "Paid Ads"])
+ 
+     def test_derive_services_without_data_returns_empty_list(self):
+         self.assertEqual(self.service._derive_services(None), [])
+@@ -6713,6 +6732,7 @@ class StepRefineServiceTests(APITestCase):
+             company_name=self.brand.company_name,
+             industry="SaaS",
+             usp_list=["SEO"],
++            services=["SEO"],
+         )
+         self.campaign = Campaign.objects.create(
+             brand=self.brand,

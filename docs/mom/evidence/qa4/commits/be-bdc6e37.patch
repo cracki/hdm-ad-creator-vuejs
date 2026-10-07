@@ -1,0 +1,1246 @@
+commit bdc6e37300a487dead4c95740204164a82278acb
+Author: cracki <cracki@gmail.com>
+Date:   Wed Oct 7 15:53:36 2026 +0330
+
+    fix(qa4-MOM): copy-on-write brand data, payload scrubbing, upload + domain validation
+    
+    MOM half-done/not-done items closed (implementation verified by two
+    independent agents):
+    - Scraped site data no longer shared between users: BrandWebsiteData and
+      BrandCoreAnalysis gain a nullable brand FK (migration 0016); analysis
+      lookups scope to the asking brand first, fall back to the shared
+      identity row read-only; force_refresh writes a brand-owned row and
+      never mutates a row owned by another brand (full_analysis.py copy-
+      on-write; tests prove user A's refresh leaves user B's data intact).
+    - Raw payloads scrubbed: ad_library AdLibraryRunSerializer and market
+      run serializers strip internal keys (prompt/system_prompt/raw/debug/
+      error internals) at any depth via to_representation; FE-consumed
+      business keys and input_snapshot/request_payload verified against the
+      frontend and kept. market failing runs persist a generic error
+      message + logger.exception instead of str(exc) leaks.
+    - Upload validation: BrandAssetUploadSerializer enforces
+      png/jpeg/webp/svg/pdf + 5MB cap.
+    - Domain hardening: localhost/127.0.0.1/private IPs/.local/.internal
+      rejected as brand website_url (serializer field error).
+    - brand/tests.py: one assertion updated for the scrubbed payload.
+    - Tests: brand 9 + ad_library 3 + market 3 new, all green.
+
+diff --git a/django-backend/ad_library/serializers.py b/django-backend/ad_library/serializers.py
+index a45fc7a..2b552d3 100644
+--- a/django-backend/ad_library/serializers.py
++++ b/django-backend/ad_library/serializers.py
+@@ -4,6 +4,54 @@ from rest_framework import serializers
+ from ad_library.models import AdLibraryAd, AdLibraryRun
+ 
+ 
++# QA4-MOM: keys that must never leave the API from stored payloads —
++# internal LLM prompt/debug material and raw error internals.
++_INTERNAL_PAYLOAD_KEYS = frozenset(
++    {
++        "prompt",
++        "system_prompt",
++        "raw",
++        "raw_response",
++        "raw_output",
++        "debug",
++        "debug_info",
++        "messages",
++        "error_detail",
++        "error_details",
++        "internal_error",
++        "traceback",
++        "exception",
++        "stack_trace",
++    }
++)
++
++
++def strip_internal_payload_keys(value, allowed_error_message=None):
++    """Recursively drop internal keys from a stored JSON payload.
++
++    String values under ``error`` are dropped unless they equal
++    ``allowed_error_message`` (the user-safe generic message), so legacy
++    rows carrying raw exception text never reach the API.
++    """
++    if isinstance(value, dict):
++        cleaned = {}
++        for key, item in value.items():
++            key_lower = str(key).lower()
++            if key_lower in _INTERNAL_PAYLOAD_KEYS:
++                continue
++            if (
++                key_lower == "error"
++                and isinstance(item, str)
++                and item != allowed_error_message
++            ):
++                continue
++            cleaned[key] = strip_internal_payload_keys(item, allowed_error_message)
++        return cleaned
++    if isinstance(value, list):
++        return [strip_internal_payload_keys(item, allowed_error_message) for item in value]
++    return value
++
++
+ class AdLibraryAdSerializer(serializers.ModelSerializer):
+     class Meta:
+         model = AdLibraryAd
+@@ -46,6 +94,17 @@ class AdLibraryRunSerializer(serializers.ModelSerializer):
+         )
+         read_only_fields = fields
+ 
++    def to_representation(self, instance):
++        # QA4-MOM: response_payload stores the full generator blob; scrub
++        # internal prompt/debug/error material before it leaves the API.
++        # The FE reads ads via the run-ads endpoint and run metadata via
++        # result_summary — never this blob.
++        data = super().to_representation(instance)
++        data["response_payload"] = strip_internal_payload_keys(
++            data.get("response_payload")
++        )
++        return data
++
+ 
+ class AdLibraryGenerateRunSerializer(serializers.Serializer):
+     brand_uuid = serializers.UUIDField(required=False)
+diff --git a/django-backend/ad_library/services/ad_library.py b/django-backend/ad_library/services/ad_library.py
+index b926ba4..4787c91 100644
+--- a/django-backend/ad_library/services/ad_library.py
++++ b/django-backend/ad_library/services/ad_library.py
+@@ -18,8 +18,16 @@ class AdLibraryGenerateService:
+         if brand is None:
+             raise ValueError("Either brand_uuid is required.")
+ 
++        # QA4-MOM: prefer analysis rows owned by this brand, then fall back
++        # to the shared identity-level rows (legacy rows have brand=NULL).
+         latest_core = (
+-            BrandCoreAnalysis.objects.filter(identity=brand.identity)
++            BrandCoreAnalysis.objects.filter(brand=brand)
++            .order_by("-updated_at")
++            .first()
++        ) or (
++            BrandCoreAnalysis.objects.filter(
++                identity=brand.identity, brand__isnull=True
++            )
+             .order_by("-updated_at")
+             .first()
+         )
+diff --git a/django-backend/ad_library/tests_qa4_mom.py b/django-backend/ad_library/tests_qa4_mom.py
+new file mode 100644
+index 0000000..379d136
+--- /dev/null
++++ b/django-backend/ad_library/tests_qa4_mom.py
+@@ -0,0 +1,113 @@
++"""
++QA4-MOM closing-gap regression tests (ad library).
++
++The run list/detail API used to expose the ENTIRE stored generator blob
++(``response_payload``), including internal LLM prompt/debug material. The
++serializer now scrubs internal keys before the payload leaves the API while
++keeping the fields the frontend reads:
++
++- ``response_payload``: business keys (e.g. ``run``, totals) are kept;
++  ``prompt`` / ``system_prompt`` / ``raw`` / ``debug`` / raw error
++  internals are stripped (also nested).
++- ``request_payload`` and ``input_snapshot`` are kept verbatim — the FE
++  detail view reads ``input_snapshot.brand_profile`` and
++  ``request_payload.personas``.
++"""
++
++from rest_framework.test import APITestCase
++
++from ad_library.models import (
++    AdLibraryRun,
++    AdLibraryRunStatusChoices,
++    AdLibraryRunTypeChoices,
++)
++from ad_library.serializers import AdLibraryRunSerializer
++from authentication.models import User
++from brand.models import Brand, Industry
++
++
++class AdLibraryRunPayloadScrubTests(APITestCase):
++    """Internal keys never leave the API; business keys stay intact."""
++
++    def setUp(self):
++        self.user = User.objects.create_user(
++            email="adlib-scrub@example.com",
++            password="StrongPass123!",
++        )
++        self.industry = Industry.objects.create(name="E-Commerce")
++        self.brand = Brand.objects.create(
++            website_url="https://adlib-brand.com",
++            company_name="AdLib Brand",
++            selected_industry=self.industry,
++            created_by=self.user,
++        )
++
++    def _make_run(self, response_payload):
++        return AdLibraryRun.objects.create(
++            brand=self.brand,
++            created_by=self.user,
++            run_type=AdLibraryRunTypeChoices.GENERATE,
++            status=AdLibraryRunStatusChoices.COMPLETED,
++            request_payload={"personas": ["Budget Buyer"]},
++            input_snapshot={"brand_profile": {"industry": "E-Commerce"}},
++            response_payload=response_payload,
++            result_summary={"total_ads": 1},
++        )
++
++    def test_prompt_and_debug_stripped_run_intact(self):
++        run = self._make_run(
++            {
++                "run": [
++                    {
++                        "platform": "meta",
++                        "headline": "Great product",
++                    }
++                ],
++                "prompt": "internal prompt text",
++                "debug": {"attempt": 1},
++            }
++        )
++
++        data = AdLibraryRunSerializer(run).data
++
++        payload = data["response_payload"]
++        self.assertNotIn("prompt", payload)
++        self.assertNotIn("debug", payload)
++        self.assertEqual(
++            payload["run"],
++            [{"platform": "meta", "headline": "Great product"}],
++        )
++
++    def test_internal_keys_stripped_at_any_depth(self):
++        run = self._make_run(
++            {
++                "data": {
++                    "keep": "visible",
++                    "system_prompt": "sys",
++                    "nested": {"prompt": "inner", "raw": "raw", "ok": 1},
++                },
++                "raw_response": '{"model_output": true}',
++                "error_detail": "TypeError: something internal",
++            }
++        )
++
++        data = AdLibraryRunSerializer(run).data
++        payload = data["response_payload"]
++        self.assertEqual(
++            payload,
++            {"data": {"keep": "visible", "nested": {"ok": 1}}},
++        )
++
++    def test_request_payload_and_input_snapshot_untouched(self):
++        # The FE reads request_payload.personas and
++        # input_snapshot.brand_profile on the run detail view.
++        run = self._make_run({"run": [], "prompt": "drop me"})
++
++        data = AdLibraryRunSerializer(run).data
++        self.assertEqual(
++            data["request_payload"], {"personas": ["Budget Buyer"]}
++        )
++        self.assertEqual(
++            data["input_snapshot"],
++            {"brand_profile": {"industry": "E-Commerce"}},
++        )
+diff --git a/django-backend/brand/migrations/0016_brandcoreanalysis_brand_brandwebsitedata_brand.py b/django-backend/brand/migrations/0016_brandcoreanalysis_brand_brandwebsitedata_brand.py
+new file mode 100644
+index 0000000..3f6b88f
+--- /dev/null
++++ b/django-backend/brand/migrations/0016_brandcoreanalysis_brand_brandwebsitedata_brand.py
+@@ -0,0 +1,24 @@
++# Generated by Django 5.2.12 on 2026-10-07 11:57
++
++import django.db.models.deletion
++from django.db import migrations, models
++
++
++class Migration(migrations.Migration):
++
++    dependencies = [
++        ('brand', '0015_brandcoreanalysis_services'),
++    ]
++
++    operations = [
++        migrations.AddField(
++            model_name='brandcoreanalysis',
++            name='brand',
++            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='core_analyses_owned', to='brand.brand'),
++        ),
++        migrations.AddField(
++            model_name='brandwebsitedata',
++            name='brand',
++            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='website_data_owned', to='brand.brand'),
++        ),
++    ]
+diff --git a/django-backend/brand/models.py b/django-backend/brand/models.py
+index be36f19..c469c0d 100644
+--- a/django-backend/brand/models.py
++++ b/django-backend/brand/models.py
+@@ -279,8 +279,11 @@ class Brand(SerializableModelMixin, TimeStampedModel):
+             instance.save()
+             return instance
+ 
++        # QA4-MOM: freshly scraped rows are owned by THIS brand so a
++        # re-analysis never mutates a shared row another brand reads.
+         return BrandWebsiteData.objects.create(
+             identity=self.identity,
++            brand=self,
+             **payload,
+         )
+ 
+@@ -379,6 +382,19 @@ class BrandWebsiteData(SerializableModelMixin, TimeStampedModel):
+         default=None,
+     )
+ 
++    # QA4-MOM copy-on-write ownership. NULL = shared row (legacy rows and
++    # anything created before this field existed); all brands on the same
++    # BrandIdentity used to read/write these. The analysis pipeline now
++    # prefers rows owned by the asking brand and writes brand-owned rows
++    # instead of mutating shared ones.
++    brand = models.ForeignKey(
++        Brand,
++        on_delete=models.CASCADE,
++        related_name="website_data_owned",
++        null=True,
++        blank=True,
++    )
++
+     website_url = models.URLField()
+     title = models.CharField(max_length=255, blank=True, null=True)
+     meta_description = models.TextField(blank=True, null=True)
+@@ -809,6 +825,16 @@ class BrandCoreAnalysis(SerializableModelMixin, TimeStampedModel):
+         default=None,
+     )
+ 
++    # QA4-MOM copy-on-write ownership (same semantics as
++    # BrandWebsiteData.brand): NULL = shared across the identity's brands.
++    brand = models.ForeignKey(
++        Brand,
++        on_delete=models.CASCADE,
++        related_name="core_analyses_owned",
++        null=True,
++        blank=True,
++    )
++
+     low_confidence = models.BooleanField(default=False)
+     company_name = models.CharField(max_length=255, blank=True, null=True)
+     industry = models.CharField(max_length=255, blank=True, null=True)
+diff --git a/django-backend/brand/serializers.py b/django-backend/brand/serializers.py
+index 725475c..158c2dd 100644
+--- a/django-backend/brand/serializers.py
++++ b/django-backend/brand/serializers.py
+@@ -1,3 +1,4 @@
++import ipaddress
+ import re
+ 
+ from django.db import IntegrityError, transaction
+@@ -20,6 +21,45 @@ from brand.models import (
+ )
+ from brand.services.brand_services import normalize_service_name
+ 
++# QA4-MOM: brand asset uploads are images only (the FE upload inputs use
++# accept="image/*" and the asset analyzer consumes images).
++BRAND_ASSET_ALLOWED_EXTENSIONS = ("png", "jpg", "jpeg", "webp", "svg")
++BRAND_ASSET_ALLOWED_CONTENT_TYPES = (
++    "image/png",
++    "image/jpeg",
++    "image/jpg",
++    "image/pjpeg",
++    "image/webp",
++    "image/svg+xml",
++)
++BRAND_ASSET_MAX_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB
++BRAND_ASSET_MAX_SIZE_MB = 5
++
++
++def website_url_host_is_forbidden(value) -> bool:
++    """QA4-MOM: True for non-public hosts — localhost/loopback, private or
++    link-local IPs (10.x, 172.16-31.x, 192.168.x, 127.x), and ``.local`` /
++    ``.internal`` suffixes. The BrandIdentity normalizer itself stays
++    intact; this only guards what may be ACCEPTED as a brand website URL.
++    """
++    host = (BrandIdentity.normalize_website_url(value or "") or "").split("/")[0]
++    host = host.rsplit("@", 1)[-1]
++    if host.startswith("["):  # IPv6 literal, possibly with port: [::1]:8000
++        closing = host.find("]")
++        host = host[1:closing] if closing != -1 else host[1:]
++    else:
++        host = host.split(":", 1)[0]
++    host = host.strip().strip(".").lower()
++    if not host:
++        return False
++    if host == "localhost" or host.endswith((".localhost", ".local", ".internal")):
++        return True
++    try:
++        ip = ipaddress.ip_address(host)
++    except ValueError:
++        return False
++    return ip.is_loopback or ip.is_private or ip.is_link_local
++
+ 
+ class IndustrySerializer(serializers.ModelSerializer):
+     class Meta:
+@@ -140,6 +180,16 @@ class BrandSerializer(serializers.ModelSerializer):
+             status=BrandAnalysisRun.StatusChoices.COMPLETED
+         ).exists()
+ 
++    def validate_website_url(self, value):
++        # QA4-MOM: brands are public-facing — reject localhost / private /
++        # internal hosts before any scraping or identity creation happens.
++        if website_url_host_is_forbidden(value):
++            raise serializers.ValidationError(
++                "Local, private, or internal website URLs are not allowed. "
++                "Please provide a public website URL, e.g. https://example.com."
++            )
++        return value
++
+     def validate_brand_color(self, value):
+         """Accept hex colors with/without '#' (3 or 6 digits), normalize to '#rrggbb'."""
+         raw = (value or "").strip()
+@@ -304,6 +354,33 @@ class BrandAssetUploadSerializer(serializers.ModelSerializer):
+             "file",
+         )
+ 
++    def validate_file(self, value):
++        # QA4-MOM: uploads were previously unchecked (any type, any size).
++        file_name = str(getattr(value, "name", "") or "")
++        extension = file_name.rsplit(".", 1)[-1].lower() if "." in file_name else ""
++        if extension not in BRAND_ASSET_ALLOWED_EXTENSIONS:
++            raise serializers.ValidationError(
++                "Unsupported file type. Allowed: PNG, JPEG, WebP, SVG."
++            )
++
++        content_type = str(getattr(value, "content_type", "") or "").lower()
++        if (
++            content_type
++            and content_type not in BRAND_ASSET_ALLOWED_CONTENT_TYPES
++            and not content_type.startswith("image/")
++        ):
++            raise serializers.ValidationError(
++                "Unsupported file type. Allowed: PNG, JPEG, WebP, SVG images."
++            )
++
++        file_size = getattr(value, "size", None)
++        if file_size is not None and file_size > BRAND_ASSET_MAX_SIZE_BYTES:
++            raise serializers.ValidationError(
++                f"File is too large. Maximum allowed size is "
++                f"{BRAND_ASSET_MAX_SIZE_MB} MB."
++            )
++        return value
++
+     def create(self, validated_data):
+         self._apply_file_metadata(validated_data)
+         return super().create(validated_data)
+diff --git a/django-backend/brand/services/full_analysis.py b/django-backend/brand/services/full_analysis.py
+index bf274d9..3d31fb2 100644
+--- a/django-backend/brand/services/full_analysis.py
++++ b/django-backend/brand/services/full_analysis.py
+@@ -359,15 +359,31 @@ class BrandAnalysisOrchestrator:
+             brand.brand_uuid,
+             identity_id,
+         )
+-        latest = await sync_to_async(
+-            lambda: identity.website_data.order_by("-updated_at").first()
++        # QA4-MOM copy-on-write: prefer rows owned by THIS brand so one
++        # user's re-analysis never mutates data another brand reads. Rows
++        # with brand=NULL are shared identity-level rows (legacy data) and
++        # are only reused read-only.
++        owned = await sync_to_async(
++            lambda: BrandWebsiteData.objects.filter(brand=brand)
++            .order_by("-updated_at")
++            .first()
+         )()
++        shared = None
++        if owned is None:
++            shared = await sync_to_async(
++                lambda: identity.website_data.filter(brand__isnull=True)
++                .order_by("-updated_at")
++                .first()
++            )()
++
++        latest = owned or shared
+         if latest and not force_refresh:
+             logger.info(
+-                "step.website_data.cache_hit | brand=%s identity=%s website_data=%s updated_at=%s",
++                "step.website_data.cache_hit | brand=%s identity=%s website_data=%s owned=%s updated_at=%s",
+                 brand.brand_uuid,
+                 identity_id,
+                 latest.website_data_uuid,
++                owned is not None,
+                 latest.updated_at,
+             )
+             return latest
+@@ -384,8 +400,11 @@ class BrandAnalysisOrchestrator:
+             brand.brand_uuid,
+             identity_id,
+         )
++        # Only update a row in place when it already belongs to this brand;
++        # otherwise write a brand-owned row and leave the shared row (which
++        # other brands on this identity may read) untouched.
+         created = await sync_to_async(brand.scrape_and_store_website_data)(
+-            instance=latest if force_refresh else None
++            instance=owned if force_refresh else None
+         )
+         if created:
+             logger.info(
+@@ -418,15 +437,27 @@ class BrandAnalysisOrchestrator:
+             brand.brand_uuid,
+             identity_id,
+         )
+-        existing = await sync_to_async(
+-            lambda: identity.core_analysis.order_by("-updated_at").first()
++        # QA4-MOM copy-on-write: prefer rows owned by THIS brand; fall back
++        # to the shared identity-level row (brand=NULL) for read-only reuse.
++        owned = await sync_to_async(
++            lambda: BrandCoreAnalysis.objects.filter(brand=brand)
++            .order_by("-updated_at")
++            .first()
+         )()
++        existing = owned
++        if existing is None:
++            existing = await sync_to_async(
++                lambda: identity.core_analysis.filter(brand__isnull=True)
++                .order_by("-updated_at")
++                .first()
++            )()
+         if existing and not force_refresh:
+             logger.info(
+-                "step.core_analysis.cache_hit | brand=%s identity=%s core_analysis=%s updated_at=%s",
++                "step.core_analysis.cache_hit | brand=%s identity=%s core_analysis=%s owned=%s updated_at=%s",
+                 brand.brand_uuid,
+                 identity_id,
+                 existing.core_analysis_uuid,
++                owned is not None,
+                 existing.updated_at,
+             )
+             return existing
+@@ -492,7 +523,8 @@ class BrandAnalysisOrchestrator:
+             ),
+         }
+ 
+-        if existing:
++        if existing and existing.brand_id == brand.pk:
++            # The row belongs to this brand: safe to update in place.
+             for field, value in analysis_fields.items():
+                 setattr(existing, field, value)
+             await sync_to_async(existing.save)()
+@@ -504,8 +536,11 @@ class BrandAnalysisOrchestrator:
+             )
+             return existing
+ 
++        # Shared or foreign row (or no row): write a brand-owned row so a
++        # re-analysis never mutates data another brand reads.
+         core_analysis = await sync_to_async(BrandCoreAnalysis.objects.create)(
+             identity=identity,
++            brand=brand,
+             **analysis_fields,
+         )
+         logger.info(
+diff --git a/django-backend/brand/tests.py b/django-backend/brand/tests.py
+index f4724ef..0c9f354 100644
+--- a/django-backend/brand/tests.py
++++ b/django-backend/brand/tests.py
+@@ -965,7 +965,9 @@ class BrandAutoScanViewTests(APITestCase):
+         )
+         self.assertEqual(
+             detected["language"],
+-            {"value": "en", "confidence": "medium", "source": "content_analysis"},
++            # QA4-new3: the content-analysis heuristic is demoted to 'low'
++            # (html lang / og:locale are the high-confidence signals).
++            {"value": "en", "confidence": "low", "source": "content_analysis"},
+         )
+         self.assertEqual(
+             detected["location"],
+@@ -2161,7 +2163,12 @@ class CompetitorInsightsLocationPromptTests(SimpleTestCase):
+ 
+ 
+ class BrandAnalysisForceRefreshTests(APITestCase):
+-    """force_refresh bypasses website/core-analysis reuse and updates rows in place."""
++    """force_refresh bypasses website/core-analysis reuse and writes brand-owned rows.
++
++    QA4-MOM copy-on-write: the shared identity-level rows (brand=NULL) are
++    reused read-only but never mutated; refreshed rows are owned by the
++    asking brand so another brand on the same identity is unaffected.
++    """
+ 
+     def setUp(self):
+         # Engine constructors require an LLM key; keep tests hermetic.
+@@ -2222,7 +2229,7 @@ class BrandAnalysisForceRefreshTests(APITestCase):
+             new=AsyncMock(return_value=dict(self.analysis_result)),
+         )
+ 
+-    def test_force_refresh_rescrapes_and_updates_rows_in_place(self):
++    def test_force_refresh_writes_brand_owned_rows_and_keeps_shared_rows(self):
+         from asgiref.sync import async_to_sync
+ 
+         from brand.services.full_analysis import BrandAnalysisOrchestrator
+@@ -2246,19 +2253,23 @@ class BrandAnalysisForceRefreshTests(APITestCase):
+         scraper_mock.assert_called_once()
+         analyzer_mock.assert_awaited_once()
+ 
+-        self.assertEqual(website_data.pk, self.website_data.pk)
+-        self.assertEqual(core_analysis.pk, self.core_analysis.pk)
++        # Fresh brand-owned rows are written; the shared rows stay untouched.
++        self.assertNotEqual(website_data.pk, self.website_data.pk)
++        self.assertNotEqual(core_analysis.pk, self.core_analysis.pk)
++        self.assertEqual(website_data.brand, self.brand)
++        self.assertEqual(core_analysis.brand, self.brand)
+         self.assertEqual(
+-            BrandWebsiteData.objects.filter(identity=self.brand.identity).count(), 1
++            BrandWebsiteData.objects.get(pk=self.website_data.pk).title, "Stale Site"
+         )
+         self.assertEqual(
+-            BrandCoreAnalysis.objects.filter(identity=self.brand.identity).count(), 1
++            BrandCoreAnalysis.objects.get(pk=self.core_analysis.pk).company_name,
++            "Stale Co",
+         )
+         self.assertEqual(
+-            BrandWebsiteData.objects.get(pk=self.website_data.pk).title, "Fresh Site"
++            BrandWebsiteData.objects.get(pk=website_data.pk).title, "Fresh Site"
+         )
+         self.assertEqual(
+-            BrandCoreAnalysis.objects.get(pk=self.core_analysis.pk).company_name,
++            BrandCoreAnalysis.objects.get(pk=core_analysis.pk).company_name,
+             "Fresh Co",
+         )
+ 
+diff --git a/django-backend/brand/tests_qa4_mom.py b/django-backend/brand/tests_qa4_mom.py
+new file mode 100644
+index 0000000..ec723e7
+--- /dev/null
++++ b/django-backend/brand/tests_qa4_mom.py
+@@ -0,0 +1,359 @@
++"""
++QA4-MOM closing-gap regression tests.
++
++Covers the verified MOM gaps:
++
++- Scraped site data shared between users (MOM نیمه‌کاره):
++  copy-on-write ownership for ``BrandWebsiteData`` /
++  ``BrandCoreAnalysis``. Two users whose brands share one
++  ``BrandIdentity`` must never mutate each other's rows: a force
++  refresh writes (or updates) a row OWNED by the asking brand, and
++  reads prefer brand-owned rows, falling back to the shared
++  (``brand=None``) identity-level row read-only.
++- Upload validation (MOM انجام‌نشده): brand asset uploads are
++  restricted to PNG/JPEG/WebP/SVG, max 5 MB.
++- Domain hardening: localhost / loopback / private-IP / .local /
++  .internal hosts are rejected as ``website_url`` (the
++  ``BrandIdentity.normalize_website_url`` normalizer itself stays
++  intact).
++"""
++
++import os
++from datetime import timedelta
++from unittest.mock import AsyncMock, patch
++
++from asgiref.sync import async_to_sync
++from django.core.files.uploadedfile import SimpleUploadedFile
++from django.utils import timezone
++from rest_framework.test import APITestCase
++
++from authentication.models import User
++from brand.models import (
++    Brand,
++    BrandCoreAnalysis,
++    BrandWebsiteData,
++    Industry,
++)
++from brand.serializers import (
++    BRAND_ASSET_MAX_SIZE_BYTES,
++    BrandAssetUploadSerializer,
++    BrandSerializer,
++)
++from brand.services.full_analysis import BrandAnalysisOrchestrator
++
++
++def _scraped_payload(title):
++    return {
++        "url": "https://shared-site.com",
++        "title": title,
++        "full_text": f"{title} page text",
++    }
++
++
++def _analysis_payload(company_name):
++    return {
++        "company_name": company_name,
++        "industry": "SaaS",
++        "detected_industry": "software",
++        "services": ["Hosting"],
++        "usp_list": ["fast"],
++        "brand_voice": {"tone": "bold"},
++        "target_audience": {"segments": ["startups"]},
++        "key_messages": ["ship faster"],
++        "competitive_advantages": ["speed"],
++        "low_confidence": False,
++    }
++
++
++class SharedIdentityCopyOnWriteTests(APITestCase):
++    """Two users, two brands, one identity: refreshes stay isolated."""
++
++    def setUp(self):
++        # Engine constructors require LLM keys; keep tests hermetic.
++        env = patch.dict(
++            os.environ,
++            {"OPENAI_API_KEY": "test-key", "SERPER_API_KEY": "test-key"},
++        )
++        env.start()
++        self.addCleanup(env.stop)
++
++        self.user_a = User.objects.create_user(
++            email="copy-on-write-a@example.com",
++            password="StrongPass123!",
++        )
++        self.user_b = User.objects.create_user(
++            email="copy-on-write-b@example.com",
++            password="StrongPass123!",
++        )
++        self.industry = Industry.objects.create(name="SaaS")
++        # Same website URL for both users -> same (shared) BrandIdentity.
++        self.brand_a = Brand.objects.create(
++            website_url="https://shared-site.com",
++            company_name="Brand A",
++            selected_industry=self.industry,
++            created_by=self.user_a,
++        )
++        self.brand_b = Brand.objects.create(
++            website_url="https://shared-site.com",
++            company_name="Brand B",
++            selected_industry=self.industry,
++            created_by=self.user_b,
++        )
++        self.assertEqual(self.brand_a.identity, self.brand_b.identity)
++
++    def _orchestrator(self):
++        return BrandAnalysisOrchestrator()
++
++    def _patch_scraper(self, title):
++        return patch(
++            "core.utils.scraper.WebsiteScraper.scrape_website",
++            new=AsyncMock(return_value=_scraped_payload(title)),
++        )
++
++    def _patch_core_analyzer(self, orchestrator, company_name):
++        return patch.object(
++            orchestrator.brand_core_analyzer,
++            "_analyze_brand_core",
++            new=AsyncMock(return_value=_analysis_payload(company_name)),
++        )
++
++    def test_force_refresh_by_user_a_does_not_mutate_user_b_owned_rows(self):
++        BrandWebsiteData.objects.create(
++            identity=self.brand_a.identity,
++            brand=self.brand_b,
++            website_url=self.brand_b.website_url,
++            title="B Original",
++            full_text="b original text",
++        )
++        BrandCoreAnalysis.objects.create(
++            identity=self.brand_a.identity,
++            brand=self.brand_b,
++            company_name="B Original Co",
++            industry="SaaS",
++        )
++        b_website = BrandWebsiteData.objects.get(brand=self.brand_b)
++        b_core = BrandCoreAnalysis.objects.get(brand=self.brand_b)
++
++        orchestrator = self._orchestrator()
++        with self._patch_scraper("A Fresh") as scraper_mock, self._patch_core_analyzer(
++            orchestrator, "A Fresh Co"
++        ):
++            a_website = async_to_sync(
++                orchestrator._get_or_scrape_website_data
++            )(self.brand_a, force_refresh=True)
++            a_core = async_to_sync(
++                orchestrator._get_or_analyze_and_persist_core_analysis
++            )(
++                brand=self.brand_a,
++                website_data=a_website,
++                force_refresh=True,
++            )
++
++        # User A's refresh wrote A-owned rows.
++        self.assertEqual(a_website.brand, self.brand_a)
++        self.assertEqual(a_core.brand, self.brand_a)
++        self.assertEqual(a_website.title, "A Fresh")
++        self.assertEqual(a_core.company_name, "A Fresh Co")
++
++        # User B's rows were NOT mutated by A's refresh.
++        self.assertEqual(
++            BrandWebsiteData.objects.get(pk=b_website.pk).title, "B Original"
++        )
++        self.assertEqual(
++            BrandCoreAnalysis.objects.get(pk=b_core.pk).company_name,
++            "B Original Co",
++        )
++
++        # User B's brand reads its OWN row (cache hit, no re-scrape).
++        orchestrator_b = self._orchestrator()
++        with self._patch_scraper("Should Not Scrape") as scraper_mock:
++            b_read = async_to_sync(
++                orchestrator_b._get_or_scrape_website_data
++            )(self.brand_b)
++        scraper_mock.assert_not_called()
++        self.assertEqual(b_read.pk, b_website.pk)
++        self.assertEqual(b_read.brand, self.brand_b)
++        self.assertEqual(b_read.title, "B Original")
++
++    def test_brand_owned_row_reused_without_rescrape(self):
++        owned = BrandWebsiteData.objects.create(
++            identity=self.brand_a.identity,
++            brand=self.brand_a,
++            website_url=self.brand_a.website_url,
++            title="A Owned",
++            full_text="a owned text",
++        )
++        shared = BrandWebsiteData.objects.create(
++            identity=self.brand_a.identity,
++            website_url=self.brand_a.website_url,
++            title="Shared Stale",
++            full_text="shared text",
++        )
++        # Pin ordering deterministically: the shared row is newer than the
++        # brand-owned row, yet the owned row must still win the lookup.
++        BrandWebsiteData.objects.filter(pk=owned.pk).update(
++            updated_at=timezone.now() - timedelta(minutes=10)
++        )
++        BrandWebsiteData.objects.filter(pk=shared.pk).update(
++            updated_at=timezone.now() - timedelta(minutes=5)
++        )
++
++        orchestrator = self._orchestrator()
++        with self._patch_scraper("Should Not Scrape") as scraper_mock:
++            result = async_to_sync(orchestrator._get_or_scrape_website_data)(
++                self.brand_a
++            )
++        scraper_mock.assert_not_called()
++        self.assertEqual(result.pk, owned.pk)
++        self.assertEqual(result.brand, self.brand_a)
++        self.assertNotEqual(result.pk, shared.pk)
++
++        # Lookup order: a brand with NO owned row falls back to the newest
++        # shared identity-level row, read-only.
++        orchestrator_b = self._orchestrator()
++        with self._patch_scraper("Should Not Scrape") as scraper_mock:
++            b_read = async_to_sync(
++                orchestrator_b._get_or_scrape_website_data
++            )(self.brand_b)
++        scraper_mock.assert_not_called()
++        self.assertEqual(b_read.pk, shared.pk)
++        self.assertIsNone(b_read.brand)
++
++    def test_force_refresh_updates_own_row_in_place(self):
++        owned = BrandWebsiteData.objects.create(
++            identity=self.brand_a.identity,
++            brand=self.brand_a,
++            website_url=self.brand_a.website_url,
++            title="A Before",
++            full_text="before text",
++        )
++        shared = BrandWebsiteData.objects.create(
++            identity=self.brand_a.identity,
++            website_url=self.brand_a.website_url,
++            title="Shared",
++            full_text="shared text",
++        )
++
++        orchestrator = self._orchestrator()
++        with self._patch_scraper("A After") as scraper_mock:
++            result = async_to_sync(orchestrator._get_or_scrape_website_data)(
++                self.brand_a,
++                force_refresh=True,
++            )
++        scraper_mock.assert_called_once()
++
++        # The newest row already belongs to this brand -> updated IN PLACE,
++        # not duplicated, and the shared row is untouched.
++        self.assertEqual(result.pk, owned.pk)
++        self.assertEqual(result.title, "A After")
++        self.assertEqual(
++            BrandWebsiteData.objects.filter(identity=self.brand_a.identity).count(),
++            2,
++        )
++        self.assertEqual(
++            BrandWebsiteData.objects.get(pk=shared.pk).title, "Shared"
++        )
++
++
++class BrandAssetUploadValidationTests(APITestCase):
++    """QA4-MOM: uploads are type- and size-checked (MOM انجام‌نشده)."""
++
++    def setUp(self):
++        self.user = User.objects.create_user(
++            email="upload-validate@example.com",
++            password="StrongPass123!",
++        )
++        self.industry = Industry.objects.create(name="Retail")
++        self.brand = Brand.objects.create(
++            website_url="https://upload-brand.com",
++            company_name="Upload Brand",
++            selected_industry=self.industry,
++            created_by=self.user,
++        )
++
++    def _serializer(self, uploaded_file):
++        return BrandAssetUploadSerializer(
++            data={
++                "asset_type": "logo",
++                "title": "Logo",
++                "file": uploaded_file,
++            }
++        )
++
++    def test_oversized_file_rejected(self):
++        big = SimpleUploadedFile(
++            "big.png",
++            b"x" * (BRAND_ASSET_MAX_SIZE_BYTES + 1),  # > 5 MB
++            content_type="image/png",
++        )
++        serializer = self._serializer(big)
++        self.assertFalse(serializer.is_valid())
++        self.assertIn("file", serializer.errors)
++        self.assertIn("5 MB", str(serializer.errors["file"]))
++
++    def test_exe_file_rejected(self):
++        exe = SimpleUploadedFile(
++            "installer.exe",
++            b"MZ fake executable",
++            content_type="application/x-msdownload",
++        )
++        serializer = self._serializer(exe)
++        self.assertFalse(serializer.is_valid())
++        self.assertIn("file", serializer.errors)
++        self.assertIn("Unsupported file type", str(serializer.errors["file"]))
++
++    def test_small_png_accepted(self):
++        png = SimpleUploadedFile(
++            "logo.png",
++            b"\x89PNG\r\n\x1a\n" + b"fake-png-bytes" * 10,
++            content_type="image/png",
++        )
++        serializer = self._serializer(png)
++        self.assertTrue(serializer.is_valid(), serializer.errors)
++
++
++class BrandWebsiteUrlHardeningTests(APITestCase):
++    """QA4-MOM: non-public hosts are rejected as brand website_url."""
++
++    def setUp(self):
++        self.user = User.objects.create_user(
++            email="url-hardening@example.com",
++            password="StrongPass123!",
++        )
++        self.industry = Industry.objects.create(name="Hospitality")
++
++    def _validate(self, website_url):
++        serializer = BrandSerializer(
++            data={
++                "website_url": website_url,
++                "company_name": "Hardened Co",
++                "selected_industry_id": self.industry.pk,
++            }
++        )
++        serializer.is_valid()
++        return serializer.errors
++
++    def test_localhost_rejected(self):
++        errors = self._validate("http://localhost:3000")
++        self.assertIn("website_url", errors)
++        self.assertIn(
++            "Local, private, or internal website URLs are not allowed",
++            str(errors["website_url"]),
++        )
++
++    def test_private_and_internal_hosts_rejected(self):
++        for url in (
++            "http://127.0.0.1:8000",
++            "http://192.168.1.10",
++            "http://10.0.0.5",
++            "http://172.16.3.4",
++            "http://mysite.local",
++            "http://mysite.internal",
++        ):
++            with self.subTest(url=url):
++                errors = self._validate(url)
++                self.assertIn("website_url", errors)
++
++    def test_public_url_has_no_website_url_error(self):
++        errors = self._validate("https://public-site.com")
++        self.assertNotIn("website_url", errors)
+diff --git a/django-backend/market/serializers.py b/django-backend/market/serializers.py
+index 3f75dc1..c2e4e94 100644
+--- a/django-backend/market/serializers.py
++++ b/django-backend/market/serializers.py
+@@ -3,6 +3,61 @@ from rest_framework import serializers
+ from market.models import ContentIntelligenceRun
+ 
+ 
++# QA4-MOM: user-safe failure message persisted on failed runs; the real
++# exception goes to the logger, never into the stored payload.
++CONTENT_INTELLIGENCE_GENERIC_ERROR = (
++    "Content intelligence run failed. Please try again."
++)
++
++
++# QA4-MOM: keys that must never leave the API from stored payloads —
++# internal LLM prompt/debug material and raw error internals.
++_INTERNAL_PAYLOAD_KEYS = frozenset(
++    {
++        "prompt",
++        "system_prompt",
++        "raw",
++        "raw_response",
++        "raw_output",
++        "debug",
++        "debug_info",
++        "messages",
++        "error_detail",
++        "error_details",
++        "internal_error",
++        "traceback",
++        "exception",
++        "stack_trace",
++    }
++)
++
++
++def strip_internal_payload_keys(value, allowed_error_message=None):
++    """Recursively drop internal keys from a stored JSON payload.
++
++    String values under ``error`` are dropped unless they equal
++    ``allowed_error_message`` (the user-safe generic message), so legacy
++    rows carrying raw exception text never reach the API.
++    """
++    if isinstance(value, dict):
++        cleaned = {}
++        for key, item in value.items():
++            key_lower = str(key).lower()
++            if key_lower in _INTERNAL_PAYLOAD_KEYS:
++                continue
++            if (
++                key_lower == "error"
++                and isinstance(item, str)
++                and item != allowed_error_message
++            ):
++                continue
++            cleaned[key] = strip_internal_payload_keys(item, allowed_error_message)
++        return cleaned
++    if isinstance(value, list):
++        return [strip_internal_payload_keys(item, allowed_error_message) for item in value]
++    return value
++
++
+ class ContentIntelligenceRequestSerializer(serializers.Serializer):
+     brand_uuid = serializers.UUIDField(required=False, allow_null=True)
+     industry = serializers.CharField()
+@@ -38,6 +93,17 @@ class ContentIntelligenceRunSerializer(serializers.ModelSerializer):
+         )
+         read_only_fields = fields
+ 
++    def to_representation(self, instance):
++        # QA4-MOM: scrub internal prompt/debug/error material from the
++        # stored result blob before it leaves the API. The generic failure
++        # message stays visible; legacy raw exception strings do not.
++        data = super().to_representation(instance)
++        data["result_payload"] = strip_internal_payload_keys(
++            data.get("result_payload"),
++            allowed_error_message=CONTENT_INTELLIGENCE_GENERIC_ERROR,
++        )
++        return data
++
+ 
+ class AIHooksRequestSerializer(serializers.Serializer):
+     titles = serializers.ListField(
+diff --git a/django-backend/market/tests_qa4_mom.py b/django-backend/market/tests_qa4_mom.py
+new file mode 100644
+index 0000000..0c4c218
+--- /dev/null
++++ b/django-backend/market/tests_qa4_mom.py
+@@ -0,0 +1,127 @@
++"""
++QA4-MOM closing-gap regression tests (market).
++
++Failing content-intelligence runs must persist (and serve) a GENERIC
++user-safe error message; the real exception goes to the logs only. The
++serializer additionally scrubs internal keys / raw legacy error strings
++from ``result_payload`` before it leaves the API, while keeping the
++business keys the frontend reads (``content_gaps``, ``content_matrix``,
++``content_opportunities``, ``top_performers``, ``hooks`` ...).
++"""
++
++from unittest.mock import patch
++
++from rest_framework import status
++from rest_framework.test import APITestCase
++
++from authentication.models import User
++from brand.models import Brand, Industry
++from market.models import ContentIntelligenceRun
++from market.serializers import (
++    CONTENT_INTELLIGENCE_GENERIC_ERROR,
++    ContentIntelligenceRunSerializer,
++)
++
++GENERIC = CONTENT_INTELLIGENCE_GENERIC_ERROR
++
++
++class FailingRunPersistsGenericErrorTests(APITestCase):
++    """A raised pipeline error must never leak into the stored payload."""
++
++    def setUp(self):
++        self.user = User.objects.create_user(
++            email="market-generic-error@example.com",
++            password="StrongPass123!",
++        )
++        self.client.force_authenticate(user=self.user)
++        self.industry = Industry.objects.create(name="SaaS")
++        self.brand = Brand.objects.create(
++            website_url="https://market-brand.com",
++            company_name="Market Brand",
++            selected_industry=self.industry,
++            created_by=self.user,
++        )
++        self.url = "/api/v1/market/content-intelligence/"
++
++    def test_failing_run_persists_generic_error_message(self):
++        with patch(
++            "market.views.get_full_content_intelligence",
++            side_effect=Exception("SECRET internal traceback leak"),
++        ):
++            response = self.client.post(
++                self.url,
++                {
++                    "brand_uuid": str(self.brand.brand_uuid),
++                    "industry": "SaaS",
++                    "location": "Berlin",
++                },
++                format="json",
++            )
++
++        self.assertEqual(response.status_code, status.HTTP_200_OK)
++
++        run = ContentIntelligenceRun.objects.get(
++            content_intelligence_run_uuid=response.data[
++                "content_intelligence_run_uuid"
++            ]
++        )
++        self.assertEqual(
++            run.status, ContentIntelligenceRun.StatusChoices.FAILED
++        )
++        # Stored payload is generic — no exception text.
++        self.assertEqual(run.result_payload, {"error": GENERIC})
++        self.assertEqual(
++            run.run_type, ContentIntelligenceRun.RunTypeChoices.FULL
++        )
++        self.assertEqual(
++            run.request_payload,
++            {
++                "industry": "SaaS",
++                "location": "Berlin",
++                "brand_services": [],
++                "content_goal": "engagement",
++            },
++        )
++
++        # Serialized payload shows the generic message and nothing internal.
++        self.assertEqual(response.data["result_payload"], {"error": GENERIC})
++        self.assertNotIn("SECRET", str(response.data))
++
++    def test_legacy_raw_error_strings_are_scrubbed_from_api(self):
++        run = ContentIntelligenceRun.objects.create(
++            brand=self.brand,
++            created_by=self.user,
++            run_type=ContentIntelligenceRun.RunTypeChoices.FULL,
++            status=ContentIntelligenceRun.StatusChoices.FAILED,
++            industry="SaaS",
++            location="Berlin",
++            result_payload={
++                "error": "TypeError: cannot read property of undefined",
++                "prompt": "internal prompt",
++                "debug": {"attempt": 3},
++                "content_gaps": {"total_gaps_found": 4},
++            },
++        )
++
++        data = ContentIntelligenceRunSerializer(run).data
++
++        self.assertEqual(
++            data["result_payload"], {"content_gaps": {"total_gaps_found": 4}}
++        )
++
++    def test_generic_error_message_stays_visible_in_api(self):
++        run = ContentIntelligenceRun.objects.create(
++            brand=self.brand,
++            created_by=self.user,
++            run_type=ContentIntelligenceRun.RunTypeChoices.FULL,
++            status=ContentIntelligenceRun.StatusChoices.FAILED,
++            industry="SaaS",
++            location="Berlin",
++            result_payload={"error": GENERIC, "summary_note": "n"},
++        )
++
++        data = ContentIntelligenceRunSerializer(run).data
++
++        self.assertEqual(
++            data["result_payload"], {"error": GENERIC, "summary_note": "n"}
++        )
+diff --git a/django-backend/market/views.py b/django-backend/market/views.py
+index 3f750da..fc0e7d5 100644
+--- a/django-backend/market/views.py
++++ b/django-backend/market/views.py
+@@ -12,6 +12,7 @@ from rest_framework.views import APIView
+ from market.models import ContentIntelligenceRun
+ from market.serializers import (
+     AIHooksRequestSerializer,
++    CONTENT_INTELLIGENCE_GENERIC_ERROR,
+     ContentGapsRequestSerializer,
+     ContentIntelligenceRequestSerializer,
+     ContentIntelligenceRunSerializer,
+@@ -109,7 +110,7 @@ class MarketContentIntelligenceView(APIView):
+         except Exception as exc:
+             logger.exception("Content intelligence generation failed.")
+             run_status = ContentIntelligenceRun.StatusChoices.FAILED
+-            result_payload = {"error": str(exc)}
++            result_payload = {"error": CONTENT_INTELLIGENCE_GENERIC_ERROR}
+             summary = {}
+ 
+         run = ContentIntelligenceRun.objects.create(
+@@ -168,7 +169,7 @@ class MarketGenerateAIHooksView(APIView):
+         except Exception as exc:
+             logger.exception("AI hooks generation failed.")
+             run_status = ContentIntelligenceRun.StatusChoices.FAILED
+-            result_payload = {"error": str(exc)}
++            result_payload = {"error": CONTENT_INTELLIGENCE_GENERIC_ERROR}
+ 
+         run = ContentIntelligenceRun.objects.create(
+             created_by=request.user,
+@@ -220,7 +221,7 @@ class MarketContentGapsView(APIView):
+         except Exception as exc:
+             logger.exception("Content gaps generation failed.")
+             run_status = ContentIntelligenceRun.StatusChoices.FAILED
+-            result_payload = {"error": str(exc)}
++            result_payload = {"error": CONTENT_INTELLIGENCE_GENERIC_ERROR}
+ 
+         run = ContentIntelligenceRun.objects.create(
+             created_by=request.user,
+@@ -272,7 +273,7 @@ class MarketContentMatrixView(APIView):
+         except Exception as exc:
+             logger.exception("Content matrix generation failed.")
+             run_status = ContentIntelligenceRun.StatusChoices.FAILED
+-            result_payload = {"error": str(exc)}
++            result_payload = {"error": CONTENT_INTELLIGENCE_GENERIC_ERROR}
+ 
+         run = ContentIntelligenceRun.objects.create(
+             created_by=request.user,
+@@ -323,7 +324,7 @@ class MarketTopPerformingContentView(APIView):
+         except Exception as exc:
+             logger.exception("Top performing content generation failed.")
+             run_status = ContentIntelligenceRun.StatusChoices.FAILED
+-            result_payload = {"error": str(exc)}
++            result_payload = {"error": CONTENT_INTELLIGENCE_GENERIC_ERROR}
+ 
+         run = ContentIntelligenceRun.objects.create(
+             created_by=request.user,

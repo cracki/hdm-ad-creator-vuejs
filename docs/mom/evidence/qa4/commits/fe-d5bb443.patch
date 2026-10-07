@@ -1,0 +1,441 @@
+commit d5bb4436c7db5ea885274585d89350bddfed2518
+Author: cracki <cracki@gmail.com>
+Date:   Wed Oct 7 15:02:32 2026 +0330
+
+    fix(qa4-P0): break refresh-401 deadlock; network-first SW; single-flight initAuth
+    
+    CRITICAL: after page refresh the panel went black. Root causes, all fixed:
+    - client.ts: the refresh request itself was not excluded from the 401
+      interceptor, so a 401 from /auth/token/refresh/ re-entered the
+      interceptor which awaited its own still-pending refreshPromise
+      (circular await) - logout/redirect never ran. A 401 on the refresh
+      endpoint now logs out + redirects immediately (client.ts:14-24,41-72).
+    - store.ts: refreshAccessToken/initAuth share a module-level
+      single-flight guard so concurrent initAuth + API 401 refreshes issue
+      ONE refresh call (backend rotates+blacklists refresh tokens, so a
+      second concurrent call always 401'd) (store.ts:44-55,88-124).
+    - sw.js: no longer precaches '/'+'index.html' (CACHE_NAME hdm-v1.1.0);
+      navigations are network-first so /login can never serve a stale black
+      shell; cache-first kept for static assets.
+    - Backend side: REFRESH_TOKEN_LIFETIME 1d->7d (ad_creator commit
+      d1d7c39).
+    - client.test.ts (3) + store.test.ts (3): deadlock settlement, single
+      refresh per reload, logout+redirect paths.
+
+diff --git a/public/sw.js b/public/sw.js
+index d040838..29e23ed 100644
+--- a/public/sw.js
++++ b/public/sw.js
+@@ -1,8 +1,8 @@
+-const CACHE_NAME = 'hdm-v1.0.0'
+-const STATIC_ASSETS = [
+-  '/',
+-  '/index.html',
+-]
++// hdm-v1.1.0 (QA4-P0): navigations are now network-first and the app shell is
++// no longer precached, so /login and route changes can never serve a stale
++// (e.g. black) cached index.html. Cache-first stays for other static GETs.
++const CACHE_NAME = 'hdm-v1.1.0'
++const STATIC_ASSETS: string[] = []
+ 
+ self.addEventListener('install', (event) => {
+   event.waitUntil(
+@@ -25,6 +25,23 @@ self.addEventListener('fetch', (event) => {
+ 
+   if (request.method !== 'GET' || request.url.includes('/api/')) return
+ 
++  // Page navigations: network-first. Fall back to the cache only when offline.
++  if (request.mode === 'navigate') {
++    event.respondWith(
++      fetch(request).then((response) => {
++        if (response && response.status === 200 && response.type === 'basic') {
++          const clone = response.clone()
++          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
++        }
++        return response
++      }).catch(() =>
++        caches.match(request).then((cached) => cached ?? caches.match('/index.html'))
++      )
++    )
++    return
++  }
++
++  // Other static GETs: cache-first (stale-while-revalidate-ish).
+   event.respondWith(
+     caches.match(request).then((cached) => {
+       const fetchPromise = fetch(request).then((response) => {
+diff --git a/src/features/auth/store.test.ts b/src/features/auth/store.test.ts
+new file mode 100644
+index 0000000..72951bc
+--- /dev/null
++++ b/src/features/auth/store.test.ts
+@@ -0,0 +1,81 @@
++import { describe, it, expect, vi, beforeEach } from 'vitest'
++import { createPinia, setActivePinia } from 'pinia'
++
++/**
++ * QA4-P0: the module-level single-flight refresh guard. The backend rotates +
++ * blacklists refresh tokens, so concurrent refreshes (router guard's initAuth
++ * racing an API 401 interceptor refresh) would 401 the second call.
++ */
++
++const mocks = vi.hoisted(() => ({
++  refreshToken: vi.fn(),
++  getUser: vi.fn(),
++}))
++
++vi.mock('@/features/auth/api', () => ({
++  authApi: {
++    login: vi.fn(),
++    register: vi.fn(),
++    googleLogin: vi.fn(),
++    refreshToken: mocks.refreshToken,
++    getUser: mocks.getUser,
++    updateUser: vi.fn(),
++  },
++}))
++
++import { useAuthStore } from './store'
++import { AUTH_TOKENS_KEY } from '@/shared/utils/constants'
++
++function seedRefreshToken(value = 'refresh-token-1') {
++  sessionStorage.setItem(AUTH_TOKENS_KEY, btoa(encodeURIComponent(value)))
++}
++
++beforeEach(() => {
++  vi.clearAllMocks()
++  sessionStorage.clear()
++  setActivePinia(createPinia())
++})
++
++describe('auth store — single-flight refresh (QA4-P0)', () => {
++  it('concurrent initAuth + refreshAccessToken share ONE authApi.refreshToken call', async () => {
++    seedRefreshToken()
++    mocks.refreshToken.mockResolvedValue({
++      data: { access: 'new-access', refresh: 'refresh-token-2' },
++    })
++    mocks.getUser.mockResolvedValue({ data: { email: 'user@test.dev' } })
++
++    const store = useAuthStore()
++    await Promise.all([store.initAuth(), store.refreshAccessToken()])
++
++    expect(mocks.refreshToken).toHaveBeenCalledTimes(1)
++    expect(store.accessToken).toBe('new-access')
++    expect(store.isInitialized).toBe(true)
++  })
++
++  it('clears the in-flight guard after a failure so a later refresh can retry', async () => {
++    seedRefreshToken()
++    mocks.refreshToken
++      .mockRejectedValueOnce(new Error('refresh blacklisted'))
++      .mockResolvedValueOnce({ data: { access: 'recovered-access', refresh: 'refresh-token-3' } })
++
++    const store = useAuthStore()
++
++    await expect(store.refreshAccessToken()).rejects.toThrow('refresh blacklisted')
++    await expect(store.refreshAccessToken()).resolves.toBe('recovered-access')
++
++    expect(mocks.refreshToken).toHaveBeenCalledTimes(2)
++  })
++
++  it('initAuth logs out and clears the stored refresh token when refresh fails', async () => {
++    seedRefreshToken()
++    mocks.refreshToken.mockRejectedValue(new Error('refresh blacklisted'))
++
++    const store = useAuthStore()
++    await store.initAuth()
++
++    expect(store.accessToken).toBeNull()
++    expect(store.user).toBeNull()
++    expect(sessionStorage.getItem(AUTH_TOKENS_KEY)).toBeNull()
++    expect(store.isInitialized).toBe(true)
++  })
++})
+diff --git a/src/features/auth/store.ts b/src/features/auth/store.ts
+index d758e1b..547a228 100644
+--- a/src/features/auth/store.ts
++++ b/src/features/auth/store.ts
+@@ -41,6 +41,20 @@ function clearStoredRefresh() {
+   } catch {}
+ }
+ 
++/**
++ * Module-level single-flight refresh (QA4-P0). The backend rotates and
++ * blacklists refresh tokens, so concurrent refresh calls would 401 the second
++ * one and deadlock the API client's 401 interceptor. initAuth (router guard),
++ * the interceptor and any caller must share ONE refresh promise.
++ */
++let refreshInFlight: Promise<string> | null = null
++
++/**
++ * Single-flight init: concurrent router-guard invocations must not run the
++ * refresh + fetchUser sequence twice.
++ */
++let initInFlight: Promise<void> | null = null
++
+ export const useAuthStore = defineStore('auth', () => {
+   const accessToken = ref<string | null>(null)
+   const user = ref<User | null>(null)
+@@ -75,7 +89,7 @@ export const useAuthStore = defineStore('auth', () => {
+     user.value = data
+   }
+ 
+-  async function refreshAccessToken(): Promise<string> {
++  async function requestNewAccessToken(): Promise<string> {
+     const refresh = getStoredRefresh()
+     if (!refresh) throw new Error('No refresh token')
+     const { data } = await authApi.refreshToken(refresh)
+@@ -83,13 +97,23 @@ export const useAuthStore = defineStore('auth', () => {
+     return data.access
+   }
+ 
++  /** Single-flight: concurrent callers share one in-flight refresh. */
++  function refreshAccessToken(): Promise<string> {
++    if (!refreshInFlight) {
++      refreshInFlight = requestNewAccessToken().finally(() => {
++        refreshInFlight = null
++      })
++    }
++    return refreshInFlight
++  }
++
+   function logout() {
+     accessToken.value = null
+     user.value = null
+     clearStoredRefresh()
+   }
+ 
+-  async function initAuth() {
++  async function runInitAuth() {
+     const refresh = getStoredRefresh()
+     if (!refresh) {
+       isInitialized.value = true
+@@ -104,6 +128,16 @@ export const useAuthStore = defineStore('auth', () => {
+     isInitialized.value = true
+   }
+ 
++  /** Single-flight so concurrent guard navigations share one init sequence. */
++  function initAuth(): Promise<void> {
++    if (!initInFlight) {
++      initInFlight = runInitAuth().finally(() => {
++        initInFlight = null
++      })
++    }
++    return initInFlight
++  }
++
+   return {
+     accessToken,
+     user,
+diff --git a/src/shared/api/client.test.ts b/src/shared/api/client.test.ts
+new file mode 100644
+index 0000000..d2c19f1
+--- /dev/null
++++ b/src/shared/api/client.test.ts
+@@ -0,0 +1,128 @@
++import { describe, it, expect, vi, beforeEach } from 'vitest'
++import { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios'
++
++/**
++ * QA4-P0 regression tests for the 401 handler in client.ts.
++ *
++ * The old implementation deadlocked: the refresh request's own 401 re-entered
++ * the interceptor which awaited the still-pending refresh promise (circular
++ * await), so logout never ran and the panel went black.
++ */
++
++const mockAuth = vi.hoisted(() => ({
++  accessToken: 'stale-access-token' as string | null,
++  logout: vi.fn(),
++  refreshAccessToken: vi.fn(),
++}))
++
++vi.mock('@/features/auth/store', () => ({
++  useAuthStore: vi.fn(() => mockAuth),
++}))
++
++import apiClient from '@/shared/api/client'
++
++type Responder = (config: InternalAxiosRequestConfig) => { status: number; data?: unknown }
++
++let respond: Responder
++// Snapshots taken at adapter time — the retry mutates the original config
++// object, so holding the reference would show the new token for both calls.
++const seenRequests: { url: string; auth?: string }[] = []
++
++// Minimal axios adapter: answers from `respond` and throws AxiosError with a
++// response attached for non-2xx, mimicking the XHR adapter.
++const adapter = vi.fn(async (config: InternalAxiosRequestConfig): Promise<AxiosResponse> => {
++  seenRequests.push({ url: config.url ?? '', auth: authHeader(config) })
++  const { status, data } = respond(config)
++  const response: AxiosResponse = {
++    data: data ?? {},
++    status,
++    statusText: status < 400 ? 'OK' : 'Error',
++    headers: {},
++    config,
++  }
++  if (status >= 400) {
++    throw new AxiosError('Request failed', String(status), config, null, response)
++  }
++  return response
++})
++
++function authHeader(config: InternalAxiosRequestConfig | undefined): string | undefined {
++  if (!config) return undefined
++  const headers = config.headers as unknown as
++    | { get?: (k: string) => string | undefined; Authorization?: string }
++  return headers?.get ? headers.get('Authorization') : headers?.Authorization
++}
++
++beforeEach(() => {
++  vi.clearAllMocks()
++  seenRequests.length = 0
++  mockAuth.accessToken = 'stale-access-token'
++  apiClient.defaults.adapter = adapter
++  // jsdom does not implement navigation; replace location so the redirect
++  // performed by the interceptor can be asserted.
++  Object.defineProperty(window, 'location', {
++    value: { href: 'http://localhost:3000/dashboard' },
++    writable: true,
++    configurable: true,
++  })
++})
++
++describe('apiClient 401 handling — refresh deadlock regression (QA4-P0)', () => {
++  it('401 on the refresh endpoint itself logs out and redirects WITHOUT calling refreshAccessToken again', async () => {
++    respond = () => ({ status: 401, data: { detail: 'token is invalid or expired' } })
++
++    await expect(
++      apiClient.post('/auth/token/refresh/', { refresh: 'stale-refresh' }),
++    ).rejects.toMatchObject({ status: 401 })
++
++    expect(mockAuth.refreshAccessToken).not.toHaveBeenCalled()
++    expect(mockAuth.logout).toHaveBeenCalledTimes(1)
++    expect(window.location.href).toBe('/login')
++  })
++
++  it('401 on a normal API + successful refresh retries the request once with the new token', async () => {
++    let thingsCalls = 0
++    respond = (config) => {
++      if (config.url?.includes('/things/')) {
++        thingsCalls += 1
++        return thingsCalls === 1
++          ? { status: 401, data: { detail: 'expired' } }
++          : { status: 200, data: { ok: true } }
++      }
++      return { status: 401 }
++    }
++    // The real store persists the new tokens before returning the access token.
++    mockAuth.refreshAccessToken.mockImplementation(async () => {
++      mockAuth.accessToken = 'brand-new-token'
++      return 'brand-new-token'
++    })
++
++    const res = await apiClient.get('/things/')
++
++    expect(res.status).toBe(200)
++    expect(mockAuth.refreshAccessToken).toHaveBeenCalledTimes(1)
++    expect(thingsCalls).toBe(2)
++    expect(seenRequests[0]).toMatchObject({ url: '/things/', auth: 'Bearer stale-access-token' })
++    expect(seenRequests[1]).toMatchObject({ url: '/things/', auth: 'Bearer brand-new-token' })
++  })
++
++  it('401 on a normal API + failing refresh settles: logout + redirect + rejection (no infinite await)', async () => {
++    // Reproduce the real shape of the deadlock: refreshAccessToken itself makes
++    // the refresh call through apiClient, and the backend answers 401 —
++    // previously this circularly awaited its own refresh promise forever.
++    mockAuth.refreshAccessToken.mockImplementation(() =>
++      apiClient.post('/auth/token/refresh/', { refresh: 'blacklisted' }).then((r) => r.data.access),
++    )
++    respond = (config) => {
++      if (config.url?.includes('/auth/token/refresh/')) {
++        return { status: 401, data: { detail: 'blacklisted' } }
++      }
++      return { status: 401, data: { detail: 'expired' } }
++    }
++
++    await expect(apiClient.get('/things/')).rejects.toMatchObject({ status: 401 })
++
++    expect(mockAuth.logout).toHaveBeenCalled()
++    expect(window.location.href).toBe('/login')
++  }, 2000)
++})
+diff --git a/src/shared/api/client.ts b/src/shared/api/client.ts
+index 6af9fc7..80f9e27 100644
+--- a/src/shared/api/client.ts
++++ b/src/shared/api/client.ts
+@@ -4,6 +4,27 @@ import { useAuthStore } from '@/features/auth/store'
+ 
+ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+ 
++/**
++ * Path of the JWT refresh endpoint (see src/features/auth/api.ts).
++ *
++ * QA4-P0 deadlock: a 401 returned by THIS endpoint must never trigger (or
++ * await) another refresh. Previously the refresh request itself 401'd,
++ * re-entered the response interceptor and awaited the still-pending refresh
++ * promise — a circular await that never settled, so logout never ran and the
++ * panel went black with the token still in sessionStorage.
++ */
++export const REFRESH_URL_PATH = '/auth/token/refresh/'
++
++function isRefreshRequest(config?: InternalAxiosRequestConfig | null): boolean {
++  return !!config?.url?.includes(REFRESH_URL_PATH)
++}
++
++function forceLogoutAndRedirect(): void {
++  const auth = useAuthStore()
++  auth.logout()
++  window.location.href = '/login'
++}
++
+ const apiClient: AxiosInstance = axios.create({
+   baseURL: `${API_BASE_URL}/api/v1`,
+   timeout: 60_000,
+@@ -22,29 +43,36 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+   return config
+ })
+ 
+-let refreshPromise: Promise<string> | null = null
+-
+ apiClient.interceptors.response.use(
+   (response: AxiosResponse) => response,
+   async (error: AxiosError & { config?: InternalAxiosRequestConfig & { _retry?: boolean } }) => {
+     const originalRequest = error.config
++
++    // 1) The failed request IS the refresh call itself: the refresh token is
++    //    dead (rotated/blacklisted). Log out immediately — never call or await
++    //    another refresh here, otherwise this interceptor waits on its own
++    //    pending refresh and deadlocks.
++    if (error.response?.status === 401 && isRefreshRequest(originalRequest)) {
++      forceLogoutAndRedirect()
++      return Promise.reject(error)
++    }
++
++    // 2) Regular request: refresh once and retry. The single-flight guard
++    //    lives in the auth store (module-level promise), so concurrent 401s
++    //    here and the router guard's initAuth() share ONE refresh call.
+     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+       originalRequest._retry = true
+       const auth = useAuthStore()
+       try {
+-        if (!refreshPromise) {
+-          refreshPromise = auth.refreshAccessToken().finally(() => { refreshPromise = null })
+-        }
+-        const newToken = await refreshPromise
++        const newToken = await auth.refreshAccessToken()
+         originalRequest.headers.Authorization = `Bearer ${newToken}`
+         return apiClient(originalRequest)
+       } catch {
+-        refreshPromise = null
+-        auth.logout()
+-        window.location.href = '/login'
++        forceLogoutAndRedirect()
+         return Promise.reject(error)
+       }
+     }
++
+     return Promise.reject(error)
+   },
+ )

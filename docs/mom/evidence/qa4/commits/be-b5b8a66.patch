@@ -1,0 +1,935 @@
+commit b5b8a66ee21878d8aa59ebd23201b2e78e49a053
+Author: cracki <cracki@gmail.com>
+Date:   Wed Oct 7 15:02:03 2026 +0330
+
+    fix(qa4-img14,qa4-img29,qa4-img18): ppc budget shares, no auto-complete, platform-tag whitelist
+    
+    - img14: _apply_service_budget_shares now stamps budget_share onto
+      services_bpc_scores AND ppc_opportunity_ranking AND ppc_blueprints
+      (matched by normalized service name), weighted by opportunity_score
+      (fallback bpc_score), deterministic ints summing to 100
+      (ppc_viability_engine.py:326-459); optional budget_share added to the
+      prompt schema.
+    - img29/new5: auto-COMPLETED block deleted from ads_strategy.py:388-399
+      - campaigns stay IN_PROGRESS until the explicit Complete action
+      (POST /campaigns/{uuid}/complete/). completion.py exposes derived
+      flags ad_generation_completed/visual_completed/review_completed
+      (ads exist / visual image_url present / an approved ad review);
+      CampaignSerializer exposes all three for the FE 9-step count.
+    - img18: campaign/text_utils.py bracket cleaner is now case-insensitive
+      but whitelist-only (known platform slugs); ads_strategy_engine
+      sanitizer skips 'keywords' keys so Google exact-match keywords like
+      [plumber] survive. ppc_viability.py error message reworded to
+      'Brand services are required...' (usp_list no longer the source).
+    - campaign/tests_qa4_budget_status.py: 14 tests.
+
+diff --git a/django-backend/campaign/engines/ads_strategy_engine.py b/django-backend/campaign/engines/ads_strategy_engine.py
+index eb1e1ff..6dfdfaf 100644
+--- a/django-backend/campaign/engines/ads_strategy_engine.py
++++ b/django-backend/campaign/engines/ads_strategy_engine.py
+@@ -831,9 +831,15 @@ class AdsStrategyEngine:
+         Clean LLM free text in place (QA: leaked internal tokens like
+         "[linkedin]" / "opportunity_score 94"). Dict keys are structural
+         and stay untouched; only string values are sanitized.
++
++        QA4-img18: values under keys named "keywords" are skipped entirely —
++        Google exact-match keywords ("[plumber]", "[google]") are campaign
++        content, not scaffolding, so the tag cleaner must not touch them.
+         """
+         if isinstance(container, dict):
+             for key, value in container.items():
++                if str(key).strip().lower() == "keywords":
++                    continue
+                 if isinstance(value, str):
+                     container[key] = clean_llm_text(value)
+                 else:
+diff --git a/django-backend/campaign/engines/ppc_viability_engine.py b/django-backend/campaign/engines/ppc_viability_engine.py
+index dbd1c37..5b7d8fa 100644
+--- a/django-backend/campaign/engines/ppc_viability_engine.py
++++ b/django-backend/campaign/engines/ppc_viability_engine.py
+@@ -81,7 +81,8 @@ You MUST output a valid JSON object with exactly this structure:
+                 "service": "string",
+                 "bpc_score": "number 0-100",
+                 "classification": "Performance-Friendly/Brand-Dependent/Mixed",
+-                "reasoning": "string"
++                "reasoning": "string",
++                "budget_share": "number - percent of the initial budget for this service; optional, filled in automatically"
+             }}
+         ]
+     }},
+@@ -91,12 +92,14 @@ You MUST output a valid JSON object with exactly this structure:
+                 "rank": 1,
+                 "service": "string",
+                 "opportunity_score": "number 0-100",
+-                "priority_level": "Priority 1 (Go Now)/Priority 2 (Test & Build)/Priority 3 (Brand-First)"
++                "priority_level": "Priority 1 (Go Now)/Priority 2 (Test & Build)/Priority 3 (Brand-First)",
++                "budget_share": "number - percent of the initial budget for this service; optional, filled in automatically"
+             }}
+         ],
+         "ppc_blueprints": [
+             {{
+                 "service": "string",
++                "budget_share": "number - percent of the initial budget for this service; optional, filled in automatically",
+                 "priority": "1 or 2",
+                 "key_platforms": ["string"],
+                 "campaign_objective": "string",
+@@ -319,38 +322,141 @@ Use these insights to inform your competitive landscape analysis, trust factor h
+             default=DEFAULT_PLATFORM_BUDGET,
+         )
+ 
++    @staticmethod
++    def _dict_rows(container: Any, key: str) -> List[Dict[str, Any]]:
++        """Return the list of dict entries at ``container[key]`` ([] if absent)."""
++        value = container.get(key) if isinstance(container, dict) else None
++        if not isinstance(value, list):
++            return []
++        return [entry for entry in value if isinstance(entry, dict)]
++
++    @staticmethod
++    def _service_key(entry: Dict[str, Any]) -> str:
++        """Normalized service name of a card entry ("" when absent/blank)."""
++        name = entry.get("service")
++        if not isinstance(name, str):
++            return ""
++        return name.strip().casefold()
++
++    def _service_budget_weights(
++        self,
++        bpc_rows: List[Dict[str, Any]],
++        ranking_rows: List[Dict[str, Any]],
++        blueprint_rows: List[Dict[str, Any]],
++    ) -> Optional[Dict[str, float]]:
++        """
++        Name-keyed service weights for the budget split: the PPC
++        ``opportunity_score`` when usable, falling back to the service's
++        ``bpc_score``. Services named only in blueprints (no score anywhere)
++        weight 0 so every named card still gets an explicit share. Returns
++        None when none of the three sections carries service names (the
++        index-based legacy path applies instead).
++        """
++        bpc_scores: Dict[str, Optional[float]] = {}
++        for entry in bpc_rows:
++            key = self._service_key(entry)
++            if key and key not in bpc_scores:
++                bpc_scores[key] = _coerce_non_negative_number(
++                    entry.get("bpc_score")
++                )
++
++        opportunity_scores: Dict[str, Optional[float]] = {}
++        for entry in ranking_rows:
++            key = self._service_key(entry)
++            if key and key not in opportunity_scores:
++                opportunity_scores[key] = _coerce_non_negative_number(
++                    entry.get("opportunity_score")
++                )
++
++        weights: Dict[str, float] = {}
++        for key in dict.fromkeys(list(bpc_scores) + list(opportunity_scores)):
++            opportunity = opportunity_scores.get(key)
++            if opportunity is not None:
++                weights[key] = opportunity
++                continue
++            bpc = bpc_scores.get(key)
++            weights[key] = bpc if bpc is not None else 0.0
++
++        for entry in blueprint_rows:
++            key = self._service_key(entry)
++            if key and key not in weights:
++                weights[key] = 0.0
++
++        return weights or None
++
+     def _apply_service_budget_shares(self, result: Dict[str, Any]) -> None:
+         """
+-        Add a deterministic ``budget_share`` (int, %) to each service entry in
+-        ``brand_trust_analysis.services_bpc_scores`` so every PPC card shows
+-        how the initial budget splits across services (QA round 3).
+-
+-        Shares are weighted by each service's ``bpc_score`` (even split when
+-        no usable score exists), normalized to ints that sum to exactly 100
+-        via ``campaign.budget_utils.normalize_allocation``. Additive only:
+-        unusable or missing sections leave the result untouched.
++        Add a deterministic ``budget_share`` (int, %) to every service card so
++        each PPC card shows how the initial budget splits across services
++        (QA3; QA4-img14 extended it to the ranking and blueprint cards).
++
++        Stamped onto ``brand_trust_analysis.services_bpc_scores``,
++        ``strategic_prioritization.ppc_opportunity_ranking`` and
++        ``strategic_prioritization.ppc_blueprints``. All three structures use
++        a ``service`` name field, so cards are matched by normalized service
++        name; the position-based fallback below applies only when a section
++        (or all of them) carries no usable names.
++
++        Weights: each service's ``opportunity_score`` from the ranking when
++        usable, else its ``bpc_score``. Shares are normalized to ints that
++        sum to exactly 100 via ``campaign.budget_utils.normalize_allocation``
++        (each stamped section gets the same full 100-point split). Weights
++        come from the score fields only, so re-running with the same payload
++        re-stamps identical values (idempotent). Additive only: unusable or
++        missing sections leave the result untouched.
+         """
+         analysis = result.get("brand_trust_analysis")
+-        if not isinstance(analysis, dict):
+-            return
+-        services = analysis.get("services_bpc_scores")
+-        if not isinstance(services, list):
+-            return
++        prioritization = result.get("strategic_prioritization")
+ 
+-        rows = [entry for entry in services if isinstance(entry, dict)]
+-        if not rows:
++        bpc_rows = self._dict_rows(analysis, "services_bpc_scores")
++        ranking_rows = self._dict_rows(prioritization, "ppc_opportunity_ranking")
++        blueprint_rows = self._dict_rows(prioritization, "ppc_blueprints")
++        if not (bpc_rows or ranking_rows or blueprint_rows):
+             return
+ 
+-        weights = {}
+-        for index, entry in enumerate(rows):
+-            score = _coerce_non_negative_number(entry.get("bpc_score"))
+-            weights[str(index)] = score if score is not None else 0.0
+-        if sum(weights.values()) <= 0:
+-            weights = {key: 1.0 for key in weights}
++        name_shares = None
++        weights = self._service_budget_weights(bpc_rows, ranking_rows, blueprint_rows)
++        if weights is not None:
++            if sum(weights.values()) <= 0:
++                weights = {key: 1.0 for key in weights}
++            name_shares = normalize_allocation(weights)
++            for rows in (bpc_rows, ranking_rows, blueprint_rows):
++                for entry in rows:
++                    key = self._service_key(entry)
++                    if key in name_shares:
++                        entry["budget_share"] = name_shares[key]
++            return
+ 
+-        shares = normalize_allocation(weights)
+-        for index, entry in enumerate(rows):
+-            entry["budget_share"] = shares[str(index)]
++        # Legacy index fallback: no section carries service names, so shares
++        # align positionally. Weight by the ranking's opportunity_score when
++        # a ranking exists, else the bpc_score list (previous behavior).
++        scored_rows = ranking_rows or bpc_rows
++        score_field = "opportunity_score" if ranking_rows else "bpc_score"
++        if scored_rows:
++            index_weights = {}
++            for index, entry in enumerate(scored_rows):
++                score = _coerce_non_negative_number(entry.get(score_field))
++                index_weights[str(index)] = score if score is not None else 0.0
++            if sum(index_weights.values()) <= 0:
++                index_weights = {key: 1.0 for key in index_weights}
++        else:
++            index_weights = {str(index): 1.0 for index in range(len(blueprint_rows))}
++        index_shares = normalize_allocation(index_weights)
++
++        for index, entry in enumerate(scored_rows):
++            entry["budget_share"] = index_shares[str(index)]
++        for rows in (blueprint_rows, bpc_rows if scored_rows is not bpc_rows else []):
++            if not rows:
++                continue
++            if len(rows) == len(scored_rows or [None]):
++                for index, entry in enumerate(rows):
++                    entry["budget_share"] = index_shares[str(index)]
++            else:
++                even = normalize_allocation(
++                    {str(index): 1.0 for index in range(len(rows))}
++                )
++                for index, entry in enumerate(rows):
++                    entry["budget_share"] = even[str(index)]
+ 
+     def _build_serper_ad_context(self, ad_inspiration: Dict[str, Any]) -> str:
+         context_parts = []
+diff --git a/django-backend/campaign/serializers.py b/django-backend/campaign/serializers.py
+index 7726e14..dd7c441 100644
+--- a/django-backend/campaign/serializers.py
++++ b/django-backend/campaign/serializers.py
+@@ -24,6 +24,11 @@ from campaign.models import (
+ )
+ 
+ from authorization.permissions import get_user_brand_or_403
++from campaign.services.completion import (
++    has_approved_ad_review,
++    has_generated_ads,
++    has_generated_visual,
++)
+ 
+ # ISO-style currency codes (USD, EUR, ...). Kept deliberately loose (3-8
+ # uppercase letters) so future non-ISO display codes still fit (B6/M-H17).
+@@ -52,6 +57,14 @@ class CampaignSerializer(serializers.ModelSerializer):
+         help_text="Output language for all campaign content: en, fa, or ar.",
+     )
+     steps_count = serializers.IntegerField(read_only=True)
++    # Derived post-wizard flags (QA4-img29/new5): ad generation, visuals and
++    # ad review are not step types so they have no stored *_completed flag;
++    # they are read from the best available proxies in
++    # campaign.services.completion. Informational only (never write input,
++    # never error when the campaign has no ads yet -> False).
++    ad_generation_completed = serializers.SerializerMethodField()
++    visual_completed = serializers.SerializerMethodField()
++    review_completed = serializers.SerializerMethodField()
+ 
+     class Meta:
+         model = Campaign
+@@ -72,6 +85,9 @@ class CampaignSerializer(serializers.ModelSerializer):
+             "meta_ads_completed",
+             "google_ads_completed",
+             "linkedin_ads_completed",
++            "ad_generation_completed",
++            "visual_completed",
++            "review_completed",
+             "context_payload",
+             "summary",
+             "steps_count",
+@@ -89,12 +105,24 @@ class CampaignSerializer(serializers.ModelSerializer):
+             "meta_ads_completed",
+             "google_ads_completed",
+             "linkedin_ads_completed",
++            "ad_generation_completed",
++            "visual_completed",
++            "review_completed",
+             "summary",
+             "steps_count",
+             "created_at",
+             "updated_at",
+         )
+ 
++    def get_ad_generation_completed(self, obj) -> bool:
++        return bool(has_generated_ads(obj))
++
++    def get_visual_completed(self, obj) -> bool:
++        return bool(has_generated_visual(obj))
++
++    def get_review_completed(self, obj) -> bool:
++        return bool(has_approved_ad_review(obj))
++
+     def validate_brand(self, brand):
+         user = self.context["request"].user
+ 
+diff --git a/django-backend/campaign/services/ads_strategy.py b/django-backend/campaign/services/ads_strategy.py
+index eb0ca1b..8876029 100644
+--- a/django-backend/campaign/services/ads_strategy.py
++++ b/django-backend/campaign/services/ads_strategy.py
+@@ -324,10 +324,6 @@ class CampaignAdsStrategyService:
+         resolved_context: Dict[str, Any],
+         result: Dict[str, Any],
+     ) -> None:
+-        # Imported locally: completion.py imports the platform constants from
+-        # this module, so a module-level import would be circular.
+-        from campaign.services.completion import get_completion_error
+-
+         result_data = result.get("data") or {}
+         funnel_campaigns = result_data.get("funnel_campaigns") or []
+ 
+@@ -389,22 +385,17 @@ class CampaignAdsStrategyService:
+ 
+             campaign.context_payload = campaign_context
+             campaign.summary = campaign_summary
+-            # Gate auto-completion on the full completion rules (base steps +
+-            # selected platforms) instead of just the three platform flags.
+-            try:
+-                detail, _ = get_completion_error(campaign)
+-                campaign.status = (
+-                    CampaignStatusChoices.COMPLETED
+-                    if detail is None
+-                    else CampaignStatusChoices.IN_PROGRESS
+-                )
+-            except Exception:
+-                logger.exception(
+-                    "Ads-strategy completion gate failed for campaign=%s "
+-                    "platform=%s",
+-                    campaign.campaign_uuid,
+-                    platform,
+-                )
++            # QA4-img29/new5: an ads-strategy success must NOT complete the
++            # campaign. Ad generation, visuals and ad review are not step
++            # types, so the completion gate never sees them and finishing the
++            # last selected platform used to flip the campaign COMPLETED while
++            # that work was still pending. Completion stays the explicit
++            # POST /campaigns/{uuid}/complete/ action
++            # (campaign.views.CampaignViewSet.complete_campaign). The status
++            # is only promoted forward to IN_PROGRESS (a run may still be
++            # triggered on a legacy DRAFT campaign); it is never demoted and
++            # never set to COMPLETED here.
++            if campaign.status != CampaignStatusChoices.IN_PROGRESS:
+                 campaign.status = CampaignStatusChoices.IN_PROGRESS
+             campaign.current_step = self._resolve_next_step(campaign, platform)
+ 
+diff --git a/django-backend/campaign/services/completion.py b/django-backend/campaign/services/completion.py
+index a511e1f..51567eb 100644
+--- a/django-backend/campaign/services/completion.py
++++ b/django-backend/campaign/services/completion.py
+@@ -143,3 +143,90 @@ def get_completion_error(campaign: Campaign) -> Tuple[Optional[str], List[str]]:
+         )
+ 
+     return None, []
++
++
++# --- Derived (post-gate) completion flags (QA4-img29/new5) -----------------
++#
++# The completion gate above only covers step types; ad generation, visual
++# generation and ad review happen AFTER the wizard steps and are not
++# ``CampaignStepTypeChoices`` members, so they can never be part of
++# ``get_completion_error``. These helpers expose them as informational
++# read-only flags for the FE (and the campaign serializer); they are NOT
++# completion gates and never block ``complete_campaign``.
++#
++# Proxies (best available storage, see the per-helper docstrings):
++# - ``ad_generation_completed``: at least one ``CampaignAd`` row
++#   (``Campaign.ads``, models.py related_name="ads").
++# - ``visual_completed``: at least one ad carries a SUCCESSFUL visual record
++#   (``ad.data["latest_generated_visual"]`` or any entry of
++#   ``ad.data["generated_visuals"]`` with an ``image_url``) — the exact
++#   persistence shape used by ``campaign/services/visual_generation.py``.
++# - ``review_completed``: at least one ad has
++#   ``ad.data["review_status"] == "approved"`` — the per-ad review decision
++#   stored by ``campaign/services/ad_review.py`` (absent = not reviewed).
++
++
++def has_generated_ads(campaign: Campaign) -> bool:
++    """True when the campaign has at least one generated ad row."""
++    try:
++        return campaign.ads.exists()
++    except Exception:
++        # A campaign without the ads relation (unsaved/legacy mock) must
++        # never break serialization: missing rows simply mean False.
++        return False
++
++
++def _ad_data_has_visual(ad_data: Any) -> bool:
++    if not isinstance(ad_data, dict):
++        return False
++    latest = ad_data.get("latest_generated_visual")
++    if isinstance(latest, dict) and latest.get("image_url"):
++        return True
++    records = ad_data.get("generated_visuals")
++    if isinstance(records, list):
++        for record in records:
++            if isinstance(record, dict) and record.get("image_url"):
++                return True
++    return False
++
++
++def has_generated_visual(campaign: Campaign) -> bool:
++    """True when at least one ad carries a successfully generated visual."""
++    try:
++        for ad_data in campaign.ads.values_list("data", flat=True):
++            if _ad_data_has_visual(ad_data):
++                return True
++    except Exception:
++        return False
++    return False
++
++
++def has_approved_ad_review(campaign: Campaign) -> bool:
++    """True when at least one ad's review decision is ``approved``."""
++    try:
++        for ad_data in campaign.ads.values_list("data", flat=True):
++            if (
++                isinstance(ad_data, dict)
++                and ad_data.get("review_status") == "approved"
++            ):
++                return True
++    except Exception:
++        return False
++    return False
++
++
++def get_derived_completion_flags(campaign: Campaign) -> dict:
++    """
++    Return the three derived post-wizard flags for ``campaign``:
++
++    ``{"ad_generation_completed": bool, "visual_completed": bool,
++    "review_completed": bool}``
++
++    Always a plain dict of booleans — False whenever the underlying rows are
++    missing — so the campaign serializer can expose it unconditionally.
++    """
++    return {
++        "ad_generation_completed": has_generated_ads(campaign),
++        "visual_completed": has_generated_visual(campaign),
++        "review_completed": has_approved_ad_review(campaign),
++    }
+diff --git a/django-backend/campaign/services/ppc_viability.py b/django-backend/campaign/services/ppc_viability.py
+index b14891b..004a97b 100644
+--- a/django-backend/campaign/services/ppc_viability.py
++++ b/django-backend/campaign/services/ppc_viability.py
+@@ -119,7 +119,7 @@ class CampaignPPCViabilityService:
+                 "Segmentation must be completed first because PPC viability reads location from the latest segmentation step."
+             )
+         if not resolved_services:
+-            raise ValueError("Brand USP list is required before running PPC viability.")
++            raise ValueError("Brand services are required before running PPC viability.")
+ 
+         return {
+             "brand_profile": brand_profile,
+diff --git a/django-backend/campaign/tests_qa4_budget_status.py b/django-backend/campaign/tests_qa4_budget_status.py
+new file mode 100644
+index 0000000..7dae621
+--- /dev/null
++++ b/django-backend/campaign/tests_qa4_budget_status.py
+@@ -0,0 +1,404 @@
++"""QA4 regression tests.
++
++Covers four QA items:
++- QA4-img14: ``budget_share`` must be stamped on EVERY PPC card (services
++  bpc scores, ppc_opportunity_ranking and ppc_blueprints), weighted by
++  opportunity_score (bpc_score fallback), ints summing to exactly 100.
++- QA4-img29/new5: finishing the last selected platform's ads strategy must
++  NOT flip the campaign COMPLETED anymore; completion stays the explicit
++  POST /complete/ action.
++- derived completion flags (ad generation / visual / review) exposed on the
++  campaign serializer without erroring on campaigns without ads.
++- QA4-img18: the text sanitizer strips platform bracket tags
++  case-insensitively but preserves exact-match keywords ("[plumber]"), and
++  the ads-strategy sanitizer skips values under "keywords" keys.
++"""
++
++import os
++from unittest.mock import AsyncMock, patch
++
++from django.test import SimpleTestCase, TestCase
++
++from authentication.models import User
++from brand.models import Brand, Industry
++from campaign.engines.ads_strategy_engine import AdsStrategyEngine
++from campaign.engines.ppc_viability_engine import PPCViabilityEngine
++from campaign.engines.platform_recommendation_engine import (
++    PlatformRecommendationEngine,
++)
++from campaign.models import (
++    Campaign,
++    CampaignAd,
++    CampaignStatusChoices,
++    CampaignStep,
++    CampaignStepStatusChoices,
++    CampaignStepTypeChoices,
++)
++from campaign.serializers import CampaignSerializer
++from campaign.services.ads_strategy import CampaignAdsStrategyService
++from campaign.services.completion import get_derived_completion_flags
++from campaign.text_utils import clean_llm_text
++
++
++def _budget_fixture(bpc, ranking, blueprints):
++    """Build a minimal PPC viability result with the three card sections."""
++    return {
++        "summary": {
++            "recommended_initial_budget_allocation": {
++                "google": 40,
++                "meta": 40,
++                "linkedin": 20,
++            }
++        },
++        "brand_trust_analysis": {
++            "services_bpc_scores": bpc,
++        },
++        "strategic_prioritization": {
++            "ppc_opportunity_ranking": ranking,
++            "ppc_blueprints": blueprints,
++        },
++    }
++
++
++class QA4ServiceBudgetShareCardsTests(SimpleTestCase):
++    """QA4-img14: budget_share on every PPC card, weighted, summing to 100."""
++
++    def setUp(self):
++        # Engine constructors require an LLM key; keep tests hermetic.
++        env = patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"})
++        env.start()
++        self.addCleanup(env.stop)
++
++    def _engine(self):
++        return PPCViabilityEngine()
++
++    def _named_fixture(self):
++        return _budget_fixture(
++            bpc=[
++                {"service": "SEO", "bpc_score": 80},
++                {"service": "Workshops", "bpc_score": 20},
++                {"service": "Retreats", "bpc_score": 40},
++            ],
++            ranking=[
++                {"rank": 1, "service": "seo", "opportunity_score": 90},
++                {"rank": 2, "service": "Retreats", "opportunity_score": 40},
++                {"rank": 3, "service": "Workshops", "opportunity_score": 10},
++            ],
++            blueprints=[
++                {"service": "SEO", "priority": "1"},
++                {"service": "Workshops", "priority": "2"},
++                {"service": "Retreats", "priority": "2"},
++            ],
++        )
++
++    def _sections(self, result):
++        return (
++            result["brand_trust_analysis"]["services_bpc_scores"],
++            result["strategic_prioritization"]["ppc_opportunity_ranking"],
++            result["strategic_prioritization"]["ppc_blueprints"],
++        )
++
++    def test_budget_share_stamped_on_all_cards_and_sums_to_100(self):
++        engine = self._engine()
++        result = self._named_fixture()
++
++        engine._apply_service_budget_shares(result)
++
++        for rows in self._sections(result):
++            shares = [row["budget_share"] for row in rows]
++            self.assertEqual(len(shares), len(rows))
++            for share in shares:
++                self.assertIsInstance(share, int)
++            self.assertEqual(sum(shares), 100)
++
++    def test_higher_opportunity_score_gets_at_least_as_large_share(self):
++        engine = self._engine()
++        result = self._named_fixture()
++
++        engine._apply_service_budget_shares(result)
++
++        bpc_rows, ranking_rows, blueprint_rows = self._sections(result)
++        # Weighting uses the ranking's opportunity_score (90/40/10), so the
++        # share order follows it, not the bpc order in the fixture.
++        seo_share = next(
++            row["budget_share"] for row in ranking_rows if row["service"] == "seo"
++        )
++        workshops_share = next(
++            row["budget_share"]
++            for row in ranking_rows
++            if row["service"] == "Workshops"
++        )
++        self.assertGreaterEqual(seo_share, workshops_share)
++        self.assertGreater(seo_share, workshops_share)
++
++        # The same per-service split is stamped on every card section.
++        self.assertEqual(
++            {row["service"].casefold(): row["budget_share"] for row in bpc_rows},
++            {
++                row["service"].casefold(): row["budget_share"]
++                for row in ranking_rows
++            },
++        )
++        self.assertEqual(
++            [row["budget_share"] for row in blueprint_rows],
++            [row["budget_share"] for row in bpc_rows],
++        )
++
++    def test_bpc_score_fallback_when_ranking_score_missing(self):
++        engine = self._engine()
++        result = _budget_fixture(
++            bpc=[
++                {"service": "SEO", "bpc_score": 75},
++                {"service": "Workshops", "bpc_score": 25},
++            ],
++            ranking=[
++                {"rank": 1, "service": "SEO", "opportunity_score": "n/a"},
++            ],
++            blueprints=[{"service": "SEO"}, {"service": "Workshops"}],
++        )
++
++        engine._apply_service_budget_shares(result)
++
++        bpc_rows = result["brand_trust_analysis"]["services_bpc_scores"]
++        seo_share = next(
++            row["budget_share"] for row in bpc_rows if row["service"] == "SEO"
++        )
++        workshops_share = next(
++            row["budget_share"]
++            for row in bpc_rows
++            if row["service"] == "Workshops"
++        )
++        # SEO's opportunity_score is unusable -> its bpc_score weights it.
++        self.assertGreater(seo_share, workshops_share)
++        self.assertEqual(seo_share + workshops_share, 100)
++        # Blueprint-only service (Workshops) still gets an explicit share.
++        blueprint_shares = [
++            row["budget_share"]
++            for row in result["strategic_prioritization"]["ppc_blueprints"]
++        ]
++        self.assertEqual(sum(blueprint_shares), 100)
++
++    def test_idempotent_on_rerun(self):
++        engine = self._engine()
++        result = self._named_fixture()
++
++        engine._apply_service_budget_shares(result)
++        snapshot = [
++            {row["service"]: row.get("budget_share") for row in rows}
++            for rows in self._sections(result)
++        ]
++
++        engine._apply_service_budget_shares(result)
++        rerun = [
++            {row["service"]: row.get("budget_share") for row in rows}
++            for rows in self._sections(result)
++        ]
++
++        self.assertEqual(snapshot, rerun)
++
++    def test_sections_without_service_names_use_index_fallback(self):
++        engine = self._engine()
++        result = _budget_fixture(
++            bpc=[{"bpc_score": 30}, {"bpc_score": 70}],
++            ranking=[{"rank": 1, "opportunity_score": 10}, {"opportunity_score": 90}],
++            blueprints=[{"priority": "1"}, {"priority": "2"}],
++        )
++
++        engine._apply_service_budget_shares(result)
++
++        for rows in self._sections(result):
++            shares = [row["budget_share"] for row in rows]
++            self.assertEqual(sum(shares), 100)
++        # Positional weighting follows the ranking's opportunity_score.
++        ranking_rows = result["strategic_prioritization"]["ppc_opportunity_ranking"]
++        self.assertGreater(ranking_rows[1]["budget_share"], ranking_rows[0]["budget_share"])
++
++
++class QA4AdsStrategyStatusTests(TestCase):
++    """QA4-img29/new5: ads strategy must never auto-complete the campaign."""
++
++    def setUp(self):
++        self.user = User.objects.create_user(
++            email="qa4-status-user@example.com",
++            password="StrongPass123!",
++        )
++        self.industry = Industry.objects.create(name="QA4 Status")
++        self.brand = Brand.objects.create(
++            website_url="https://example-qa4-status.com",
++            company_name="Example QA4 Status",
++            selected_industry=self.industry,
++            created_by=self.user,
++        )
++        self.campaign = Campaign.objects.create(
++            brand=self.brand,
++            name="QA4 Status Campaign",
++            created_by=self.user,
++        )
++        # Ads strategy reads personas from the latest completed segmentation.
++        CampaignStep.objects.create(
++            campaign=self.campaign,
++            step_type=CampaignStepTypeChoices.SEGMENTATION,
++            status=CampaignStepStatusChoices.COMPLETED,
++            response_payload={"data": {"segments": [{"persona_name": "P1"}]}},
++        )
++
++    def _run_platform(self, platform):
++        service = CampaignAdsStrategyService()
++        engine_result = {
++            "success": True,
++            "platform": platform,
++            "data": {"funnel_campaigns": []},
++        }
++        with patch("campaign.services.ads_strategy.AdsStrategyEngine") as engine_class:
++            engine_class.return_value.generate_strategy = AsyncMock(
++                return_value=engine_result
++            )
++            service.run(campaign=self.campaign, platform=platform)
++        self.campaign.refresh_from_db()
++
++    def test_last_platform_strategy_keeps_campaign_in_progress(self):
++        self.campaign.context_payload = {"selected_platforms": ["meta", "google", "linkedin"]}
++        self.campaign.segmentation_completed = True
++        self.campaign.ppc_viability_completed = True
++        self.campaign.funnel_completed = True
++        self.campaign.content_strategy_completed = True
++        self.campaign.save()
++
++        for platform in ("meta", "google", "linkedin"):
++            self._run_platform(platform)
++
++        self.assertTrue(self.campaign.meta_ads_completed)
++        self.assertTrue(self.campaign.google_ads_completed)
++        self.assertTrue(self.campaign.linkedin_ads_completed)
++        # The completion gate is satisfied, but completion stays the explicit
++        # POST /complete/ action: the campaign must NOT be COMPLETED yet.
++        self.assertEqual(self.campaign.status, CampaignStatusChoices.IN_PROGRESS)
++
++    def test_draft_campaign_is_promoted_to_in_progress_not_completed(self):
++        self.assertEqual(self.campaign.status, CampaignStatusChoices.DRAFT)
++
++        self._run_platform("meta")
++
++        self.assertTrue(self.campaign.meta_ads_completed)
++        self.assertEqual(self.campaign.status, CampaignStatusChoices.IN_PROGRESS)
++
++
++class QA4DerivedCompletionFlagsTests(TestCase):
++    """Derived flags: False on empty campaigns, True with ad+visual+review."""
++
++    def setUp(self):
++        self.user = User.objects.create_user(
++            email="qa4-flags-user@example.com",
++            password="StrongPass123!",
++        )
++        self.campaign = Campaign.objects.create(
++            name="QA4 Flags Campaign",
++            created_by=self.user,
++        )
++
++    def test_empty_campaign_reports_all_flags_false(self):
++        flags = get_derived_completion_flags(self.campaign)
++        self.assertEqual(
++            flags,
++            {
++                "ad_generation_completed": False,
++                "visual_completed": False,
++                "review_completed": False,
++            },
++        )
++
++        data = CampaignSerializer(self.campaign).data
++        self.assertEqual(
++            (
++                data["ad_generation_completed"],
++                data["visual_completed"],
++                data["review_completed"],
++            ),
++            (False, False, False),
++        )
++
++    def test_ad_visual_and_approved_review_report_all_flags_true(self):
++        CampaignAd.objects.create(
++            campaign=self.campaign,
++            platform="meta",
++            data={
++                "review_status": "approved",
++                "reviewed_at": "2026-10-07T00:00:00Z",
++                "generated_visuals": [
++                    {"image_url": "/media/campaign_visuals/x.png", "success": True}
++                ],
++                "latest_generated_visual": {
++                    "image_url": "/media/campaign_visuals/x.png",
++                    "success": True,
++                },
++            },
++        )
++
++        flags = get_derived_completion_flags(self.campaign)
++        self.assertTrue(flags["ad_generation_completed"])
++        self.assertTrue(flags["visual_completed"])
++        self.assertTrue(flags["review_completed"])
++
++        data = CampaignSerializer(self.campaign).data
++        self.assertTrue(data["ad_generation_completed"])
++        self.assertTrue(data["visual_completed"])
++        self.assertTrue(data["review_completed"])
++
++
++class QA4TextSanitizerKeywordTests(SimpleTestCase):
++    """QA4-img18: platform tags stripped case-insensitively, keywords kept."""
++
++    def setUp(self):
++        # Engine constructors require an LLM key; keep tests hermetic.
++        env = patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"})
++        env.start()
++        self.addCleanup(env.stop)
++
++    def test_platform_tags_stripped_case_insensitively(self):
++        self.assertEqual(clean_llm_text("Use [Meta] and [linkedin]"), "Use and")
++        self.assertEqual(clean_llm_text("[GOOGLE] first"), "first")
++
++    def test_exact_match_keyword_preserved_in_message(self):
++        self.assertEqual(
++            clean_llm_text("Bid on [plumber] now"), "Bid on [plumber] now"
++        )
++        self.assertEqual(
++            clean_llm_text("Ordinary [note with spaces] stays"),
++            "Ordinary [note with spaces] stays",
++        )
++
++    def test_internal_field_tag_still_stripped(self):
++        self.assertEqual(
++            clean_llm_text("[bpc_score] drives the split"),
++            "drives the split",
++        )
++
++    def test_ads_sanitizer_skips_keyword_values(self):
++        engine = AdsStrategyEngine()
++        payload = {
++            "keywords": ["[plumber]", "[google]", "[Meta]", "emergency plumber"],
++            "message": "[Meta] Bid on [plumber] today",
++            "targeting": {"keywords": ["[roof repair]"], "headline": "[linkedin] ads"},
++        }
++
++        engine._sanitize_free_text(payload)
++
++        self.assertEqual(
++            payload["keywords"],
++            ["[plumber]", "[google]", "[Meta]", "emergency plumber"],
++        )
++        self.assertEqual(payload["targeting"]["keywords"], ["[roof repair]"])
++        # Non-keyword strings are still cleaned.
++        self.assertEqual(payload["message"], "Bid on [plumber] today")
++        self.assertEqual(payload["targeting"]["headline"], "ads")
++
++    def test_join_scalar_still_cleans_message_text(self):
++        engine = PlatformRecommendationEngine()
++        self.assertEqual(
++            engine._join_scalar("Best channel is [LinkedIn] for B2B"),
++            "Best channel is for B2B",
++        )
++        self.assertEqual(
++            engine._join_scalar("opportunity_score 94 for [plumber]"),
++            "opportunity score 94 for [plumber]",
++        )
+diff --git a/django-backend/campaign/text_utils.py b/django-backend/campaign/text_utils.py
+index 6a9e72b..78fb05c 100644
+--- a/django-backend/campaign/text_utils.py
++++ b/django-backend/campaign/text_utils.py
+@@ -9,11 +9,6 @@ reaches the FE.
+ 
+ import re
+ 
+-# Prompt-scaffolding tags such as [linkedin] or [bpc_score]: lowercase
+-# letters/underscores only, so ordinary bracketed prose ("[max 5 items]")
+-# is left alone.
+-_BRACKET_TAG_RE = re.compile(r"\[[a-z_]+\]")
+-
+ # Internal field names -> human wording. Kept deliberately small: only
+ # tokens that actually leaked in QA. Scores read naturally as words, the
+ # percent keys as "budget share".
+@@ -26,6 +21,23 @@ _INTERNAL_FIELD_WORDS = {
+     "budget_allocation_percent": "budget share",
+ }
+ 
++# Prompt-scaffolding platform tags such as [linkedin] or [Meta] (QA4-img18):
++# whitelisted platform names only, case-insensitive and word-bounded inside
++# the brackets, so ordinary bracketed prose ("[max 5 items]") AND Google
++# exact-match keywords ("[plumber]") are left alone. Longer names first is
++# not required (the closing bracket forces a full match) but harmless.
++_PLATFORM_TAG_RE = re.compile(
++    r"\[\s*\b(?:meta|google|linkedin|facebook|instagram|tiktok|youtube|"
++    r"twitter|x|bing)\b\s*\]",
++    re.IGNORECASE,
++)
++
++# Bracketed internal field names such as [bpc_score]: stripped outright,
++# exactly like the bare "bpc_score" token they wrap.
++_INTERNAL_FIELD_TAG_RE = re.compile(
++    r"\[(?:%s)\]" % "|".join(sorted(_INTERNAL_FIELD_WORDS, key=len, reverse=True))
++)
++
+ # Runs of plain spaces left behind by removed tags (newlines preserved).
+ _MULTI_SPACE_RE = re.compile(r" {2,}")
+ 
+@@ -34,15 +46,17 @@ def clean_llm_text(value: str) -> str:
+     """
+     Strip internal tokens from an LLM-generated string.
+ 
+-    Bracket tags are removed outright (they are scaffolding, not content),
+-    then known internal field names are replaced with their human wording
++    Whitelisted platform bracket tags and bracketed internal field names are
++    removed outright (they are scaffolding, not content), then known internal
++    field names are replaced with their human wording
+     (``opportunity_score 94`` -> ``opportunity score 94``); stray double
+     spaces are collapsed and the result is trimmed.
+     """
+     if not value:
+         return ""
+ 
+-    text = _BRACKET_TAG_RE.sub("", value)
++    text = _PLATFORM_TAG_RE.sub("", value)
++    text = _INTERNAL_FIELD_TAG_RE.sub("", text)
+     for token, words in _INTERNAL_FIELD_WORDS.items():
+         text = text.replace(token, words)
+     text = _MULTI_SPACE_RE.sub(" ", text)

@@ -1,0 +1,4 @@
+[2m      Tests [22m [1m[32m416 passed[39m[22m[90m (416)[39m
+[2m   Start at [22m 17:01:55
+[2m   Duration [22m 73.20s[2m (transform 22.13s, setup 0ms, import 106.35s, tests 29.09s, environment 306.46s)[22m
+

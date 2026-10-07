@@ -1,0 +1,473 @@
+commit 282bb1a23471bde1e5a72e6f0ac34a13f10e9fab
+Author: cracki <cracki@gmail.com>
+Date:   Wed Oct 7 15:03:36 2026 +0330
+
+    fix(qa4-img14,qa4-img27,qa4-img29): ppc budget badge, review split tolerance, true step counts
+    
+    - img14: PPC service cards/detail rows render budget_share
+      (badge data-testid=ppc-budget-share via t('ppc.budgetShareBadge'),
+      detail row after budget; aliases budget_share/_percent, 0-100
+      validated) - backend now stamps it on all three lists (ad_creator
+      commit b5b8a66) (types.ts:422-441,488-489,506-527).
+    - img27: getStrategyBudgetSplit tolerates response_payload shapes
+      funnel_campaigns / data.funnel_campaigns / data-as-payload; equal
+      thirds fallback only when no strategy carries funnel data;
+      by-platform view weighted by platform_recommendations.budget_share
+      (types.ts:768-783,800).
+    - img29/new5: getCampaignStepCounts includes the optional
+      ad_generation_completed/visual_completed/review_completed flags
+      (total up to 9) when the backend provides them; unchanged otherwise
+      (types.ts:366-404).
+    - types.test.ts 27->39; PpcServiceCard.test.ts 6 (new).
+
+diff --git a/src/features/campaigns/components/PpcServiceCard.test.ts b/src/features/campaigns/components/PpcServiceCard.test.ts
+new file mode 100644
+index 0000000..c5011b9
+--- /dev/null
++++ b/src/features/campaigns/components/PpcServiceCard.test.ts
+@@ -0,0 +1,48 @@
++import { describe, it, expect } from 'vitest'
++import { mount } from '@vue/test-utils'
++import PpcServiceCard from './PpcServiceCard.vue'
++
++function mountCard(svc: Record<string, unknown>, expanded = false) {
++  return mount(PpcServiceCard, { props: { svc, idx: 0, expanded } })
++}
++
++describe('PpcServiceCard — budget share badge (QA4-img14)', () => {
++  it('shows the budget-share badge when the service carries budget_share', () => {
++    const wrapper = mountCard({ name: 'Implants', budget_share: 23, bpc_score: 72 })
++
++    const badge = wrapper.find('[data-testid="ppc-budget-share"]')
++    expect(badge.exists()).toBe(true)
++    expect(badge.text()).toBe('Budget share 23%')
++  })
++
++  it('accepts the budget_share_percent alias and string values', () => {
++    const wrapper = mountCard({ name: 'Implants', budget_share_percent: '45.5' })
++
++    expect(wrapper.find('[data-testid="ppc-budget-share"]').text()).toBe('Budget share 45.5%')
++  })
++
++  it('renders a 0% share instead of hiding the badge', () => {
++    const wrapper = mountCard({ name: 'Consulting', budget_share: 0 })
++
++    expect(wrapper.find('[data-testid="ppc-budget-share"]').text()).toBe('Budget share 0%')
++  })
++
++  it('omits the badge when no budget share is present', () => {
++    const wrapper = mountCard({ name: 'Landing Pages', bpc_score: 40 })
++
++    expect(wrapper.find('[data-testid="ppc-budget-share"]').exists()).toBe(false)
++  })
++
++  it('omits the badge for invalid shares outside 0-100', () => {
++    const wrapper = mountCard({ name: 'Landing Pages', budget_share: 140 })
++
++    expect(wrapper.find('[data-testid="ppc-budget-share"]').exists()).toBe(false)
++  })
++
++  it('keeps the score badge beside the budget-share badge', () => {
++    const wrapper = mountCard({ name: 'Implants', budget_share: 23, bpc_score: 72 })
++
++    expect(wrapper.find('[data-testid="ppc-budget-share"]').exists()).toBe(true)
++    expect(wrapper.text()).toContain('72')
++  })
++})
+diff --git a/src/features/campaigns/components/PpcServiceCard.vue b/src/features/campaigns/components/PpcServiceCard.vue
+index 4b5e37f..7109447 100644
+--- a/src/features/campaigns/components/PpcServiceCard.vue
++++ b/src/features/campaigns/components/PpcServiceCard.vue
+@@ -1,14 +1,15 @@
+ <script setup lang="ts">
++import { computed } from 'vue'
+ import { TrendingUp, ChevronDown, ChevronUp } from 'lucide-vue-next'
+ import { useI18n } from '@/shared/utils/i18n'
+-import { ppcServiceDetailRows, hasPpcServiceDetails } from '../types'
++import { ppcServiceDetailRows, hasPpcServiceDetails, ppcServiceBudgetShare } from '../types'
+ 
+ /**
+  * One expandable PPC service card (QA round 3 fix 4): extracted from
+  * PPCViabilityView so selected AND "other analyzed" rows render identically.
+  * The parent owns the one-open-at-a-time state.
+  */
+-defineProps<{
++const props = defineProps<{
+   /** Service row (payload rows are loosely shaped — same as the views). */
+   svc: Record<string, any>
+   /** Global row index — drives the expandable testids. */
+@@ -19,6 +20,14 @@ defineProps<{
+ const emit = defineEmits<{ toggle: [] }>()
+ 
+ const { t } = useI18n()
++
++// Budget share badge (QA4-img14): normalized percent off the raw
++// budget_share / budget_share_percent payload keys (or a pre-normalized
++// budgetShare); null hides the badge.
++const budgetShareText = computed(() => {
++  const share = ppcServiceBudgetShare(props.svc)
++  return share == null ? null : t('ppc.budgetShareBadge', { share })
++})
+ </script>
+ 
+ <template>
+@@ -36,6 +45,13 @@ const { t } = useI18n()
+           </div>
+         </div>
+         <div class="flex items-center gap-1.5 shrink-0">
++          <div
++            v-if="budgetShareText"
++            class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20"
++            data-testid="ppc-budget-share"
++          >
++            {{ budgetShareText }}
++          </div>
+           <div v-if="svc.score || svc.bpc_score || svc.viability_score || svc.opportunity_score || svc.priority" class="flex items-center gap-1">
+             <span class="h-1.5 w-1.5 rounded-full bg-success" />
+             <span class="text-xs font-semibold text-success">
+diff --git a/src/features/campaigns/types.test.ts b/src/features/campaigns/types.test.ts
+index a2eafa2..71726c2 100644
+--- a/src/features/campaigns/types.test.ts
++++ b/src/features/campaigns/types.test.ts
+@@ -1,9 +1,14 @@
+ import { describe, it, expect } from 'vitest'
+ import {
+   getCampaignProgress,
++  getCampaignStepCounts,
+   areAllPlatformAdsComplete,
+   formatCampaignBudget,
+   getFunnelBudgetSplit,
++  getPlatformBudgetShares,
++  getStrategyBudgetSplit,
++  ppcServiceList,
++  ppcServiceDetailRows,
+   resolveTargetMarket,
+   composeLocation,
+   type Campaign,
+@@ -293,3 +298,179 @@ describe('campaignSelectedServices + splitPpcServicesBySelected (QA r3 fix 4)',
+     expect(others).toEqual([])
+   })
+ })
++
++// ── PPC service budget share (QA4-img14) ──
++describe('ppcServiceList budget share (QA4-img14)', () => {
++  it('attaches the normalized budgetShare from budget_share and the budget_share_percent alias', () => {
++    const rows = ppcServiceList({
++      brand_trust_analysis: {
++        services_bpc_scores: [
++          { service: 'Implants', bpc_score: 72, budget_share: 23 },
++          { service: 'Whitening', bpc_score: 55, budget_share_percent: '45.5' },
++        ],
++      },
++    })
++    expect(rows.map((r) => r.budgetShare)).toEqual([23, 45.5])
++  })
++
++  it('omits budgetShare when no share key is present or the value is invalid', () => {
++    const rows = ppcServiceList({
++      brand_trust_analysis: {
++        services_bpc_scores: [{ service: 'A' }, { service: 'B', budget_share: 140 }],
++      },
++    })
++    expect(rows.map((r) => r.budgetShare)).toEqual([undefined, undefined])
++  })
++
++  it('keeps a blueprint budget_share after merging and still shows a 0 share', () => {
++    const rows = ppcServiceList({
++      brand_trust_analysis: {
++        services_bpc_scores: [{ service: 'Implants' }, { service: 'Consulting', budget_share: 0 }],
++      },
++      strategic_prioritization: {
++        ppc_blueprints: [{ service: 'Implants', budget_share: 30, key_risk: 'High CPC' }],
++      },
++    })
++    expect(rows.map((r) => r.budgetShare)).toEqual([30, 0])
++  })
++})
++
++describe('ppcServiceDetailRows budget share (QA4-img14)', () => {
++  it('adds a localized budget-share row right after the budget row', () => {
++    const rows = ppcServiceDetailRows({ budget_allocation: '60% of budget', budget_share: 23 })
++    const labels = rows.map((r) => r.labelKey)
++    expect(labels).toContain('ppc.budgetShareRow')
++    expect(labels.indexOf('ppc.budgetShareRow')).toBe(labels.indexOf('ppc.detail.budget') + 1)
++    expect(rows[labels.indexOf('ppc.budgetShareRow')].text).toBe('23%')
++  })
++
++  it('adds no budget-share row when the service has no share', () => {
++    const rows = ppcServiceDetailRows({ budget_allocation: '60%' })
++    expect(rows.map((r) => r.labelKey)).not.toContain('ppc.budgetShareRow')
++  })
++})
++
++// ── Strategy budget split payload tolerance (QA4-img27) ──
++describe('getStrategyBudgetSplit payload tolerance (QA4-img27)', () => {
++  const funnel = [
++    { funnel_stage: 'TOFU', budget_percent: 40 },
++    { funnel_stage: 'MOFU', budget_percent: 35 },
++    { funnel_stage: 'BOFU', budget_percent: 25 },
++  ]
++  const expected = {
++    byStage: { tofu: 40, mofu: 35, bofu: 25 },
++    byPlatform: [{ platform: 'meta', share: 100 }],
++  }
++
++  it('reads funnel_campaigns directly off response_payload', () => {
++    expect(
++      getStrategyBudgetSplit([{ platform: 'meta', response_payload: { funnel_campaigns: funnel } }], null),
++    ).toEqual(expected)
++  })
++
++  it('reads funnel_campaigns nested under response_payload.data', () => {
++    expect(
++      getStrategyBudgetSplit([{ platform: 'meta', response_payload: { data: { funnel_campaigns: funnel } } }], null),
++    ).toEqual(expected)
++  })
++
++  it('weights stages by the recommended budget_share map (casing-tolerant stages)', () => {
++    const campaign = buildCampaign({
++      context_payload: { platform_recommendations: { budget_share: { meta: 60, google: 40 } } },
++    })
++    const split = getStrategyBudgetSplit(
++      [
++        {
++          platform: 'meta',
++          response_payload: {
++            funnel_campaigns: [
++              { funnel_stage: 'TOFU', budget_percent: 20 },
++              { funnel_stage: 'MOFU', budget_percent: 17 },
++              { funnel_stage: 'BoFu', budget_percent: 63 },
++            ],
++          },
++        },
++        {
++          platform: 'google',
++          response_payload: {
++            data: {
++              funnel_campaigns: [
++                { funnel_stage: 'TOFU', budget_percent: 15 },
++                { funnel_stage: 'MOFU', budget_percent: 20 },
++                { funnel_stage: 'BoFu', budget_percent: 65 },
++              ],
++            },
++          },
++        },
++      ],
++      getPlatformBudgetShares(campaign),
++    )
++    expect(split).not.toBeNull()
++    expect(split!.byStage.bofu).toBe(63.8) // 0.6 × 63 + 0.4 × 65
++    expect(split!.byPlatform).toHaveLength(2)
++    expect(split!.byPlatform).toEqual([
++      { platform: 'meta', share: 60 },
++      { platform: 'google', share: 40 },
++    ])
++  })
++
++  it('returns null when no strategy carries funnel data', () => {
++    expect(getStrategyBudgetSplit([], null)).toBeNull()
++    expect(getStrategyBudgetSplit([{ platform: 'meta', response_payload: {} }], null)).toBeNull()
++    expect(
++      getStrategyBudgetSplit([{ platform: 'meta', response_payload: { data: { campaign_overview: {} } } }], null),
++    ).toBeNull()
++  })
++})
++
++// ── Optional review-flow flags (QA4-img29/new5) ──
++describe('getCampaignStepCounts optional flags (QA4-img29/new5)', () => {
++  it('counts the ad_generation/visual/review flags when the serializer exposes them (9 total mid-work)', () => {
++    const counts = getCampaignStepCounts(
++      buildCampaign({
++        context_payload: { selected_platforms: ['meta', 'google'] },
++        ad_generation_completed: true,
++        visual_completed: false,
++        review_completed: false,
++      }),
++    )
++    // 4 base + 2 selected platforms + 3 new flags = 9; only ad_generation done → 1
++    expect(counts).toEqual({ completed: 1, total: 9 })
++  })
++
++  it('includes all three flags as soon as any one of them is defined', () => {
++    const counts = getCampaignStepCounts(
++      buildCampaign({
++        context_payload: { selected_platforms: ['meta', 'google'] },
++        ad_generation_completed: false,
++      }),
++    )
++    expect(counts.total).toBe(9)
++  })
++
++  it('keeps the backward-compatible total when the flags are absent', () => {
++    const counts = getCampaignStepCounts(
++      buildCampaign({ context_payload: { selected_platforms: ['meta', 'google'] } }),
++    )
++    expect(counts).toEqual({ completed: 0, total: 6 })
++  })
++
++  it('still reaches 100% progress when every counted flag (including the new ones) is done', () => {
++    expect(
++      getCampaignProgress(
++        buildCampaign({
++          segmentation_completed: true,
++          ppc_viability_completed: true,
++          funnel_completed: true,
++          content_strategy_completed: true,
++          meta_ads_completed: true,
++          google_ads_completed: true,
++          linkedin_ads_completed: true,
++          ad_generation_completed: true,
++          visual_completed: true,
++          review_completed: true,
++        }),
++      ),
++    ).toBe(100)
++  })
++})
+diff --git a/src/features/campaigns/types.ts b/src/features/campaigns/types.ts
+index 2333ed7..538f934 100644
+--- a/src/features/campaigns/types.ts
++++ b/src/features/campaigns/types.ts
+@@ -35,6 +35,13 @@ export interface Campaign {
+   meta_ads_completed: boolean
+   google_ads_completed: boolean
+   linkedin_ads_completed: boolean
++  /**
++   * OPTIONAL completion flags from newer serializers (QA4-img29/new5): absent
++   * on older payloads, so readers must branch on `!== undefined`.
++   */
++  ad_generation_completed?: boolean
++  visual_completed?: boolean
++  review_completed?: boolean
+   context_payload: Record<string, unknown>
+   /** Reused brand-analysis data (M-H8); null until the backend computes it. */
+   brand_context?: BrandContext | null
+@@ -360,6 +367,12 @@ export interface AdsStrategyListResponse {
+  * the platforms the user actually selected. If platform selection hasn't
+  * happened yet, all three platform flags count so early-campaign progress is
+  * unchanged (a partial-platform campaign can still reach 100%).
++ *
++ * QA4-img29/new5: newer serializers also expose three OPTIONAL flags
++ * (ad_generation_completed / visual_completed / review_completed). As soon as
++ * ANY of them is defined on the payload they count too (4 base + 3 platforms +
++ * 3 extra = up to 10; 9 mid-work with 2 platforms selected); when all are
++ * absent the count stays backward compatible with older payloads.
+  */
+ export function getCampaignStepCounts(campaign: Campaign): { completed: number; total: number } {
+   const baseFlags = [
+@@ -377,7 +390,16 @@ export function getCampaignStepCounts(campaign: Campaign): { completed: number;
+         campaign.google_ads_completed,
+         campaign.linkedin_ads_completed,
+       ]
+-  const flags = [...baseFlags, ...platformFlags]
++  const extraFlags = [
++    campaign.ad_generation_completed,
++    campaign.visual_completed,
++    campaign.review_completed,
++  ]
++  const flags = [
++    ...baseFlags,
++    ...platformFlags,
++    ...(extraFlags.some((f) => f !== undefined) ? extraFlags : []),
++  ]
+   return { completed: flags.filter(Boolean).length, total: flags.length }
+ }
+ 
+@@ -400,6 +422,27 @@ export function areAllPlatformAdsComplete(campaign: Campaign): boolean {
+ 
+ export interface PpcServiceDetailRow { labelKey: TKey; text: string }
+ 
++/**
++ * Normalized PPC service row (QA4-img14): the raw payload fields plus the
++ * normalized `budgetShare` (percent 0–100) the backend stamps onto
++ * services_bpc_scores / ppc_opportunity_ranking / ppc_blueprints entries.
++ */
++export type PpcServiceRow = Record<string, unknown> & { budgetShare?: number | null }
++
++/**
++ * Normalized budget share (percent 0–100) off a PPC service row: reads the
++ * pre-normalized `budgetShare` or the raw `budget_share` / `budget_share_percent`
++ * payload keys (numeric strings tolerated); null when absent/invalid.
++ */
++export function ppcServiceBudgetShare(svc: Record<string, unknown> | null | undefined): number | null {
++  if (!svc || typeof svc !== 'object') return null
++  const raw = (svc as Record<string, any>).budgetShare
++    ?? (svc as Record<string, any>).budget_share
++    ?? (svc as Record<string, any>).budget_share_percent
++  const share = readFunnelBudgetShare(raw)
++  return share == null ? null : Math.round(share * 10) / 10
++}
++
+ function ppcDetailValue(v: unknown): string | null {
+   if (v == null) return null
+   if (typeof v === 'string') return v.trim() ? v.trim() : null
+@@ -442,6 +485,8 @@ export function ppcServiceDetailRows(svc: Record<string, unknown> | null | undef
+   push('ppc.detail.objective', svc.campaign_objective, svc.objective)
+   push('ppc.detail.valueProp', svc.unique_value_proposition, svc.value_proposition)
+   push('ppc.detail.budget', svc.budget_allocation, svc.recommended_budget, svc.budget)
++  const budgetShare = ppcServiceBudgetShare(svc)
++  if (budgetShare != null) push('ppc.budgetShareRow', `${budgetShare}%`)
+   push('ppc.detail.reasoning', svc.reasoning, svc.rationale, svc.notes, svc.analysis)
+   push('ppc.detail.risk', svc.key_risk, svc.risk)
+   return rows
+@@ -460,9 +505,10 @@ export function hasPpcServiceDetails(svc: Record<string, unknown> | null | undef
+  * Service list from a PPC viability payload: prefers the BPC scores, then the
+  * opportunity ranking, then any services-like list. Each row is enriched with
+  * its matching `ppc_blueprints` entry (joined by service name) so the
+- * expandable cards can surface platform / objective / risk details.
++ * expandable cards can surface platform / objective / risk details, and with
++ * its normalized `budgetShare` when the backend stamped one (QA4-img14).
+  */
+-export function ppcServiceList(data: Record<string, unknown> | null | undefined): Record<string, unknown>[] {
++export function ppcServiceList(data: Record<string, unknown> | null | undefined): PpcServiceRow[] {
+   if (!data || typeof data !== 'object') return []
+   const d = data as Record<string, any>
+   const svcs = d.brand_trust_analysis?.services_bpc_scores
+@@ -475,7 +521,10 @@ export function ppcServiceList(data: Record<string, unknown> | null | undefined)
+   return mergePpcBlueprints(
+     items.filter((s): s is Record<string, unknown> => !!s && typeof s === 'object'),
+     d,
+-  )
++  ).map((row) => {
++    const budgetShare = ppcServiceBudgetShare(row)
++    return budgetShare == null ? row : { ...row, budgetShare }
++  })
+ }
+ 
+ /**
+@@ -717,6 +766,24 @@ function normalizeStageKey(raw: unknown): 'tofu' | 'mofu' | 'bofu' | null {
+   if (s.startsWith('bofu') || s.includes('bottom')) return 'bofu'
+   return null
+ }
++/**
++ * Tolerant read of a strategy's funnel campaigns (QA4-img27): real payloads
++ * sometimes nest one level deeper than the documented shape (the renderer
++ * itself unwraps `props.data?.data ?? props.data`). Accepted shapes:
++ *   { funnel_campaigns: [...] }                       — documented shape
++ *   { data: { funnel_campaigns: [...] } }             — data-envelope payload
++ * Anything else (including `{ data: {...} }` without funnel_campaigns) → null.
++ */
++function extractFunnelCampaigns(payload: unknown): unknown[] | null {
++  if (!payload || typeof payload !== 'object') return null
++  const p = payload as Record<string, any>
++  if (Array.isArray(p.funnel_campaigns)) return p.funnel_campaigns
++  const nested = p.data
++  if (nested && typeof nested === 'object' && !Array.isArray(nested) && Array.isArray(nested.funnel_campaigns)) {
++    return nested.funnel_campaigns
++  }
++  return null
++}
+ /**
+  * Budget split aggregated from the ACTUAL ads-strategy steps (QA round 3):
+  * each platform's `funnel_campaigns` entries carry a per-stage
+@@ -730,8 +797,8 @@ export function getStrategyBudgetSplit(
+ ): StrategyBudgetSplit | null {
+   const platformsWithStages: { platform: string; stagePercents: Record<string, number> }[] = []
+   for (const strategy of strategies ?? []) {
+-    const campaigns = (strategy?.response_payload as { funnel_campaigns?: unknown } | undefined)?.funnel_campaigns
+-    if (!Array.isArray(campaigns)) continue
++    const campaigns = extractFunnelCampaigns(strategy?.response_payload)
++    if (!campaigns) continue
+     const stagePercents: Record<string, number> = { tofu: 0, mofu: 0, bofu: 0 }
+     for (const entry of campaigns) {
+       if (!entry || typeof entry !== 'object') continue

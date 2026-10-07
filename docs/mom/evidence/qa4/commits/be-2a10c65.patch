@@ -1,0 +1,262 @@
+commit 2a10c65a24db77a2e62397f812c0c4bddf24f705
+Author: cracki <cracki@gmail.com>
+Date:   Wed Oct 7 16:57:32 2026 +0330
+
+    fix(qa4-img29,qa4-MOM): outputs gate completion + site-data cache expiry + error-leak fix
+    
+    Post-review hardening (internal adversarial QA pass):
+    - img29: get_completion_error now ALSO requires the derived outputs —
+      ad_generation, visual, review (approved) — so the Complete action
+      returns 400 with the missing list on a mid-work campaign, exactly as
+      the client requested for the completion CONDITION (not just the
+      progress count). CampaignCompleteGatingTests updated + new 400 test.
+    - MOM 'انقضای کش' (was silently unaccounted): reused website scrapes
+      expire after SITE_DATA_MAX_AGE_DAYS (env, default 30 days) — an
+      expired row is re-scraped instead of served forever
+      (brand/services/full_analysis.py) + 2 tests (expired rescraped,
+      fresh reused).
+    - brand/views.py competitor identification no longer raises
+      APIException(str(exc)) — generic message + logger.exception, matching
+      the payload-hygiene rule applied elsewhere.
+    - Accurate upload whitelist note: png/jpeg/webp/svg (no pdf — the FE
+      only sends image/*); commit bdc6e37's message overstated this.
+
+diff --git a/django-backend/brand/services/full_analysis.py b/django-backend/brand/services/full_analysis.py
+index 3d31fb2..18a7f69 100644
+--- a/django-backend/brand/services/full_analysis.py
++++ b/django-backend/brand/services/full_analysis.py
+@@ -2,6 +2,7 @@ import asyncio
+ import logging
+ import os
+ import time
++from datetime import timedelta
+ from typing import Any, Dict, List, Optional
+ 
+ from asgiref.sync import sync_to_async
+@@ -377,6 +378,21 @@ class BrandAnalysisOrchestrator:
+             )()
+ 
+         latest = owned or shared
++        # QA4-MOM (cache expiry): reused scrapes expire after
++        # SITE_DATA_MAX_AGE_DAYS (env, default 30). An expired row is
++        # treated as a miss and re-scraped instead of being served forever.
++        max_age_days = int(os.getenv("SITE_DATA_MAX_AGE_DAYS", "30") or 30)
++        if latest and not force_refresh:
++            age = timezone.now() - latest.updated_at
++            if age > timedelta(days=max_age_days):
++                logger.info(
++                    "step.website_data.cache_expired | brand=%s website_data=%s age_days=%s max_age_days=%s",
++                    brand.brand_uuid,
++                    latest.website_data_uuid,
++                    age.days,
++                    max_age_days,
++                )
++                latest = None
+         if latest and not force_refresh:
+             logger.info(
+                 "step.website_data.cache_hit | brand=%s identity=%s website_data=%s owned=%s updated_at=%s",
+@@ -402,9 +418,11 @@ class BrandAnalysisOrchestrator:
+         )
+         # Only update a row in place when it already belongs to this brand;
+         # otherwise write a brand-owned row and leave the shared row (which
+-        # other brands on this identity may read) untouched.
++        # other brands on this identity may read) untouched. A cache-expired
++        # owned row is refreshed in place; an expired shared row is left
++        # alone and a fresh brand-owned row is written.
+         created = await sync_to_async(brand.scrape_and_store_website_data)(
+-            instance=owned if force_refresh else None
++            instance=owned if (force_refresh or owned is not None) else None
+         )
+         if created:
+             logger.info(
+diff --git a/django-backend/brand/tests_qa4_mom.py b/django-backend/brand/tests_qa4_mom.py
+index ec723e7..7a5311b 100644
+--- a/django-backend/brand/tests_qa4_mom.py
++++ b/django-backend/brand/tests_qa4_mom.py
+@@ -219,6 +219,53 @@ class SharedIdentityCopyOnWriteTests(APITestCase):
+         self.assertEqual(b_read.pk, shared.pk)
+         self.assertIsNone(b_read.brand)
+ 
++    def test_expired_cache_is_rescraped(self):
++        """QA4-MOM (cache expiry): a reused scrape older than
++        SITE_DATA_MAX_AGE_DAYS is treated as a miss and re-scraped."""
++        owned = BrandWebsiteData.objects.create(
++            identity=self.brand_a.identity,
++            brand=self.brand_a,
++            website_url=self.brand_a.website_url,
++            title="Old Scrape",
++            full_text="old text",
++        )
++        # backdate the row beyond the expiry window
++        BrandWebsiteData.objects.filter(pk=owned.pk).update(
++            updated_at=timezone.now() - timedelta(days=40)
++        )
++
++        orchestrator = self._orchestrator()
++        with patch.dict(os.environ, {"SITE_DATA_MAX_AGE_DAYS": "30"}):
++            with self._patch_scraper("Fresh Scrape") as scraper_mock:
++                result = async_to_sync(orchestrator._get_or_scrape_website_data)(
++                    self.brand_a,
++                    force_refresh=False,
++                )
++        scraper_mock.assert_called_once()
++        self.assertEqual(result.title, "Fresh Scrape")
++        # the stale OWNED row is refreshed in place (copy-on-write preserved)
++        self.assertEqual(result.pk, owned.pk)
++
++    def test_fresh_cache_is_reused(self):
++        """A scrape inside the expiry window is still served from cache."""
++        owned = BrandWebsiteData.objects.create(
++            identity=self.brand_a.identity,
++            brand=self.brand_a,
++            website_url=self.brand_a.website_url,
++            title="Recent Scrape",
++            full_text="recent text",
++        )
++
++        orchestrator = self._orchestrator()
++        with patch.dict(os.environ, {"SITE_DATA_MAX_AGE_DAYS": "30"}):
++            with self._patch_scraper("Should Not Run") as scraper_mock:
++                result = async_to_sync(orchestrator._get_or_scrape_website_data)(
++                    self.brand_a,
++                    force_refresh=False,
++                )
++        scraper_mock.assert_not_called()
++        self.assertEqual(result.pk, owned.pk)
++
+     def test_force_refresh_updates_own_row_in_place(self):
+         owned = BrandWebsiteData.objects.create(
+             identity=self.brand_a.identity,
+diff --git a/django-backend/brand/views.py b/django-backend/brand/views.py
+index e71b6a4..6861787 100644
+--- a/django-backend/brand/views.py
++++ b/django-backend/brand/views.py
+@@ -501,7 +501,9 @@ class BrandCompetitorIdentifyView(BrandAccessMixin, APIView):
+                 brand.brand_uuid,
+                 brand_name,
+             )
+-            raise APIException(str(exc))
++            raise APIException(
++                "Competitor identification failed. Please try again later."
++            )
+ 
+         for is_direct, key in (
+             (True, "direct_competitors"),
+diff --git a/django-backend/campaign/services/completion.py b/django-backend/campaign/services/completion.py
+index 51567eb..76f0246 100644
+--- a/django-backend/campaign/services/completion.py
++++ b/django-backend/campaign/services/completion.py
+@@ -142,6 +142,24 @@ def get_completion_error(campaign: Campaign) -> Tuple[Optional[str], List[str]]:
+             missing_platforms,
+         )
+ 
++    # QA4-img29/new5: ad generation, visuals and review are part of the
++    # completion contract (client QA request) — a campaign without them
++    # must not be completable, matching the FE 9-step progress count.
++    missing_outputs = []
++    if not has_generated_ads(campaign):
++        missing_outputs.append("ad_generation")
++    if not has_generated_visual(campaign):
++        missing_outputs.append("visual")
++    if not has_approved_ad_review(campaign):
++        missing_outputs.append("review")
++    if missing_outputs:
++        return (
++            "Campaign is missing required outputs: {}.".format(
++                ", ".join(missing_outputs)
++            ),
++            missing_outputs,
++        )
++
+     return None, []
+ 
+ 
+@@ -149,10 +167,11 @@ def get_completion_error(campaign: Campaign) -> Tuple[Optional[str], List[str]]:
+ #
+ # The completion gate above only covers step types; ad generation, visual
+ # generation and ad review happen AFTER the wizard steps and are not
+-# ``CampaignStepTypeChoices`` members, so they can never be part of
+-# ``get_completion_error``. These helpers expose them as informational
+-# read-only flags for the FE (and the campaign serializer); they are NOT
+-# completion gates and never block ``complete_campaign``.
++# ``CampaignStepTypeChoices`` members, so they are handled by these
++# derived helpers instead: they feed the campaign serializer (FE 9-step
++# count) AND gate ``get_completion_error`` per the QA4 client request
++# (a campaign without an ad, a visual and an approved review cannot be
++# completed).
+ #
+ # Proxies (best available storage, see the per-helper docstrings):
+ # - ``ad_generation_completed``: at least one ``CampaignAd`` row
+diff --git a/django-backend/campaign/tests.py b/django-backend/campaign/tests.py
+index dff7979..cc973d8 100644
+--- a/django-backend/campaign/tests.py
++++ b/django-backend/campaign/tests.py
+@@ -40,6 +40,7 @@ from campaign.refinement_utils import refinement_directive
+ from campaign.models import (
+     Campaign,
+     CampaignAd,
++    CampaignAdPlatformChoices,
+     CampaignStatusChoices,
+     CampaignStep,
+     CampaignStepStatusChoices,
+@@ -2915,9 +2916,22 @@ class CampaignCompleteGatingTests(APITestCase):
+             kwargs={"campaign_uuid": self.campaign.campaign_uuid},
+         )
+ 
++    def _add_completed_output(self):
++        """QA4-img29: completion now also requires an ad with a generated
++        visual and an approved review (not just the wizard steps)."""
++        CampaignAd.objects.create(
++            campaign=self.campaign,
++            platform=CampaignAdPlatformChoices.META,
++            data={
++                "latest_generated_visual": {"image_url": "https://img.example/ad.png"},
++                "review_status": "approved",
++            },
++        )
++
+     def test_completes_when_base_and_selected_platforms_done(self):
+         # google/linkedin ads are incomplete but NOT selected: must not block.
+         self._set_flags(platforms=("meta",), selected=["meta"])
++        self._add_completed_output()
+ 
+         response = self.client.post(self._complete_url())
+ 
+@@ -2929,6 +2943,21 @@ class CampaignCompleteGatingTests(APITestCase):
+         self.campaign.refresh_from_db()
+         self.assertEqual(self.campaign.status, CampaignStatusChoices.COMPLETED)
+ 
++    def test_missing_ad_output_returns_400(self):
++        # QA4-img29: without an ad/visual/approved review the campaign is
++        # mid-work and must NOT be completable.
++        self._set_flags(platforms=("meta",), selected=["meta"])
++
++        response = self.client.post(self._complete_url())
++
++        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
++        self.assertIn("ad_generation", response.data["detail"])
++        self.assertEqual(
++            response.data["missing"], ["ad_generation", "visual", "review"]
++        )
++        self.campaign.refresh_from_db()
++        self.assertNotEqual(self.campaign.status, CampaignStatusChoices.COMPLETED)
++
+     def test_missing_base_step_returns_400_with_missing_list(self):
+         self._set_flags(platforms=("meta",), selected=["meta"])
+         self.campaign.segmentation_completed = False
+@@ -3004,6 +3033,7 @@ class CampaignCompleteGatingTests(APITestCase):
+         # Case, whitespace and duplicates in the stored selection are all
+         # normalized to the canonical platform slug.
+         self._set_flags(platforms=("meta",), selected=["Meta", " meta ", "META"])
++        self._add_completed_output()
+ 
+         response = self.client.post(self._complete_url())
+ 
+@@ -3024,6 +3054,7 @@ class CampaignCompleteGatingTests(APITestCase):
+         # No selected_platforms in context_payload: derive the selection from
+         # the platform flags that are already True (legacy campaigns).
+         self._set_flags(platforms=("google",))
++        self._add_completed_output()
+ 
+         response = self.client.post(self._complete_url())
+ 
