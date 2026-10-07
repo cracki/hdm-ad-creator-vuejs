@@ -1,9 +1,14 @@
 import { describe, it, expect } from 'vitest'
 import {
   getCampaignProgress,
+  getCampaignStepCounts,
   areAllPlatformAdsComplete,
   formatCampaignBudget,
   getFunnelBudgetSplit,
+  getPlatformBudgetShares,
+  getStrategyBudgetSplit,
+  ppcServiceList,
+  ppcServiceDetailRows,
   resolveTargetMarket,
   composeLocation,
   type Campaign,
@@ -291,5 +296,181 @@ describe('campaignSelectedServices + splitPpcServicesBySelected (QA r3 fix 4)', 
     const { primary, others } = splitPpcServicesBySelected(rows, [])
     expect(primary).toBe(rows)
     expect(others).toEqual([])
+  })
+})
+
+// ── PPC service budget share (QA4-img14) ──
+describe('ppcServiceList budget share (QA4-img14)', () => {
+  it('attaches the normalized budgetShare from budget_share and the budget_share_percent alias', () => {
+    const rows = ppcServiceList({
+      brand_trust_analysis: {
+        services_bpc_scores: [
+          { service: 'Implants', bpc_score: 72, budget_share: 23 },
+          { service: 'Whitening', bpc_score: 55, budget_share_percent: '45.5' },
+        ],
+      },
+    })
+    expect(rows.map((r) => r.budgetShare)).toEqual([23, 45.5])
+  })
+
+  it('omits budgetShare when no share key is present or the value is invalid', () => {
+    const rows = ppcServiceList({
+      brand_trust_analysis: {
+        services_bpc_scores: [{ service: 'A' }, { service: 'B', budget_share: 140 }],
+      },
+    })
+    expect(rows.map((r) => r.budgetShare)).toEqual([undefined, undefined])
+  })
+
+  it('keeps a blueprint budget_share after merging and still shows a 0 share', () => {
+    const rows = ppcServiceList({
+      brand_trust_analysis: {
+        services_bpc_scores: [{ service: 'Implants' }, { service: 'Consulting', budget_share: 0 }],
+      },
+      strategic_prioritization: {
+        ppc_blueprints: [{ service: 'Implants', budget_share: 30, key_risk: 'High CPC' }],
+      },
+    })
+    expect(rows.map((r) => r.budgetShare)).toEqual([30, 0])
+  })
+})
+
+describe('ppcServiceDetailRows budget share (QA4-img14)', () => {
+  it('adds a localized budget-share row right after the budget row', () => {
+    const rows = ppcServiceDetailRows({ budget_allocation: '60% of budget', budget_share: 23 })
+    const labels = rows.map((r) => r.labelKey)
+    expect(labels).toContain('ppc.budgetShareRow')
+    expect(labels.indexOf('ppc.budgetShareRow')).toBe(labels.indexOf('ppc.detail.budget') + 1)
+    expect(rows[labels.indexOf('ppc.budgetShareRow')].text).toBe('23%')
+  })
+
+  it('adds no budget-share row when the service has no share', () => {
+    const rows = ppcServiceDetailRows({ budget_allocation: '60%' })
+    expect(rows.map((r) => r.labelKey)).not.toContain('ppc.budgetShareRow')
+  })
+})
+
+// ── Strategy budget split payload tolerance (QA4-img27) ──
+describe('getStrategyBudgetSplit payload tolerance (QA4-img27)', () => {
+  const funnel = [
+    { funnel_stage: 'TOFU', budget_percent: 40 },
+    { funnel_stage: 'MOFU', budget_percent: 35 },
+    { funnel_stage: 'BOFU', budget_percent: 25 },
+  ]
+  const expected = {
+    byStage: { tofu: 40, mofu: 35, bofu: 25 },
+    byPlatform: [{ platform: 'meta', share: 100 }],
+  }
+
+  it('reads funnel_campaigns directly off response_payload', () => {
+    expect(
+      getStrategyBudgetSplit([{ platform: 'meta', response_payload: { funnel_campaigns: funnel } }], null),
+    ).toEqual(expected)
+  })
+
+  it('reads funnel_campaigns nested under response_payload.data', () => {
+    expect(
+      getStrategyBudgetSplit([{ platform: 'meta', response_payload: { data: { funnel_campaigns: funnel } } }], null),
+    ).toEqual(expected)
+  })
+
+  it('weights stages by the recommended budget_share map (casing-tolerant stages)', () => {
+    const campaign = buildCampaign({
+      context_payload: { platform_recommendations: { budget_share: { meta: 60, google: 40 } } },
+    })
+    const split = getStrategyBudgetSplit(
+      [
+        {
+          platform: 'meta',
+          response_payload: {
+            funnel_campaigns: [
+              { funnel_stage: 'TOFU', budget_percent: 20 },
+              { funnel_stage: 'MOFU', budget_percent: 17 },
+              { funnel_stage: 'BoFu', budget_percent: 63 },
+            ],
+          },
+        },
+        {
+          platform: 'google',
+          response_payload: {
+            data: {
+              funnel_campaigns: [
+                { funnel_stage: 'TOFU', budget_percent: 15 },
+                { funnel_stage: 'MOFU', budget_percent: 20 },
+                { funnel_stage: 'BoFu', budget_percent: 65 },
+              ],
+            },
+          },
+        },
+      ],
+      getPlatformBudgetShares(campaign),
+    )
+    expect(split).not.toBeNull()
+    expect(split!.byStage.bofu).toBe(63.8) // 0.6 × 63 + 0.4 × 65
+    expect(split!.byPlatform).toHaveLength(2)
+    expect(split!.byPlatform).toEqual([
+      { platform: 'meta', share: 60 },
+      { platform: 'google', share: 40 },
+    ])
+  })
+
+  it('returns null when no strategy carries funnel data', () => {
+    expect(getStrategyBudgetSplit([], null)).toBeNull()
+    expect(getStrategyBudgetSplit([{ platform: 'meta', response_payload: {} }], null)).toBeNull()
+    expect(
+      getStrategyBudgetSplit([{ platform: 'meta', response_payload: { data: { campaign_overview: {} } } }], null),
+    ).toBeNull()
+  })
+})
+
+// ── Optional review-flow flags (QA4-img29/new5) ──
+describe('getCampaignStepCounts optional flags (QA4-img29/new5)', () => {
+  it('counts the ad_generation/visual/review flags when the serializer exposes them (9 total mid-work)', () => {
+    const counts = getCampaignStepCounts(
+      buildCampaign({
+        context_payload: { selected_platforms: ['meta', 'google'] },
+        ad_generation_completed: true,
+        visual_completed: false,
+        review_completed: false,
+      }),
+    )
+    // 4 base + 2 selected platforms + 3 new flags = 9; only ad_generation done → 1
+    expect(counts).toEqual({ completed: 1, total: 9 })
+  })
+
+  it('includes all three flags as soon as any one of them is defined', () => {
+    const counts = getCampaignStepCounts(
+      buildCampaign({
+        context_payload: { selected_platforms: ['meta', 'google'] },
+        ad_generation_completed: false,
+      }),
+    )
+    expect(counts.total).toBe(9)
+  })
+
+  it('keeps the backward-compatible total when the flags are absent', () => {
+    const counts = getCampaignStepCounts(
+      buildCampaign({ context_payload: { selected_platforms: ['meta', 'google'] } }),
+    )
+    expect(counts).toEqual({ completed: 0, total: 6 })
+  })
+
+  it('still reaches 100% progress when every counted flag (including the new ones) is done', () => {
+    expect(
+      getCampaignProgress(
+        buildCampaign({
+          segmentation_completed: true,
+          ppc_viability_completed: true,
+          funnel_completed: true,
+          content_strategy_completed: true,
+          meta_ads_completed: true,
+          google_ads_completed: true,
+          linkedin_ads_completed: true,
+          ad_generation_completed: true,
+          visual_completed: true,
+          review_completed: true,
+        }),
+      ),
+    ).toBe(100)
   })
 })

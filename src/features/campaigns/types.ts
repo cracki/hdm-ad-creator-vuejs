@@ -35,6 +35,13 @@ export interface Campaign {
   meta_ads_completed: boolean
   google_ads_completed: boolean
   linkedin_ads_completed: boolean
+  /**
+   * OPTIONAL completion flags from newer serializers (QA4-img29/new5): absent
+   * on older payloads, so readers must branch on `!== undefined`.
+   */
+  ad_generation_completed?: boolean
+  visual_completed?: boolean
+  review_completed?: boolean
   context_payload: Record<string, unknown>
   /** Reused brand-analysis data (M-H8); null until the backend computes it. */
   brand_context?: BrandContext | null
@@ -360,6 +367,12 @@ export interface AdsStrategyListResponse {
  * the platforms the user actually selected. If platform selection hasn't
  * happened yet, all three platform flags count so early-campaign progress is
  * unchanged (a partial-platform campaign can still reach 100%).
+ *
+ * QA4-img29/new5: newer serializers also expose three OPTIONAL flags
+ * (ad_generation_completed / visual_completed / review_completed). As soon as
+ * ANY of them is defined on the payload they count too (4 base + 3 platforms +
+ * 3 extra = up to 10; 9 mid-work with 2 platforms selected); when all are
+ * absent the count stays backward compatible with older payloads.
  */
 export function getCampaignStepCounts(campaign: Campaign): { completed: number; total: number } {
   const baseFlags = [
@@ -377,7 +390,16 @@ export function getCampaignStepCounts(campaign: Campaign): { completed: number; 
         campaign.google_ads_completed,
         campaign.linkedin_ads_completed,
       ]
-  const flags = [...baseFlags, ...platformFlags]
+  const extraFlags = [
+    campaign.ad_generation_completed,
+    campaign.visual_completed,
+    campaign.review_completed,
+  ]
+  const flags = [
+    ...baseFlags,
+    ...platformFlags,
+    ...(extraFlags.some((f) => f !== undefined) ? extraFlags : []),
+  ]
   return { completed: flags.filter(Boolean).length, total: flags.length }
 }
 
@@ -399,6 +421,27 @@ export function areAllPlatformAdsComplete(campaign: Campaign): boolean {
 // ── PPC service cards (MOM 11.2 — expandable details) ─────
 
 export interface PpcServiceDetailRow { labelKey: TKey; text: string }
+
+/**
+ * Normalized PPC service row (QA4-img14): the raw payload fields plus the
+ * normalized `budgetShare` (percent 0–100) the backend stamps onto
+ * services_bpc_scores / ppc_opportunity_ranking / ppc_blueprints entries.
+ */
+export type PpcServiceRow = Record<string, unknown> & { budgetShare?: number | null }
+
+/**
+ * Normalized budget share (percent 0–100) off a PPC service row: reads the
+ * pre-normalized `budgetShare` or the raw `budget_share` / `budget_share_percent`
+ * payload keys (numeric strings tolerated); null when absent/invalid.
+ */
+export function ppcServiceBudgetShare(svc: Record<string, unknown> | null | undefined): number | null {
+  if (!svc || typeof svc !== 'object') return null
+  const raw = (svc as Record<string, any>).budgetShare
+    ?? (svc as Record<string, any>).budget_share
+    ?? (svc as Record<string, any>).budget_share_percent
+  const share = readFunnelBudgetShare(raw)
+  return share == null ? null : Math.round(share * 10) / 10
+}
 
 function ppcDetailValue(v: unknown): string | null {
   if (v == null) return null
@@ -442,6 +485,8 @@ export function ppcServiceDetailRows(svc: Record<string, unknown> | null | undef
   push('ppc.detail.objective', svc.campaign_objective, svc.objective)
   push('ppc.detail.valueProp', svc.unique_value_proposition, svc.value_proposition)
   push('ppc.detail.budget', svc.budget_allocation, svc.recommended_budget, svc.budget)
+  const budgetShare = ppcServiceBudgetShare(svc)
+  if (budgetShare != null) push('ppc.budgetShareRow', `${budgetShare}%`)
   push('ppc.detail.reasoning', svc.reasoning, svc.rationale, svc.notes, svc.analysis)
   push('ppc.detail.risk', svc.key_risk, svc.risk)
   return rows
@@ -460,9 +505,10 @@ export function hasPpcServiceDetails(svc: Record<string, unknown> | null | undef
  * Service list from a PPC viability payload: prefers the BPC scores, then the
  * opportunity ranking, then any services-like list. Each row is enriched with
  * its matching `ppc_blueprints` entry (joined by service name) so the
- * expandable cards can surface platform / objective / risk details.
+ * expandable cards can surface platform / objective / risk details, and with
+ * its normalized `budgetShare` when the backend stamped one (QA4-img14).
  */
-export function ppcServiceList(data: Record<string, unknown> | null | undefined): Record<string, unknown>[] {
+export function ppcServiceList(data: Record<string, unknown> | null | undefined): PpcServiceRow[] {
   if (!data || typeof data !== 'object') return []
   const d = data as Record<string, any>
   const svcs = d.brand_trust_analysis?.services_bpc_scores
@@ -475,7 +521,10 @@ export function ppcServiceList(data: Record<string, unknown> | null | undefined)
   return mergePpcBlueprints(
     items.filter((s): s is Record<string, unknown> => !!s && typeof s === 'object'),
     d,
-  )
+  ).map((row) => {
+    const budgetShare = ppcServiceBudgetShare(row)
+    return budgetShare == null ? row : { ...row, budgetShare }
+  })
 }
 
 /**
@@ -718,6 +767,24 @@ function normalizeStageKey(raw: unknown): 'tofu' | 'mofu' | 'bofu' | null {
   return null
 }
 /**
+ * Tolerant read of a strategy's funnel campaigns (QA4-img27): real payloads
+ * sometimes nest one level deeper than the documented shape (the renderer
+ * itself unwraps `props.data?.data ?? props.data`). Accepted shapes:
+ *   { funnel_campaigns: [...] }                       — documented shape
+ *   { data: { funnel_campaigns: [...] } }             — data-envelope payload
+ * Anything else (including `{ data: {...} }` without funnel_campaigns) → null.
+ */
+function extractFunnelCampaigns(payload: unknown): unknown[] | null {
+  if (!payload || typeof payload !== 'object') return null
+  const p = payload as Record<string, any>
+  if (Array.isArray(p.funnel_campaigns)) return p.funnel_campaigns
+  const nested = p.data
+  if (nested && typeof nested === 'object' && !Array.isArray(nested) && Array.isArray(nested.funnel_campaigns)) {
+    return nested.funnel_campaigns
+  }
+  return null
+}
+/**
  * Budget split aggregated from the ACTUAL ads-strategy steps (QA round 3):
  * each platform's `funnel_campaigns` entries carry a per-stage
  * `budget_percent`; platforms are weighted by their recommended budget share
@@ -730,8 +797,8 @@ export function getStrategyBudgetSplit(
 ): StrategyBudgetSplit | null {
   const platformsWithStages: { platform: string; stagePercents: Record<string, number> }[] = []
   for (const strategy of strategies ?? []) {
-    const campaigns = (strategy?.response_payload as { funnel_campaigns?: unknown } | undefined)?.funnel_campaigns
-    if (!Array.isArray(campaigns)) continue
+    const campaigns = extractFunnelCampaigns(strategy?.response_payload)
+    if (!campaigns) continue
     const stagePercents: Record<string, number> = { tofu: 0, mofu: 0, bofu: 0 }
     for (const entry of campaigns) {
       if (!entry || typeof entry !== 'object') continue

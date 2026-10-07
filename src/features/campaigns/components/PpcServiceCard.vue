@@ -1,14 +1,15 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { TrendingUp, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import { useI18n } from '@/shared/utils/i18n'
-import { ppcServiceDetailRows, hasPpcServiceDetails } from '../types'
+import { ppcServiceDetailRows, hasPpcServiceDetails, ppcServiceBudgetShare } from '../types'
 
 /**
  * One expandable PPC service card (QA round 3 fix 4): extracted from
  * PPCViabilityView so selected AND "other analyzed" rows render identically.
  * The parent owns the one-open-at-a-time state.
  */
-defineProps<{
+const props = defineProps<{
   /** Service row (payload rows are loosely shaped — same as the views). */
   svc: Record<string, any>
   /** Global row index — drives the expandable testids. */
@@ -19,6 +20,14 @@ defineProps<{
 const emit = defineEmits<{ toggle: [] }>()
 
 const { t } = useI18n()
+
+// Budget share badge (QA4-img14): normalized percent off the raw
+// budget_share / budget_share_percent payload keys (or a pre-normalized
+// budgetShare); null hides the badge.
+const budgetShareText = computed(() => {
+  const share = ppcServiceBudgetShare(props.svc)
+  return share == null ? null : t('ppc.budgetShareBadge', { share })
+})
 </script>
 
 <template>
@@ -36,6 +45,13 @@ const { t } = useI18n()
           </div>
         </div>
         <div class="flex items-center gap-1.5 shrink-0">
+          <div
+            v-if="budgetShareText"
+            class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20"
+            data-testid="ppc-budget-share"
+          >
+            {{ budgetShareText }}
+          </div>
           <div v-if="svc.score || svc.bpc_score || svc.viability_score || svc.opportunity_score || svc.priority" class="flex items-center gap-1">
             <span class="h-1.5 w-1.5 rounded-full bg-success" />
             <span class="text-xs font-semibold text-success">
