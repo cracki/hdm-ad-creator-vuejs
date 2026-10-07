@@ -147,6 +147,14 @@ export const translations = {
   'status.analyzed': { en: 'Analyzed', ar: 'تم التحليل', fa: 'تحلیل‌شده' },
   'status.analyzing': { en: 'Analyzing', ar: 'قيد التحليل', fa: 'در حال تحلیل' },
   'status.notAnalyzed': { en: 'Not analyzed', ar: 'لم يُحلَّل', fa: 'تحلیل نشده' },
+  'status.analysisFailed': { en: 'Analysis failed', ar: 'فشل التحليل', fa: 'تحلیل ناموفق' },
+
+  // QA4 shared keys
+  'sidebar.creditsUsage': { en: '{used} / {quota} used', ar: 'تم استخدام {used} / {quota}', fa: '{used} / {quota} استفاده‌شده' },
+  'review.budgetByPlatform': { en: 'Budget by platform', ar: 'الميزانية حسب المنصة', fa: 'بودجه بر اساس پلتفرم' },
+  'review.budgetByStage': { en: 'Budget by funnel stage', ar: 'الميزانية حسب مرحلة القمع', fa: 'بودجه بر اساس مرحله‌ی قیف' },
+  'ppc.budgetShareBadge': { en: 'Budget share {share}%', ar: 'حصة الميزانية {share}%', fa: 'سهم بودجه {share}٪' },
+  'ppc.budgetShareRow': { en: 'Budget share', ar: 'حصة الميزانية', fa: 'سهم بودجه' },
 
   // Time
   'time.2m': { en: '2m ago', ar: 'قبل ٢د', fa: '۲ دقیقه پیش' },
