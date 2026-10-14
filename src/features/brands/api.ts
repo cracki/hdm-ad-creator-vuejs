@@ -129,6 +129,7 @@ export const brandsApi = {
     return apiClient.post(`/brands/${brandUuid}/analysis-runs/start/`, {
       include_social: payload.include_social ?? true,
       include_competitors: payload.include_competitors ?? true,
+      force_refresh: payload.force_refresh ?? false,
     }, { timeout: 120_000 })
   },
 }

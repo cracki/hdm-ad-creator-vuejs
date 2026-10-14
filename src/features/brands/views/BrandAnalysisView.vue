@@ -131,7 +131,7 @@ async function retryAnalysis() {
   if (!operationManager.canStart(opKey.value)) return
   operationManager.start(opKey.value)
   try {
-    const res = await startMutation.mutateAsync({ previousRunUuid: runUuid.value || undefined })
+    const res = await startMutation.mutateAsync({ previousRunUuid: runUuid.value || undefined, force_refresh: true })
     const newRunUuid = res.data?.analysis_run_uuid ?? ''
     // Clear the old run from the tracker so the bar restarts from zero.
     tracker.reset()

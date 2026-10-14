@@ -150,7 +150,7 @@ describe('BrandAnalysisView — retry navigates to the new run (QA4-taza1)', () 
 
     // The old run uuid (none in this route) travels with the start mutation so
     // its single-run cache can be invalidated
-    expect(mutateAsync).toHaveBeenCalledWith({ previousRunUuid: undefined })
+    expect(mutateAsync).toHaveBeenCalledWith({ previousRunUuid: undefined, force_refresh: true })
     // Tracker state is cleared, the route moves to the NEW run, and tracking
     // resumes against it instead of the old uuid
     expect(tracker.reset).toHaveBeenCalled()

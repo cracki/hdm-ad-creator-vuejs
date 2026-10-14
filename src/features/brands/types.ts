@@ -180,4 +180,6 @@ export interface AnalysisRun {
 export interface AnalysisStartPayload {
   include_social?: boolean
   include_competitors?: boolean
+  /** QA4: Re-Analyze re-scrapes the site instead of reusing cached data. */
+  force_refresh?: boolean
 }
