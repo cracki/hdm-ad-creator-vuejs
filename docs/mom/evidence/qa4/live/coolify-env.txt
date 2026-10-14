@@ -1,0 +1,14 @@
+=== Coolify environment evidence (2026-10-14T14:37:38Z) ===
+-- deployment h9kqjjvd1m0u1oqblfxalqt7 --
+{
+ "status": "finished",
+ "created_at": "2026-10-14T13:14:38.000000Z",
+ "finished_at": "2026-10-14T13:17:09.000000Z",
+ "commit": "61c29a51082ebb40ac870ef45daaff67683d2417",
+ "commit_message": "Merge remote-tracking branch 'origin/main' into feat/django-backend"
+}
+-- applications --
+Ad Creator Front | cracki/hdm-ad-creator-vuejs main | running:unknown | commit: HEAD
+ad_creator:feat/django-backend-udta1wf3v5vwlb9iw6oscix3 | Dinamehraban/ad_creator feat/django-backend | running:unknown | commit: HEAD
+-- /health/version --
+{"version": "qa4", "commit": "61c29a5", "build_at": null}
