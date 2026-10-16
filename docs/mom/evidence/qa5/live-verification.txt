@@ -1,0 +1,11 @@
+== QA5 live evidence (2026-10-16T20:46:58Z) ==
+-- friendly scan error (live) --
+{"detail":"We couldn't reach this website — the address could not be found. Check the URL and try again."}
+-- health/version --
+{"version": "qa4", "commit": "faa3870", "build_at": null}
+-- review split (live DOM) --
+Budget split by funnel stage | USD 10,000 | By platform: Meta 100% | By funnel stage: TOFU 5% (500) / MOFU 15% (1500) / BOFU 80% (8000) | progress: 40% · 4/10
+-- edit-brand Enter (live) --
+typed "Window Cleaning" + Enter => added=true, input cleared
+-- version badge --
+54a433e · Oct 17 (mechanism verified; final deploy b570648)
