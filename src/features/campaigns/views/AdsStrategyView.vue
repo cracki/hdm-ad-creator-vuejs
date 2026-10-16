@@ -12,7 +12,7 @@ import { usePageActions } from '@/shared/composables/usePageActions'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { useCampaign, useAdsStrategy } from '../queries'
 import { campaignsApi } from '../api'
-import type { AdsStrategyRun } from '../types'
+import { normalizeStrategyRuns, type NormalizedStrategyRun } from '../types'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { useNormalizeResponse } from '@/shared/composables/useNormalizeResponse'
 import { operationManager } from '@/infrastructure/operations/operationManager'
@@ -46,8 +46,11 @@ const isPrereqMet = computed(() => {
 const { data: strategyData } = useAdsStrategy(campaignUuid)
 
 const platformResults = computed(() => {
-  const map = new Map<string, { completed: boolean; data: AdsStrategyRun | null }>()
-  const strategies = strategyData.value?.strategies ?? []
+  const map = new Map<string, { completed: boolean; data: NormalizedStrategyRun | null }>()
+  // QA5-img27: the backend returns a BARE array of CampaignStep rows (no
+  // {strategies} envelope, no platform field) — normalizeStrategyRuns reads
+  // both shapes so the persisted results still expand after a reload.
+  const strategies = normalizeStrategyRuns(strategyData.value)
   for (const platform of selectedPlatforms.value) {
     const run = strategies.find(s => s.platform === platform)
     // Live status (MOM): a platform is done when either the ads-strategy run

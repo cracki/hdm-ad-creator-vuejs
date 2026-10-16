@@ -590,3 +590,134 @@ describe('CampaignReviewView — unified budget split from strategies (QA3)', ()
     expect(wrapper.find('[data-testid="budget-split-tofu"]').text()).toBe('40% · 400')
   })
 })
+
+// ── QA5 fixes: bare backend ads-strategy array + shared progress formula ──
+
+/** The REAL GET /campaigns/{uuid}/ads-strategy/ body: bare CampaignStep rows. */
+const BARE_BACKEND_STEPS = [
+  {
+    campaign_step_uuid: 's1',
+    campaign: 'c1',
+    step_type: 'meta_ads',
+    status: 'completed',
+    request_payload: {},
+    input_snapshot: {},
+    response_payload: {
+      success: true,
+      data: {
+        funnel_campaigns: [
+          { funnel_stage: 'TOFU', budget_percent: 20 },
+          { funnel_stage: 'MOFU', budget_percent: 10 },
+          { funnel_stage: 'BOFU', budget_percent: 70 },
+        ],
+      },
+    },
+    summary: {},
+    started_at: null,
+    completed_at: '2026-01-01T00:00:00Z',
+    error_message: null,
+    created_at: '',
+    updated_at: '',
+  },
+  {
+    campaign_step_uuid: 's2',
+    campaign: 'c1',
+    step_type: 'google_ads',
+    status: 'completed',
+    request_payload: {},
+    input_snapshot: {},
+    response_payload: {
+      success: true,
+      data: {
+        funnel_campaigns: [
+          { funnel_stage: 'TOFU', budget_percent: 20 },
+          { funnel_stage: 'MOFU', budget_percent: 15 },
+          { funnel_stage: 'BOFU', budget_percent: 65 },
+        ],
+      },
+    },
+    summary: {},
+    started_at: null,
+    completed_at: '2026-01-01T00:00:00Z',
+    error_message: null,
+    created_at: '',
+    updated_at: '',
+  },
+]
+
+describe('CampaignReviewView — QA5 fixes', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: CampaignReviewView },
+        { path: '/campaigns', component: { template: '<div />' } },
+        { path: '/campaigns/:campaignUuid/review', component: CampaignReviewView },
+      ],
+    })
+    vi.mocked(useCompleteCampaign).mockReturnValue({ mutateAsync } as never)
+    vi.mocked(useCampaignAds).mockReturnValue({
+      data: ref({ success: true, ads: [] }),
+    } as never)
+    vi.mocked(useCampaignVisuals).mockReturnValue({
+      data: ref({ success: true, results: [] }),
+    } as never)
+    vi.mocked(useReviewAd).mockReturnValue(fakeMutation())
+    vi.mocked(usePatchAd).mockReturnValue(fakeMutation())
+    vi.mocked(useRefineAd).mockReturnValue(fakeMutation())
+  })
+
+  it('renders the strategy split from the BARE ads-strategy array the backend returns (QA5-img27)', async () => {
+    vi.mocked(useCampaign).mockReturnValue({
+      data: ref(
+        buildCampaign({
+          context_payload: {
+            selected_platforms: ['meta', 'google'],
+            platform_recommendations: { budget_share: { meta: 45, google: 55 } },
+          },
+        }),
+      ),
+      isLoading: ref(false),
+    } as never)
+    // No {strategies} envelope, no platform field — the raw step array.
+    vi.mocked(useAdsStrategy).mockReturnValue({
+      data: ref(BARE_BACKEND_STEPS),
+    } as never)
+
+    const wrapper = await mountView()
+
+    expect(wrapper.find('[data-testid="strategy-budget-split"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="funnel-budget-split"]').exists()).toBe(false)
+    // Platforms derived from step_type; shares from the recommendation weights.
+    expect(wrapper.find('[data-testid="budget-split-platform-meta"]').text()).toBe('45%')
+    expect(wrapper.find('[data-testid="budget-split-platform-google"]').text()).toBe('55%')
+    // 0.45×20 + 0.55×20 = 20 (×1000 budget).
+    expect(wrapper.find('[data-testid="budget-split-tofu"]').text()).toBe('20% · 200')
+  })
+
+  it('shows the same Campaign Progress percent as the campaign cards — shared helper (QA5-taza5)', async () => {
+    vi.mocked(useCampaign).mockReturnValue({
+      data: ref(
+        buildCampaign({
+          context_payload: { selected_platforms: ['meta', 'google'] },
+          google_ads_completed: false,
+          ad_generation_completed: true,
+          visual_completed: false,
+          review_completed: false,
+        }),
+      ),
+      isLoading: ref(false),
+    } as never)
+    vi.mocked(useAdsStrategy).mockReturnValue({
+      data: ref(BARE_BACKEND_STEPS),
+    } as never)
+
+    const wrapper = await mountView()
+
+    // 4 base + meta + ad_generation done of 4 base + 2 platforms + 3 optional
+    // flags = 6/9 → 67% — identical to the list card (getCampaignProgressData).
+    // The view's own old formula (base + selected platforms only) said 83%.
+    expect(wrapper.find('[data-testid="campaign-progress-percent"]').text()).toBe('67% · 6/9')
+  })
+})

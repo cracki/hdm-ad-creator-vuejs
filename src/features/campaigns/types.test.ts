@@ -1,12 +1,14 @@
 import { describe, it, expect } from 'vitest'
 import {
   getCampaignProgress,
+  getCampaignProgressData,
   getCampaignStepCounts,
   areAllPlatformAdsComplete,
   formatCampaignBudget,
   getFunnelBudgetSplit,
   getPlatformBudgetShares,
   getStrategyBudgetSplit,
+  normalizeStrategyRuns,
   ppcServiceList,
   ppcServiceDetailRows,
   resolveTargetMarket,
@@ -472,5 +474,174 @@ describe('getCampaignStepCounts optional flags (QA4-img29/new5)', () => {
         }),
       ),
     ).toBe(100)
+  })
+})
+
+// ── Shared progress formula (QA5-taza5) ──
+describe('getCampaignProgressData deterministic denominator (QA5-taza5)', () => {
+  const baseDone = {
+    segmentation_completed: true,
+    ppc_viability_completed: true,
+    funnel_completed: true,
+    content_strategy_completed: true,
+  }
+
+  it('selected_platforms=[meta,google] + ad flags done → total 9', () => {
+    const data = getCampaignProgressData(
+      buildCampaign({
+        ...baseDone,
+        context_payload: { selected_platforms: ['meta', 'google'] },
+        meta_ads_completed: true,
+        google_ads_completed: true,
+        ad_generation_completed: true,
+        visual_completed: false,
+        review_completed: false,
+      }),
+    )
+    // 4 base + 2 selected platforms + 3 optional flags = 9; 7 done → 78%.
+    expect(data).toEqual({ completed: 7, total: 9, percent: 78 })
+  })
+
+  it('selected_platforms=[meta,google,linkedin] → total 10', () => {
+    const data = getCampaignProgressData(
+      buildCampaign({
+        ...baseDone,
+        context_payload: { selected_platforms: ['meta', 'google', 'linkedin'] },
+        ad_generation_completed: false,
+      }),
+    )
+    // 4 base + 3 platforms + 3 optional flags = 10; only the base 4 done.
+    expect(data).toEqual({ completed: 4, total: 10, percent: 40 })
+  })
+
+  it('no selection key + optional outputs defined → total 10', () => {
+    const data = getCampaignProgressData(
+      buildCampaign({
+        ...baseDone,
+        meta_ads_completed: true,
+        ad_generation_completed: false,
+        visual_completed: false,
+        review_completed: false,
+      }),
+    )
+    // No selected_platforms → all 3 platform flags count: 4 + 3 + 3 = 10; 5 done.
+    expect(data).toEqual({ completed: 5, total: 10, percent: 50 })
+  })
+
+  it('a junk/empty stored selection deterministically falls back to all 3 platform flags', () => {
+    for (const selected_platforms of ['', 'meta', [], [null, 42]]) {
+      const data = getCampaignProgressData(
+        buildCampaign({
+          ...baseDone,
+          context_payload: { selected_platforms },
+          meta_ads_completed: true,
+        }),
+      )
+      // 4 base + 3 platform flags = 7 (optional flags absent); 5 done → 71%.
+      expect(data).toEqual({ completed: 5, total: 7, percent: 71 })
+    }
+  })
+})
+
+// ── Tolerant ads-strategy normalizer (QA5-img27) ──
+describe('normalizeStrategyRuns (QA5-img27)', () => {
+  // The REAL backend GET /campaigns/{uuid}/ads-strategy/ response: a bare
+  // array of CampaignStep rows — no {strategies} envelope, no platform field.
+  const bareBackendSteps = [
+    {
+      campaign_step_uuid: 's1',
+      campaign: 'c1',
+      step_type: 'meta_ads',
+      status: 'completed',
+      request_payload: {},
+      input_snapshot: {},
+      response_payload: {
+        success: true,
+        data: {
+          funnel_campaigns: [
+            { funnel_stage: 'TOFU', budget_percent: 20 },
+            { funnel_stage: 'MOFU', budget_percent: 10 },
+            { funnel_stage: 'BOFU', budget_percent: 70 },
+          ],
+        },
+      },
+      summary: {},
+      started_at: null,
+      completed_at: '2026-01-01T00:00:00Z',
+      error_message: null,
+      created_at: '',
+      updated_at: '',
+    },
+    {
+      campaign_step_uuid: 's2',
+      campaign: 'c1',
+      step_type: 'google_ads',
+      status: 'completed',
+      request_payload: {},
+      input_snapshot: {},
+      response_payload: {
+        success: true,
+        data: {
+          funnel_campaigns: [
+            { funnel_stage: 'TOFU', budget_percent: 20 },
+            { funnel_stage: 'MOFU', budget_percent: 15 },
+            { funnel_stage: 'BOFU', budget_percent: 65 },
+          ],
+        },
+      },
+      summary: {},
+      started_at: null,
+      completed_at: '2026-01-01T00:00:00Z',
+      error_message: null,
+      created_at: '',
+      updated_at: '',
+    },
+    {
+      campaign_step_uuid: 's3',
+      campaign: 'c1',
+      step_type: 'segmentation',
+      status: 'completed',
+      response_payload: {},
+    },
+  ]
+
+  it('derives the platform from step_type on the bare backend array and skips non-ad steps', () => {
+    const runs = normalizeStrategyRuns(bareBackendSteps)
+    expect(runs.map((r) => r.platform)).toEqual(['meta', 'google'])
+    expect(runs[0].status).toBe('completed')
+    expect(runs[0].response_payload).toBe(bareBackendSteps[0].response_payload)
+  })
+
+  it('reads the documented {strategies:[…]} envelope, flat and nested {step:{response_payload}} rows', () => {
+    const flat = normalizeStrategyRuns({
+      success: true,
+      strategies: [
+        { platform: 'meta', status: 'completed', response_payload: { funnel_campaigns: [] } },
+        { step_type: 'linkedin_ads', step: { response_payload: { data: { funnel_campaigns: [] } } } },
+      ],
+    })
+    expect(flat).toEqual([
+      { platform: 'meta', status: 'completed', response_payload: { funnel_campaigns: [] } },
+      { platform: 'linkedin', status: undefined, response_payload: { data: { funnel_campaigns: [] } } },
+    ])
+  })
+
+  it('returns [] for null/undefined and unrecognized shapes', () => {
+    expect(normalizeStrategyRuns(null)).toEqual([])
+    expect(normalizeStrategyRuns(undefined)).toEqual([])
+    expect(normalizeStrategyRuns({ success: true })).toEqual([])
+    expect(normalizeStrategyRuns('nope')).toEqual([])
+  })
+
+  it('feeds getStrategyBudgetSplit from the bare backend array: bofu ≈ 67 and byPlatform present', () => {
+    const runs = normalizeStrategyRuns(bareBackendSteps)
+    const split = getStrategyBudgetSplit(runs, { meta: 45, google: 55 })
+    expect(split).not.toBeNull()
+    // 0.45 × meta(BoFu 70) + 0.55 × google(BoFu 65) = 67.25 ≈ 67.
+    expect(split!.byStage.bofu).toBeCloseTo(67, 0)
+    expect(split!.byPlatform).toEqual([
+      { platform: 'meta', share: 45 },
+      { platform: 'google', share: 55 },
+    ])
   })
 })

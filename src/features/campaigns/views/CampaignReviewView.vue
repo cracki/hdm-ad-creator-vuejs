@@ -19,6 +19,8 @@ import {
   getAdCopy,
   getPlatformBudgetShares,
   getStrategyBudgetSplit,
+  getCampaignProgressData,
+  normalizeStrategyRuns,
 } from '../types'
 import { campaignStepLabel } from '../stepLabels'
 import type { CampaignAd } from '../types'
@@ -99,10 +101,11 @@ const PLATFORM_LABELS_MAP: Record<string, () => string> = {
  */
 const strategySplit = computed(() => {
   if (!campaign.value) return null
-  const strategies = (strategiesData.value?.strategies ?? []).map((s) => ({
-    platform: s.platform,
-    response_payload: s.response_payload,
-  }))
+  // QA5-img27: the backend returns a BARE array of CampaignStep rows (no
+  // {strategies} envelope, no platform field) — normalizeStrategyRuns reads
+  // that plus the documented envelope, so the split no longer falls back to
+  // the funnel-step default.
+  const strategies = normalizeStrategyRuns(strategiesData.value)
   return getStrategyBudgetSplit(strategies, getPlatformBudgetShares(campaign.value))
 })
 
@@ -170,10 +173,16 @@ const completionFlags = computed(() => {
   return [...base, ...platformFlags]
 })
 
-const completedCount = computed(() => completionFlags.value.filter((f) => f.done).length)
-const progress = computed(() =>
-  completionFlags.value.length ? Math.round((completedCount.value / completionFlags.value.length) * 100) : 0,
+// Shared progress formula (QA5-taza5): the review percent MUST equal the
+// campaign-card percent — same helper (getCampaignProgressData →
+// getCampaignStepCounts), same deterministic platform denominator. The view's
+// own completionFlags list stays for the checklist display below.
+const progressData = computed(() =>
+  campaign.value
+    ? getCampaignProgressData(campaign.value)
+    : { completed: 0, total: 0, percent: 0 },
 )
+const progress = computed(() => progressData.value.percent)
 // Complete = every required step (base + the selected platforms) done AND at
 // least one platform chosen. Previously this was gated on all 7 hardcoded
 // flags, so a partial-platform campaign could never be completed.
@@ -263,7 +272,9 @@ async function handleReviewExport(format: 'csv' | 'pdf' | 'pptx') {
         <div class="surface-card p-5 mb-6" data-loc="campaigns.review.progress">
           <div class="flex items-center justify-between mb-3">
             <div class="text-sm font-semibold">{{ t('review.progress') }}</div>
-            <div class="text-xs text-muted-foreground">{{ progress }}%</div>
+            <div class="text-xs text-muted-foreground" data-testid="campaign-progress-percent">
+              {{ progress }}%<template v-if="progressData.total"> · {{ progressData.completed }}/{{ progressData.total }}</template>
+            </div>
           </div>
           <div class="h-2 rounded-full bg-overlay-subtle overflow-hidden mb-4">
             <div class="h-full rounded-full bg-[image:var(--gradient-brand)] transition-all duration-500" :style="{ width: `${progress}%` }" />

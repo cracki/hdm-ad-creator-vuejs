@@ -362,6 +362,69 @@ export interface AdsStrategyListResponse {
   strategies: AdsStrategyRun[]
 }
 
+// ── Tolerant ads-strategy read (QA5-img27) ─────────────────
+
+/** step_type → ad platform (bare CampaignStep rows carry no `platform`). */
+const STEP_TYPE_TO_PLATFORM: Record<string, CampaignAdPlatform> = {
+  meta_ads: 'meta',
+  google_ads: 'google',
+  linkedin_ads: 'linkedin',
+}
+
+/** A ads-strategy run normalized for getStrategyBudgetSplit / views. */
+export interface NormalizedStrategyRun {
+  platform: string
+  /** Step status carried through when the source row exposes one. */
+  status?: string
+  response_payload?: Record<string, unknown> | null
+}
+
+function normalizeStrategyRunList(list: unknown): NormalizedStrategyRun[] {
+  if (!Array.isArray(list)) return []
+  const runs: NormalizedStrategyRun[] = []
+  for (const item of list) {
+    if (!item || typeof item !== 'object') continue
+    const s = item as Record<string, any>
+    const step = s.step && typeof s.step === 'object' ? (s.step as Record<string, any>) : null
+    const platform =
+      typeof s.platform === 'string' && s.platform
+        ? s.platform
+        : STEP_TYPE_TO_PLATFORM[String(s.step_type ?? step?.step_type ?? '')]
+    if (!platform) continue // unknown step types (segmentation, …) are not ad strategies
+    runs.push({
+      platform,
+      status: typeof s.status === 'string' ? s.status : step?.status,
+      response_payload: (s.response_payload ?? step?.response_payload ?? null) as
+        | Record<string, unknown>
+        | null
+        | undefined,
+    })
+  }
+  return runs
+}
+
+/**
+ * The backend's GET /campaigns/{uuid}/ads-strategy/ actually returns a BARE
+ * ARRAY of CampaignStep objects — [{step_type: 'meta_ads', status,
+ * response_payload: {success, data: {funnel_campaigns: […]}}}, …] — with NO
+ * {strategies: […]} envelope and no `platform` field (QA5-img27: reading
+ * `.strategies` yielded [] and the review budget split fell back to the
+ * funnel-step default). This normalizer accepts all documented shapes:
+ *   (a) the bare CampaignStep array — platform derived from step_type;
+ *   (b) {strategies: […]} with flat runs (platform + response_payload) or
+ *       nested {step: {response_payload}} rows;
+ *   (c) null/undefined/anything else → [].
+ */
+export function normalizeStrategyRuns(raw: unknown): NormalizedStrategyRun[] {
+  if (raw == null) return []
+  if (Array.isArray(raw)) return normalizeStrategyRunList(raw)
+  if (typeof raw === 'object') {
+    const envelope = raw as { strategies?: unknown }
+    if (Array.isArray(envelope.strategies)) return normalizeStrategyRunList(envelope.strategies)
+  }
+  return []
+}
+
 /**
  * Completed vs applicable step count (MOM باگ۶): the 4 base steps plus only
  * the platforms the user actually selected. If platform selection hasn't
@@ -381,8 +444,15 @@ export function getCampaignStepCounts(campaign: Campaign): { completed: number; 
     campaign.funnel_completed,
     campaign.content_strategy_completed,
   ]
-  const ctx = campaign.context_payload as { selected_platforms?: string[] } | undefined
-  const selectedPlatforms = ctx?.selected_platforms ?? []
+  // Deterministic denominator (QA5-taza5): ONLY a genuine non-empty string
+  // array of selected platforms narrows the count — a missing/empty/junk
+  // stored selection always falls back to all three platform flags, so the
+  // card, detail and review totals can never disagree per stored payload.
+  const rawSelected = (campaign.context_payload as { selected_platforms?: unknown } | undefined)
+    ?.selected_platforms
+  const selectedPlatforms = Array.isArray(rawSelected)
+    ? rawSelected.filter((p): p is string => typeof p === 'string' && !!p.trim())
+    : []
   const platformFlags = selectedPlatforms.length
     ? selectedPlatforms.map((p) => campaign[`${p}_ads_completed` as keyof Campaign])
     : [
@@ -403,9 +473,21 @@ export function getCampaignStepCounts(campaign: Campaign): { completed: number; 
   return { completed: flags.filter(Boolean).length, total: flags.length }
 }
 
-export function getCampaignProgress(campaign: Campaign): number {
+/** Shared progress read (QA5-taza5): campaign cards AND review use this. */
+export interface CampaignProgressData {
+  completed: number
+  total: number
+  /** Math.round(completed / total × 100); 0 when total is 0. */
+  percent: number
+}
+
+export function getCampaignProgressData(campaign: Campaign): CampaignProgressData {
   const { completed, total } = getCampaignStepCounts(campaign)
-  return Math.round((completed / total) * 100)
+  return { completed, total, percent: total ? Math.round((completed / total) * 100) : 0 }
+}
+
+export function getCampaignProgress(campaign: Campaign): number {
+  return getCampaignProgressData(campaign).percent
 }
 
 export function areAllPlatformAdsComplete(campaign: Campaign): boolean {
