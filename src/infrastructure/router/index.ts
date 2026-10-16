@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/features/auth/store'
+import { shouldRecover, hasRecoveryAttempted, markRecoveryAttempt, clearRecoveryFlag } from '@/shared/utils/dynamicImportRecovery'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -266,6 +267,44 @@ router.beforeEach(async (to, _from, next) => {
   }
 
   next()
+})
+
+// QA5: after a deploy the old hashed chunks are gone from the server, so
+// browsers running a stale service worker / cached shell fail lazy route
+// loads ("Failed to fetch dynamically imported module"). Self-heal ONCE per
+// session: unregister every service worker, wipe the cache storage, reload.
+// If the reload already happened this session, let the error surface instead
+// of looping (logged; there is no dedicated error route).
+router.onError((error) => {
+  if (!shouldRecover(error)) {
+    console.error('[router] navigation error:', error)
+    return
+  }
+  if (hasRecoveryAttempted()) {
+    // Recovery reload already issued this session — surfacing the error
+    // beats looping forever on a genuinely broken deployment.
+    console.error('[router] dynamic-import recovery already attempted this session; not reloading again:', error)
+    return
+  }
+  markRecoveryAttempt()
+  const purge: Promise<unknown>[] = []
+  if (typeof navigator !== 'undefined' && navigator.serviceWorker) {
+    purge.push(
+      navigator.serviceWorker
+        .getRegistrations()
+        .then((registrations) => Promise.all(registrations.map((r) => r.unregister()))),
+    )
+  }
+  if (typeof caches !== 'undefined') {
+    purge.push(caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key)))))
+  }
+  Promise.all(purge).catch(() => undefined).finally(() => window.location.reload())
+})
+
+// Successful navigation proves the app loaded fine — clear the one-time
+// recovery guard so a FUTURE deploy can also self-heal in this session.
+router.afterEach(() => {
+  clearRecoveryFlag()
 })
 
 document.addEventListener('mouseover', (e) => {

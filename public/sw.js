@@ -1,7 +1,7 @@
-// hdm-v1.1.0 (QA4-P0): navigations are now network-first and the app shell is
-// no longer precached, so /login and route changes can never serve a stale
-// (e.g. black) cached index.html. Cache-first stays for other static GETs.
-const CACHE_NAME = 'hdm-v1.1.0'
+// hdm-v1.2.0 (QA5): cache-name bump forces every installed client to
+// activate this worker and drop the hdm-v1.1.0 cache on the next navigation,
+// so no browser can keep serving pre-deploy chunks after an update.
+const CACHE_NAME = 'hdm-v1.2.0'
 const STATIC_ASSETS: string[] = []
 
 self.addEventListener('install', (event) => {

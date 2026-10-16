@@ -7,11 +7,19 @@ import { execSync } from 'node:child_process'
 
 const pkg = JSON.parse(readFileSync('package.json', 'utf-8'))
 const version = pkg.version
+// QA5-تازه۶: the CI/CD-injected commit wins when present (the build machine
+// may not have git history, e.g. a docker build context or a shallow clone);
+// only then fall back to the local git rev-parse, "unknown" as the last resort.
+const envCommit = process.env.VITE_GIT_COMMIT?.trim()
 let commitHash = 'unknown'
-try {
-  commitHash = execSync('git rev-parse --short HEAD').toString().trim()
-} catch {
-  commitHash = process.env.VITE_GIT_COMMIT || 'unknown'
+if (envCommit) {
+  commitHash = envCommit
+} else {
+  try {
+    commitHash = execSync('git rev-parse --short HEAD').toString().trim()
+  } catch {
+    commitHash = 'unknown'
+  }
 }
 
 export default defineConfig({
