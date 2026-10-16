@@ -45,6 +45,10 @@ const unrelatedWarning = ref('')
 const warnedName = ref('')
 const deletingUuid = ref<string | null>(null)
 
+// QA5: one busy flag for the whole add flow (check + create) — Enter and the
+// Add button share it so a pending add can never double-fire.
+const isAdding = computed(() => createMutation.isPending.value || checkMutation.isPending.value)
+
 const SOURCE_LABEL_KEYS: Record<string, TKey> = {
   scraped: 'brandServices.source.scraped',
   brand_analysis: 'brandServices.source.brandAnalysis',
@@ -65,7 +69,10 @@ function clearWarning() {
 
 async function addService() {
   const name = newName.value.trim()
-  if (!name || createMutation.isPending.value) return
+  // QA5 تست۴-۲: Enter and the Add button share this exact entry point —
+  // both bail on an empty name or while ANY part of the add flow (check or
+  // create) is still pending, so Enter can never double-fire a request.
+  if (!name || isAdding.value) return
   error.value = ''
   // Relatedness check (QA round 3 fix 1): only for NEW names; a known name
   // (managed or detected) is added straight away. `related:false` warns once.
@@ -182,17 +189,17 @@ async function removeService(serviceUuid: string) {
           :placeholder="t('brandServices.addPlaceholder')"
           class="flex-1 h-10 px-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm outline-none focus:border-primary/60 transition placeholder:text-muted-foreground/60"
           data-testid="brand-service-add-input"
-          @keyup.enter="addService"
+          @keydown.enter.prevent="addService"
           @input="clearWarning"
         />
         <button
           type="button"
           class="h-10 px-3.5 rounded-lg border border-primary/40 bg-primary/10 text-primary text-xs font-medium hover:bg-primary/15 transition inline-flex items-center justify-center gap-1.5 disabled:opacity-50"
-          :disabled="!newName.trim() || createMutation.isPending.value || checkMutation.isPending.value"
+          :disabled="!newName.trim() || isAdding"
           data-testid="brand-service-add-btn"
           @click="addService"
         >
-          <Loader2 v-if="createMutation.isPending.value || checkMutation.isPending.value" class="h-3.5 w-3.5 animate-spin" />
+          <Loader2 v-if="isAdding" class="h-3.5 w-3.5 animate-spin" />
           <Plus v-else class="h-3.5 w-3.5" />
           {{ t('brandServices.add') }}
         </button>

@@ -4,7 +4,7 @@ import { createRouter, createMemoryHistory, type Router } from 'vue-router'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import BrandCreateView from './BrandCreateView.vue'
 import { brandsApi } from '@/features/brands/api'
-import type { BrandScanResult, Brand, ManagedBrandService } from '../types'
+import type { BrandScanResult, BrandScanDetected, Brand, ManagedBrandService } from '../types'
 
 vi.mock('@/features/brands/api', () => ({
   brandsApi: {
@@ -67,6 +67,25 @@ function scanWithCompany(name: string): { data: BrandScanResult } {
       warnings: [],
     },
   }
+}
+
+/** A detection where every field came back empty (QA5 تست۴-۳ site B). */
+function emptyDetection(overrides: Partial<BrandScanDetected> = {}): BrandScanDetected {
+  return {
+    company_name: { value: null, confidence: null, source: null },
+    industry: { value: [], confidence: null, source: null },
+    brand_colors: { value: [], confidence: null, source: null },
+    logo_url: { value: null, confidence: null, source: null },
+    services: { value: [], confidence: null, source: null },
+    social_profiles: { value: [], confidence: null, source: null },
+    language: { value: null, confidence: null, source: null },
+    location: { value: null, confidence: null, source: null },
+    ...overrides,
+  }
+}
+
+function scanOf(detected: BrandScanDetected): { data: BrandScanResult } {
+  return { data: { success: true, detected, warnings: [] } }
 }
 
 let router: Router
@@ -276,6 +295,145 @@ describe('BrandCreateView — website auto-scan (F18)', () => {
     await wrapper.find('[data-testid="scan-button"]').trigger('click')
     await flushPromises()
     expect((wrapper.find('[data-testid="company-input"]').element as HTMLInputElement).value).toBe('Gamma')
+  })
+
+  it('scanning a DIFFERENT website wipes the previous site\'s scan-filled fields before applying the new scan (QA5 تست۴-۳)', async () => {
+    // Site A (justlife): fills company, brand color, socials and auto-selects
+    // the high-confidence industry.
+    vi.mocked(brandsApi.scanWebsite)
+      .mockResolvedValueOnce(scanOf({
+        ...emptyDetection(),
+        company_name: { value: 'Justlife', confidence: 'high', source: 'og_site_name' },
+        industry: scanResponse.data.detected.industry,
+        brand_colors: { value: ['#000000'], confidence: 'high', source: 'logo_palette' },
+        social_profiles: { value: [{ platform: 'instagram', url: 'https://instagram.com/justlife' }], confidence: 'high', source: 'schema_org_sameAs' },
+      }))
+      // Site B (EDI): detects only a location — no company, no color, no
+      // socials, no industry candidates.
+      .mockResolvedValueOnce(scanOf(emptyDetection({
+        location: { value: 'Tehran, Iran', confidence: 'high', source: 'address_schema' },
+      })))
+    const wrapper = await mountView()
+    await flushPromises()
+
+    await wrapper.find('[data-testid="website-url-input"]').setValue('https://justlife.com')
+    await wrapper.find('[data-testid="scan-button"]').trigger('click')
+    await flushPromises()
+    expect((wrapper.find('[data-testid="company-input"]').element as HTMLInputElement).value).toBe('Justlife')
+    expect((wrapper.find('select[data-loc="brands.create.industry-dropdown"]').element as HTMLSelectElement).value).toBe('ind-1')
+
+    // Scan a different website for a different brand.
+    await wrapper.find('[data-testid="website-url-input"]').setValue('https://edi.test')
+    await wrapper.find('[data-testid="scan-button"]').trigger('click')
+    await flushPromises()
+
+    // Previous site's data is GONE; only the new scan's own detection shows.
+    expect((wrapper.find('[data-testid="company-input"]').element as HTMLInputElement).value).toBe('')
+    expect((inputByPlaceholder(wrapper, 'Dubai, UAE').element as HTMLInputElement).value).toBe('Tehran, Iran')
+    // Industry reset to the placeholder (the new scan selects none).
+    expect((wrapper.find('select[data-loc="brands.create.industry-dropdown"]').element as HTMLSelectElement).value).not.toBe('ind-1')
+
+    // Step 2 fields: Justlife's #000000 and its Instagram must NOT appear on
+    // the EDI brand.
+    await wrapper.find('[data-loc="brands.create.continue-btn"]').trigger('click')
+    await flushPromises()
+    expect((inputByPlaceholder(wrapper, '#A855F7').element as HTMLInputElement).value).toBe('')
+    expect((inputByPlaceholder(wrapper, 'Instagram URL').element as HTMLInputElement).value).toBe('')
+  })
+
+  it('a user-edited field survives the switch to a different website (userEditedFields wins, QA5 تست۴-۳)', async () => {
+    vi.mocked(brandsApi.scanWebsite)
+      .mockResolvedValueOnce(scanOf(emptyDetection({
+        company_name: { value: 'Justlife', confidence: 'high', source: 'og_site_name' },
+        brand_colors: { value: ['#000000'], confidence: 'high', source: 'logo_palette' },
+      })))
+      .mockResolvedValueOnce(scanOf(emptyDetection()))
+    const wrapper = await mountView()
+    await flushPromises()
+
+    await wrapper.find('[data-testid="website-url-input"]').setValue('https://justlife.com')
+    await wrapper.find('[data-testid="scan-button"]').trigger('click')
+    await flushPromises()
+
+    // The user overrides the scan-filled color with their own choice.
+    await wrapper.find('[data-loc="brands.create.continue-btn"]').trigger('click')
+    await flushPromises()
+    const colorInput = inputByPlaceholder(wrapper, '#A855F7')
+    expect((colorInput.element as HTMLInputElement).value).toBe('#000000')
+    await colorInput.setValue('#123456')
+
+    // Scan a different site whose detection has no color.
+    await wrapper.find('[data-loc="brands.create.back-btn"]').trigger('click')
+    await wrapper.find('[data-testid="website-url-input"]').setValue('https://edi.test')
+    await wrapper.find('[data-testid="scan-button"]').trigger('click')
+    await flushPromises()
+    // Scan-filled company was wiped (still on step 1).
+    expect((wrapper.find('[data-testid="company-input"]').element as HTMLInputElement).value).toBe('')
+
+    await wrapper.find('[data-loc="brands.create.continue-btn"]').trigger('click')
+    await flushPromises()
+    // The USER's color survives the website switch.
+    expect((inputByPlaceholder(wrapper, '#A855F7').element as HTMLInputElement).value).toBe('#123456')
+  })
+
+  it('www/protocol variants of the same host are NOT a website switch — rescan semantics apply (QA5 تست۴-۳)', async () => {
+    vi.mocked(brandsApi.scanWebsite)
+      .mockResolvedValueOnce(scanOf(emptyDetection({
+        company_name: { value: 'Alpha', confidence: 'high', source: 'og_site_name' },
+        industry: scanResponse.data.detected.industry,
+        brand_colors: { value: ['#EC4899'], confidence: 'medium', source: 'logo_palette' },
+      })))
+      // Same host written differently; detection no longer includes a color.
+      .mockResolvedValueOnce(scanOf(emptyDetection({
+        company_name: { value: 'Beta', confidence: 'high', source: 'og_site_name' },
+      })))
+    const wrapper = await mountView()
+    await flushPromises()
+
+    await wrapper.find('[data-testid="website-url-input"]').setValue('https://a.test')
+    await wrapper.find('[data-testid="scan-button"]').trigger('click')
+    await flushPromises()
+    expect((wrapper.find('[data-testid="company-input"]').element as HTMLInputElement).value).toBe('Alpha')
+
+    await wrapper.find('[data-testid="website-url-input"]').setValue('https://www.a.test/')
+    await wrapper.find('[data-testid="scan-button"]').trigger('click')
+    await flushPromises()
+
+    // Same site → rescan updates its own detections (company → Beta) but the
+    // untouched scan-filled color and auto-selected industry survive.
+    expect((wrapper.find('[data-testid="company-input"]').element as HTMLInputElement).value).toBe('Beta')
+    expect((wrapper.find('select[data-loc="brands.create.industry-dropdown"]').element as HTMLSelectElement).value).toBe('ind-1')
+    await wrapper.find('[data-loc="brands.create.continue-btn"]').trigger('click')
+    await flushPromises()
+    expect((inputByPlaceholder(wrapper, '#A855F7').element as HTMLInputElement).value).toBe('#EC4899')
+  })
+
+  it('the new site\'s own high-confidence industry is auto-selected after the switch (QA5 تست۴-۳)', async () => {
+    vi.mocked(brandsApi.scanWebsite)
+      .mockResolvedValueOnce(scanOf(emptyDetection({
+        industry: scanResponse.data.detected.industry, // high: ind-1 (Beauty)
+      })))
+      .mockResolvedValueOnce(scanOf(emptyDetection({
+        industry: {
+          value: [{ industry_uuid: 'ind-2', name: 'Fitness', confidence: 'high', source: 'page_text' }],
+          confidence: 'high',
+          source: 'page_text',
+        },
+      })))
+    const wrapper = await mountView()
+    await flushPromises()
+
+    await wrapper.find('[data-testid="website-url-input"]').setValue('https://a.test')
+    await wrapper.find('[data-testid="scan-button"]').trigger('click')
+    await flushPromises()
+    expect((wrapper.find('select[data-loc="brands.create.industry-dropdown"]').element as HTMLSelectElement).value).toBe('ind-1')
+
+    await wrapper.find('[data-testid="website-url-input"]').setValue('https://b.test')
+    await wrapper.find('[data-testid="scan-button"]').trigger('click')
+    await flushPromises()
+
+    // Site A's Beauty selection was reset and site B's Fitness was selected.
+    expect((wrapper.find('select[data-loc="brands.create.industry-dropdown"]').element as HTMLSelectElement).value).toBe('ind-2')
   })
 
   it('includes location and brand_color in the create payload (drop-field fix)', async () => {

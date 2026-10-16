@@ -70,6 +70,122 @@ describe('BrandServicesManager — detected services section (QA r3 fix 5)', () 
   })
 })
 
+describe('BrandServicesManager — Enter-to-add (QA5 تست۴-۲)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    })
+    vi.mocked(apiClient.get).mockImplementation((url: string) => {
+      if (String(url).includes('/services/manage/')) {
+        return Promise.resolve({ data: managed })
+      }
+      return Promise.resolve({ data: { success: true, services: merged } })
+    })
+  })
+
+  function postCalls(urlPart: string) {
+    return vi.mocked(apiClient.post).mock.calls.filter((c) => String(c[0]).includes(urlPart))
+  }
+
+  it('pressing Enter adds the service through the exact same check→create flow as the Add button', async () => {
+    vi.mocked(apiClient.post).mockImplementation((url: string) => {
+      if (String(url).includes('/services/check/')) {
+        return Promise.resolve({ data: { related: true } })
+      }
+      return Promise.resolve({
+        data: { success: true, service: { service_uuid: 'bs-e1', name: 'Enter Service', source: 'manual' } },
+      })
+    })
+    const wrapper = await mountManager()
+    await flushPromises()
+
+    const input = wrapper.find('[data-testid="brand-service-add-input"]')
+    await input.setValue('  Enter Service  ')
+    await input.trigger('keydown', { key: 'Enter' })
+    await flushPromises()
+
+    // Same path as the button: relatedness check first, then the trimmed create.
+    expect(postCalls('/services/check/')).toHaveLength(1)
+    expect(postCalls('/services/check/')[0]).toEqual(['/brands/b1/services/check/', { name: 'Enter Service' }])
+    expect(postCalls('/services/manage/')).toHaveLength(1)
+    expect(postCalls('/services/manage/')[0]).toEqual(['/brands/b1/services/manage/', { name: 'Enter Service' }])
+    // Input clears only after the create succeeded.
+    expect((input.element as HTMLInputElement).value).toBe('')
+  })
+
+  it('Enter runs the same validate flow as the button: unrelated service warns once, second Enter force-adds', async () => {
+    vi.mocked(apiClient.post).mockImplementation((url: string) => {
+      if (String(url).includes('/services/check/')) {
+        return Promise.resolve({ data: { related: false, reason: 'not found' } })
+      }
+      return Promise.resolve({
+        data: { success: true, service: { service_uuid: 'bs-e2', name: 'X', source: 'manual' } },
+      })
+    })
+    const wrapper = await mountManager()
+    await flushPromises()
+
+    const input = wrapper.find('[data-testid="brand-service-add-input"]')
+    await input.setValue('Car Tyre Replacement')
+    await input.trigger('keydown', { key: 'Enter' })
+    await flushPromises()
+
+    // First Enter: warning, check only — nothing created, text preserved.
+    expect(wrapper.find('[data-testid="service-warning"]').exists()).toBe(true)
+    expect(postCalls('/services/manage/')).toHaveLength(0)
+    expect((input.element as HTMLInputElement).value).toBe('Car Tyre Replacement')
+
+    // Second Enter: force-add.
+    await input.trigger('keydown', { key: 'Enter' })
+    await flushPromises()
+    expect(postCalls('/services/manage/')).toHaveLength(1)
+    expect(postCalls('/services/manage/')[0]).toEqual(['/brands/b1/services/manage/', { name: 'Car Tyre Replacement' }])
+    expect(wrapper.find('[data-testid="service-warning"]').exists()).toBe(false)
+    expect((input.element as HTMLInputElement).value).toBe('')
+  })
+
+  it('Enter while the add flow is pending is ignored — no double add (check phase and create phase)', async () => {
+    let resolveCheck!: (value: { data: { related: boolean } }) => void
+    let resolveCreate!: (value: unknown) => void
+    vi.mocked(apiClient.post).mockImplementation((url: string) => {
+      if (String(url).includes('/services/check/')) {
+        return new Promise((res) => { resolveCheck = res })
+      }
+      return new Promise((res) => { resolveCreate = res })
+    })
+    const wrapper = await mountManager()
+    await flushPromises()
+
+    const input = wrapper.find('[data-testid="brand-service-add-input"]')
+    await input.setValue('Pending Service')
+    await input.trigger('keydown', { key: 'Enter' })
+    await flushPromises()
+
+    // Check in flight. A second (and third) Enter must be ignored entirely.
+    expect(postCalls('/services/check/')).toHaveLength(1)
+    await input.trigger('keydown', { key: 'Enter' })
+    await input.trigger('keydown', { key: 'Enter' })
+    await flushPromises()
+    expect(postCalls('/services/check/')).toHaveLength(1)
+    expect(postCalls('/services/manage/')).toHaveLength(0)
+
+    // Check resolves related → create starts. Enter during the create phase
+    // must not fire a second create either.
+    resolveCheck({ data: { related: true } })
+    await flushPromises()
+    expect(postCalls('/services/manage/')).toHaveLength(1)
+    await input.trigger('keydown', { key: 'Enter' })
+    await flushPromises()
+    expect(postCalls('/services/manage/')).toHaveLength(1)
+
+    resolveCreate({ data: { success: true, service: { service_uuid: 'bs-e3', name: 'Pending Service', source: 'manual' } } })
+    await flushPromises()
+    expect((input.element as HTMLInputElement).value).toBe('')
+    expect(postCalls('/services/manage/')).toHaveLength(1)
+  })
+})
+
 describe('BrandServicesManager — create invalidates both queries (QA r3 fix 5)', () => {
   beforeEach(() => {
     vi.clearAllMocks()

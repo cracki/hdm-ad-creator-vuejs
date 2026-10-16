@@ -180,7 +180,12 @@ watch([industryCandidates, industries], ([candidates, list]) => {
   const confident = candidates.find(
     (c) => c.confidence === 'high' && list.some((i) => i.industry_uuid === c.industry_uuid),
   )
-  if (confident) form.value.selected_industry_id = confident.industry_uuid
+  if (confident) {
+    form.value.selected_industry_id = confident.industry_uuid
+    // The auto-selection is scan data, not user data — a later scan for a
+    // different website may reset it (QA5 تست۴-۳).
+    scanFilledFields.add('selected_industry_id')
+  }
 }, { immediate: true })
 
 async function handleScan() {
@@ -193,6 +198,17 @@ async function handleScan() {
   scanResult.value = null
   try {
     const res = await scanMutation.mutateAsync({ website_url: url })
+    // QA5 تست۴-۳: a scan for a DIFFERENT website starts from a clean slate.
+    // Fields the previous scan filled (company, location, color, socials,
+    // auto-selected industry) belong to that other domain and must never
+    // leak into the new brand (Justlife's #000000 on the EDI brand). The
+    // reset runs BEFORE the new detections are applied; user-edited fields
+    // always survive (userEditedFields wins).
+    const normalizedUrl = normalizeScanUrl(url)
+    if (lastScannedUrl.value && normalizedUrl !== lastScannedUrl.value) {
+      resetScanFilledFields()
+    }
+    lastScannedUrl.value = normalizedUrl
     scanResult.value = res.data
     applyScanResult(res.data)
   } catch (e: any) {
@@ -216,6 +232,45 @@ const userEditedFields = new Set<string>()
 // detections — a previously scan-filled value is not user data — while
 // user-typed values are never clobbered (markUserEdited wins forever).
 const scanFilledFields = new Set<string>()
+
+// QA5 تست۴-۳: the site of the last COMPLETED scan (normalized), so a scan
+// for a different website can be detected and the previous site's data
+// purged before the new detections are applied.
+const lastScannedUrl = ref('')
+
+/** Normalize a website for "same site?" comparison: protocol/www/path ignored. */
+function normalizeScanUrl(raw: string): string {
+  const trimmed = raw.trim().toLowerCase()
+  try {
+    const url = new URL(/^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`)
+    return url.host.replace(/^www\./, '')
+  } catch {
+    return trimmed.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/+$/, '')
+  }
+}
+
+/**
+ * QA5 تست۴-۳: wipe every field the previous scan filled back to its
+ * empty/default value. User-edited fields are skipped (they win), and so are
+ * fields that were never scan-filled (e.g. edit-mode prefills from the API).
+ */
+function resetScanFilledFields() {
+  const resets: Array<[string, () => void]> = [
+    ['company_name', () => { form.value.company_name = '' }],
+    ['location', () => { form.value.location = '' }],
+    ['brand_color', () => { form.value.brand_color = '' }],
+    ['selected_industry_id', () => { form.value.selected_industry_id = null }],
+    ...Object.keys(socialLinks.value).map((platform): [string, () => void] => [
+      `social:${platform}`,
+      () => { socialLinks.value[platform] = '' },
+    ]),
+  ]
+  for (const [key, reset] of resets) {
+    if (userEditedFields.has(key) || !scanFilledFields.has(key)) continue
+    reset()
+    scanFilledFields.delete(key)
+  }
+}
 
 function markUserEdited(key: string) {
   userEditedFields.add(key)
@@ -445,7 +500,7 @@ async function handleSubmit() {
                       : 'border-border/60 bg-overlay-subtle text-foreground hover:border-primary/40',
                   ]"
                   data-testid="industry-candidate"
-                  @click="form.selected_industry_id = cand.industry_uuid"
+                  @click="form.selected_industry_id = cand.industry_uuid; markUserEdited('selected_industry_id')"
                 >
                   {{ cand.name }}
                   <span
@@ -481,7 +536,7 @@ async function handleSubmit() {
           <div class="grid md:grid-cols-2 gap-4">
             <label class="block">
               <span class="text-xs font-medium text-muted-foreground mb-1.5 block">{{ t('newbrand.field.industry') }}</span>
-              <select v-model="form.selected_industry_id" data-loc="brands.create.industry-dropdown" class="w-full h-11 px-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm outline-none focus:border-primary/60 transition">
+              <select v-model="form.selected_industry_id" data-loc="brands.create.industry-dropdown" class="w-full h-11 px-3 rounded-lg bg-overlay-subtle border border-border/70 text-sm outline-none focus:border-primary/60 transition" @change="markUserEdited('selected_industry_id')">
                 <option :value="null" disabled>Select industry</option>
                 <option v-for="ind in industries" :key="ind.industry_uuid" :value="ind.industry_uuid" class="bg-card">
                   {{ ind.name }}
