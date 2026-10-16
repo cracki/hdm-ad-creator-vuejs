@@ -141,12 +141,14 @@ const stageLabels: Record<string, string> = {
                wins; otherwise fall back to the built-in actions with the same
                item-shape mapping MarketMatrixView uses. -->
           <slot name="item-actions" :item="idea" :index="idx">
-            <InsightItemActions
-              view="matrix"
-              :title="idea.suggested_title || idea.title_inspiration || idea.topic || ''"
-              :snippet="idea.content_angle || idea.topic || ''"
-              :angle="idea.content_angle"
-            />
+            <div data-testid="insight-item-actions">
+              <InsightItemActions
+                view="matrix"
+                :title="idea.suggested_title || idea.title_inspiration || idea.topic || ''"
+                :snippet="idea.content_angle || idea.topic || ''"
+                :angle="idea.content_angle"
+              />
+            </div>
           </slot>
         </div>
       </div>

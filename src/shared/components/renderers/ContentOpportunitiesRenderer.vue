@@ -88,11 +88,13 @@ function typeName(key: string): string {
                actions render. These are scraped top-performing items, so they
                map like the top_performers view (title / snippet / query). -->
           <slot name="item-actions" :item="item" :index="idx">
-            <InsightItemActions
-              view="top_performers"
-              :title="item.title || ''"
-              :snippet="item.snippet || item.query || ''"
-            />
+            <div data-testid="insight-item-actions">
+              <InsightItemActions
+                view="top_performers"
+                :title="item.title || ''"
+                :snippet="item.snippet || item.query || ''"
+              />
+            </div>
           </slot>
         </div>
       </div>
@@ -143,11 +145,13 @@ function typeName(key: string): string {
 
           <!-- Same per-item actions as the top-content rows above -->
           <slot name="item-actions" :item="item" :index="idx">
-            <InsightItemActions
-              view="top_performers"
-              :title="item.title || ''"
-              :snippet="item.snippet || item.query || ''"
-            />
+            <div data-testid="insight-item-actions">
+              <InsightItemActions
+                view="top_performers"
+                :title="item.title || ''"
+                :snippet="item.snippet || item.query || ''"
+              />
+            </div>
           </slot>
         </div>
       </div>

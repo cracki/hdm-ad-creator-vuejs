@@ -11,7 +11,6 @@ import TopPerformingContentRenderer from '@/shared/components/renderers/TopPerfo
 import MarketHistoryList from '../components/MarketHistoryList.vue'
 import { useI18n } from '@/shared/utils/i18n'
 import { useBrands, useBrandServices } from '@/features/brands/queries'
-import { managedServiceNames, selectServiceSuggestions } from '@/features/brands/serviceSuggestions'
 import { useAutoSelectBrand } from '@/shared/composables/useAutoSelectBrand'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { exportIntelligencePDF, exportIntelligencePPTX, exportIntelligenceXLSX } from '@/shared/utils/exportMarket'
@@ -34,23 +33,57 @@ const location = ref('')
 const brandServices = ref('')
 const contentGoal = ref<'engagement' | 'leads' | 'awareness' | 'sales' | 'education'>('engagement')
 
-// Prefill the manual services input (F14) — QA round 3 fix 2: the brand's
-// MANAGED services win; otherwise the merged scan/analysis list, capped at 6
-// so junk floods can't dominate. The user can still edit the text before run.
+// Prefill the manual services input (F14). QA5-taza5: the merged services
+// list also carries scraped junk ("40% off", testimonial names, …) which
+// flooded the field with 17 unusable items — only user-authored sources
+// ('manual' / 'brand_analysis') are trusted now, capped at 8. Rows carrying
+// no source at all (legacy managed string lists) can't be classified and
+// stay; 'scraped' / 'ppc_viability' rows are dropped.
 const { data: detectedServices } = useBrandServices(selectedBrandUuid)
-
 const selectedBrand = computed(() => brands.value?.find((b) => b.brand_uuid === selectedBrandUuid.value) ?? null)
-const managedNames = computed(() => managedServiceNames(selectedBrand.value?.services))
 
+const TRUSTED_SERVICE_SOURCES: ReadonlySet<string> = new Set(['manual', 'brand_analysis'])
+const SERVICE_PREFILL_CAP = 8
+
+function trustedServiceNames(rows: unknown): string[] {
+  if (!Array.isArray(rows)) return []
+  const names: string[] = []
+  for (const row of rows) {
+    if (names.length >= SERVICE_PREFILL_CAP) break
+    const name = typeof row === 'string' ? row : (row as { name?: unknown } | null)?.name
+    if (typeof name !== 'string' || !name.trim()) continue
+    const source = typeof row === 'string' ? null : (row as { source?: unknown } | null)?.source ?? null
+    if (source != null && !TRUSTED_SERVICE_SOURCES.has(String(source))) continue
+    names.push(name.trim())
+  }
+  return names
+}
+
+// Reset the prefills when the brand changes (declared FIRST so it runs
+// before the prefill watchers below — same-flush watchers fire in creation
+// order and the reset must win).
 watch(selectedBrandUuid, () => {
   brandServices.value = ''
+  industry.value = ''
+  location.value = ''
 })
 
-watch([managedNames, detectedServices], ([managed, detected]) => {
+// Prefill Industry + Location from the selected brand (QA5-taza5): they used
+// to stay empty even though the brand already knows both.
+watch(selectedBrand, (brand) => {
+  if (!brand) return
+  if (!industry.value.trim() && brand.selected_industry?.name) {
+    industry.value = brand.selected_industry.name
+  }
+  if (!location.value.trim() && brand.location) {
+    location.value = brand.location
+  }
+}, { immediate: true })
+
+watch([selectedBrand, detectedServices], ([brand, detected]) => {
   if (brandServices.value.trim()) return
-  const names = managed.length
-    ? managed
-    : selectServiceSuggestions([], detected ?? []).options.map((s) => s.name)
+  let names = trustedServiceNames(brand?.services)
+  if (!names.length) names = trustedServiceNames(detected)
   if (names.length) {
     brandServices.value = names.join(', ')
   }

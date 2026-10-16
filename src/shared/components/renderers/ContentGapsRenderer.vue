@@ -127,12 +127,14 @@ function contentTypeName(type: string): string {
              otherwise fall back to the built-in actions with the same
              item-shape mapping MarketGapsView uses. -->
         <slot name="item-actions" :item="gap" :index="idx">
-          <InsightItemActions
-            view="gaps"
-            :title="gap.topic"
-            :snippet="gap.reason || gap.suggested_content_type || ''"
-            :angle="gap.suggested_content_type ? `${gap.suggested_content_type} — ${gap.reason}` : gap.reason"
-          />
+          <div data-testid="insight-item-actions">
+            <InsightItemActions
+              view="gaps"
+              :title="gap.topic"
+              :snippet="gap.reason || gap.suggested_content_type || ''"
+              :angle="gap.suggested_content_type ? `${gap.suggested_content_type} — ${gap.reason}` : gap.reason"
+            />
+          </div>
         </slot>
       </div>
     </div>

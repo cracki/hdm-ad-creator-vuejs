@@ -106,12 +106,14 @@ function getTypeClass(type: string): string {
                wins; otherwise fall back to the built-in actions with the same
                item-shape mapping MarketTopPerformingView uses. -->
           <slot name="item-actions" :item="item" :index="idx">
-            <InsightItemActions
-              view="top_performers"
-              :title="item.title || ''"
-              :snippet="item.why_it_ranks || item.snippet || ''"
-              :angle="item.your_opportunity"
-            />
+            <div data-testid="insight-item-actions">
+              <InsightItemActions
+                view="top_performers"
+                :title="item.title || ''"
+                :snippet="item.why_it_ranks || item.snippet || ''"
+                :angle="item.your_opportunity"
+              />
+            </div>
           </slot>
         </div>
       </div>
