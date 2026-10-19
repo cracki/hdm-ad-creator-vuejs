@@ -6,7 +6,7 @@ import Topbar from '@/layout/Topbar.vue'
 import ServiceSelector from '@/shared/components/ServiceSelector.vue'
 import { useI18n, LANGS, type Lang } from '@/shared/utils/i18n'
 import { useBrands, useBrandServices } from '@/features/brands/queries'
-import { managedServiceNames, selectServiceSuggestions, SERVICE_SUGGESTION_CAP } from '@/features/brands/serviceSuggestions'
+import { managedServiceNames, selectServiceSuggestions, SERVICE_SUGGESTION_CAP, type ServiceSuggestion } from '@/features/brands/serviceSuggestions'
 import { useAutoSelectBrand } from '@/shared/composables/useAutoSelectBrand'
 import { useCreateCampaign } from '../queries'
 
@@ -51,9 +51,46 @@ const selectedBrand = computed(() => brands.value?.find((b) => b.brand_uuid === 
 const managedNames = computed(() => managedServiceNames(selectedBrand.value?.services))
 const showAllServices = ref(false)
 
-const serviceSuggestions = computed(() =>
-  selectServiceSuggestions(managedNames.value, brandServices.value ?? [], SERVICE_SUGGESTION_CAP, showAllServices.value),
+// QA6-jadid6(b): suggestions come from the FULL merged services list
+// (GET /brands/{uuid}/services/) restricted to user-authored sources —
+// 'manual' + 'brand_analysis' — so the analysis courses (Gold, Platinum, …)
+// appear next to the managed rows; scraped junk stays out. Rows without a
+// source (legacy managed string lists) can't be classified and stay.
+const SUGGESTION_SOURCES: ReadonlySet<string> = new Set(['manual', 'brand_analysis'])
+const SUGGESTION_CAP = 12
+
+const trustedDetected = computed<ServiceSuggestion[]>(() =>
+  (brandServices.value ?? [])
+    .filter((s) => {
+      const source = (s as { source?: unknown }).source
+      return source == null || SUGGESTION_SOURCES.has(String(source))
+    })
+    .map((s) => ({ name: s.name, score: s.score })),
 )
+
+// Managed-first (user-confirmed rows always lead, never capped), then the
+// trusted detected rows deduped against them, capped at 12 with a show-more.
+// Falls back to the previous behavior when the endpoint has nothing trusted.
+const serviceSuggestions = computed(() => {
+  const trusted = trustedDetected.value
+  if (managedNames.value.length || trusted.length) {
+    const seen = new Set(managedNames.value.map((n) => n.trim().toLowerCase()))
+    const extras = [...trusted]
+      .sort((a, b) => (typeof b.score === 'number' ? b.score : -1) - (typeof a.score === 'number' ? a.score : -1))
+      .filter((s) => {
+        const key = s.name.trim().toLowerCase()
+        if (!key || seen.has(key)) return false
+        seen.add(key)
+        return true
+      })
+    const combined = [...managedNames.value.map((name) => ({ name })), ...extras]
+    if (showAllServices.value || combined.length <= SUGGESTION_CAP) {
+      return { options: combined, capped: false }
+    }
+    return { options: combined.slice(0, SUGGESTION_CAP), capped: true }
+  }
+  return selectServiceSuggestions(managedNames.value, brandServices.value ?? [], SERVICE_SUGGESTION_CAP, showAllServices.value)
+})
 
 watch(selectedBrandUuid, () => {
   selectedServices.value = []

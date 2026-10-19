@@ -152,8 +152,11 @@ describe('MarketIntelligenceView — brand prefill (QA5-taza5)', () => {
   })
 
   it('re-prefills from the newly selected brand when the brand is switched', async () => {
-    const wrapper = await mountView(
-      [
+    // Live ref simulating the per-brand services query (each selection
+    // resolves its own data — the brand list alone is managed-only).
+    const servicesRef = ref<unknown[]>([{ name: 'Home Cleaning', source: 'brand_analysis' }])
+    vi.mocked(useBrands).mockReturnValue({
+      data: ref([
         buildBrand({
           services: [{ name: 'Home Cleaning', source: 'brand_analysis' }],
         }),
@@ -164,9 +167,21 @@ describe('MarketIntelligenceView — brand prefill (QA5-taza5)', () => {
           location: 'Muscat, Oman',
           services: [{ name: 'Roof Repair', source: 'manual' }],
         }),
-      ],
-      [{ name: 'Home Cleaning', source: 'brand_analysis' }],
-    )
+      ]),
+    } as never)
+    vi.mocked(useBrandServices).mockReturnValue({ data: servicesRef } as never)
+    vi.mocked(useRunContentIntelligence).mockReturnValue({ mutateAsync: vi.fn() } as never)
+    vi.mocked(useContentIntelligenceHistory).mockReturnValue({
+      data: ref([]),
+      isLoading: ref(false),
+    } as never)
+
+    const wrapper = mount(MarketIntelligenceView, {
+      global: {
+        stubs: { Topbar: true, GuidedAction: true, MarketHistoryList: true, AiLoadingAnimation: true },
+      },
+    })
+    await flushPromises()
 
     const select = wrapper.find('[data-loc="market.intel.brand-select"]')
     await select.setValue('b1')
@@ -174,12 +189,84 @@ describe('MarketIntelligenceView — brand prefill (QA5-taza5)', () => {
     expect(fieldValue(wrapper, 'market.intel.brand-services-input')).toBe('Home Cleaning')
     expect(fieldValue(wrapper, 'market.intel.industry-input')).toBe('Home Services')
 
-    await select.setValue('b2')
+    // Switch brands: v-model updates, then the b2 services query resolves —
+    // both land before the prefill watcher flushes.
+    select.setValue('b2')
+    servicesRef.value = [{ name: 'Roof Repair', source: 'manual' }]
     await flushPromises()
 
     expect(fieldValue(wrapper, 'market.intel.brand-services-input')).toBe('Roof Repair')
     expect(fieldValue(wrapper, 'market.intel.industry-input')).toBe('Construction')
     expect(fieldValue(wrapper, 'market.intel.location-input')).toBe('Muscat, Oman')
+    wrapper.unmount()
+  })
+})
+
+// ── QA6-jadid6(a): full detected list beats the managed-only brand.services ──
+describe('MarketIntelligenceView — QA6-jadid6 prefill from full services endpoint', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('prefills manual + brand_analysis rows from the services endpoint even when brand.services is managed-only', async () => {
+    // QA6 card: brand.services carried ONLY the manually added service while
+    // the endpoint's merged list also had the analysis courses.
+    const wrapper = await mountView(
+      [
+        buildBrand({
+          services: [{ name: 'Car Driving Lessons', source: 'manual' }],
+        }),
+      ],
+      [
+        { name: 'Car Driving Lessons', source: 'manual' },
+        { name: 'Gold Driving Course', source: 'brand_analysis' },
+        { name: 'Gold Excellence Course', source: 'brand_analysis' },
+        { name: 'Platinum Course', source: 'brand_analysis' },
+        { name: '40% off', source: 'scraped' },
+      ],
+    )
+
+    await wrapper.find('[data-loc="market.intel.brand-select"]').setValue('b1')
+    await flushPromises()
+
+    // The analysis courses appear next to the manual service; scraped junk stays out.
+    expect(fieldValue(wrapper, 'market.intel.brand-services-input')).toBe(
+      'Car Driving Lessons, Gold Driving Course, Gold Excellence Course, Platinum Course',
+    )
+    wrapper.unmount()
+  })
+
+  it('caps the endpoint prefill at 8 and drops non-trusted rows beyond the cap', async () => {
+    const rows = [
+      ...Array.from({ length: 5 }, (_, i) => ({ name: `Manual ${i + 1}`, source: 'manual' })),
+      ...Array.from({ length: 6 }, (_, i) => ({ name: `Course ${i + 1}`, source: 'brand_analysis' })),
+      { name: '40% off', source: 'scraped' },
+    ]
+    const wrapper = await mountView([buildBrand()], rows)
+
+    await wrapper.find('[data-loc="market.intel.brand-select"]').setValue('b1')
+    await flushPromises()
+
+    const value = fieldValue(wrapper, 'market.intel.brand-services-input')
+    expect(value.split(', ')).toHaveLength(8)
+    expect(value).not.toContain('40% off')
+    wrapper.unmount()
+  })
+
+  it('falls back to the managed brand.services list when the services endpoint fails/returns nothing', async () => {
+    const wrapper = await mountView(
+      [
+        buildBrand({
+          services: [{ name: 'Car Driving Lessons', source: 'manual' }],
+        }),
+      ],
+      [],
+    )
+
+    await wrapper.find('[data-loc="market.intel.brand-select"]').setValue('b1')
+    await flushPromises()
+
+    expect(fieldValue(wrapper, 'market.intel.brand-services-input')).toBe('Car Driving Lessons')
     wrapper.unmount()
   })
 })

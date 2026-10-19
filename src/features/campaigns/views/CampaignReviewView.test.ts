@@ -462,7 +462,105 @@ describe('CampaignReviewView — ad visuals on review (QA photo 28)', () => {
   })
 })
 
-// ── Unified split from the actual ads strategies (QA round 3, MOM §12.4) ──
+// ── QA6-taza5: human missing-chip labels + ready-to-complete badge ──
+describe('CampaignReviewView — QA6-taza5 (missing labels + ready badge)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: CampaignReviewView },
+        { path: '/campaigns', component: { template: '<div />' } },
+        { path: '/campaigns/:campaignUuid/review', component: CampaignReviewView },
+      ],
+    })
+    vi.mocked(useCampaign).mockReturnValue({
+      data: ref(buildCampaign()),
+      isLoading: ref(false),
+    } as never)
+    vi.mocked(useCompleteCampaign).mockReturnValue({ mutateAsync } as never)
+    vi.mocked(useCampaignAds).mockReturnValue({
+      data: ref({ success: true, ads: [] }),
+    } as never)
+    vi.mocked(useCampaignVisuals).mockReturnValue({
+      data: ref({ success: true, results: [] }),
+    } as never)
+    vi.mocked(useAdsStrategy).mockReturnValue({
+      data: ref({ success: true, strategies: [] }),
+    } as never)
+    vi.mocked(useReviewAd).mockReturnValue(fakeMutation())
+    vi.mocked(usePatchAd).mockReturnValue(fakeMutation())
+    vi.mocked(useRefineAd).mockReturnValue(fakeMutation())
+  })
+
+  it('renders human labels for the ad_generation/visual/review missing chips — no raw machine names', async () => {
+    mutateAsync.mockRejectedValueOnce({
+      response: {
+        status: 400,
+        data: {
+          detail: 'Campaign completion requirements not met.',
+          missing: ['ad_generation', 'visual', 'review'],
+        },
+      },
+    })
+    const wrapper = await mountView()
+
+    await wrapper.find('[data-loc="campaigns.review.complete-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="complete-missing"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="missing-chip-ad_generation"]').text()).toBe('Ad Generation')
+    expect(wrapper.find('[data-testid="missing-chip-visual"]').text()).toBe('Visual Generation')
+    expect(wrapper.find('[data-testid="missing-chip-review"]').text()).toBe('Ad Review')
+    // No raw machine name leaks anywhere in the error banner.
+    const bannerText = wrapper.find('[data-testid="complete-error"]').text()
+    expect(bannerText).not.toContain('ad_generation')
+    expect(bannerText).not.toContain("'review'")
+  })
+
+  it('shows the Ready-to-complete badge at 100% while the campaign is not completed', async () => {
+    vi.mocked(useCampaign).mockReturnValue({
+      data: ref(
+        buildCampaign({
+          status: 'in_progress',
+          context_payload: { selected_platforms: ['meta'] },
+          ad_generation_completed: true,
+          visual_completed: true,
+          review_completed: true,
+        }),
+      ),
+      isLoading: ref(false),
+    } as never)
+
+    const wrapper = await mountView()
+
+    // 4 base + meta + 3 optional = 8/8 → 100%, still in_progress → ready.
+    expect(wrapper.find('[data-testid="campaign-progress-percent"]').text()).toContain('100%')
+    const badge = wrapper.find('[data-testid="ready-to-complete-badge"]')
+    expect(badge.exists()).toBe(true)
+    expect(badge.text()).toBe('Ready to complete')
+  })
+
+  it('shows 100% WITHOUT the ready badge once the campaign status is completed', async () => {
+    vi.mocked(useCampaign).mockReturnValue({
+      data: ref(
+        buildCampaign({
+          status: 'completed',
+          // Stale flags (review still false) must not keep it below 100%.
+          review_completed: false,
+          ad_generation_completed: true,
+          visual_completed: true,
+        }),
+      ),
+      isLoading: ref(false),
+    } as never)
+
+    const wrapper = await mountView()
+
+    expect(wrapper.find('[data-testid="campaign-progress-percent"]').text()).toContain('100%')
+    expect(wrapper.find('[data-testid="ready-to-complete-badge"]').exists()).toBe(false)
+  })
+})
 
 const STRATEGY_META = {
   campaign_step_uuid: 's1',

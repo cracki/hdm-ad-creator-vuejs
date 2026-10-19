@@ -1,4 +1,3 @@
-import { COUNTRIES } from '@/shared/data/countries'
 import type { TKey } from '@/shared/utils/translations'
 
 export type CampaignStatus = 'draft' | 'in_progress' | 'completed' | 'archived'
@@ -479,11 +478,22 @@ export interface CampaignProgressData {
   total: number
   /** Math.round(completed / total × 100); 0 when total is 0. */
   percent: number
+  /**
+   * True at 100% while the campaign is NOT yet completed (QA6-taza5c): every
+   * counted step is done and only the final "Complete" click is missing.
+   */
+  ready: boolean
 }
 
 export function getCampaignProgressData(campaign: Campaign): CampaignProgressData {
   const { completed, total } = getCampaignStepCounts(campaign)
-  return { completed, total, percent: total ? Math.round((completed / total) * 100) : 0 }
+  // QA6-taza5(b): status 'completed' is the source of truth — stale step flags
+  // must not keep a finished campaign at "90% · 9/10".
+  if (campaign.status === 'completed') {
+    return { completed: total, total, percent: 100, ready: false }
+  }
+  const percent = total ? Math.round((completed / total) * 100) : 0
+  return { completed, total, percent, ready: percent === 100 }
 }
 
 export function getCampaignProgress(campaign: Campaign): number {
@@ -677,6 +687,35 @@ export function splitPpcServicesBySelected(
   })
   const others = rows.filter((row) => !matched.has(ppcRowName(row)))
   return { primary, others }
+}
+
+// ── Consistent "PPC Ready" counts (QA6-photo14, FE side) ──
+
+export interface PpcReadyCounts {
+  /** PPC-ready services per the run summary (ppc_ready_services). */
+  ready: number
+  /** Services the run ACTUALLY analyzed — the consistent denominator. */
+  analyzed: number
+}
+
+/**
+ * Truth-in-numbers for the "PPC Ready: X of Y" counter (QA6-photo14): the
+ * summary's services_count can disagree with the run (it used to come from
+ * the campaign's selected services while the numerator came from the analyzed
+ * rows — "4 of 2"). Both numbers are derived from the SAME run: the analyzed
+ * denominator is the PPC step's actual service list length, falling back to
+ * the summary count only when the step payload has no list.
+ */
+export function getPpcReadyCounts(
+  summary: { ppc_ready_services?: unknown; services_count?: unknown } | null | undefined,
+  ppcStepPayload: Record<string, unknown> | null | undefined,
+): PpcReadyCounts {
+  const num = (v: unknown): number => {
+    const n = Number(v)
+    return Number.isFinite(n) && n > 0 ? Math.round(n) : 0
+  }
+  const analyzed = ppcServiceList(ppcStepPayload).length || num(summary?.services_count)
+  return { ready: num(summary?.ppc_ready_services), analyzed }
 }
 
 export function getCampaignStepStatuses(campaign: Campaign): Record<CampaignStepType, 'completed' | 'pending'> {
@@ -936,8 +975,11 @@ export interface TargetMarket {
 
 /**
  * Initial country/city for the segmentation form: prefer the structured
- * target_market persisted by a previous run; otherwise best-effort seed the
- * country from the brand's free-text location.
+ * target_market persisted by a previous run; otherwise split the brand's
+ * free-text location ("City, Country" — QA6-taza4: the backend already
+ * pre-fills it from the brand location, e.g. "Dubai, UAE", so the form must
+ * show BOTH parts). Last comma-separated token = country, the remainder =
+ * city; a single token seeds the city only and leaves the country empty.
  */
 export function resolveTargetMarket(campaign: Pick<Campaign, 'context_payload' | 'brand'> | null | undefined): TargetMarket {
   const tm = (campaign?.context_payload as { target_market?: { country?: unknown; city?: unknown } } | undefined)?.target_market
@@ -947,10 +989,14 @@ export function resolveTargetMarket(campaign: Pick<Campaign, 'context_payload' |
       city: typeof tm.city === 'string' ? tm.city : '',
     }
   }
-  const brandLocation = campaign?.brand?.location
+  const brandLocation = campaign?.brand?.location?.trim()
   if (brandLocation) {
-    const match = COUNTRIES.find((c) => brandLocation.toLowerCase().includes(c.toLowerCase()))
-    if (match) return { country: match, city: '' }
+    const tokens = brandLocation.split(',').map((s) => s.trim()).filter(Boolean)
+    if (tokens.length >= 2) {
+      const country = tokens[tokens.length - 1]
+      return { country, city: tokens.slice(0, -1).join(', ') }
+    }
+    return { country: '', city: tokens[0] ?? '' }
   }
   return { country: '', city: '' }
 }

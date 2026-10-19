@@ -80,10 +80,16 @@ watch(selectedBrand, (brand) => {
   }
 }, { immediate: true })
 
+// QA6-jadid6(a): the FULL detected list (GET /brands/{uuid}/services/) is the
+// primary source — it carries manual AND brand_analysis rows merged, while
+// brand.services (BrandSerializer) is managed-only, so the QA6 card only saw
+// the manually-added service and the analysis courses never appeared. The
+// managed-only list stays as the fallback when the endpoint fails/returns
+// nothing.
 watch([selectedBrand, detectedServices], ([brand, detected]) => {
   if (brandServices.value.trim()) return
-  let names = trustedServiceNames(brand?.services)
-  if (!names.length) names = trustedServiceNames(detected)
+  let names = trustedServiceNames(detected)
+  if (!names.length) names = trustedServiceNames(brand?.services)
   if (names.length) {
     brandServices.value = names.join(', ')
   }

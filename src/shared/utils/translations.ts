@@ -1726,6 +1726,10 @@ export const translations = {
   'payload.score': { en: 'Score', ar: 'النتيجة', fa: 'امتیاز' },
   'payload.grade': { en: 'Grade', ar: 'التقدير', fa: 'درجه' },
   'payload.confidence': { en: 'Confidence', ar: 'الثقة', fa: 'اطمینان' },
+
+  // ---------- QA6 additions ----------
+  'review.readyToComplete': { en: 'Ready to complete', ar: 'جاهز للإكمال', fa: 'آماده‌ی تکمیل' },
+  'steps.review': { en: 'Ad Review', ar: 'مراجعة الإعلانات', fa: 'مرور آگهی' },
 } as const
 
 export type TKey = keyof typeof translations

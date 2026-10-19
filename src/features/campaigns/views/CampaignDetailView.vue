@@ -15,7 +15,7 @@ import BrandContextPanel from '@/shared/components/BrandContextPanel.vue'
 import { useConfetti } from '@/shared/composables/useConfetti'
 import { useCampaign, useCampaignAds, useCampaignVisuals } from '../queries'
 import { exportCampaignPDF, exportCampaignPPTX, formatBudgetAllocation } from '@/shared/utils/exportCampaign'
-import { formatCampaignBudget, getFunnelBudgetSplit, resolveBrandContext } from '../types'
+import { formatCampaignBudget, getFunnelBudgetSplit, getPpcReadyCounts, resolveBrandContext } from '../types'
 import { useTourRegistration } from '@/shared/composables/useTourRegistration'
 import { campaignDetailTour } from '../tours'
 
@@ -172,6 +172,16 @@ const totalBudgetText = computed(() => (campaign.value ? formatCampaignBudget(ca
 const funnelSplit = computed(() => (campaign.value ? getFunnelBudgetSplit(campaign.value) : null))
 const budgetAllocationText = computed(() =>
   formatBudgetAllocation(ppcSummary.value?.recommended_initial_budget_allocation),
+)
+
+// QA6-photo14 (FE robustness): "PPC Ready: X of Y" — both numbers from the
+// SAME run payload (X = summary ready count, Y = services the run actually
+// analyzed) so a stale summary services_count can't produce "4 of 2".
+const ppcReadyCounts = computed(() =>
+  getPpcReadyCounts(
+    ppcSummary.value,
+    (campaign.value as any)?.latest_steps?.ppc_viability?.response_payload ?? null,
+  ),
 )
 
 const completedCount = computed(() => {
@@ -444,7 +454,7 @@ function getStepStatusLabel(step: StepDef, idx: number): string {
             </div>
             <div class="flex items-center justify-between text-xs">
               <span class="text-muted-foreground">{{ t('cd.ppcReady' as any) }}</span>
-              <span class="font-medium text-success">{{ ppcSummary.ppc_ready_services }} {{ t('cd.of' as any) }} {{ ppcSummary.services_count }}</span>
+              <span class="font-medium text-success">{{ ppcReadyCounts.ready }} {{ t('cd.of' as any) }} {{ ppcReadyCounts.analyzed }}</span>
             </div>
             <div class="flex items-center justify-between text-xs">
               <span class="text-muted-foreground">Brand-first</span>

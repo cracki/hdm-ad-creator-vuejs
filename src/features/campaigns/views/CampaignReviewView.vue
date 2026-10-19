@@ -23,6 +23,7 @@ import {
   normalizeStrategyRuns,
 } from '../types'
 import { campaignStepLabel } from '../stepLabels'
+import type { TKey } from '@/shared/utils/translations'
 import type { CampaignAd } from '../types'
 
 const route = useRoute()
@@ -180,9 +181,13 @@ const completionFlags = computed(() => {
 const progressData = computed(() =>
   campaign.value
     ? getCampaignProgressData(campaign.value)
-    : { completed: 0, total: 0, percent: 0 },
+    : { completed: 0, total: 0, percent: 0, ready: false },
 )
 const progress = computed(() => progressData.value.percent)
+// QA6-taza5(c): at 100% without the final Complete click the numbers stay,
+// but the header wears a success "Ready to complete" chip so the raw
+// "100% · 9/9" reads as a state, not a bug.
+const readyToComplete = computed(() => progressData.value.ready)
 // Complete = every required step (base + the selected platforms) done AND at
 // least one platform chosen. Previously this was gated on all 7 hardcoded
 // flags, so a partial-platform campaign could never be completed.
@@ -193,6 +198,22 @@ const allDone = computed(
 const completing = ref(false)
 const completeError = ref('')
 const completeMissing = ref<string[]>([])
+
+// QA6-taza5(a): the backend's `missing` list can also carry the newer step
+// slugs (ad_generation / visual / review) which campaignStepLabel doesn't
+// know — those used to render as raw machine-name chips under the friendly
+// detail sentence. Map them to human, localized labels instead.
+const EXTRA_MISSING_STEP_LABELS: Record<string, TKey> = {
+  ad_generation: 'adgen.title',
+  visual: 'visual.title',
+  review: 'steps.review',
+}
+
+/** Human label for a missing-step chip: known slug → localized step name. */
+function missingStepLabel(slug: string): string {
+  const key = EXTRA_MISSING_STEP_LABELS[slug]
+  return key ? t(key) : campaignStepLabel(slug, t)
+}
 
 async function completeCampaign() {
   if (!allDone.value) return
@@ -272,8 +293,13 @@ async function handleReviewExport(format: 'csv' | 'pdf' | 'pptx') {
         <div class="surface-card p-5 mb-6" data-loc="campaigns.review.progress">
           <div class="flex items-center justify-between mb-3">
             <div class="text-sm font-semibold">{{ t('review.progress') }}</div>
-            <div class="text-xs text-muted-foreground" data-testid="campaign-progress-percent">
-              {{ progress }}%<template v-if="progressData.total"> · {{ progressData.completed }}/{{ progressData.total }}</template>
+            <div class="text-xs text-muted-foreground flex items-center gap-2" data-testid="campaign-progress-percent">
+              <span>{{ progress }}%<template v-if="progressData.total"> · {{ progressData.completed }}/{{ progressData.total }}</template></span>
+              <span
+                v-if="readyToComplete"
+                class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-success/15 text-success border border-success/30"
+                data-testid="ready-to-complete-badge"
+              >{{ t('review.readyToComplete') }}</span>
             </div>
           </div>
           <div class="h-2 rounded-full bg-overlay-subtle overflow-hidden mb-4">
@@ -459,7 +485,7 @@ async function handleReviewExport(format: 'csv' | 'pdf' | 'pptx') {
                 class="text-[11px] font-medium px-2 py-0.5 rounded-full bg-destructive/10 border border-destructive/30 text-destructive"
                 :data-testid="`missing-chip-${slug}`"
               >
-                {{ campaignStepLabel(slug, t) }}
+                {{ missingStepLabel(slug) }}
               </span>
             </div>
           </div>

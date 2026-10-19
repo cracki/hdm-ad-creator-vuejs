@@ -20,7 +20,7 @@ import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { useNormalizeResponse } from '@/shared/composables/useNormalizeResponse'
 import { operationManager } from '@/infrastructure/operations/operationManager'
 import { exportSegmentation } from '@/shared/utils/exportStep'
-import { composeLocation, resolveTargetMarket, type TargetMarket } from '../types'
+import { composeLocation, resolveTargetMarket, campaignSelectedServices, type TargetMarket } from '../types'
 
 const route = useRoute()
 const router = useRouter()
@@ -48,6 +48,14 @@ const productDescTouched = ref(false)
 const businessTypeFromAnalysis = ref(false)
 const productDescFromAnalysis = ref(false)
 
+// Natural-language join for the selected-services description (QA6-taza4):
+// ["A", "B"] → "A and B"; ["A", "B", "C"] → "A, B and C".
+function naturalServiceJoin(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? ''
+  if (names.length === 2) return `${names[0]} and ${names[1]}`
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+}
+
 watch(
   campaign,
   (c) => {
@@ -57,10 +65,19 @@ watch(
       businessType.value = industry
       businessTypeFromAnalysis.value = true
     }
+    // QA6-taza4: the product description defaults to the campaign's SELECTED
+    // services (what the user actually picked at creation, joined naturally)
+    // and only falls back to the brand-analysis courses when nothing was
+    // selected. Untouched, still-empty field only — manual input wins.
+    const selected = campaignSelectedServices(c)
     const services = c.brand_context?.available ? (c.brand_context.services ?? []) : []
-    if (services.length && !productDescTouched.value && !productDescription.value.trim()) {
-      productDescription.value = services.slice(0, 3).join(', ')
-      productDescFromAnalysis.value = true
+    if (!productDescTouched.value && !productDescription.value.trim()) {
+      if (selected.length) {
+        productDescription.value = naturalServiceJoin(selected)
+      } else if (services.length) {
+        productDescription.value = services.slice(0, 3).join(', ')
+        productDescFromAnalysis.value = true
+      }
     }
   },
   { immediate: true },

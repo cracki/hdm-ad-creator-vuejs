@@ -13,6 +13,7 @@ import {
   ppcServiceDetailRows,
   resolveTargetMarket,
   composeLocation,
+  getPpcReadyCounts,
   type Campaign,
   campaignSelectedServices,
   splitPpcServicesBySelected,
@@ -212,24 +213,38 @@ describe('resolveTargetMarket (F19)', () => {
     ).toEqual({ country: 'Oman', city: 'Muscat' })
   })
 
-  it('best-effort seeds the country from the brand free-text location', () => {
+  it('splits the brand free-text location into city + country (QA6-taza4)', () => {
+    expect(
+      resolveTargetMarket(
+        buildCampaign({
+          brand: { brand_uuid: 'b1', company_name: 'L', website_url: '', location: 'Dubai, UAE', selected_industry: null },
+        }),
+      ),
+    ).toEqual({ country: 'UAE', city: 'Dubai' })
     expect(
       resolveTargetMarket(
         buildCampaign({
           brand: { brand_uuid: 'b1', company_name: 'L', website_url: '', location: 'Dubai, United Arab Emirates', selected_industry: null },
         }),
       ),
-    ).toEqual({ country: 'United Arab Emirates', city: '' })
+    ).toEqual({ country: 'United Arab Emirates', city: 'Dubai' })
   })
 
-  it('leaves the country empty when the brand location matches no known country', () => {
+  it('seeds only the city for a single-token brand location (QA6-taza4)', () => {
+    expect(
+      resolveTargetMarket(
+        buildCampaign({
+          brand: { brand_uuid: 'b1', company_name: 'L', website_url: '', location: 'Dubai', selected_industry: null },
+        }),
+      ),
+    ).toEqual({ country: '', city: 'Dubai' })
     expect(
       resolveTargetMarket(
         buildCampaign({
           brand: { brand_uuid: 'b1', company_name: 'L', website_url: '', location: 'Narnia', selected_industry: null },
         }),
       ),
-    ).toEqual({ country: '', city: '' })
+    ).toEqual({ country: '', city: 'Narnia' })
   })
 })
 
@@ -499,7 +514,7 @@ describe('getCampaignProgressData deterministic denominator (QA5-taza5)', () => 
       }),
     )
     // 4 base + 2 selected platforms + 3 optional flags = 9; 7 done → 78%.
-    expect(data).toEqual({ completed: 7, total: 9, percent: 78 })
+    expect(data).toEqual({ completed: 7, total: 9, percent: 78, ready: false })
   })
 
   it('selected_platforms=[meta,google,linkedin] → total 10', () => {
@@ -511,7 +526,7 @@ describe('getCampaignProgressData deterministic denominator (QA5-taza5)', () => 
       }),
     )
     // 4 base + 3 platforms + 3 optional flags = 10; only the base 4 done.
-    expect(data).toEqual({ completed: 4, total: 10, percent: 40 })
+    expect(data).toEqual({ completed: 4, total: 10, percent: 40, ready: false })
   })
 
   it('no selection key + optional outputs defined → total 10', () => {
@@ -525,7 +540,7 @@ describe('getCampaignProgressData deterministic denominator (QA5-taza5)', () => 
       }),
     )
     // No selected_platforms → all 3 platform flags count: 4 + 3 + 3 = 10; 5 done.
-    expect(data).toEqual({ completed: 5, total: 10, percent: 50 })
+    expect(data).toEqual({ completed: 5, total: 10, percent: 50, ready: false })
   })
 
   it('a junk/empty stored selection deterministically falls back to all 3 platform flags', () => {
@@ -538,8 +553,89 @@ describe('getCampaignProgressData deterministic denominator (QA5-taza5)', () => 
         }),
       )
       // 4 base + 3 platform flags = 7 (optional flags absent); 5 done → 71%.
-      expect(data).toEqual({ completed: 5, total: 7, percent: 71 })
+      expect(data).toEqual({ completed: 5, total: 7, percent: 71, ready: false })
     }
+  })
+})
+
+// ── Completed status + ready flag (QA6-taza5 b/c) ──
+describe('getCampaignProgressData completed status + ready flag (QA6-taza5)', () => {
+  const baseDone = {
+    segmentation_completed: true,
+    ppc_viability_completed: true,
+    funnel_completed: true,
+    content_strategy_completed: true,
+  }
+
+  it('returns 100% (completed = total) whenever status === "completed"', () => {
+    // Stale step flags (9 of 10 done) must not keep a finished campaign at 90%.
+    const data = getCampaignProgressData(
+      buildCampaign({
+        status: 'completed',
+        ...baseDone,
+        context_payload: { selected_platforms: ['meta', 'google', 'linkedin'] },
+        meta_ads_completed: true,
+        google_ads_completed: true,
+        linkedin_ads_completed: true,
+        ad_generation_completed: true,
+        visual_completed: false,
+        review_completed: false,
+      }),
+    )
+    expect(data).toEqual({ completed: 10, total: 10, percent: 100, ready: false })
+  })
+
+  it('flags ready=true at 100% while the status is not completed', () => {
+    const data = getCampaignProgressData(
+      buildCampaign({
+        status: 'in_progress',
+        ...baseDone,
+        context_payload: { selected_platforms: ['meta'] },
+        meta_ads_completed: true,
+        ad_generation_completed: true,
+        visual_completed: true,
+        review_completed: true,
+      }),
+    )
+    expect(data.percent).toBe(100)
+    expect(data.ready).toBe(true)
+  })
+
+  it('ready stays false below 100% and for a completed campaign', () => {
+    expect(getCampaignProgressData(buildCampaign()).ready).toBe(false)
+    expect(
+      getCampaignProgressData(buildCampaign({ status: 'completed', segmentation_completed: true })).ready,
+    ).toBe(false)
+  })
+})
+
+// ── Consistent PPC Ready counts (QA6-photo14, FE side) ──
+describe('getPpcReadyCounts (QA6-photo14)', () => {
+  const analyzedPayload = {
+    brand_trust_analysis: {
+      services_bpc_scores: [
+        { service: 'Gold Course' },
+        { service: 'Platinum Course' },
+        { service: 'Driving Lessons' },
+        { service: 'Theory Test Prep' },
+      ],
+    },
+  }
+
+  it('derives numerator AND denominator from the same run payload (no "4 of 2")', () => {
+    // The stale summary says services_count=2 (the selected services) while
+    // the run actually analyzed 4 — the counter must read "4 of 4".
+    const counts = getPpcReadyCounts(
+      { ppc_ready_services: 4, services_count: 2 },
+      analyzedPayload,
+    )
+    expect(counts).toEqual({ ready: 4, analyzed: 4 })
+  })
+
+  it('falls back to the summary count when the step payload has no service list', () => {
+    const counts = getPpcReadyCounts({ ppc_ready_services: 2, services_count: 3 }, null)
+    expect(counts).toEqual({ ready: 2, analyzed: 3 })
+    expect(getPpcReadyCounts(null, null)).toEqual({ ready: 0, analyzed: 0 })
   })
 })
 

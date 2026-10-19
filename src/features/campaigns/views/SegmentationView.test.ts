@@ -154,7 +154,7 @@ describe('SegmentationView — structured target market (F19)', () => {
     expect((wrapper.find('[data-testid="city-input"]').element as HTMLInputElement).value).toBe('Tehran')
   })
 
-  it('seeds the country from the brand free-text location when no target market exists', async () => {
+  it('seeds city + country from the brand free-text location when no target market exists (QA6-taza4)', async () => {
     mockCampaign(
       buildCampaign({
         brand: {
@@ -171,7 +171,99 @@ describe('SegmentationView — structured target market (F19)', () => {
     expect((wrapper.find('[data-testid="country-input"]').element as HTMLInputElement).value).toBe(
       'United Arab Emirates',
     )
-    expect((wrapper.find('[data-testid="city-input"]').element as HTMLInputElement).value).toBe('')
+    expect((wrapper.find('[data-testid="city-input"]').element as HTMLInputElement).value).toBe('Dubai')
+  })
+})
+
+// ── Brand-location + selected-services prefill (QA6-taza4) ──
+describe('SegmentationView — QA6-taza4 prefill', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(campaignsApi.runSegmentation).mockResolvedValue({
+      data: { step: { response_payload: {} } },
+    } as never)
+    vi.mocked(campaignsApi.update).mockResolvedValue({ data: {} } as never)
+  })
+
+  it("pre-fills Country/City inputs from the brand location 'Dubai, UAE'", async () => {
+    mockCampaign(
+      buildCampaign({
+        brand: {
+          brand_uuid: 'b1',
+          company_name: 'Lumen',
+          website_url: 'https://lumen.test',
+          location: 'Dubai, UAE',
+          selected_industry: null,
+        },
+      }),
+    )
+    const wrapper = await mountView()
+
+    expect((wrapper.find('[data-testid="country-input"]').element as HTMLInputElement).value).toBe('UAE')
+    expect((wrapper.find('[data-testid="city-input"]').element as HTMLInputElement).value).toBe('Dubai')
+    wrapper.unmount()
+  })
+
+  it('defaults the product description to the campaign SELECTED services (natural join)', async () => {
+    mockCampaign(
+      buildCampaign({
+        brand: {
+          brand_uuid: 'b1',
+          company_name: 'Lumen',
+          website_url: 'https://lumen.test',
+          location: null,
+          selected_industry: null,
+        },
+        brand_context: { available: true, services: ['Gold', 'Gold Excellence', 'Platinum'] },
+        context_payload: { selected_services: ['Car Driving Lessons', 'Gold Driving Course'] },
+      }),
+    )
+    const wrapper = await mountView()
+
+    const productDesc = wrapper.find('[data-loc="campaigns.segmentation.product-desc-input"]').element as HTMLTextAreaElement
+    expect(productDesc.value).toBe('Car Driving Lessons and Gold Driving Course')
+    wrapper.unmount()
+  })
+
+  it('falls back to the brand-analysis services when nothing was selected', async () => {
+    mockCampaign(
+      buildCampaign({
+        brand: {
+          brand_uuid: 'b1',
+          company_name: 'Lumen',
+          website_url: 'https://lumen.test',
+          location: null,
+          selected_industry: null,
+        },
+        brand_context: { available: true, services: ['Gold', 'Gold Excellence', 'Platinum'] },
+        context_payload: {},
+      }),
+    )
+    const wrapper = await mountView()
+
+    const productDesc = wrapper.find('[data-loc="campaigns.segmentation.product-desc-input"]').element as HTMLTextAreaElement
+    expect(productDesc.value).toBe('Gold, Gold Excellence, Platinum')
+    expect(wrapper.find('[data-testid="product-desc-analysis-hint"]').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
+  it('seeds only the city when the brand location has no comma', async () => {
+    mockCampaign(
+      buildCampaign({
+        brand: {
+          brand_uuid: 'b1',
+          company_name: 'Lumen',
+          website_url: 'https://lumen.test',
+          location: 'Dubai',
+          selected_industry: null,
+        },
+      }),
+    )
+    const wrapper = await mountView()
+
+    expect((wrapper.find('[data-testid="country-input"]').element as HTMLInputElement).value).toBe('')
+    expect((wrapper.find('[data-testid="city-input"]').element as HTMLInputElement).value).toBe('Dubai')
+    wrapper.unmount()
   })
 })
 
