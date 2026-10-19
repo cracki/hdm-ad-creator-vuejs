@@ -1,0 +1,13 @@
+{
+  "generated_at": "2026-10-19T13:55:00Z",
+  "deployed": {"frontend_commit": "667fa9e", "backend_commit": "0fe3a63", "backend_health": "https://api.178.105.224.88.sslip.io/health/version"},
+  "e2e_campaign": {"uuid": "4130997d-ed8b-44a6-a87b-0d516f410bec", "name": "QA6-Live-E2E", "brand": "Emirates Driving Institute (bed17054, fresh scan of edi-uae.com)", "selected_services": ["Gold Driving Course", "Platinum Driving Course"], "selected_platforms": ["meta", "google"]},
+  "img2_scan_clean": {"services_detected": ["Gold Driving Course", "Platinum Driving Course", "Gold Excellence Course"], "junk_present": false, "screenshot": "01-img2-scan-edi-clean.png"},
+  "taza2_positioning": {"language": "en", "text": "The most trusted and structured driving institute in Dubai for learners who want to become safe, confident, and test-ready with expert guidance.", "persian_chars": false, "screenshot": "02-taza2-positioning-english.png"},
+  "jadid6_intelligence_prefill": {"brand_services_input": "Gold Driving Course, Gold Excellence Course, Platinum Driving Course", "industry": "Education", "location": "Dubai, Uae, Abu Dhabi", "screenshot": "03-jadid6-intelligence-prefill.png"},
+  "jadid6b_campaign_suggestions": ["Gold Driving Course", "Gold Excellence Course", "Platinum Driving Course"], "screenshot_04": "04-jadid6b-campaign-suggestions.png",
+  "taza4_segmentation_prefill": {"product_description": "Gold Driving Course and Platinum Driving Course", "city_prefilled": "Dubai, Uae", "country_prefilled": "Abu Dhabi", "note": "country value derives from the brand location string quality (scan produced a 3-part location)", "screenshot": "05-taza4-segmentation-prefill.png"},
+  "img14_ppc": {"services_bpc_scores": [["Gold Driving Course", 52], ["Platinum Driving Course", 48]], "sum": 100, "ui_badges": ["Budget share 52%", "Budget share 48%"], "summary": {"services_count": 2, "ppc_ready_services": 1}, "screenshot": "06-img14-ppc-selected-only.png"},
+  "taza5_gate": {"detail": "Campaign is missing: ad generation (create at least one ad), visual generation (generate an image for an ad), ad review (approve at least one ad).", "chips_rendered": ["Ad Generation", "Visual Generation", "Ad Review"], "raw_slug_visible": false, "review_progress": "67% . 6/9", "screenshot": "08-taza5-gate-friendly.png"},
+  "campaign_list_counters_screenshot": "07-img14-campaign-card-counter.png"
+}
