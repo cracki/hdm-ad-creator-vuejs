@@ -1037,7 +1037,7 @@ export function splitLocationParts(raw: string): TargetMarket {
       break
     }
   }
-  const city = tokens.find((token, index) => index !== countryIndex) ?? ''
+  const city = tokens.find((_, index) => index !== countryIndex) ?? ''
   return { country, city }
 }
 
