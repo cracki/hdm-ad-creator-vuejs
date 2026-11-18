@@ -1,0 +1,1214 @@
+Creating test database for alias 'default'...
+C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\django\core\handlers\base.py:61: UserWarning: No directory at: C:\laragon\www\ad_creator\django-backend\staticfiles\
+  mw_instance = middleware(adapted_handler)
+.[2026-11-18 14:56:03,578] WARNING django.request: Not Found: /api/v1/ad-library/runs/435d5a7b-818b-4f18-bbcd-71c6380c1d9c/
+.[2026-11-18 14:56:05,281] WARNING django.request: Forbidden: /api/v1/ad-library/generate/
+....[2026-11-18 14:56:15,888] WARNING django.request: Not Found: /api/v1/ad-library/runs/c2abeed3-4368-409f-a2c8-22e2fdc78283/
+.[2026-11-18 14:56:19,063] WARNING django.request: Not Found: /api/v1/ad-library/runs/949d1d79-b079-412a-9bea-f621c4e551a4/ads/
+....[2026-11-18 14:56:34,229] WARNING django.request: Unauthorized: /api/v1/ad-library/runs/
+[2026-11-18 14:56:34,231] WARNING django.request: Unauthorized: /api/v1/ad-library/runs/c5cae3e1-787e-4bfd-84b8-28e0a2e3fd60/
+.......[2026-11-18 14:56:49,358] WARNING django.request: Bad Request: /api/v1/auth/token/
+[2026-11-18 14:56:49,360] WARNING django.request: Bad Request: /api/v1/auth/token/
+[2026-11-18 14:56:49,361] WARNING django.request: Too Many Requests: /api/v1/auth/token/
+.[2026-11-18 14:56:49,424] WARNING django.request: Unauthorized: /api/v1/brands/
+...[2026-11-18 14:56:50,679] INFO brand.services.full_analysis: full_analysis.start | brand=9e4ee6c6-9fc7-46a0-a327-df9a7bb0c676 include_social=True include_competitors=True force_refresh=False persist_run=False
+[2026-11-18 14:56:50,682] INFO brand.services.full_analysis: full_analysis.run_running | brand=9e4ee6c6-9fc7-46a0-a327-df9a7bb0c676 run=c20d7841-1545-4f9b-8848-be2de3255bd2
+[2026-11-18 14:56:50,684] INFO brand.services.full_analysis: full_analysis.section_running | brand=9e4ee6c6-9fc7-46a0-a327-df9a7bb0c676 run=c20d7841-1545-4f9b-8848-be2de3255bd2 section=website_scrape
+[2026-11-18 14:56:50,685] INFO brand.services.full_analysis: step.website_data.check_existing | brand=9e4ee6c6-9fc7-46a0-a327-df9a7bb0c676 identity=3481873c-d65f-47c3-a1f1-d637b6b637e6
+[2026-11-18 14:56:50,695] INFO brand.services.full_analysis: step.website_data.compute_start | brand=9e4ee6c6-9fc7-46a0-a327-df9a7bb0c676 identity=3481873c-d65f-47c3-a1f1-d637b6b637e6
+[2026-11-18 14:56:50,699] INFO brand.services.full_analysis: step.website_data.compute_done | brand=9e4ee6c6-9fc7-46a0-a327-df9a7bb0c676 identity=3481873c-d65f-47c3-a1f1-d637b6b637e6 website_data=54c4970b-6cda-4a21-9a3c-abfa1f550f37
+[2026-11-18 14:56:50,701] INFO brand.services.full_analysis: full_analysis.section_completed | brand=9e4ee6c6-9fc7-46a0-a327-df9a7bb0c676 run=c20d7841-1545-4f9b-8848-be2de3255bd2 section=website_scrape
+[2026-11-18 14:56:50,701] INFO brand.services.full_analysis: full_analysis.step_done | brand=9e4ee6c6-9fc7-46a0-a327-df9a7bb0c676 run=c20d7841-1545-4f9b-8848-be2de3255bd2 step=website_data elapsed=0.02s website_data=54c4970b-6cda-4a21-9a3c-abfa1f550f37
+[2026-11-18 14:56:50,701] ERROR brand.services.full_analysis: full_analysis.failed | brand=9e4ee6c6-9fc7-46a0-a327-df9a7bb0c676 run=c20d7841-1545-4f9b-8848-be2de3255bd2 error=Website content could not be extracted (the site may be empty, blocked, or JS-rendered). Please enter brand information manually and re-run.
+Traceback (most recent call last):
+  File "C:\laragon\www\ad_creator\django-backend\brand\services\full_analysis.py", line 141, in analyze_full_brand
+    raise EmptyWebsiteContentError(EMPTY_WEBSITE_CONTENT_MESSAGE)
+brand.services.full_analysis.EmptyWebsiteContentError: Website content could not be extracted (the site may be empty, blocked, or JS-rendered). Please enter brand information manually and re-run.
+[2026-11-18 14:56:50,705] ERROR brand.services.full_analysis: full_analysis.run_failed | brand=9e4ee6c6-9fc7-46a0-a327-df9a7bb0c676 run=c20d7841-1545-4f9b-8848-be2de3255bd2 error=Website content could not be extracted (the site may be empty, blocked, or JS-rendered). Please enter brand information manually and re-run.
+.[2026-11-18 14:56:51,688] WARNING brand.tasks: Analysis run ffbf8edf-8f2d-40b9-9d60-d8875371c5c9 stopped: website content could not be extracted
+.[2026-11-18 14:56:53,145] INFO brand.services.full_analysis: full_analysis.start | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f include_social=True include_competitors=True force_refresh=False persist_run=False
+[2026-11-18 14:56:53,149] INFO brand.services.full_analysis: full_analysis.run_running | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f run=03b571eb-cb08-4b7b-a336-e0959a30cb3e
+[2026-11-18 14:56:53,151] INFO brand.services.full_analysis: full_analysis.section_running | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f run=03b571eb-cb08-4b7b-a336-e0959a30cb3e section=website_scrape
+[2026-11-18 14:56:53,153] INFO brand.services.full_analysis: step.website_data.check_existing | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f identity=70eda600-c157-4072-94e1-1a16a27286f1
+[2026-11-18 14:56:53,159] INFO brand.services.full_analysis: step.website_data.compute_start | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f identity=70eda600-c157-4072-94e1-1a16a27286f1
+[2026-11-18 14:56:53,163] INFO brand.services.full_analysis: step.website_data.compute_done | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f identity=70eda600-c157-4072-94e1-1a16a27286f1 website_data=bbf023b2-0dca-45b8-a34e-60bbcad49735
+[2026-11-18 14:56:53,167] INFO brand.services.full_analysis: full_analysis.section_completed | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f run=03b571eb-cb08-4b7b-a336-e0959a30cb3e section=website_scrape
+[2026-11-18 14:56:53,167] INFO brand.services.full_analysis: full_analysis.step_done | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f run=03b571eb-cb08-4b7b-a336-e0959a30cb3e step=website_data elapsed=0.02s website_data=bbf023b2-0dca-45b8-a34e-60bbcad49735
+[2026-11-18 14:56:53,169] INFO brand.services.full_analysis: full_analysis.section_running | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f run=03b571eb-cb08-4b7b-a336-e0959a30cb3e section=core_analysis
+[2026-11-18 14:56:53,170] INFO brand.services.full_analysis: step.core_analysis.check_existing | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f identity=70eda600-c157-4072-94e1-1a16a27286f1
+[2026-11-18 14:56:53,177] INFO brand.services.full_analysis: step.core_analysis.compute_start | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f fallback_industry=Fitness website_data=bbf023b2-0dca-45b8-a34e-60bbcad49735
+[2026-11-18 14:56:53,181] INFO brand.services.full_analysis: step.core_analysis.compute_done | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f identity=70eda600-c157-4072-94e1-1a16a27286f1 core_analysis=3c20759c-7cb2-4ffd-8573-72a3679baa40
+[2026-11-18 14:56:53,185] INFO brand.services.full_analysis: full_analysis.section_completed | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f run=03b571eb-cb08-4b7b-a336-e0959a30cb3e section=core_analysis
+[2026-11-18 14:56:53,185] INFO brand.services.full_analysis: full_analysis.step_done | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f run=03b571eb-cb08-4b7b-a336-e0959a30cb3e step=core_analysis elapsed=0.02s core_analysis=3c20759c-7cb2-4ffd-8573-72a3679baa40
+[2026-11-18 14:56:53,187] INFO brand.services.full_analysis: full_analysis.section_running | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f run=03b571eb-cb08-4b7b-a336-e0959a30cb3e section=quality_validation
+[2026-11-18 14:56:53,187] WARNING brand.quality_validator: No validation rules for industry: Fitness
+[2026-11-18 14:56:53,187] WARNING brand.quality_validator: No validation rules for industry: Fitness
+[2026-11-18 14:56:53,200] INFO brand.services.full_analysis: full_analysis.step_done | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f run=03b571eb-cb08-4b7b-a336-e0959a30cb3e step=quality elapsed=0.01s is_valid=True confidence=85 issues=0
+[2026-11-18 14:56:53,203] INFO brand.services.full_analysis: full_analysis.section_completed | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f run=03b571eb-cb08-4b7b-a336-e0959a30cb3e section=quality_validation
+[2026-11-18 14:56:53,203] INFO brand.engines.brand_memory: Brand memory created for Fitness with professional tone
+[2026-11-18 14:56:53,204] INFO brand.services.full_analysis: full_analysis.step_done | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f run=03b571eb-cb08-4b7b-a336-e0959a30cb3e step=memory_emotion elapsed=0.00s
+[2026-11-18 14:56:53,204] INFO brand.services.full_analysis: full_analysis.parallel_start | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f run=03b571eb-cb08-4b7b-a336-e0959a30cb3e social=True audience=true competitors=True
+[2026-11-18 14:56:53,207] INFO brand.services.full_analysis: full_analysis.section_running | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f run=03b571eb-cb08-4b7b-a336-e0959a30cb3e section=social
+[2026-11-18 14:56:53,210] INFO brand.services.full_analysis: full_analysis.section_running | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f run=03b571eb-cb08-4b7b-a336-e0959a30cb3e section=audience
+[2026-11-18 14:56:53,213] INFO brand.services.full_analysis: full_analysis.section_running | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f run=03b571eb-cb08-4b7b-a336-e0959a30cb3e section=competitors
+[2026-11-18 14:56:53,213] INFO brand.services.full_analysis: step.competitors.check_existing | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f core_analysis=3c20759c-7cb2-4ffd-8573-72a3679baa40
+[2026-11-18 14:56:53,215] INFO brand.services.full_analysis: step.social.skipped | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f reason=no_profiles
+[2026-11-18 14:56:53,215] INFO brand.services.full_analysis: full_analysis.section_completed | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f run=03b571eb-cb08-4b7b-a336-e0959a30cb3e section=audience
+[2026-11-18 14:56:53,226] INFO brand.services.full_analysis: step.competitors.compute_start | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f core_analysis=3c20759c-7cb2-4ffd-8573-72a3679baa40 stored_row=none
+[2026-11-18 14:56:53,230] INFO brand.services.full_analysis: full_analysis.section_completed | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f run=03b571eb-cb08-4b7b-a336-e0959a30cb3e section=social
+[2026-11-18 14:56:53,236] INFO brand.services.full_analysis: step.competitors.compute_done | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f core_analysis=3c20759c-7cb2-4ffd-8573-72a3679baa40
+[2026-11-18 14:56:53,238] INFO brand.services.full_analysis: full_analysis.section_completed | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f run=03b571eb-cb08-4b7b-a336-e0959a30cb3e section=competitors
+[2026-11-18 14:56:53,238] INFO brand.services.full_analysis: full_analysis.parallel_done | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f run=03b571eb-cb08-4b7b-a336-e0959a30cb3e elapsed=0.03s social_active=0 social_missing=6 competitors=True
+[2026-11-18 14:56:53,240] INFO brand.services.full_analysis: full_analysis.section_running | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f run=03b571eb-cb08-4b7b-a336-e0959a30cb3e section=recommendations
+[2026-11-18 14:56:53,243] INFO brand.services.full_analysis: full_analysis.section_completed | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f run=03b571eb-cb08-4b7b-a336-e0959a30cb3e section=recommendations
+[2026-11-18 14:56:53,243] INFO brand.services.full_analysis: full_analysis.step_done | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f run=03b571eb-cb08-4b7b-a336-e0959a30cb3e step=recommendations elapsed=0.00s
+[2026-11-18 14:56:53,252] INFO brand.services.full_analysis: full_analysis.step_done | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f run=03b571eb-cb08-4b7b-a336-e0959a30cb3e step=brand_profile elapsed=0.01s
+[2026-11-18 14:56:53,258] INFO brand.services.full_analysis: full_analysis.run_completed | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f run=03b571eb-cb08-4b7b-a336-e0959a30cb3e
+[2026-11-18 14:56:53,258] INFO brand.services.full_analysis: full_analysis.completed | brand=2f89ce13-7589-44a7-be41-2c3ba87d436f run=03b571eb-cb08-4b7b-a336-e0959a30cb3e
+.[2026-11-18 14:56:54,414] INFO brand.services.full_analysis: step.website_data.check_existing | brand=93bc077b-4413-45b9-be2b-8dbb810ea613 identity=eaeb20bc-6840-4cfa-961d-3757fe074075
+[2026-11-18 14:56:54,423] INFO brand.services.full_analysis: step.website_data.cache_hit | brand=93bc077b-4413-45b9-be2b-8dbb810ea613 identity=eaeb20bc-6840-4cfa-961d-3757fe074075 website_data=49f931fc-9e2c-4c1e-bde6-2e7ace37eebe owned=False updated_at=2026-11-18 11:26:54.322726+00:00
+[2026-11-18 14:56:54,426] INFO brand.services.full_analysis: step.core_analysis.check_existing | brand=93bc077b-4413-45b9-be2b-8dbb810ea613 identity=eaeb20bc-6840-4cfa-961d-3757fe074075
+[2026-11-18 14:56:54,435] INFO brand.services.full_analysis: step.core_analysis.cache_hit | brand=93bc077b-4413-45b9-be2b-8dbb810ea613 identity=eaeb20bc-6840-4cfa-961d-3757fe074075 core_analysis=49659915-93bc-45d3-96aa-97e76cd2ebe6 owned=False updated_at=2026-11-18 11:26:54.325727+00:00
+.[2026-11-18 14:56:55,404] INFO brand.services.full_analysis: step.website_data.check_existing | brand=d9e36220-930a-4c8a-b337-c4b22a45b76a identity=918d3112-cb2e-4cdc-af05-ba857518f481
+[2026-11-18 14:56:55,409] INFO brand.services.full_analysis: step.website_data.force_refresh | brand=d9e36220-930a-4c8a-b337-c4b22a45b76a identity=918d3112-cb2e-4cdc-af05-ba857518f481 website_data=70191d19-c34d-45fd-a417-df0e0dcdf837
+[2026-11-18 14:56:55,409] INFO brand.services.full_analysis: step.website_data.compute_start | brand=d9e36220-930a-4c8a-b337-c4b22a45b76a identity=918d3112-cb2e-4cdc-af05-ba857518f481
+[2026-11-18 14:56:55,412] INFO brand.services.full_analysis: step.website_data.compute_done | brand=d9e36220-930a-4c8a-b337-c4b22a45b76a identity=918d3112-cb2e-4cdc-af05-ba857518f481 website_data=5f789388-896f-497e-9ab9-bd455fbaeb3b
+[2026-11-18 14:56:55,415] INFO brand.services.full_analysis: step.core_analysis.check_existing | brand=d9e36220-930a-4c8a-b337-c4b22a45b76a identity=918d3112-cb2e-4cdc-af05-ba857518f481
+[2026-11-18 14:56:55,420] INFO brand.services.full_analysis: step.core_analysis.force_refresh | brand=d9e36220-930a-4c8a-b337-c4b22a45b76a identity=918d3112-cb2e-4cdc-af05-ba857518f481 core_analysis=4ea8c211-94ca-4ea3-8f99-9814f3cdced8
+[2026-11-18 14:56:55,422] INFO brand.services.full_analysis: step.core_analysis.compute_start | brand=d9e36220-930a-4c8a-b337-c4b22a45b76a fallback_industry=SaaS website_data=5f789388-896f-497e-9ab9-bd455fbaeb3b
+[2026-11-18 14:56:55,424] INFO brand.services.full_analysis: step.core_analysis.compute_done | brand=d9e36220-930a-4c8a-b337-c4b22a45b76a identity=918d3112-cb2e-4cdc-af05-ba857518f481 core_analysis=679633ed-8494-4027-a49a-9a0b6a4aa3de
+..[2026-11-18 14:56:57,481] INFO brand.services.full_analysis: full_analysis.start | brand=15b24718-179e-4a93-93da-af101b9ebe83 include_social=True include_competitors=True force_refresh=False persist_run=False
+[2026-11-18 14:56:57,484] INFO brand.services.full_analysis: full_analysis.run_running | brand=15b24718-179e-4a93-93da-af101b9ebe83 run=400e4934-8afe-46d7-9d4e-f81653c2144f
+[2026-11-18 14:56:57,486] INFO brand.services.full_analysis: full_analysis.section_running | brand=15b24718-179e-4a93-93da-af101b9ebe83 run=400e4934-8afe-46d7-9d4e-f81653c2144f section=website_scrape
+[2026-11-18 14:56:57,487] INFO brand.services.full_analysis: step.website_data.check_existing | brand=15b24718-179e-4a93-93da-af101b9ebe83 identity=cd1444b9-ea21-48af-a2b2-6def7f3a73f8
+[2026-11-18 14:56:57,497] INFO brand.services.full_analysis: step.website_data.compute_start | brand=15b24718-179e-4a93-93da-af101b9ebe83 identity=cd1444b9-ea21-48af-a2b2-6def7f3a73f8
+[2026-11-18 14:56:57,500] INFO brand.services.full_analysis: step.website_data.compute_done | brand=15b24718-179e-4a93-93da-af101b9ebe83 identity=cd1444b9-ea21-48af-a2b2-6def7f3a73f8 website_data=13ff52b9-ad77-454a-9974-c0efdd163ec5
+[2026-11-18 14:56:57,502] INFO brand.services.full_analysis: full_analysis.section_completed | brand=15b24718-179e-4a93-93da-af101b9ebe83 run=400e4934-8afe-46d7-9d4e-f81653c2144f section=website_scrape
+[2026-11-18 14:56:57,502] INFO brand.services.full_analysis: full_analysis.step_done | brand=15b24718-179e-4a93-93da-af101b9ebe83 run=400e4934-8afe-46d7-9d4e-f81653c2144f step=website_data elapsed=0.02s website_data=13ff52b9-ad77-454a-9974-c0efdd163ec5
+[2026-11-18 14:56:57,504] INFO brand.services.full_analysis: full_analysis.section_running | brand=15b24718-179e-4a93-93da-af101b9ebe83 run=400e4934-8afe-46d7-9d4e-f81653c2144f section=core_analysis
+[2026-11-18 14:56:57,505] INFO brand.services.full_analysis: step.core_analysis.check_existing | brand=15b24718-179e-4a93-93da-af101b9ebe83 identity=cd1444b9-ea21-48af-a2b2-6def7f3a73f8
+[2026-11-18 14:56:57,516] INFO brand.services.full_analysis: step.core_analysis.compute_start | brand=15b24718-179e-4a93-93da-af101b9ebe83 fallback_industry=Fitness website_data=13ff52b9-ad77-454a-9974-c0efdd163ec5
+[2026-11-18 14:56:57,519] INFO brand.services.full_analysis: step.core_analysis.compute_done | brand=15b24718-179e-4a93-93da-af101b9ebe83 identity=cd1444b9-ea21-48af-a2b2-6def7f3a73f8 core_analysis=380425b8-00fe-4abf-be5b-bda2e96964a7
+[2026-11-18 14:56:57,521] INFO brand.services.full_analysis: full_analysis.section_completed | brand=15b24718-179e-4a93-93da-af101b9ebe83 run=400e4934-8afe-46d7-9d4e-f81653c2144f section=core_analysis
+[2026-11-18 14:56:57,521] INFO brand.services.full_analysis: full_analysis.step_done | brand=15b24718-179e-4a93-93da-af101b9ebe83 run=400e4934-8afe-46d7-9d4e-f81653c2144f step=core_analysis elapsed=0.02s core_analysis=380425b8-00fe-4abf-be5b-bda2e96964a7
+[2026-11-18 14:56:57,523] INFO brand.services.full_analysis: full_analysis.section_running | brand=15b24718-179e-4a93-93da-af101b9ebe83 run=400e4934-8afe-46d7-9d4e-f81653c2144f section=quality_validation
+[2026-11-18 14:56:57,525] INFO brand.services.full_analysis: full_analysis.section_failed | brand=15b24718-179e-4a93-93da-af101b9ebe83 run=400e4934-8afe-46d7-9d4e-f81653c2144f section=quality_validation
+[2026-11-18 14:56:57,525] ERROR brand.services.full_analysis: full_analysis.failed | brand=15b24718-179e-4a93-93da-af101b9ebe83 run=400e4934-8afe-46d7-9d4e-f81653c2144f error=validation exploded
+Traceback (most recent call last):
+  File "C:\laragon\www\ad_creator\django-backend\brand\services\full_analysis.py", line 188, in analyze_full_brand
+    quality_report = await self._run_section(
+  File "C:\laragon\www\ad_creator\django-backend\brand\services\full_analysis.py", line 853, in _run_section
+    result = await factory()
+  File "C:\laragon\www\ad_creator\django-backend\brand\services\full_analysis.py", line 166, in _run_quality_validation
+    self.quality_validator.validate_brand_output(core_analysis)
+  File "C:\laragon\bin\python\python-3.10\lib\unittest\mock.py", line 1104, in __call__
+    return self._mock_call(*args, **kwargs)
+  File "C:\laragon\bin\python\python-3.10\lib\unittest\mock.py", line 1108, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+  File "C:\laragon\bin\python\python-3.10\lib\unittest\mock.py", line 1163, in _execute_mock_call
+    raise effect
+RuntimeError: validation exploded
+[2026-11-18 14:56:57,529] ERROR brand.services.full_analysis: full_analysis.run_failed | brand=15b24718-179e-4a93-93da-af101b9ebe83 run=400e4934-8afe-46d7-9d4e-f81653c2144f error=validation exploded
+.[2026-11-18 14:56:58,552] INFO brand.services.full_analysis: full_analysis.start | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 include_social=True include_competitors=True force_refresh=False persist_run=False
+[2026-11-18 14:56:58,554] INFO brand.services.full_analysis: full_analysis.run_running | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 run=3a961be3-7436-4584-8d40-96ea136cae44
+[2026-11-18 14:56:58,557] INFO brand.services.full_analysis: full_analysis.section_running | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 run=3a961be3-7436-4584-8d40-96ea136cae44 section=website_scrape
+[2026-11-18 14:56:58,557] INFO brand.services.full_analysis: step.website_data.check_existing | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 identity=75bd6e74-eed4-4dbf-a241-a8b03e049898
+[2026-11-18 14:56:58,563] INFO brand.services.full_analysis: step.website_data.compute_start | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 identity=75bd6e74-eed4-4dbf-a241-a8b03e049898
+[2026-11-18 14:56:58,565] INFO brand.services.full_analysis: step.website_data.compute_done | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 identity=75bd6e74-eed4-4dbf-a241-a8b03e049898 website_data=8ecd9c5e-313f-4a7c-8a88-8be0aadfb3bc
+[2026-11-18 14:56:58,568] INFO brand.services.full_analysis: full_analysis.section_completed | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 run=3a961be3-7436-4584-8d40-96ea136cae44 section=website_scrape
+[2026-11-18 14:56:58,568] INFO brand.services.full_analysis: full_analysis.step_done | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 run=3a961be3-7436-4584-8d40-96ea136cae44 step=website_data elapsed=0.01s website_data=8ecd9c5e-313f-4a7c-8a88-8be0aadfb3bc
+[2026-11-18 14:56:58,570] INFO brand.services.full_analysis: full_analysis.section_running | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 run=3a961be3-7436-4584-8d40-96ea136cae44 section=core_analysis
+[2026-11-18 14:56:58,571] INFO brand.services.full_analysis: step.core_analysis.check_existing | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 identity=75bd6e74-eed4-4dbf-a241-a8b03e049898
+[2026-11-18 14:56:58,578] INFO brand.services.full_analysis: step.core_analysis.compute_start | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 fallback_industry=Fitness website_data=8ecd9c5e-313f-4a7c-8a88-8be0aadfb3bc
+[2026-11-18 14:56:58,581] INFO brand.services.full_analysis: step.core_analysis.compute_done | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 identity=75bd6e74-eed4-4dbf-a241-a8b03e049898 core_analysis=7544fceb-c708-4a38-9236-54cca5886c14
+[2026-11-18 14:56:58,583] INFO brand.services.full_analysis: full_analysis.section_completed | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 run=3a961be3-7436-4584-8d40-96ea136cae44 section=core_analysis
+[2026-11-18 14:56:58,583] INFO brand.services.full_analysis: full_analysis.step_done | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 run=3a961be3-7436-4584-8d40-96ea136cae44 step=core_analysis elapsed=0.02s core_analysis=7544fceb-c708-4a38-9236-54cca5886c14
+[2026-11-18 14:56:58,586] INFO brand.services.full_analysis: full_analysis.section_running | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 run=3a961be3-7436-4584-8d40-96ea136cae44 section=quality_validation
+[2026-11-18 14:56:58,586] WARNING brand.quality_validator: No validation rules for industry: Fitness
+[2026-11-18 14:56:58,586] WARNING brand.quality_validator: No validation rules for industry: Fitness
+[2026-11-18 14:56:58,586] INFO brand.services.full_analysis: full_analysis.step_done | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 run=3a961be3-7436-4584-8d40-96ea136cae44 step=quality elapsed=0.00s is_valid=True confidence=85 issues=0
+[2026-11-18 14:56:58,588] INFO brand.services.full_analysis: full_analysis.section_completed | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 run=3a961be3-7436-4584-8d40-96ea136cae44 section=quality_validation
+[2026-11-18 14:56:58,588] INFO brand.engines.brand_memory: Brand memory created for Fitness with professional tone
+[2026-11-18 14:56:58,589] INFO brand.services.full_analysis: full_analysis.step_done | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 run=3a961be3-7436-4584-8d40-96ea136cae44 step=memory_emotion elapsed=0.00s
+[2026-11-18 14:56:58,589] INFO brand.services.full_analysis: full_analysis.parallel_start | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 run=3a961be3-7436-4584-8d40-96ea136cae44 social=True audience=true competitors=True
+[2026-11-18 14:56:58,592] INFO brand.services.full_analysis: full_analysis.section_running | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 run=3a961be3-7436-4584-8d40-96ea136cae44 section=social
+[2026-11-18 14:56:58,594] INFO brand.services.full_analysis: full_analysis.section_running | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 run=3a961be3-7436-4584-8d40-96ea136cae44 section=audience
+[2026-11-18 14:56:58,596] INFO brand.services.full_analysis: full_analysis.section_running | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 run=3a961be3-7436-4584-8d40-96ea136cae44 section=competitors
+[2026-11-18 14:56:58,596] INFO brand.services.full_analysis: step.competitors.check_existing | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 core_analysis=7544fceb-c708-4a38-9236-54cca5886c14
+[2026-11-18 14:56:58,600] INFO brand.services.full_analysis: step.social.skipped | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 reason=no_profiles
+[2026-11-18 14:56:58,601] INFO brand.services.full_analysis: full_analysis.section_completed | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 run=3a961be3-7436-4584-8d40-96ea136cae44 section=audience
+[2026-11-18 14:56:58,609] INFO brand.services.full_analysis: step.competitors.compute_start | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 core_analysis=7544fceb-c708-4a38-9236-54cca5886c14 stored_row=none
+[2026-11-18 14:56:58,610] INFO brand.services.full_analysis: full_analysis.section_completed | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 run=3a961be3-7436-4584-8d40-96ea136cae44 section=social
+[2026-11-18 14:56:58,614] INFO brand.services.full_analysis: step.competitors.compute_done | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 core_analysis=7544fceb-c708-4a38-9236-54cca5886c14
+[2026-11-18 14:56:58,616] INFO brand.services.full_analysis: full_analysis.section_completed | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 run=3a961be3-7436-4584-8d40-96ea136cae44 section=competitors
+[2026-11-18 14:56:58,616] INFO brand.services.full_analysis: full_analysis.parallel_done | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 run=3a961be3-7436-4584-8d40-96ea136cae44 elapsed=0.03s social_active=0 social_missing=6 competitors=True
+[2026-11-18 14:56:58,619] INFO brand.services.full_analysis: full_analysis.section_running | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 run=3a961be3-7436-4584-8d40-96ea136cae44 section=recommendations
+[2026-11-18 14:56:58,621] INFO brand.services.full_analysis: full_analysis.section_completed | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 run=3a961be3-7436-4584-8d40-96ea136cae44 section=recommendations
+[2026-11-18 14:56:58,621] INFO brand.services.full_analysis: full_analysis.step_done | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 run=3a961be3-7436-4584-8d40-96ea136cae44 step=recommendations elapsed=0.00s
+[2026-11-18 14:56:58,624] INFO brand.services.full_analysis: full_analysis.step_done | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 run=3a961be3-7436-4584-8d40-96ea136cae44 step=brand_profile elapsed=0.00s
+[2026-11-18 14:56:58,629] INFO brand.services.full_analysis: full_analysis.run_completed | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 run=3a961be3-7436-4584-8d40-96ea136cae44
+[2026-11-18 14:56:58,630] INFO brand.services.full_analysis: full_analysis.completed | brand=0686ae40-36e5-4680-b759-0cdbbc4054d6 run=3a961be3-7436-4584-8d40-96ea136cae44
+.....[2026-11-18 14:57:02,793] WARNING django.request: Bad Request: /api/v1/brands/
+.[2026-11-18 14:57:03,702] WARNING django.request: Bad Request: /api/v1/brands/
+..[2026-11-18 14:57:05,342] WARNING django.request: Unauthorized: /api/v1/brands/
+...[2026-11-18 14:57:07,892] WARNING django.request: Method Not Allowed: /api/v1/brands/ce317a43-f2b8-49b5-bcc4-d2c38d3be808/website-data-records/
+[2026-11-18 14:57:07,893] WARNING django.request: Method Not Allowed: /api/v1/brands/ce317a43-f2b8-49b5-bcc4-d2c38d3be808/website-data-records/f76ff70e-d615-4608-bd33-c9329d2d9977/
+[2026-11-18 14:57:07,895] WARNING django.request: Method Not Allowed: /api/v1/brands/ce317a43-f2b8-49b5-bcc4-d2c38d3be808/website-data-records/f76ff70e-d615-4608-bd33-c9329d2d9977/
+[2026-11-18 14:57:07,897] WARNING django.request: Method Not Allowed: /api/v1/brands/ce317a43-f2b8-49b5-bcc4-d2c38d3be808/core-analyses/
+[2026-11-18 14:57:07,898] WARNING django.request: Method Not Allowed: /api/v1/brands/ce317a43-f2b8-49b5-bcc4-d2c38d3be808/core-analyses/5d7ce57f-1f9f-4a06-97c9-0c895fba227b/
+[2026-11-18 14:57:07,899] WARNING django.request: Method Not Allowed: /api/v1/brands/ce317a43-f2b8-49b5-bcc4-d2c38d3be808/core-analyses/5d7ce57f-1f9f-4a06-97c9-0c895fba227b/
+[2026-11-18 14:57:07,900] WARNING django.request: Method Not Allowed: /api/v1/brands/ce317a43-f2b8-49b5-bcc4-d2c38d3be808/competitor-analyses/
+[2026-11-18 14:57:07,902] WARNING django.request: Method Not Allowed: /api/v1/brands/ce317a43-f2b8-49b5-bcc4-d2c38d3be808/competitor-analyses/c49fbf20-47e8-4d8f-af17-51864bc91b26/
+[2026-11-18 14:57:07,903] WARNING django.request: Method Not Allowed: /api/v1/brands/ce317a43-f2b8-49b5-bcc4-d2c38d3be808/competitor-analyses/c49fbf20-47e8-4d8f-af17-51864bc91b26/
+[2026-11-18 14:57:07,904] WARNING django.request: Method Not Allowed: /api/v1/brands/ce317a43-f2b8-49b5-bcc4-d2c38d3be808/analysis-runs/
+[2026-11-18 14:57:07,906] WARNING django.request: Method Not Allowed: /api/v1/brands/ce317a43-f2b8-49b5-bcc4-d2c38d3be808/analysis-runs/9a84c607-4be6-407b-ad7a-19f41e58a200/
+[2026-11-18 14:57:07,907] WARNING django.request: Method Not Allowed: /api/v1/brands/ce317a43-f2b8-49b5-bcc4-d2c38d3be808/analysis-runs/9a84c607-4be6-407b-ad7a-19f41e58a200/
+....[2026-11-18 14:57:11,895] WARNING django.request: Unauthorized: /api/v1/brands/f8851fa3-5bc6-4043-a305-cccad08593f5/analysis-runs/start/
+.....[2026-11-18 14:57:16,285] WARNING django.request: Bad Request: /api/v1/brands/scan/
+[2026-11-18 14:57:16,287] WARNING django.request: Bad Request: /api/v1/brands/scan/
+[2026-11-18 14:57:16,287] WARNING django.request: Bad Request: /api/v1/brands/scan/
+[2026-11-18 14:57:16,287] WARNING django.request: Bad Request: /api/v1/brands/scan/
+[2026-11-18 14:57:16,287] WARNING django.request: Bad Request: /api/v1/brands/scan/
+.[2026-11-18 14:57:17,036] WARNING django.request: Unauthorized: /api/v1/brands/scan/
+.[2026-11-18 14:57:17,775] WARNING brand.engines.auto_scan_engine: Auto scan scrape failed for https://scan-brand.com: RuntimeError: network down
+[2026-11-18 14:57:17,776] WARNING django.request: Bad Request: /api/v1/brands/scan/
+[2026-11-18 14:57:17,782] WARNING brand.engines.auto_scan_engine: Auto scan timed out for https://scan-brand.com after 60 seconds
+[2026-11-18 14:57:17,783] WARNING django.request: Bad Request: /api/v1/brands/scan/
+...[2026-11-18 14:57:20,205] WARNING brand.engines.auto_scan_engine: Auto scan scrape failed for https://scan-brand.com: HTTP 404
+[2026-11-18 14:57:20,207] WARNING django.request: Bad Request: /api/v1/brands/scan/
+.[2026-11-18 14:57:21,042] INFO brand.analyzers.competitor_analyzer: Creating BrandCompetitor rows for brand=77f8a973-6234-4bcd-b2fd-ae23dfa1ea7d from identified competitors (direct=1 indirect=0)
+[2026-11-18 14:57:21,042] INFO brand.analyzers.competitor_analyzer: Updated existing BrandCompetitor brand=77f8a973-6234-4bcd-b2fd-ae23dfa1ea7d competitor=Example Co website=https://www.example.com is_direct=True
+[2026-11-18 14:57:21,042] INFO brand.analyzers.competitor_analyzer: BrandCompetitor creation summary brand=77f8a973-6234-4bcd-b2fd-ae23dfa1ea7d created=0 updated=1 skipped_missing_website=0
+.............[2026-11-18 14:57:31,885] WARNING django.request: Bad Request: /api/v1/brands/
+[2026-11-18 14:57:31,885] WARNING django.request: Bad Request: /api/v1/brands/
+[2026-11-18 14:57:31,885] WARNING django.request: Bad Request: /api/v1/brands/
+[2026-11-18 14:57:31,885] WARNING django.request: Bad Request: /api/v1/brands/
+...[2026-11-18 14:57:35,206] WARNING django.request: Not Found: /api/v1/brands/ff3a7e20-a5c7-4aee-903f-beb7590aa825/services/check/
+.[2026-11-18 14:57:36,006] WARNING django.request: Unauthorized: /api/v1/brands/a03a79f6-c142-4de7-b8c1-ccd1c5138a5b/services/check/
+.[2026-11-18 14:57:36,783] WARNING django.request: Bad Request: /api/v1/brands/f5b2de31-ebe0-4af4-90b4-457f281f2541/services/check/
+......[2026-11-18 14:57:41,878] WARNING django.request: Bad Request: /api/v1/brands/e2a098c3-20ea-4a99-82fc-9312684ca67a/services/manage/
+[2026-11-18 14:57:41,886] WARNING django.request: Bad Request: /api/v1/brands/e2a098c3-20ea-4a99-82fc-9312684ca67a/services/manage/
+.[2026-11-18 14:57:42,645] WARNING django.request: Bad Request: /api/v1/brands/a33e009a-82da-4e25-b7ae-1dd5955615a2/services/manage/
+.[2026-11-18 14:57:43,442] WARNING django.request: Unauthorized: /api/v1/brands/28d519de-0e18-4b7f-bddb-aa25cf268b47/services/manage/
+[2026-11-18 14:57:43,443] WARNING django.request: Unauthorized: /api/v1/brands/28d519de-0e18-4b7f-bddb-aa25cf268b47/services/manage/
+.[2026-11-18 14:57:45,002] WARNING django.request: Not Found: /api/v1/brands/f7f394e1-2bef-46f2-8ab0-ce33a485964e/services/manage/
+[2026-11-18 14:57:45,002] WARNING django.request: Not Found: /api/v1/brands/f7f394e1-2bef-46f2-8ab0-ce33a485964e/services/manage/
+[2026-11-18 14:57:45,013] WARNING django.request: Not Found: /api/v1/brands/f7f394e1-2bef-46f2-8ab0-ce33a485964e/services/manage/14ed0c91-c1d6-4c0c-a8df-79aeff514c65/
+[2026-11-18 14:57:45,017] WARNING django.request: Not Found: /api/v1/brands/f7f394e1-2bef-46f2-8ab0-ce33a485964e/services/manage/14ed0c91-c1d6-4c0c-a8df-79aeff514c65/
+.[2026-11-18 14:57:46,050] WARNING django.request: Bad Request: /api/v1/brands/41dc94a8-0743-454c-a89f-c853cc316034/services/manage/58056f5b-d706-431c-9c68-b8a4615471a7/
+......[2026-11-18 14:57:51,870] WARNING django.request: Not Found: /api/v1/brands/ae8bdef6-1bb4-41da-a530-9964e15333ff/services/
+..[2026-11-18 14:57:53,411] WARNING django.request: Unauthorized: /api/v1/brands/a3f39fa7-319a-4e13-b094-bdabebb87d79/services/
+.[2026-11-18 14:57:54,248] INFO brand.analyzers.competitor_analyzer: Starting real competitor analysis for Serenity Home Massage
+[2026-11-18 14:57:54,256] INFO brand.analyzers.competitor_analyzer: Competitor analysis context brand_id=f926af2a-9bfc-48e5-b251-6caa9b230799 brand_name=Serenity Home Massage website_url=https://competitor-location-brand.com
+[2026-11-18 14:57:54,261] INFO brand.analyzers.competitor_analyzer: Loaded stored competitors brand_id=f926af2a-9bfc-48e5-b251-6caa9b230799 count=0
+[2026-11-18 14:57:54,261] INFO brand.analyzers.competitor_analyzer: No stored competitors found for brand_id=f926af2a-9bfc-48e5-b251-6caa9b230799. Running identify_competitors...
+[2026-11-18 14:57:54,261] INFO brand.analyzers.competitor_analyzer: identify_competitors returned brand_id=f926af2a-9bfc-48e5-b251-6caa9b230799 direct=0 indirect=0
+[2026-11-18 14:57:54,261] INFO brand.analyzers.competitor_analyzer: Creating BrandCompetitor rows for brand=f926af2a-9bfc-48e5-b251-6caa9b230799 from identified competitors (direct=0 indirect=0)
+[2026-11-18 14:57:54,261] INFO brand.analyzers.competitor_analyzer: BrandCompetitor creation summary brand=f926af2a-9bfc-48e5-b251-6caa9b230799 created=0 updated=0 skipped_missing_website=0
+[2026-11-18 14:57:54,263] INFO brand.analyzers.competitor_analyzer: Reloaded competitors after create brand_id=f926af2a-9bfc-48e5-b251-6caa9b230799 count=0
+[2026-11-18 14:57:54,263] INFO brand.analyzers.competitor_analyzer: Competitor analyses ready: total_valid=0 (saved=0, new=0)
+[2026-11-18 14:57:54,263] WARNING brand.analyzers.competitor_analyzer: No valid competitor analyses available; using simple fallback
+.[2026-11-18 14:57:55,141] INFO brand.services.full_analysis: step.website_data.check_existing | brand=cc1eefaf-369d-45c8-b847-c822955123e9 identity=f71ced30-198f-4566-b7b1-2cb1ab940020
+[2026-11-18 14:57:55,141] INFO brand.services.full_analysis: step.website_data.compute_start | brand=cc1eefaf-369d-45c8-b847-c822955123e9 identity=f71ced30-198f-4566-b7b1-2cb1ab940020
+[2026-11-18 14:57:55,152] INFO brand.services.full_analysis: step.website_data.compute_done | brand=cc1eefaf-369d-45c8-b847-c822955123e9 identity=f71ced30-198f-4566-b7b1-2cb1ab940020 website_data=3b59647d-99a1-45ea-8040-1efbf8db638e
+[2026-11-18 14:57:55,152] INFO brand.services.full_analysis: step.core_analysis.check_existing | brand=cc1eefaf-369d-45c8-b847-c822955123e9 identity=f71ced30-198f-4566-b7b1-2cb1ab940020
+[2026-11-18 14:57:55,167] INFO brand.services.full_analysis: step.core_analysis.compute_start | brand=cc1eefaf-369d-45c8-b847-c822955123e9 fallback_industry=Wellness website_data=3b59647d-99a1-45ea-8040-1efbf8db638e
+[2026-11-18 14:57:55,169] INFO brand.services.full_analysis: step.core_analysis.compute_done | brand=cc1eefaf-369d-45c8-b847-c822955123e9 identity=f71ced30-198f-4566-b7b1-2cb1ab940020 core_analysis=a1e92ff5-9164-4060-97ab-787450d1854b
+.[2026-11-18 14:57:56,069] INFO brand.services.full_analysis: step.website_data.check_existing | brand=3289e0f6-fadb-42b2-86b5-1055a7521483 identity=8d0f829d-6709-4f6b-9847-eb134df19f3f
+[2026-11-18 14:57:56,077] INFO brand.services.full_analysis: step.website_data.compute_start | brand=3289e0f6-fadb-42b2-86b5-1055a7521483 identity=8d0f829d-6709-4f6b-9847-eb134df19f3f
+[2026-11-18 14:57:56,077] INFO brand.services.full_analysis: step.website_data.compute_done | brand=3289e0f6-fadb-42b2-86b5-1055a7521483 identity=8d0f829d-6709-4f6b-9847-eb134df19f3f website_data=16800972-8bad-444d-80e8-48f32e20a535
+[2026-11-18 14:57:56,077] INFO brand.services.full_analysis: step.core_analysis.check_existing | brand=3289e0f6-fadb-42b2-86b5-1055a7521483 identity=8d0f829d-6709-4f6b-9847-eb134df19f3f
+[2026-11-18 14:57:56,092] INFO brand.services.full_analysis: step.core_analysis.compute_start | brand=3289e0f6-fadb-42b2-86b5-1055a7521483 fallback_industry=Wellness website_data=16800972-8bad-444d-80e8-48f32e20a535
+[2026-11-18 14:57:56,094] INFO brand.services.full_analysis: step.core_analysis.compute_done | brand=3289e0f6-fadb-42b2-86b5-1055a7521483 identity=8d0f829d-6709-4f6b-9847-eb134df19f3f core_analysis=ea36f041-0f73-4f63-8642-0bb73ff454f3
+......................[2026-11-18 14:58:02,888] INFO brand.services.full_analysis: step.website_data.check_existing | brand=ea990c4a-2b48-403f-9e70-3b93aaa2e588 identity=4d6b96f7-98be-4784-bbe6-929a6467d8b7
+[2026-11-18 14:58:02,892] INFO brand.services.full_analysis: step.website_data.cache_hit | brand=ea990c4a-2b48-403f-9e70-3b93aaa2e588 identity=4d6b96f7-98be-4784-bbe6-929a6467d8b7 website_data=f293f22c-990f-480e-b2c6-92003e13a3e5 owned=True updated_at=2026-11-18 11:18:02.811163+00:00
+[2026-11-18 14:58:02,975] INFO brand.services.full_analysis: step.website_data.check_existing | brand=e5dc38c8-d28c-4830-8e8d-33a606557887 identity=4d6b96f7-98be-4784-bbe6-929a6467d8b7
+[2026-11-18 14:58:02,980] INFO brand.services.full_analysis: step.website_data.cache_hit | brand=e5dc38c8-d28c-4830-8e8d-33a606557887 identity=4d6b96f7-98be-4784-bbe6-929a6467d8b7 website_data=298e4fe3-1d30-4007-9e6a-511ed57ff27e owned=False updated_at=2026-11-18 11:23:02.814210+00:00
+.[2026-11-18 14:58:04,651] INFO brand.services.full_analysis: step.website_data.check_existing | brand=3ad85a94-a2e9-4ecc-af78-a60e734d96e6 identity=9758cc9e-faef-4297-a0e0-e3887532759e
+[2026-11-18 14:58:04,651] INFO brand.services.full_analysis: step.website_data.cache_expired | brand=3ad85a94-a2e9-4ecc-af78-a60e734d96e6 website_data=272f6b2d-0d56-4aaa-b82c-49158e2efd7d age_days=40 max_age_days=30
+[2026-11-18 14:58:04,651] INFO brand.services.full_analysis: step.website_data.compute_start | brand=3ad85a94-a2e9-4ecc-af78-a60e734d96e6 identity=9758cc9e-faef-4297-a0e0-e3887532759e
+[2026-11-18 14:58:04,651] INFO brand.services.full_analysis: step.website_data.compute_done | brand=3ad85a94-a2e9-4ecc-af78-a60e734d96e6 identity=9758cc9e-faef-4297-a0e0-e3887532759e website_data=272f6b2d-0d56-4aaa-b82c-49158e2efd7d
+.[2026-11-18 14:58:06,277] INFO brand.services.full_analysis: step.website_data.check_existing | brand=15c714f8-d876-4b39-9e8a-eb6781392ae3 identity=13ac5956-b52a-4fff-9152-cd2ccbb92574
+[2026-11-18 14:58:06,282] INFO brand.services.full_analysis: step.website_data.force_refresh | brand=15c714f8-d876-4b39-9e8a-eb6781392ae3 identity=13ac5956-b52a-4fff-9152-cd2ccbb92574 website_data=none
+[2026-11-18 14:58:06,282] INFO brand.services.full_analysis: step.website_data.compute_start | brand=15c714f8-d876-4b39-9e8a-eb6781392ae3 identity=13ac5956-b52a-4fff-9152-cd2ccbb92574
+[2026-11-18 14:58:06,284] INFO brand.services.full_analysis: step.website_data.compute_done | brand=15c714f8-d876-4b39-9e8a-eb6781392ae3 identity=13ac5956-b52a-4fff-9152-cd2ccbb92574 website_data=478f6c83-e28d-4450-8367-9c26219958d5
+[2026-11-18 14:58:06,287] INFO brand.services.full_analysis: step.core_analysis.check_existing | brand=15c714f8-d876-4b39-9e8a-eb6781392ae3 identity=13ac5956-b52a-4fff-9152-cd2ccbb92574
+[2026-11-18 14:58:06,292] INFO brand.services.full_analysis: step.core_analysis.force_refresh | brand=15c714f8-d876-4b39-9e8a-eb6781392ae3 identity=13ac5956-b52a-4fff-9152-cd2ccbb92574 core_analysis=none
+[2026-11-18 14:58:06,293] INFO brand.services.full_analysis: step.core_analysis.compute_start | brand=15c714f8-d876-4b39-9e8a-eb6781392ae3 fallback_industry=SaaS website_data=478f6c83-e28d-4450-8367-9c26219958d5
+[2026-11-18 14:58:06,295] INFO brand.services.full_analysis: step.core_analysis.compute_done | brand=15c714f8-d876-4b39-9e8a-eb6781392ae3 identity=13ac5956-b52a-4fff-9152-cd2ccbb92574 core_analysis=ac0a61a3-a234-4f79-a11f-1ba3d335d523
+[2026-11-18 14:58:06,367] INFO brand.services.full_analysis: step.website_data.check_existing | brand=acbcea83-d6dd-4c55-862c-ec70f90e0d4d identity=13ac5956-b52a-4fff-9152-cd2ccbb92574
+[2026-11-18 14:58:06,369] INFO brand.services.full_analysis: step.website_data.cache_hit | brand=acbcea83-d6dd-4c55-862c-ec70f90e0d4d identity=13ac5956-b52a-4fff-9152-cd2ccbb92574 website_data=e2fa608a-0f25-4cd8-b432-1e1197e512c1 owned=True updated_at=2026-11-18 11:28:06.201762+00:00
+.[2026-11-18 14:58:08,059] INFO brand.services.full_analysis: step.website_data.check_existing | brand=74279273-1c39-41d1-9ca3-3a4473aabac8 identity=a6e9d6d1-606a-43aa-84c4-55e28d1f0427
+[2026-11-18 14:58:08,063] INFO brand.services.full_analysis: step.website_data.force_refresh | brand=74279273-1c39-41d1-9ca3-3a4473aabac8 identity=a6e9d6d1-606a-43aa-84c4-55e28d1f0427 website_data=469bb38a-ee66-4ad5-8c85-2fed4c0e993d
+[2026-11-18 14:58:08,065] INFO brand.services.full_analysis: step.website_data.compute_start | brand=74279273-1c39-41d1-9ca3-3a4473aabac8 identity=a6e9d6d1-606a-43aa-84c4-55e28d1f0427
+[2026-11-18 14:58:08,069] INFO brand.services.full_analysis: step.website_data.compute_done | brand=74279273-1c39-41d1-9ca3-3a4473aabac8 identity=a6e9d6d1-606a-43aa-84c4-55e28d1f0427 website_data=469bb38a-ee66-4ad5-8c85-2fed4c0e993d
+.[2026-11-18 14:58:10,004] INFO brand.services.full_analysis: step.website_data.check_existing | brand=a5af8681-ce3f-4eea-87ab-fb36ac0736db identity=26febf88-d80e-488b-a6b8-068453058aae
+[2026-11-18 14:58:10,006] INFO brand.services.full_analysis: step.website_data.cache_hit | brand=a5af8681-ce3f-4eea-87ab-fb36ac0736db identity=26febf88-d80e-488b-a6b8-068453058aae website_data=d51b8ff4-8a74-4f6f-a4c8-f06a85806735 owned=True updated_at=2026-11-18 11:28:09.937284+00:00
+.......[2026-11-18 14:58:13,778] WARNING django.request: Bad Request: /api/v1/brands/scan/
+........[2026-11-18 14:58:20,965] INFO brand.analyzers.competitor_analyzer: Starting real competitor analysis for Emirates Driving Institute
+[2026-11-18 14:58:20,971] INFO brand.analyzers.competitor_analyzer: Competitor analysis context brand_id=f7ff43e4-b508-4739-bc37-19a16d3b011a brand_name=Emirates Driving Institute website_url=https://edi-resolve.example.com
+[2026-11-18 14:58:20,975] INFO brand.analyzers.competitor_analyzer: Loaded stored competitors brand_id=f7ff43e4-b508-4739-bc37-19a16d3b011a count=0
+[2026-11-18 14:58:20,975] INFO brand.analyzers.competitor_analyzer: No stored competitors found for brand_id=f7ff43e4-b508-4739-bc37-19a16d3b011a. Running identify_competitors...
+[2026-11-18 14:58:20,975] INFO brand.analyzers.competitor_analyzer: identify_competitors returned brand_id=f7ff43e4-b508-4739-bc37-19a16d3b011a direct=0 indirect=0
+[2026-11-18 14:58:20,975] INFO brand.analyzers.competitor_analyzer: Creating BrandCompetitor rows for brand=f7ff43e4-b508-4739-bc37-19a16d3b011a from identified competitors (direct=0 indirect=0)
+[2026-11-18 14:58:20,975] INFO brand.analyzers.competitor_analyzer: BrandCompetitor creation summary brand=f7ff43e4-b508-4739-bc37-19a16d3b011a created=0 updated=0 skipped_missing_website=0
+[2026-11-18 14:58:20,977] INFO brand.analyzers.competitor_analyzer: Reloaded competitors after create brand_id=f7ff43e4-b508-4739-bc37-19a16d3b011a count=0
+[2026-11-18 14:58:20,977] INFO brand.analyzers.competitor_analyzer: Competitor analyses ready: total_valid=0 (saved=0, new=0)
+[2026-11-18 14:58:20,977] WARNING brand.analyzers.competitor_analyzer: No valid competitor analyses available; using simple fallback
+........[2026-11-18 14:58:29,405] INFO brand.services.full_analysis: full_analysis.start | brand=619d2a44-9897-4021-8249-cdbddd63b9fb include_social=True include_competitors=True force_refresh=False persist_run=True
+[2026-11-18 14:58:29,408] INFO brand.services.full_analysis: full_analysis.run_created | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=0cddc957-e532-4353-b82a-1d6b59a8ecb3
+[2026-11-18 14:58:29,414] INFO brand.services.full_analysis: full_analysis.run_running | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=0cddc957-e532-4353-b82a-1d6b59a8ecb3
+[2026-11-18 14:58:29,416] INFO brand.services.full_analysis: full_analysis.section_running | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=0cddc957-e532-4353-b82a-1d6b59a8ecb3 section=website_scrape
+[2026-11-18 14:58:29,417] INFO brand.services.full_analysis: step.website_data.check_existing | brand=619d2a44-9897-4021-8249-cdbddd63b9fb identity=a4d04964-446f-4396-ac3c-2b883e1ddaee
+[2026-11-18 14:58:29,422] INFO brand.services.full_analysis: step.website_data.cache_hit | brand=619d2a44-9897-4021-8249-cdbddd63b9fb identity=a4d04964-446f-4396-ac3c-2b883e1ddaee website_data=8ed92c8e-19f0-4436-a101-5eeb0a3a23d4 owned=True updated_at=2026-11-18 11:28:29.318699+00:00
+[2026-11-18 14:58:29,424] INFO brand.services.full_analysis: full_analysis.section_completed | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=0cddc957-e532-4353-b82a-1d6b59a8ecb3 section=website_scrape
+[2026-11-18 14:58:29,424] INFO brand.services.full_analysis: full_analysis.step_done | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=0cddc957-e532-4353-b82a-1d6b59a8ecb3 step=website_data elapsed=0.01s website_data=8ed92c8e-19f0-4436-a101-5eeb0a3a23d4
+[2026-11-18 14:58:29,425] INFO brand.services.full_analysis: full_analysis.section_running | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=0cddc957-e532-4353-b82a-1d6b59a8ecb3 section=core_analysis
+[2026-11-18 14:58:29,426] INFO brand.services.full_analysis: step.core_analysis.check_existing | brand=619d2a44-9897-4021-8249-cdbddd63b9fb identity=a4d04964-446f-4396-ac3c-2b883e1ddaee
+[2026-11-18 14:58:29,431] INFO brand.services.full_analysis: step.core_analysis.cache_hit | brand=619d2a44-9897-4021-8249-cdbddd63b9fb identity=a4d04964-446f-4396-ac3c-2b883e1ddaee core_analysis=8a032a75-dfd6-496a-adc9-6b81ac9db2a3 owned=True updated_at=2026-11-18 11:28:29.320695+00:00
+[2026-11-18 14:58:29,433] INFO brand.services.full_analysis: full_analysis.section_completed | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=0cddc957-e532-4353-b82a-1d6b59a8ecb3 section=core_analysis
+[2026-11-18 14:58:29,433] INFO brand.services.full_analysis: full_analysis.step_done | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=0cddc957-e532-4353-b82a-1d6b59a8ecb3 step=core_analysis elapsed=0.01s core_analysis=8a032a75-dfd6-496a-adc9-6b81ac9db2a3
+[2026-11-18 14:58:29,435] INFO brand.services.full_analysis: full_analysis.section_running | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=0cddc957-e532-4353-b82a-1d6b59a8ecb3 section=quality_validation
+[2026-11-18 14:58:29,435] WARNING brand.quality_validator: No validation rules for industry: Driving Institute
+[2026-11-18 14:58:29,435] WARNING brand.quality_validator: No validation rules for industry: Driving Institute
+[2026-11-18 14:58:29,435] INFO brand.services.full_analysis: full_analysis.step_done | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=0cddc957-e532-4353-b82a-1d6b59a8ecb3 step=quality elapsed=0.00s is_valid=True confidence=85 issues=0
+[2026-11-18 14:58:29,437] INFO brand.services.full_analysis: full_analysis.section_completed | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=0cddc957-e532-4353-b82a-1d6b59a8ecb3 section=quality_validation
+[2026-11-18 14:58:29,437] INFO brand.engines.brand_memory: Brand memory created for Driving Institute with professional tone
+[2026-11-18 14:58:29,437] INFO brand.services.full_analysis: full_analysis.step_done | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=0cddc957-e532-4353-b82a-1d6b59a8ecb3 step=memory_emotion elapsed=0.00s
+[2026-11-18 14:58:29,437] INFO brand.services.full_analysis: full_analysis.parallel_start | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=0cddc957-e532-4353-b82a-1d6b59a8ecb3 social=True audience=true competitors=True
+[2026-11-18 14:58:29,439] INFO brand.services.full_analysis: full_analysis.section_running | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=0cddc957-e532-4353-b82a-1d6b59a8ecb3 section=social
+[2026-11-18 14:58:29,441] INFO brand.services.full_analysis: full_analysis.section_running | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=0cddc957-e532-4353-b82a-1d6b59a8ecb3 section=audience
+[2026-11-18 14:58:29,443] INFO brand.services.full_analysis: full_analysis.section_running | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=0cddc957-e532-4353-b82a-1d6b59a8ecb3 section=competitors
+[2026-11-18 14:58:29,443] INFO brand.services.full_analysis: step.competitors.check_existing | brand=619d2a44-9897-4021-8249-cdbddd63b9fb core_analysis=8a032a75-dfd6-496a-adc9-6b81ac9db2a3
+[2026-11-18 14:58:29,449] INFO brand.services.full_analysis: step.social.skipped | brand=619d2a44-9897-4021-8249-cdbddd63b9fb reason=no_profiles
+[2026-11-18 14:58:29,451] INFO brand.services.full_analysis: full_analysis.section_completed | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=0cddc957-e532-4353-b82a-1d6b59a8ecb3 section=audience
+[2026-11-18 14:58:29,455] INFO brand.services.full_analysis: step.competitors.compute_start | brand=619d2a44-9897-4021-8249-cdbddd63b9fb core_analysis=8a032a75-dfd6-496a-adc9-6b81ac9db2a3 stored_row=5285d39a-e64a-49ed-9041-a028583ed4be
+[2026-11-18 14:58:29,456] INFO brand.analyzers.competitor_analyzer: Starting real competitor analysis for Emirates Driving Institute
+[2026-11-18 14:58:29,457] INFO brand.services.full_analysis: full_analysis.section_completed | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=0cddc957-e532-4353-b82a-1d6b59a8ecb3 section=social
+[2026-11-18 14:58:29,460] INFO brand.analyzers.competitor_analyzer: Competitor analysis context brand_id=619d2a44-9897-4021-8249-cdbddd63b9fb brand_name=Emirates Driving Institute website_url=https://edi-qa6.example.com
+[2026-11-18 14:58:29,464] INFO brand.analyzers.competitor_analyzer: Loaded stored competitors brand_id=619d2a44-9897-4021-8249-cdbddd63b9fb count=1
+[2026-11-18 14:58:29,465] INFO brand.analyzers.competitor_analyzer: Competitor analyses ready: total_valid=1 (saved=1, new=0)
+[2026-11-18 14:58:29,469] INFO brand.services.full_analysis: step.competitors.compute_done | brand=619d2a44-9897-4021-8249-cdbddd63b9fb core_analysis=8a032a75-dfd6-496a-adc9-6b81ac9db2a3
+[2026-11-18 14:58:29,470] INFO brand.services.full_analysis: full_analysis.section_completed | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=0cddc957-e532-4353-b82a-1d6b59a8ecb3 section=competitors
+[2026-11-18 14:58:29,470] INFO brand.services.full_analysis: full_analysis.parallel_done | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=0cddc957-e532-4353-b82a-1d6b59a8ecb3 elapsed=0.03s social_active=0 social_missing=6 competitors=True
+[2026-11-18 14:58:29,472] INFO brand.services.full_analysis: full_analysis.section_running | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=0cddc957-e532-4353-b82a-1d6b59a8ecb3 section=recommendations
+[2026-11-18 14:58:29,473] INFO brand.services.full_analysis: full_analysis.section_completed | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=0cddc957-e532-4353-b82a-1d6b59a8ecb3 section=recommendations
+[2026-11-18 14:58:29,473] INFO brand.services.full_analysis: full_analysis.step_done | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=0cddc957-e532-4353-b82a-1d6b59a8ecb3 step=recommendations elapsed=0.00s
+[2026-11-18 14:58:29,481] INFO brand.services.full_analysis: full_analysis.step_done | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=0cddc957-e532-4353-b82a-1d6b59a8ecb3 step=brand_profile elapsed=0.01s
+[2026-11-18 14:58:29,486] INFO brand.services.full_analysis: full_analysis.run_completed | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=0cddc957-e532-4353-b82a-1d6b59a8ecb3
+[2026-11-18 14:58:29,486] INFO brand.services.full_analysis: full_analysis.completed | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=0cddc957-e532-4353-b82a-1d6b59a8ecb3
+[2026-11-18 14:58:29,488] INFO brand.services.full_analysis: full_analysis.start | brand=619d2a44-9897-4021-8249-cdbddd63b9fb include_social=True include_competitors=True force_refresh=False persist_run=True
+[2026-11-18 14:58:29,489] INFO brand.services.full_analysis: full_analysis.run_created | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=52b3d530-f9dd-4301-9346-88726f77866e
+[2026-11-18 14:58:29,492] INFO brand.services.full_analysis: full_analysis.run_running | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=52b3d530-f9dd-4301-9346-88726f77866e
+[2026-11-18 14:58:29,495] INFO brand.services.full_analysis: full_analysis.section_running | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=52b3d530-f9dd-4301-9346-88726f77866e section=website_scrape
+[2026-11-18 14:58:29,495] INFO brand.services.full_analysis: step.website_data.check_existing | brand=619d2a44-9897-4021-8249-cdbddd63b9fb identity=a4d04964-446f-4396-ac3c-2b883e1ddaee
+[2026-11-18 14:58:29,498] INFO brand.services.full_analysis: step.website_data.cache_hit | brand=619d2a44-9897-4021-8249-cdbddd63b9fb identity=a4d04964-446f-4396-ac3c-2b883e1ddaee website_data=8ed92c8e-19f0-4436-a101-5eeb0a3a23d4 owned=True updated_at=2026-11-18 11:28:29.318699+00:00
+[2026-11-18 14:58:29,500] INFO brand.services.full_analysis: full_analysis.section_completed | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=52b3d530-f9dd-4301-9346-88726f77866e section=website_scrape
+[2026-11-18 14:58:29,500] INFO brand.services.full_analysis: full_analysis.step_done | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=52b3d530-f9dd-4301-9346-88726f77866e step=website_data elapsed=0.01s website_data=8ed92c8e-19f0-4436-a101-5eeb0a3a23d4
+[2026-11-18 14:58:29,501] INFO brand.services.full_analysis: full_analysis.section_running | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=52b3d530-f9dd-4301-9346-88726f77866e section=core_analysis
+[2026-11-18 14:58:29,502] INFO brand.services.full_analysis: step.core_analysis.check_existing | brand=619d2a44-9897-4021-8249-cdbddd63b9fb identity=a4d04964-446f-4396-ac3c-2b883e1ddaee
+[2026-11-18 14:58:29,504] INFO brand.services.full_analysis: step.core_analysis.cache_hit | brand=619d2a44-9897-4021-8249-cdbddd63b9fb identity=a4d04964-446f-4396-ac3c-2b883e1ddaee core_analysis=8a032a75-dfd6-496a-adc9-6b81ac9db2a3 owned=True updated_at=2026-11-18 11:28:29.320695+00:00
+[2026-11-18 14:58:29,505] INFO brand.services.full_analysis: full_analysis.section_completed | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=52b3d530-f9dd-4301-9346-88726f77866e section=core_analysis
+[2026-11-18 14:58:29,505] INFO brand.services.full_analysis: full_analysis.step_done | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=52b3d530-f9dd-4301-9346-88726f77866e step=core_analysis elapsed=0.01s core_analysis=8a032a75-dfd6-496a-adc9-6b81ac9db2a3
+[2026-11-18 14:58:29,507] INFO brand.services.full_analysis: full_analysis.section_running | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=52b3d530-f9dd-4301-9346-88726f77866e section=quality_validation
+[2026-11-18 14:58:29,507] WARNING brand.quality_validator: No validation rules for industry: Driving Institute
+[2026-11-18 14:58:29,507] WARNING brand.quality_validator: No validation rules for industry: Driving Institute
+[2026-11-18 14:58:29,507] INFO brand.services.full_analysis: full_analysis.step_done | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=52b3d530-f9dd-4301-9346-88726f77866e step=quality elapsed=0.00s is_valid=True confidence=85 issues=0
+[2026-11-18 14:58:29,509] INFO brand.services.full_analysis: full_analysis.section_completed | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=52b3d530-f9dd-4301-9346-88726f77866e section=quality_validation
+[2026-11-18 14:58:29,509] INFO brand.engines.brand_memory: Brand memory created for Driving Institute with professional tone
+[2026-11-18 14:58:29,509] INFO brand.services.full_analysis: full_analysis.step_done | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=52b3d530-f9dd-4301-9346-88726f77866e step=memory_emotion elapsed=0.00s
+[2026-11-18 14:58:29,509] INFO brand.services.full_analysis: full_analysis.parallel_start | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=52b3d530-f9dd-4301-9346-88726f77866e social=True audience=true competitors=True
+[2026-11-18 14:58:29,513] INFO brand.services.full_analysis: full_analysis.section_running | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=52b3d530-f9dd-4301-9346-88726f77866e section=social
+[2026-11-18 14:58:29,513] INFO brand.services.full_analysis: full_analysis.section_running | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=52b3d530-f9dd-4301-9346-88726f77866e section=audience
+[2026-11-18 14:58:29,513] INFO brand.services.full_analysis: full_analysis.section_running | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=52b3d530-f9dd-4301-9346-88726f77866e section=competitors
+[2026-11-18 14:58:29,513] INFO brand.services.full_analysis: step.competitors.check_existing | brand=619d2a44-9897-4021-8249-cdbddd63b9fb core_analysis=8a032a75-dfd6-496a-adc9-6b81ac9db2a3
+[2026-11-18 14:58:29,513] INFO brand.services.full_analysis: step.social.skipped | brand=619d2a44-9897-4021-8249-cdbddd63b9fb reason=no_profiles
+[2026-11-18 14:58:29,513] INFO brand.services.full_analysis: full_analysis.section_completed | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=52b3d530-f9dd-4301-9346-88726f77866e section=audience
+[2026-11-18 14:58:29,513] INFO brand.services.full_analysis: step.competitors.compute_start | brand=619d2a44-9897-4021-8249-cdbddd63b9fb core_analysis=8a032a75-dfd6-496a-adc9-6b81ac9db2a3 stored_row=5285d39a-e64a-49ed-9041-a028583ed4be
+[2026-11-18 14:58:29,513] INFO brand.analyzers.competitor_analyzer: Starting real competitor analysis for Emirates Driving Institute
+[2026-11-18 14:58:29,513] INFO brand.services.full_analysis: full_analysis.section_completed | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=52b3d530-f9dd-4301-9346-88726f77866e section=social
+[2026-11-18 14:58:29,513] INFO brand.analyzers.competitor_analyzer: Competitor analysis context brand_id=619d2a44-9897-4021-8249-cdbddd63b9fb brand_name=Emirates Driving Institute website_url=https://edi-qa6.example.com
+[2026-11-18 14:58:29,526] INFO brand.analyzers.competitor_analyzer: Loaded stored competitors brand_id=619d2a44-9897-4021-8249-cdbddd63b9fb count=1
+[2026-11-18 14:58:29,526] INFO brand.analyzers.competitor_analyzer: Competitor analyses ready: total_valid=1 (saved=1, new=0)
+[2026-11-18 14:58:29,526] INFO brand.services.full_analysis: step.competitors.compute_done | brand=619d2a44-9897-4021-8249-cdbddd63b9fb core_analysis=8a032a75-dfd6-496a-adc9-6b81ac9db2a3
+[2026-11-18 14:58:29,526] INFO brand.services.full_analysis: full_analysis.section_completed | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=52b3d530-f9dd-4301-9346-88726f77866e section=competitors
+[2026-11-18 14:58:29,526] INFO brand.services.full_analysis: full_analysis.parallel_done | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=52b3d530-f9dd-4301-9346-88726f77866e elapsed=0.03s social_active=0 social_missing=6 competitors=True
+[2026-11-18 14:58:29,526] INFO brand.services.full_analysis: full_analysis.section_running | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=52b3d530-f9dd-4301-9346-88726f77866e section=recommendations
+[2026-11-18 14:58:29,526] INFO brand.services.full_analysis: full_analysis.section_completed | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=52b3d530-f9dd-4301-9346-88726f77866e section=recommendations
+[2026-11-18 14:58:29,526] INFO brand.services.full_analysis: full_analysis.step_done | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=52b3d530-f9dd-4301-9346-88726f77866e step=recommendations elapsed=0.00s
+[2026-11-18 14:58:29,526] INFO brand.services.full_analysis: full_analysis.step_done | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=52b3d530-f9dd-4301-9346-88726f77866e step=brand_profile elapsed=0.00s
+[2026-11-18 14:58:29,542] INFO brand.services.full_analysis: full_analysis.run_completed | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=52b3d530-f9dd-4301-9346-88726f77866e
+[2026-11-18 14:58:29,542] INFO brand.services.full_analysis: full_analysis.completed | brand=619d2a44-9897-4021-8249-cdbddd63b9fb run=52b3d530-f9dd-4301-9346-88726f77866e
+.[2026-11-18 14:58:30,718] INFO brand.services.full_analysis: full_analysis.start | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 include_social=True include_competitors=True force_refresh=False persist_run=True
+[2026-11-18 14:58:30,718] INFO brand.services.full_analysis: full_analysis.run_created | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=3bb95051-e3b2-4832-88d9-d85d10ccc564
+[2026-11-18 14:58:30,718] INFO brand.services.full_analysis: full_analysis.run_running | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=3bb95051-e3b2-4832-88d9-d85d10ccc564
+[2026-11-18 14:58:30,718] INFO brand.services.full_analysis: full_analysis.section_running | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=3bb95051-e3b2-4832-88d9-d85d10ccc564 section=website_scrape
+[2026-11-18 14:58:30,718] INFO brand.services.full_analysis: step.website_data.check_existing | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 identity=57c56ffa-742c-4457-8768-81ad0e26a2e5
+[2026-11-18 14:58:30,718] INFO brand.services.full_analysis: step.website_data.cache_hit | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 identity=57c56ffa-742c-4457-8768-81ad0e26a2e5 website_data=e9203c95-2a67-45d8-a067-027f6d0b4418 owned=True updated_at=2026-11-18 11:28:30.632854+00:00
+[2026-11-18 14:58:30,729] INFO brand.services.full_analysis: full_analysis.section_completed | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=3bb95051-e3b2-4832-88d9-d85d10ccc564 section=website_scrape
+[2026-11-18 14:58:30,729] INFO brand.services.full_analysis: full_analysis.step_done | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=3bb95051-e3b2-4832-88d9-d85d10ccc564 step=website_data elapsed=0.01s website_data=e9203c95-2a67-45d8-a067-027f6d0b4418
+[2026-11-18 14:58:30,729] INFO brand.services.full_analysis: full_analysis.section_running | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=3bb95051-e3b2-4832-88d9-d85d10ccc564 section=core_analysis
+[2026-11-18 14:58:30,729] INFO brand.services.full_analysis: step.core_analysis.check_existing | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 identity=57c56ffa-742c-4457-8768-81ad0e26a2e5
+[2026-11-18 14:58:30,733] INFO brand.services.full_analysis: step.core_analysis.cache_hit | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 identity=57c56ffa-742c-4457-8768-81ad0e26a2e5 core_analysis=83aa13cf-123b-4399-a485-87d21a9503ff owned=True updated_at=2026-11-18 11:28:30.633813+00:00
+[2026-11-18 14:58:30,733] INFO brand.services.full_analysis: full_analysis.section_completed | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=3bb95051-e3b2-4832-88d9-d85d10ccc564 section=core_analysis
+[2026-11-18 14:58:30,733] INFO brand.services.full_analysis: full_analysis.step_done | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=3bb95051-e3b2-4832-88d9-d85d10ccc564 step=core_analysis elapsed=0.01s core_analysis=83aa13cf-123b-4399-a485-87d21a9503ff
+[2026-11-18 14:58:30,733] INFO brand.services.full_analysis: full_analysis.section_running | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=3bb95051-e3b2-4832-88d9-d85d10ccc564 section=quality_validation
+[2026-11-18 14:58:30,733] WARNING brand.quality_validator: No validation rules for industry: Driving Institute
+[2026-11-18 14:58:30,733] WARNING brand.quality_validator: No validation rules for industry: Driving Institute
+[2026-11-18 14:58:30,733] INFO brand.services.full_analysis: full_analysis.step_done | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=3bb95051-e3b2-4832-88d9-d85d10ccc564 step=quality elapsed=0.00s is_valid=True confidence=85 issues=0
+[2026-11-18 14:58:30,733] INFO brand.services.full_analysis: full_analysis.section_completed | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=3bb95051-e3b2-4832-88d9-d85d10ccc564 section=quality_validation
+[2026-11-18 14:58:30,733] INFO brand.engines.brand_memory: Brand memory created for Driving Institute with professional tone
+[2026-11-18 14:58:30,733] INFO brand.services.full_analysis: full_analysis.step_done | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=3bb95051-e3b2-4832-88d9-d85d10ccc564 step=memory_emotion elapsed=0.00s
+[2026-11-18 14:58:30,733] INFO brand.services.full_analysis: full_analysis.parallel_start | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=3bb95051-e3b2-4832-88d9-d85d10ccc564 social=True audience=true competitors=True
+[2026-11-18 14:58:30,733] INFO brand.services.full_analysis: full_analysis.section_running | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=3bb95051-e3b2-4832-88d9-d85d10ccc564 section=social
+[2026-11-18 14:58:30,733] INFO brand.services.full_analysis: full_analysis.section_running | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=3bb95051-e3b2-4832-88d9-d85d10ccc564 section=audience
+[2026-11-18 14:58:30,747] INFO brand.services.full_analysis: full_analysis.section_running | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=3bb95051-e3b2-4832-88d9-d85d10ccc564 section=competitors
+[2026-11-18 14:58:30,747] INFO brand.services.full_analysis: step.competitors.check_existing | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 core_analysis=83aa13cf-123b-4399-a485-87d21a9503ff
+[2026-11-18 14:58:30,749] INFO brand.services.full_analysis: step.social.skipped | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 reason=no_profiles
+[2026-11-18 14:58:30,749] INFO brand.services.full_analysis: full_analysis.section_completed | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=3bb95051-e3b2-4832-88d9-d85d10ccc564 section=audience
+[2026-11-18 14:58:30,749] INFO brand.services.full_analysis: step.competitors.compute_start | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 core_analysis=83aa13cf-123b-4399-a485-87d21a9503ff stored_row=85f9b96f-9762-4f89-a842-f8110bb73a98
+[2026-11-18 14:58:30,749] INFO brand.analyzers.competitor_analyzer: Starting real competitor analysis for Emirates Driving Institute
+[2026-11-18 14:58:30,749] INFO brand.services.full_analysis: full_analysis.section_completed | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=3bb95051-e3b2-4832-88d9-d85d10ccc564 section=social
+[2026-11-18 14:58:30,749] INFO brand.analyzers.competitor_analyzer: Competitor analysis context brand_id=12506a3a-cd62-40b0-91b4-246bbb466a30 brand_name=Emirates Driving Institute website_url=https://edi-qa6.example.com
+[2026-11-18 14:58:30,749] INFO brand.analyzers.competitor_analyzer: Loaded stored competitors brand_id=12506a3a-cd62-40b0-91b4-246bbb466a30 count=1
+[2026-11-18 14:58:30,749] INFO brand.analyzers.competitor_analyzer: Competitor analyses ready: total_valid=1 (saved=1, new=0)
+[2026-11-18 14:58:30,765] INFO brand.services.full_analysis: step.competitors.compute_done | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 core_analysis=83aa13cf-123b-4399-a485-87d21a9503ff
+[2026-11-18 14:58:30,767] INFO brand.services.full_analysis: full_analysis.section_completed | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=3bb95051-e3b2-4832-88d9-d85d10ccc564 section=competitors
+[2026-11-18 14:58:30,767] INFO brand.services.full_analysis: full_analysis.parallel_done | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=3bb95051-e3b2-4832-88d9-d85d10ccc564 elapsed=0.03s social_active=0 social_missing=6 competitors=True
+[2026-11-18 14:58:30,767] INFO brand.services.full_analysis: full_analysis.section_running | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=3bb95051-e3b2-4832-88d9-d85d10ccc564 section=recommendations
+[2026-11-18 14:58:30,769] INFO brand.services.full_analysis: full_analysis.section_completed | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=3bb95051-e3b2-4832-88d9-d85d10ccc564 section=recommendations
+[2026-11-18 14:58:30,769] INFO brand.services.full_analysis: full_analysis.step_done | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=3bb95051-e3b2-4832-88d9-d85d10ccc564 step=recommendations elapsed=0.00s
+[2026-11-18 14:58:30,771] INFO brand.services.full_analysis: full_analysis.step_done | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=3bb95051-e3b2-4832-88d9-d85d10ccc564 step=brand_profile elapsed=0.00s
+[2026-11-18 14:58:30,773] INFO brand.services.full_analysis: full_analysis.run_completed | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=3bb95051-e3b2-4832-88d9-d85d10ccc564
+[2026-11-18 14:58:30,773] INFO brand.services.full_analysis: full_analysis.completed | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=3bb95051-e3b2-4832-88d9-d85d10ccc564
+[2026-11-18 14:58:30,779] INFO brand.services.full_analysis: full_analysis.start | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 include_social=True include_competitors=True force_refresh=False persist_run=True
+[2026-11-18 14:58:30,781] INFO brand.services.full_analysis: full_analysis.run_created | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=6d24dbab-137e-4127-a034-0542df4a7000
+[2026-11-18 14:58:30,782] INFO brand.services.full_analysis: full_analysis.run_running | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=6d24dbab-137e-4127-a034-0542df4a7000
+[2026-11-18 14:58:30,782] INFO brand.services.full_analysis: full_analysis.section_running | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=6d24dbab-137e-4127-a034-0542df4a7000 section=website_scrape
+[2026-11-18 14:58:30,782] INFO brand.services.full_analysis: step.website_data.check_existing | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 identity=57c56ffa-742c-4457-8768-81ad0e26a2e5
+[2026-11-18 14:58:30,782] INFO brand.services.full_analysis: step.website_data.cache_hit | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 identity=57c56ffa-742c-4457-8768-81ad0e26a2e5 website_data=e9203c95-2a67-45d8-a067-027f6d0b4418 owned=True updated_at=2026-11-18 11:28:30.632854+00:00
+[2026-11-18 14:58:30,782] INFO brand.services.full_analysis: full_analysis.section_completed | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=6d24dbab-137e-4127-a034-0542df4a7000 section=website_scrape
+[2026-11-18 14:58:30,782] INFO brand.services.full_analysis: full_analysis.step_done | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=6d24dbab-137e-4127-a034-0542df4a7000 step=website_data elapsed=0.01s website_data=e9203c95-2a67-45d8-a067-027f6d0b4418
+[2026-11-18 14:58:30,782] INFO brand.services.full_analysis: full_analysis.section_running | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=6d24dbab-137e-4127-a034-0542df4a7000 section=core_analysis
+[2026-11-18 14:58:30,782] INFO brand.services.full_analysis: step.core_analysis.check_existing | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 identity=57c56ffa-742c-4457-8768-81ad0e26a2e5
+[2026-11-18 14:58:30,782] INFO brand.services.full_analysis: step.core_analysis.cache_hit | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 identity=57c56ffa-742c-4457-8768-81ad0e26a2e5 core_analysis=83aa13cf-123b-4399-a485-87d21a9503ff owned=True updated_at=2026-11-18 11:28:30.633813+00:00
+[2026-11-18 14:58:30,796] INFO brand.services.full_analysis: full_analysis.section_completed | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=6d24dbab-137e-4127-a034-0542df4a7000 section=core_analysis
+[2026-11-18 14:58:30,796] INFO brand.services.full_analysis: full_analysis.step_done | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=6d24dbab-137e-4127-a034-0542df4a7000 step=core_analysis elapsed=0.01s core_analysis=83aa13cf-123b-4399-a485-87d21a9503ff
+[2026-11-18 14:58:30,797] INFO brand.services.full_analysis: full_analysis.section_running | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=6d24dbab-137e-4127-a034-0542df4a7000 section=quality_validation
+[2026-11-18 14:58:30,797] WARNING brand.quality_validator: No validation rules for industry: Driving Institute
+[2026-11-18 14:58:30,797] WARNING brand.quality_validator: No validation rules for industry: Driving Institute
+[2026-11-18 14:58:30,797] INFO brand.services.full_analysis: full_analysis.step_done | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=6d24dbab-137e-4127-a034-0542df4a7000 step=quality elapsed=0.00s is_valid=True confidence=85 issues=0
+[2026-11-18 14:58:30,797] INFO brand.services.full_analysis: full_analysis.section_completed | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=6d24dbab-137e-4127-a034-0542df4a7000 section=quality_validation
+[2026-11-18 14:58:30,797] INFO brand.engines.brand_memory: Brand memory created for Driving Institute with professional tone
+[2026-11-18 14:58:30,797] INFO brand.services.full_analysis: full_analysis.step_done | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=6d24dbab-137e-4127-a034-0542df4a7000 step=memory_emotion elapsed=0.00s
+[2026-11-18 14:58:30,797] INFO brand.services.full_analysis: full_analysis.parallel_start | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=6d24dbab-137e-4127-a034-0542df4a7000 social=True audience=true competitors=True
+[2026-11-18 14:58:30,797] INFO brand.services.full_analysis: full_analysis.section_running | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=6d24dbab-137e-4127-a034-0542df4a7000 section=social
+[2026-11-18 14:58:30,797] INFO brand.services.full_analysis: full_analysis.section_running | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=6d24dbab-137e-4127-a034-0542df4a7000 section=audience
+[2026-11-18 14:58:30,807] INFO brand.services.full_analysis: full_analysis.section_running | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=6d24dbab-137e-4127-a034-0542df4a7000 section=competitors
+[2026-11-18 14:58:30,807] INFO brand.services.full_analysis: step.competitors.check_existing | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 core_analysis=83aa13cf-123b-4399-a485-87d21a9503ff
+[2026-11-18 14:58:30,807] INFO brand.services.full_analysis: step.social.skipped | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 reason=no_profiles
+[2026-11-18 14:58:30,807] INFO brand.services.full_analysis: full_analysis.section_completed | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=6d24dbab-137e-4127-a034-0542df4a7000 section=audience
+[2026-11-18 14:58:30,813] INFO brand.services.full_analysis: step.competitors.compute_start | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 core_analysis=83aa13cf-123b-4399-a485-87d21a9503ff stored_row=85f9b96f-9762-4f89-a842-f8110bb73a98
+[2026-11-18 14:58:30,813] INFO brand.analyzers.competitor_analyzer: Starting real competitor analysis for Emirates Driving Institute
+[2026-11-18 14:58:30,813] INFO brand.services.full_analysis: full_analysis.section_completed | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=6d24dbab-137e-4127-a034-0542df4a7000 section=social
+[2026-11-18 14:58:30,813] INFO brand.analyzers.competitor_analyzer: Competitor analysis context brand_id=12506a3a-cd62-40b0-91b4-246bbb466a30 brand_name=Emirates Driving Institute website_url=https://edi-qa6.example.com
+[2026-11-18 14:58:30,813] INFO brand.analyzers.competitor_analyzer: Loaded stored competitors brand_id=12506a3a-cd62-40b0-91b4-246bbb466a30 count=1
+[2026-11-18 14:58:30,813] INFO brand.analyzers.competitor_analyzer: Competitor analyses ready: total_valid=1 (saved=1, new=0)
+[2026-11-18 14:58:30,829] INFO brand.services.full_analysis: step.competitors.compute_done | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 core_analysis=83aa13cf-123b-4399-a485-87d21a9503ff
+[2026-11-18 14:58:30,829] INFO brand.services.full_analysis: full_analysis.section_completed | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=6d24dbab-137e-4127-a034-0542df4a7000 section=competitors
+[2026-11-18 14:58:30,829] INFO brand.services.full_analysis: full_analysis.parallel_done | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=6d24dbab-137e-4127-a034-0542df4a7000 elapsed=0.03s social_active=0 social_missing=6 competitors=True
+[2026-11-18 14:58:30,829] INFO brand.services.full_analysis: full_analysis.section_running | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=6d24dbab-137e-4127-a034-0542df4a7000 section=recommendations
+[2026-11-18 14:58:30,829] INFO brand.services.full_analysis: full_analysis.section_completed | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=6d24dbab-137e-4127-a034-0542df4a7000 section=recommendations
+[2026-11-18 14:58:30,829] INFO brand.services.full_analysis: full_analysis.step_done | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=6d24dbab-137e-4127-a034-0542df4a7000 step=recommendations elapsed=0.00s
+[2026-11-18 14:58:30,829] INFO brand.services.full_analysis: full_analysis.step_done | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=6d24dbab-137e-4127-a034-0542df4a7000 step=brand_profile elapsed=0.00s
+[2026-11-18 14:58:30,829] INFO brand.services.full_analysis: full_analysis.run_completed | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=6d24dbab-137e-4127-a034-0542df4a7000
+[2026-11-18 14:58:30,829] INFO brand.services.full_analysis: full_analysis.completed | brand=12506a3a-cd62-40b0-91b4-246bbb466a30 run=6d24dbab-137e-4127-a034-0542df4a7000
+.[2026-11-18 14:58:31,834] INFO brand.services.full_analysis: full_analysis.start | brand=47b9a216-3f5e-4626-88df-ff0135479d43 include_social=True include_competitors=True force_refresh=False persist_run=True
+[2026-11-18 14:58:31,836] INFO brand.services.full_analysis: full_analysis.run_created | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=51da5128-ca52-43f6-b5ba-d3b142700d59
+[2026-11-18 14:58:31,838] INFO brand.services.full_analysis: full_analysis.run_running | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=51da5128-ca52-43f6-b5ba-d3b142700d59
+[2026-11-18 14:58:31,840] INFO brand.services.full_analysis: full_analysis.section_running | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=51da5128-ca52-43f6-b5ba-d3b142700d59 section=website_scrape
+[2026-11-18 14:58:31,841] INFO brand.services.full_analysis: step.website_data.check_existing | brand=47b9a216-3f5e-4626-88df-ff0135479d43 identity=0675a489-93d4-42f4-b209-e4f6ceed3bc5
+[2026-11-18 14:58:31,843] INFO brand.services.full_analysis: step.website_data.cache_hit | brand=47b9a216-3f5e-4626-88df-ff0135479d43 identity=0675a489-93d4-42f4-b209-e4f6ceed3bc5 website_data=5f31c909-862f-480c-bda1-1e169f0b24c4 owned=True updated_at=2026-11-18 11:28:31.742995+00:00
+[2026-11-18 14:58:31,846] INFO brand.services.full_analysis: full_analysis.section_completed | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=51da5128-ca52-43f6-b5ba-d3b142700d59 section=website_scrape
+[2026-11-18 14:58:31,846] INFO brand.services.full_analysis: full_analysis.step_done | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=51da5128-ca52-43f6-b5ba-d3b142700d59 step=website_data elapsed=0.01s website_data=5f31c909-862f-480c-bda1-1e169f0b24c4
+[2026-11-18 14:58:31,848] INFO brand.services.full_analysis: full_analysis.section_running | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=51da5128-ca52-43f6-b5ba-d3b142700d59 section=core_analysis
+[2026-11-18 14:58:31,849] INFO brand.services.full_analysis: step.core_analysis.check_existing | brand=47b9a216-3f5e-4626-88df-ff0135479d43 identity=0675a489-93d4-42f4-b209-e4f6ceed3bc5
+[2026-11-18 14:58:31,851] INFO brand.services.full_analysis: step.core_analysis.cache_hit | brand=47b9a216-3f5e-4626-88df-ff0135479d43 identity=0675a489-93d4-42f4-b209-e4f6ceed3bc5 core_analysis=351a800f-30de-48ac-8f95-59d34f050b66 owned=True updated_at=2026-11-18 11:28:31.744037+00:00
+[2026-11-18 14:58:31,853] INFO brand.services.full_analysis: full_analysis.section_completed | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=51da5128-ca52-43f6-b5ba-d3b142700d59 section=core_analysis
+[2026-11-18 14:58:31,854] INFO brand.services.full_analysis: full_analysis.step_done | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=51da5128-ca52-43f6-b5ba-d3b142700d59 step=core_analysis elapsed=0.01s core_analysis=351a800f-30de-48ac-8f95-59d34f050b66
+[2026-11-18 14:58:31,855] INFO brand.services.full_analysis: full_analysis.section_running | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=51da5128-ca52-43f6-b5ba-d3b142700d59 section=quality_validation
+[2026-11-18 14:58:31,856] WARNING brand.quality_validator: No validation rules for industry: Driving Institute
+[2026-11-18 14:58:31,856] WARNING brand.quality_validator: No validation rules for industry: Driving Institute
+[2026-11-18 14:58:31,856] INFO brand.services.full_analysis: full_analysis.step_done | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=51da5128-ca52-43f6-b5ba-d3b142700d59 step=quality elapsed=0.00s is_valid=True confidence=85 issues=0
+[2026-11-18 14:58:31,858] INFO brand.services.full_analysis: full_analysis.section_completed | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=51da5128-ca52-43f6-b5ba-d3b142700d59 section=quality_validation
+[2026-11-18 14:58:31,858] INFO brand.engines.brand_memory: Brand memory created for Driving Institute with professional tone
+[2026-11-18 14:58:31,858] INFO brand.services.full_analysis: full_analysis.step_done | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=51da5128-ca52-43f6-b5ba-d3b142700d59 step=memory_emotion elapsed=0.00s
+[2026-11-18 14:58:31,858] INFO brand.services.full_analysis: full_analysis.parallel_start | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=51da5128-ca52-43f6-b5ba-d3b142700d59 social=True audience=true competitors=True
+[2026-11-18 14:58:31,862] INFO brand.services.full_analysis: full_analysis.section_running | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=51da5128-ca52-43f6-b5ba-d3b142700d59 section=social
+[2026-11-18 14:58:31,864] INFO brand.services.full_analysis: full_analysis.section_running | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=51da5128-ca52-43f6-b5ba-d3b142700d59 section=audience
+[2026-11-18 14:58:31,866] INFO brand.services.full_analysis: full_analysis.section_running | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=51da5128-ca52-43f6-b5ba-d3b142700d59 section=competitors
+[2026-11-18 14:58:31,866] INFO brand.services.full_analysis: step.competitors.check_existing | brand=47b9a216-3f5e-4626-88df-ff0135479d43 core_analysis=351a800f-30de-48ac-8f95-59d34f050b66
+[2026-11-18 14:58:31,868] INFO brand.services.full_analysis: step.social.skipped | brand=47b9a216-3f5e-4626-88df-ff0135479d43 reason=no_profiles
+[2026-11-18 14:58:31,870] INFO brand.services.full_analysis: full_analysis.section_completed | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=51da5128-ca52-43f6-b5ba-d3b142700d59 section=audience
+[2026-11-18 14:58:31,872] INFO brand.services.full_analysis: step.competitors.compute_start | brand=47b9a216-3f5e-4626-88df-ff0135479d43 core_analysis=351a800f-30de-48ac-8f95-59d34f050b66 stored_row=f148f293-55a5-44e5-8bc4-63b9e92c638a
+[2026-11-18 14:58:31,872] INFO brand.analyzers.competitor_analyzer: Starting real competitor analysis for Emirates Driving Institute
+[2026-11-18 14:58:31,874] INFO brand.services.full_analysis: full_analysis.section_completed | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=51da5128-ca52-43f6-b5ba-d3b142700d59 section=social
+[2026-11-18 14:58:31,877] INFO brand.analyzers.competitor_analyzer: Competitor analysis context brand_id=47b9a216-3f5e-4626-88df-ff0135479d43 brand_name=Emirates Driving Institute website_url=https://edi-qa6.example.com
+[2026-11-18 14:58:31,881] INFO brand.analyzers.competitor_analyzer: Loaded stored competitors brand_id=47b9a216-3f5e-4626-88df-ff0135479d43 count=1
+[2026-11-18 14:58:31,881] INFO brand.analyzers.competitor_analyzer: Competitor analyses ready: total_valid=1 (saved=1, new=0)
+[2026-11-18 14:58:31,886] INFO brand.services.full_analysis: step.competitors.compute_done | brand=47b9a216-3f5e-4626-88df-ff0135479d43 core_analysis=351a800f-30de-48ac-8f95-59d34f050b66
+[2026-11-18 14:58:31,888] INFO brand.services.full_analysis: full_analysis.section_completed | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=51da5128-ca52-43f6-b5ba-d3b142700d59 section=competitors
+[2026-11-18 14:58:31,888] INFO brand.services.full_analysis: full_analysis.parallel_done | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=51da5128-ca52-43f6-b5ba-d3b142700d59 elapsed=0.03s social_active=0 social_missing=6 competitors=True
+[2026-11-18 14:58:31,890] INFO brand.services.full_analysis: full_analysis.section_running | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=51da5128-ca52-43f6-b5ba-d3b142700d59 section=recommendations
+[2026-11-18 14:58:31,893] INFO brand.services.full_analysis: full_analysis.section_completed | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=51da5128-ca52-43f6-b5ba-d3b142700d59 section=recommendations
+[2026-11-18 14:58:31,893] INFO brand.services.full_analysis: full_analysis.step_done | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=51da5128-ca52-43f6-b5ba-d3b142700d59 step=recommendations elapsed=0.01s
+[2026-11-18 14:58:31,897] INFO brand.services.full_analysis: full_analysis.step_done | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=51da5128-ca52-43f6-b5ba-d3b142700d59 step=brand_profile elapsed=0.00s
+[2026-11-18 14:58:31,903] INFO brand.services.full_analysis: full_analysis.run_completed | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=51da5128-ca52-43f6-b5ba-d3b142700d59
+[2026-11-18 14:58:31,904] INFO brand.services.full_analysis: full_analysis.completed | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=51da5128-ca52-43f6-b5ba-d3b142700d59
+[2026-11-18 14:58:31,907] INFO brand.services.full_analysis: full_analysis.start | brand=47b9a216-3f5e-4626-88df-ff0135479d43 include_social=True include_competitors=True force_refresh=False persist_run=True
+[2026-11-18 14:58:31,910] INFO brand.services.full_analysis: full_analysis.run_created | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=43f88aeb-b6d9-4d37-926e-8de38938f8cf
+[2026-11-18 14:58:31,913] INFO brand.services.full_analysis: full_analysis.run_running | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=43f88aeb-b6d9-4d37-926e-8de38938f8cf
+[2026-11-18 14:58:31,915] INFO brand.services.full_analysis: full_analysis.section_running | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=43f88aeb-b6d9-4d37-926e-8de38938f8cf section=website_scrape
+[2026-11-18 14:58:31,916] INFO brand.services.full_analysis: step.website_data.check_existing | brand=47b9a216-3f5e-4626-88df-ff0135479d43 identity=0675a489-93d4-42f4-b209-e4f6ceed3bc5
+[2026-11-18 14:58:31,919] INFO brand.services.full_analysis: step.website_data.cache_hit | brand=47b9a216-3f5e-4626-88df-ff0135479d43 identity=0675a489-93d4-42f4-b209-e4f6ceed3bc5 website_data=5f31c909-862f-480c-bda1-1e169f0b24c4 owned=True updated_at=2026-11-18 11:28:31.742995+00:00
+[2026-11-18 14:58:31,921] INFO brand.services.full_analysis: full_analysis.section_completed | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=43f88aeb-b6d9-4d37-926e-8de38938f8cf section=website_scrape
+[2026-11-18 14:58:31,922] INFO brand.services.full_analysis: full_analysis.step_done | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=43f88aeb-b6d9-4d37-926e-8de38938f8cf step=website_data elapsed=0.01s website_data=5f31c909-862f-480c-bda1-1e169f0b24c4
+[2026-11-18 14:58:31,924] INFO brand.services.full_analysis: full_analysis.section_running | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=43f88aeb-b6d9-4d37-926e-8de38938f8cf section=core_analysis
+[2026-11-18 14:58:31,924] INFO brand.services.full_analysis: step.core_analysis.check_existing | brand=47b9a216-3f5e-4626-88df-ff0135479d43 identity=0675a489-93d4-42f4-b209-e4f6ceed3bc5
+[2026-11-18 14:58:31,927] INFO brand.services.full_analysis: step.core_analysis.cache_hit | brand=47b9a216-3f5e-4626-88df-ff0135479d43 identity=0675a489-93d4-42f4-b209-e4f6ceed3bc5 core_analysis=351a800f-30de-48ac-8f95-59d34f050b66 owned=True updated_at=2026-11-18 11:28:31.744037+00:00
+[2026-11-18 14:58:31,930] INFO brand.services.full_analysis: full_analysis.section_completed | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=43f88aeb-b6d9-4d37-926e-8de38938f8cf section=core_analysis
+[2026-11-18 14:58:31,930] INFO brand.services.full_analysis: full_analysis.step_done | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=43f88aeb-b6d9-4d37-926e-8de38938f8cf step=core_analysis elapsed=0.01s core_analysis=351a800f-30de-48ac-8f95-59d34f050b66
+[2026-11-18 14:58:31,932] INFO brand.services.full_analysis: full_analysis.section_running | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=43f88aeb-b6d9-4d37-926e-8de38938f8cf section=quality_validation
+[2026-11-18 14:58:31,933] WARNING brand.quality_validator: No validation rules for industry: Driving Institute
+[2026-11-18 14:58:31,933] WARNING brand.quality_validator: No validation rules for industry: Driving Institute
+[2026-11-18 14:58:31,933] INFO brand.services.full_analysis: full_analysis.step_done | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=43f88aeb-b6d9-4d37-926e-8de38938f8cf step=quality elapsed=0.00s is_valid=True confidence=85 issues=0
+[2026-11-18 14:58:31,935] INFO brand.services.full_analysis: full_analysis.section_completed | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=43f88aeb-b6d9-4d37-926e-8de38938f8cf section=quality_validation
+[2026-11-18 14:58:31,935] INFO brand.engines.brand_memory: Brand memory created for Driving Institute with professional tone
+[2026-11-18 14:58:31,935] INFO brand.services.full_analysis: full_analysis.step_done | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=43f88aeb-b6d9-4d37-926e-8de38938f8cf step=memory_emotion elapsed=0.00s
+[2026-11-18 14:58:31,935] INFO brand.services.full_analysis: full_analysis.parallel_start | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=43f88aeb-b6d9-4d37-926e-8de38938f8cf social=True audience=true competitors=True
+[2026-11-18 14:58:31,939] INFO brand.services.full_analysis: full_analysis.section_running | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=43f88aeb-b6d9-4d37-926e-8de38938f8cf section=social
+[2026-11-18 14:58:31,941] INFO brand.services.full_analysis: full_analysis.section_running | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=43f88aeb-b6d9-4d37-926e-8de38938f8cf section=audience
+[2026-11-18 14:58:31,944] INFO brand.services.full_analysis: full_analysis.section_running | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=43f88aeb-b6d9-4d37-926e-8de38938f8cf section=competitors
+[2026-11-18 14:58:31,944] INFO brand.services.full_analysis: step.competitors.check_existing | brand=47b9a216-3f5e-4626-88df-ff0135479d43 core_analysis=351a800f-30de-48ac-8f95-59d34f050b66
+[2026-11-18 14:58:31,946] INFO brand.services.full_analysis: step.social.skipped | brand=47b9a216-3f5e-4626-88df-ff0135479d43 reason=no_profiles
+[2026-11-18 14:58:31,949] INFO brand.services.full_analysis: full_analysis.section_completed | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=43f88aeb-b6d9-4d37-926e-8de38938f8cf section=audience
+[2026-11-18 14:58:31,951] INFO brand.services.full_analysis: step.competitors.compute_start | brand=47b9a216-3f5e-4626-88df-ff0135479d43 core_analysis=351a800f-30de-48ac-8f95-59d34f050b66 stored_row=f148f293-55a5-44e5-8bc4-63b9e92c638a
+[2026-11-18 14:58:31,951] INFO brand.analyzers.competitor_analyzer: Starting real competitor analysis for Emirates Driving Institute
+[2026-11-18 14:58:31,953] INFO brand.services.full_analysis: full_analysis.section_completed | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=43f88aeb-b6d9-4d37-926e-8de38938f8cf section=social
+[2026-11-18 14:58:31,956] INFO brand.analyzers.competitor_analyzer: Competitor analysis context brand_id=47b9a216-3f5e-4626-88df-ff0135479d43 brand_name=Emirates Driving Institute website_url=https://edi-qa6.example.com
+[2026-11-18 14:58:31,959] INFO brand.analyzers.competitor_analyzer: Loaded stored competitors brand_id=47b9a216-3f5e-4626-88df-ff0135479d43 count=1
+[2026-11-18 14:58:31,959] INFO brand.analyzers.competitor_analyzer: Competitor analyses ready: total_valid=1 (saved=1, new=0)
+[2026-11-18 14:58:31,965] INFO brand.services.full_analysis: step.competitors.compute_done | brand=47b9a216-3f5e-4626-88df-ff0135479d43 core_analysis=351a800f-30de-48ac-8f95-59d34f050b66
+[2026-11-18 14:58:31,967] INFO brand.services.full_analysis: full_analysis.section_completed | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=43f88aeb-b6d9-4d37-926e-8de38938f8cf section=competitors
+[2026-11-18 14:58:31,967] INFO brand.services.full_analysis: full_analysis.parallel_done | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=43f88aeb-b6d9-4d37-926e-8de38938f8cf elapsed=0.03s social_active=0 social_missing=6 competitors=True
+[2026-11-18 14:58:31,970] INFO brand.services.full_analysis: full_analysis.section_running | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=43f88aeb-b6d9-4d37-926e-8de38938f8cf section=recommendations
+[2026-11-18 14:58:31,973] INFO brand.services.full_analysis: full_analysis.section_completed | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=43f88aeb-b6d9-4d37-926e-8de38938f8cf section=recommendations
+[2026-11-18 14:58:31,973] INFO brand.services.full_analysis: full_analysis.step_done | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=43f88aeb-b6d9-4d37-926e-8de38938f8cf step=recommendations elapsed=0.01s
+[2026-11-18 14:58:31,976] INFO brand.services.full_analysis: full_analysis.step_done | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=43f88aeb-b6d9-4d37-926e-8de38938f8cf step=brand_profile elapsed=0.00s
+[2026-11-18 14:58:31,981] INFO brand.services.full_analysis: full_analysis.run_completed | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=43f88aeb-b6d9-4d37-926e-8de38938f8cf
+[2026-11-18 14:58:31,981] INFO brand.services.full_analysis: full_analysis.completed | brand=47b9a216-3f5e-4626-88df-ff0135479d43 run=43f88aeb-b6d9-4d37-926e-8de38938f8cf
+.[2026-11-18 14:58:33,022] INFO brand.services.full_analysis: full_analysis.start | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 include_social=True include_competitors=True force_refresh=False persist_run=True
+[2026-11-18 14:58:33,025] INFO brand.services.full_analysis: full_analysis.run_created | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=f16d07cb-b68b-4fdf-b5df-c9999eca6561
+[2026-11-18 14:58:33,027] INFO brand.services.full_analysis: full_analysis.run_running | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=f16d07cb-b68b-4fdf-b5df-c9999eca6561
+[2026-11-18 14:58:33,029] INFO brand.services.full_analysis: full_analysis.section_running | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=f16d07cb-b68b-4fdf-b5df-c9999eca6561 section=website_scrape
+[2026-11-18 14:58:33,030] INFO brand.services.full_analysis: step.website_data.check_existing | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 identity=df2b224c-e3fd-4a1f-b06f-8aab79c68a83
+[2026-11-18 14:58:33,033] INFO brand.services.full_analysis: step.website_data.cache_hit | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 identity=df2b224c-e3fd-4a1f-b06f-8aab79c68a83 website_data=6697446b-4544-4eff-b8a4-d48210fee550 owned=True updated_at=2026-11-18 11:28:32.933228+00:00
+[2026-11-18 14:58:33,035] INFO brand.services.full_analysis: full_analysis.section_completed | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=f16d07cb-b68b-4fdf-b5df-c9999eca6561 section=website_scrape
+[2026-11-18 14:58:33,035] INFO brand.services.full_analysis: full_analysis.step_done | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=f16d07cb-b68b-4fdf-b5df-c9999eca6561 step=website_data elapsed=0.01s website_data=6697446b-4544-4eff-b8a4-d48210fee550
+[2026-11-18 14:58:33,037] INFO brand.services.full_analysis: full_analysis.section_running | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=f16d07cb-b68b-4fdf-b5df-c9999eca6561 section=core_analysis
+[2026-11-18 14:58:33,038] INFO brand.services.full_analysis: step.core_analysis.check_existing | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 identity=df2b224c-e3fd-4a1f-b06f-8aab79c68a83
+[2026-11-18 14:58:33,041] INFO brand.services.full_analysis: step.core_analysis.cache_hit | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 identity=df2b224c-e3fd-4a1f-b06f-8aab79c68a83 core_analysis=3e93a949-ac7c-4bdd-9a0b-88aef1f305a2 owned=True updated_at=2026-11-18 11:28:32.935229+00:00
+[2026-11-18 14:58:33,043] INFO brand.services.full_analysis: full_analysis.section_completed | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=f16d07cb-b68b-4fdf-b5df-c9999eca6561 section=core_analysis
+[2026-11-18 14:58:33,043] INFO brand.services.full_analysis: full_analysis.step_done | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=f16d07cb-b68b-4fdf-b5df-c9999eca6561 step=core_analysis elapsed=0.01s core_analysis=3e93a949-ac7c-4bdd-9a0b-88aef1f305a2
+[2026-11-18 14:58:33,045] INFO brand.services.full_analysis: full_analysis.section_running | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=f16d07cb-b68b-4fdf-b5df-c9999eca6561 section=quality_validation
+[2026-11-18 14:58:33,045] WARNING brand.quality_validator: No validation rules for industry: Driving Institute
+[2026-11-18 14:58:33,045] WARNING brand.quality_validator: No validation rules for industry: Driving Institute
+[2026-11-18 14:58:33,046] INFO brand.services.full_analysis: full_analysis.step_done | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=f16d07cb-b68b-4fdf-b5df-c9999eca6561 step=quality elapsed=0.00s is_valid=True confidence=85 issues=0
+[2026-11-18 14:58:33,048] INFO brand.services.full_analysis: full_analysis.section_completed | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=f16d07cb-b68b-4fdf-b5df-c9999eca6561 section=quality_validation
+[2026-11-18 14:58:33,048] INFO brand.engines.brand_memory: Brand memory created for Driving Institute with professional tone
+[2026-11-18 14:58:33,048] INFO brand.services.full_analysis: full_analysis.step_done | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=f16d07cb-b68b-4fdf-b5df-c9999eca6561 step=memory_emotion elapsed=0.00s
+[2026-11-18 14:58:33,048] INFO brand.services.full_analysis: full_analysis.parallel_start | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=f16d07cb-b68b-4fdf-b5df-c9999eca6561 social=True audience=true competitors=True
+[2026-11-18 14:58:33,051] INFO brand.services.full_analysis: full_analysis.section_running | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=f16d07cb-b68b-4fdf-b5df-c9999eca6561 section=social
+[2026-11-18 14:58:33,053] INFO brand.services.full_analysis: full_analysis.section_running | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=f16d07cb-b68b-4fdf-b5df-c9999eca6561 section=audience
+[2026-11-18 14:58:33,055] INFO brand.services.full_analysis: full_analysis.section_running | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=f16d07cb-b68b-4fdf-b5df-c9999eca6561 section=competitors
+[2026-11-18 14:58:33,056] INFO brand.services.full_analysis: step.competitors.check_existing | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 core_analysis=3e93a949-ac7c-4bdd-9a0b-88aef1f305a2
+[2026-11-18 14:58:33,057] INFO brand.services.full_analysis: step.social.skipped | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 reason=no_profiles
+[2026-11-18 14:58:33,059] INFO brand.services.full_analysis: full_analysis.section_completed | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=f16d07cb-b68b-4fdf-b5df-c9999eca6561 section=audience
+[2026-11-18 14:58:33,061] INFO brand.services.full_analysis: step.competitors.compute_start | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 core_analysis=3e93a949-ac7c-4bdd-9a0b-88aef1f305a2 stored_row=76c889be-b882-413e-b46f-dd9850946b56
+[2026-11-18 14:58:33,061] INFO brand.analyzers.competitor_analyzer: Starting real competitor analysis for Emirates Driving Institute
+[2026-11-18 14:58:33,062] INFO brand.services.full_analysis: full_analysis.section_completed | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=f16d07cb-b68b-4fdf-b5df-c9999eca6561 section=social
+[2026-11-18 14:58:33,068] INFO brand.analyzers.competitor_analyzer: Competitor analysis context brand_id=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 brand_name=Emirates Driving Institute website_url=https://edi-qa6.example.com
+[2026-11-18 14:58:33,070] INFO brand.analyzers.competitor_analyzer: Loaded stored competitors brand_id=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 count=1
+[2026-11-18 14:58:33,070] INFO brand.analyzers.competitor_analyzer: Competitor analyses ready: total_valid=1 (saved=1, new=0)
+[2026-11-18 14:58:33,074] INFO brand.services.full_analysis: step.competitors.compute_done | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 core_analysis=3e93a949-ac7c-4bdd-9a0b-88aef1f305a2
+[2026-11-18 14:58:33,076] INFO brand.services.full_analysis: full_analysis.section_completed | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=f16d07cb-b68b-4fdf-b5df-c9999eca6561 section=competitors
+[2026-11-18 14:58:33,076] INFO brand.services.full_analysis: full_analysis.parallel_done | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=f16d07cb-b68b-4fdf-b5df-c9999eca6561 elapsed=0.03s social_active=0 social_missing=6 competitors=True
+[2026-11-18 14:58:33,078] INFO brand.services.full_analysis: full_analysis.section_running | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=f16d07cb-b68b-4fdf-b5df-c9999eca6561 section=recommendations
+[2026-11-18 14:58:33,082] INFO brand.services.full_analysis: full_analysis.section_completed | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=f16d07cb-b68b-4fdf-b5df-c9999eca6561 section=recommendations
+[2026-11-18 14:58:33,082] INFO brand.services.full_analysis: full_analysis.step_done | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=f16d07cb-b68b-4fdf-b5df-c9999eca6561 step=recommendations elapsed=0.01s
+[2026-11-18 14:58:33,086] INFO brand.services.full_analysis: full_analysis.step_done | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=f16d07cb-b68b-4fdf-b5df-c9999eca6561 step=brand_profile elapsed=0.00s
+[2026-11-18 14:58:33,092] INFO brand.services.full_analysis: full_analysis.run_completed | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=f16d07cb-b68b-4fdf-b5df-c9999eca6561
+[2026-11-18 14:58:33,092] INFO brand.services.full_analysis: full_analysis.completed | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=f16d07cb-b68b-4fdf-b5df-c9999eca6561
+[2026-11-18 14:58:33,096] INFO brand.services.full_analysis: full_analysis.start | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 include_social=True include_competitors=True force_refresh=False persist_run=True
+[2026-11-18 14:58:33,099] INFO brand.services.full_analysis: full_analysis.run_created | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=313720be-8b69-4852-a083-acdaa2388e71
+[2026-11-18 14:58:33,101] INFO brand.services.full_analysis: full_analysis.run_running | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=313720be-8b69-4852-a083-acdaa2388e71
+[2026-11-18 14:58:33,103] INFO brand.services.full_analysis: full_analysis.section_running | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=313720be-8b69-4852-a083-acdaa2388e71 section=website_scrape
+[2026-11-18 14:58:33,104] INFO brand.services.full_analysis: step.website_data.check_existing | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 identity=df2b224c-e3fd-4a1f-b06f-8aab79c68a83
+[2026-11-18 14:58:33,106] INFO brand.services.full_analysis: step.website_data.cache_hit | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 identity=df2b224c-e3fd-4a1f-b06f-8aab79c68a83 website_data=6697446b-4544-4eff-b8a4-d48210fee550 owned=True updated_at=2026-11-18 11:28:32.933228+00:00
+[2026-11-18 14:58:33,108] INFO brand.services.full_analysis: full_analysis.section_completed | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=313720be-8b69-4852-a083-acdaa2388e71 section=website_scrape
+[2026-11-18 14:58:33,108] INFO brand.services.full_analysis: full_analysis.step_done | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=313720be-8b69-4852-a083-acdaa2388e71 step=website_data elapsed=0.01s website_data=6697446b-4544-4eff-b8a4-d48210fee550
+[2026-11-18 14:58:33,110] INFO brand.services.full_analysis: full_analysis.section_running | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=313720be-8b69-4852-a083-acdaa2388e71 section=core_analysis
+[2026-11-18 14:58:33,110] INFO brand.services.full_analysis: step.core_analysis.check_existing | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 identity=df2b224c-e3fd-4a1f-b06f-8aab79c68a83
+[2026-11-18 14:58:33,113] INFO brand.services.full_analysis: step.core_analysis.cache_hit | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 identity=df2b224c-e3fd-4a1f-b06f-8aab79c68a83 core_analysis=3e93a949-ac7c-4bdd-9a0b-88aef1f305a2 owned=True updated_at=2026-11-18 11:28:32.935229+00:00
+[2026-11-18 14:58:33,115] INFO brand.services.full_analysis: full_analysis.section_completed | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=313720be-8b69-4852-a083-acdaa2388e71 section=core_analysis
+[2026-11-18 14:58:33,116] INFO brand.services.full_analysis: full_analysis.step_done | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=313720be-8b69-4852-a083-acdaa2388e71 step=core_analysis elapsed=0.01s core_analysis=3e93a949-ac7c-4bdd-9a0b-88aef1f305a2
+[2026-11-18 14:58:33,117] INFO brand.services.full_analysis: full_analysis.section_running | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=313720be-8b69-4852-a083-acdaa2388e71 section=quality_validation
+[2026-11-18 14:58:33,118] WARNING brand.quality_validator: No validation rules for industry: Driving Institute
+[2026-11-18 14:58:33,118] WARNING brand.quality_validator: No validation rules for industry: Driving Institute
+[2026-11-18 14:58:33,118] INFO brand.services.full_analysis: full_analysis.step_done | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=313720be-8b69-4852-a083-acdaa2388e71 step=quality elapsed=0.00s is_valid=True confidence=85 issues=0
+[2026-11-18 14:58:33,119] INFO brand.services.full_analysis: full_analysis.section_completed | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=313720be-8b69-4852-a083-acdaa2388e71 section=quality_validation
+[2026-11-18 14:58:33,120] INFO brand.engines.brand_memory: Brand memory created for Driving Institute with professional tone
+[2026-11-18 14:58:33,120] INFO brand.services.full_analysis: full_analysis.step_done | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=313720be-8b69-4852-a083-acdaa2388e71 step=memory_emotion elapsed=0.00s
+[2026-11-18 14:58:33,120] INFO brand.services.full_analysis: full_analysis.parallel_start | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=313720be-8b69-4852-a083-acdaa2388e71 social=True audience=true competitors=True
+[2026-11-18 14:58:33,122] INFO brand.services.full_analysis: full_analysis.section_running | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=313720be-8b69-4852-a083-acdaa2388e71 section=social
+[2026-11-18 14:58:33,125] INFO brand.services.full_analysis: full_analysis.section_running | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=313720be-8b69-4852-a083-acdaa2388e71 section=audience
+[2026-11-18 14:58:33,127] INFO brand.services.full_analysis: full_analysis.section_running | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=313720be-8b69-4852-a083-acdaa2388e71 section=competitors
+[2026-11-18 14:58:33,127] INFO brand.services.full_analysis: step.competitors.check_existing | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 core_analysis=3e93a949-ac7c-4bdd-9a0b-88aef1f305a2
+[2026-11-18 14:58:33,129] INFO brand.services.full_analysis: step.social.skipped | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 reason=no_profiles
+[2026-11-18 14:58:33,131] INFO brand.services.full_analysis: full_analysis.section_completed | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=313720be-8b69-4852-a083-acdaa2388e71 section=audience
+[2026-11-18 14:58:33,133] INFO brand.services.full_analysis: step.competitors.compute_start | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 core_analysis=3e93a949-ac7c-4bdd-9a0b-88aef1f305a2 stored_row=76c889be-b882-413e-b46f-dd9850946b56
+[2026-11-18 14:58:33,133] INFO brand.analyzers.competitor_analyzer: Starting real competitor analysis for Emirates Driving Institute
+[2026-11-18 14:58:33,134] INFO brand.services.full_analysis: full_analysis.section_completed | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=313720be-8b69-4852-a083-acdaa2388e71 section=social
+[2026-11-18 14:58:33,137] INFO brand.analyzers.competitor_analyzer: Competitor analysis context brand_id=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 brand_name=Emirates Driving Institute website_url=https://edi-qa6.example.com
+[2026-11-18 14:58:33,139] INFO brand.analyzers.competitor_analyzer: Loaded stored competitors brand_id=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 count=1
+[2026-11-18 14:58:33,140] INFO brand.analyzers.competitor_analyzer: Competitor analyses ready: total_valid=1 (saved=1, new=0)
+[2026-11-18 14:58:33,144] INFO brand.services.full_analysis: step.competitors.compute_done | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 core_analysis=3e93a949-ac7c-4bdd-9a0b-88aef1f305a2
+[2026-11-18 14:58:33,145] INFO brand.services.full_analysis: full_analysis.section_completed | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=313720be-8b69-4852-a083-acdaa2388e71 section=competitors
+[2026-11-18 14:58:33,145] INFO brand.services.full_analysis: full_analysis.parallel_done | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=313720be-8b69-4852-a083-acdaa2388e71 elapsed=0.03s social_active=0 social_missing=6 competitors=True
+[2026-11-18 14:58:33,148] INFO brand.services.full_analysis: full_analysis.section_running | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=313720be-8b69-4852-a083-acdaa2388e71 section=recommendations
+[2026-11-18 14:58:33,151] INFO brand.services.full_analysis: full_analysis.section_completed | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=313720be-8b69-4852-a083-acdaa2388e71 section=recommendations
+[2026-11-18 14:58:33,151] INFO brand.services.full_analysis: full_analysis.step_done | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=313720be-8b69-4852-a083-acdaa2388e71 step=recommendations elapsed=0.00s
+[2026-11-18 14:58:33,154] INFO brand.services.full_analysis: full_analysis.step_done | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=313720be-8b69-4852-a083-acdaa2388e71 step=brand_profile elapsed=0.00s
+[2026-11-18 14:58:33,158] INFO brand.services.full_analysis: full_analysis.run_completed | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=313720be-8b69-4852-a083-acdaa2388e71
+[2026-11-18 14:58:33,158] INFO brand.services.full_analysis: full_analysis.completed | brand=60d53af3-d8bb-464b-ba1f-bcc543b7a8d1 run=313720be-8b69-4852-a083-acdaa2388e71
+.[2026-11-18 14:58:35,254] INFO brand.services.full_analysis: step.competitors.check_existing | brand=6d461570-f7f1-4f41-8279-7746098a0908 core_analysis=b8cb608b-2018-4098-8709-1591b1f169ad
+[2026-11-18 14:58:35,263] INFO brand.services.full_analysis: step.competitors.compute_start | brand=6d461570-f7f1-4f41-8279-7746098a0908 core_analysis=b8cb608b-2018-4098-8709-1591b1f169ad stored_row=none
+[2026-11-18 14:58:35,263] INFO brand.analyzers.competitor_analyzer: Starting real competitor analysis for Shared Core Co
+[2026-11-18 14:58:35,272] INFO brand.analyzers.competitor_analyzer: Competitor analysis context brand_id=6d461570-f7f1-4f41-8279-7746098a0908 brand_name=Shared Core Co website_url=https://qa6-shared.example.com
+[2026-11-18 14:58:35,276] INFO brand.analyzers.competitor_analyzer: Loaded stored competitors brand_id=6d461570-f7f1-4f41-8279-7746098a0908 count=1
+[2026-11-18 14:58:35,276] INFO brand.analyzers.competitor_analyzer: Competitor analyses ready: total_valid=1 (saved=1, new=0)
+[2026-11-18 14:58:35,276] INFO brand.services.full_analysis: step.competitors.compute_done | brand=6d461570-f7f1-4f41-8279-7746098a0908 core_analysis=b8cb608b-2018-4098-8709-1591b1f169ad
+.[2026-11-18 14:58:37,104] INFO brand.services.full_analysis: step.competitors.check_existing | brand=ebc9a8c6-bdec-48c7-bfa2-ddee14a9afab core_analysis=44102ef7-6243-40cb-82c1-aeecb55562ac
+[2026-11-18 14:58:37,107] INFO brand.services.full_analysis: step.competitors.compute_start | brand=ebc9a8c6-bdec-48c7-bfa2-ddee14a9afab core_analysis=44102ef7-6243-40cb-82c1-aeecb55562ac stored_row=none
+[2026-11-18 14:58:37,107] INFO brand.analyzers.competitor_analyzer: Starting real competitor analysis for Shared Core Co
+[2026-11-18 14:58:37,110] INFO brand.analyzers.competitor_analyzer: Competitor analysis context brand_id=ebc9a8c6-bdec-48c7-bfa2-ddee14a9afab brand_name=Shared Core Co website_url=https://qa6-shared.example.com
+[2026-11-18 14:58:37,112] INFO brand.analyzers.competitor_analyzer: Loaded stored competitors brand_id=ebc9a8c6-bdec-48c7-bfa2-ddee14a9afab count=1
+[2026-11-18 14:58:37,112] INFO brand.analyzers.competitor_analyzer: Competitor analyses ready: total_valid=1 (saved=1, new=0)
+[2026-11-18 14:58:37,116] INFO brand.services.full_analysis: step.competitors.compute_done | brand=ebc9a8c6-bdec-48c7-bfa2-ddee14a9afab core_analysis=44102ef7-6243-40cb-82c1-aeecb55562ac
+[2026-11-18 14:58:37,202] INFO brand.services.full_analysis: step.competitors.check_existing | brand=1ddd9c1b-3422-4775-9eca-d12438e61360 core_analysis=44102ef7-6243-40cb-82c1-aeecb55562ac
+[2026-11-18 14:58:37,206] INFO brand.services.full_analysis: step.competitors.compute_start | brand=1ddd9c1b-3422-4775-9eca-d12438e61360 core_analysis=44102ef7-6243-40cb-82c1-aeecb55562ac stored_row=ebbcb035-cb5e-4f36-b59a-54211742f0f0
+[2026-11-18 14:58:37,206] INFO brand.analyzers.competitor_analyzer: Starting real competitor analysis for Shared Core Co
+[2026-11-18 14:58:37,208] INFO brand.analyzers.competitor_analyzer: Competitor analysis context brand_id=1ddd9c1b-3422-4775-9eca-d12438e61360 brand_name=Shared Core Co website_url=https://qa6-shared.example.com
+[2026-11-18 14:58:37,208] INFO brand.analyzers.competitor_analyzer: Loaded stored competitors brand_id=1ddd9c1b-3422-4775-9eca-d12438e61360 count=1
+[2026-11-18 14:58:37,208] INFO brand.analyzers.competitor_analyzer: Competitor analyses ready: total_valid=1 (saved=1, new=0)
+[2026-11-18 14:58:37,213] INFO brand.services.full_analysis: step.competitors.compute_done | brand=1ddd9c1b-3422-4775-9eca-d12438e61360 core_analysis=44102ef7-6243-40cb-82c1-aeecb55562ac
+..[2026-11-18 14:58:39,258] WARNING django.request: Bad Request: /api/v1/campaigns/c76e21db-9df6-403e-94e2-ee98657652ac/ads/ccf80b63-9e62-4788-93a5-faff612caab9/
+.[2026-11-18 14:58:40,137] WARNING django.request: Bad Request: /api/v1/campaigns/e859d1b7-c619-4de9-8179-69eaefc745b4/ads/0d340c3b-33b8-451c-a47a-f3495ef94c33/
+.[2026-11-18 14:58:42,089] WARNING django.request: Not Found: /api/v1/campaigns/c94f4806-8cdb-4539-bb0b-7add0d00742c/ads/4931cd0e-9552-4d75-8c23-d73ff3bd8578/
+....[2026-11-18 14:58:46,691] WARNING django.request: Not Found: /api/v1/campaigns/4c7bf38e-cb50-4c3f-90a8-ad7b3a487bdf/ads/3dc9b016-14ec-48fe-80d2-010126da6fc3/refine/
+.[2026-11-18 14:58:47,569] INFO campaign.engines.ad_generation_engine: Generating 1 ad(s) for Founders | TOFU | meta
+..[2026-11-18 14:58:49,862] WARNING django.request: Bad Request: /api/v1/campaigns/da3765b5-af6d-4176-9123-e346fd737508/ads/53b88c97-e6e7-4d08-b7bc-d1522c88c897/refine/
+.[2026-11-18 14:58:50,874] INFO campaign.engines.ad_generation_engine: Generating 1 ad(s) for Startup Founders | TOFU | meta
+.[2026-11-18 14:58:51,829] WARNING django.request: Bad Request: /api/v1/campaigns/57baa587-4935-48b4-a983-691fec80983a/ads/f436fd29-2e88-405e-9b20-0da403fed95c/refine/
+[2026-11-18 14:58:51,835] WARNING django.request: Bad Request: /api/v1/campaigns/57baa587-4935-48b4-a983-691fec80983a/ads/f436fd29-2e88-405e-9b20-0da403fed95c/refine/
+..[2026-11-18 14:58:53,809] WARNING django.request: Bad Request: /api/v1/campaigns/d6313ee3-eede-4378-be3d-e9d013ef3ebf/ads/9d415b65-8661-4431-ae26-f058b2693e44/refine/
+.[2026-11-18 14:58:55,006] WARNING django.request: Not Found: /api/v1/campaigns/a7d0a784-5437-4527-9c28-3f563de3e14b/ads/86a43d6c-101e-49e0-b7a4-9bce4b8a11b5/review/
+..[2026-11-18 14:58:56,666] WARNING django.request: Bad Request: /api/v1/campaigns/c2efadfa-aefd-4909-b1ea-c4257f094775/ads/d2712f5d-0476-4740-bd77-6d441f4a92a6/review/
+.[2026-11-18 14:58:57,560] WARNING django.request: Not Found: /api/v1/campaigns/059f6cc5-d945-4cbc-8adc-62e554fdb752/ads/not-a-uuid/review/
+.[2026-11-18 14:58:59,128] WARNING django.request: Not Found: /api/v1/campaigns/a490919b-88cf-440f-ac11-fccda182ec9a/ads/896a2184-5b41-4993-a83b-908efda25da2/review/
+...[2026-11-18 14:59:01,500] WARNING django.request: Bad Request: /api/v1/campaigns/69f7733c-472e-42cc-8c0a-7ef806930fc8/ads/d5d22868-815c-46ed-99f0-87685e8f5d33/review/
+.[2026-11-18 14:59:02,241] WARNING django.request: Bad Request: /api/v1/campaigns/ca4588d6-1ee0-443e-93a4-f26796cc9de4/ads/0f720ffa-b215-490b-b9f6-36bfbc378455/review/
+..[2026-11-18 14:59:03,907] WARNING django.request: Bad Request: /api/v1/campaigns/e7e2982d-44aa-4689-bbb5-77299c281cbd/ads/61b50837-1065-49d4-8175-56dd31185624/review/
+..............[2026-11-18 14:59:15,050] ERROR campaign.services.ads_strategy: Campaign ads strategy failed for campaign=fe1c2b5b-bfd5-4f51-abcb-05856bb8277c platform=google
+Traceback (most recent call last):
+  File "C:\laragon\www\ad_creator\django-backend\campaign\services\ads_strategy.py", line 64, in run
+    result = async_to_sync(AdsStrategyEngine().generate_strategy)(
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\asgiref\sync.py", line 332, in __call__
+    return call_result.result()
+  File "C:\laragon\bin\python\python-3.10\lib\concurrent\futures\_base.py", line 451, in result
+    return self.__get_result()
+  File "C:\laragon\bin\python\python-3.10\lib\concurrent\futures\_base.py", line 403, in __get_result
+    raise self._exception
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\asgiref\sync.py", line 372, in main_wrap
+    result = await awaitable
+  File "C:\laragon\bin\python\python-3.10\lib\unittest\mock.py", line 2206, in _execute_mock_call
+    raise effect
+RuntimeError: LLM connection reset
+[2026-11-18 14:59:15,050] ERROR campaign.views: Ads strategy generation failed for campaign=fe1c2b5b-bfd5-4f51-abcb-05856bb8277c
+Traceback (most recent call last):
+  File "C:\laragon\www\ad_creator\django-backend\campaign\views.py", line 410, in run_ads_strategy
+    step = service.run(
+  File "C:\laragon\www\ad_creator\django-backend\campaign\services\ads_strategy.py", line 64, in run
+    result = async_to_sync(AdsStrategyEngine().generate_strategy)(
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\asgiref\sync.py", line 332, in __call__
+    return call_result.result()
+  File "C:\laragon\bin\python\python-3.10\lib\concurrent\futures\_base.py", line 451, in result
+    return self.__get_result()
+  File "C:\laragon\bin\python\python-3.10\lib\concurrent\futures\_base.py", line 403, in __get_result
+    raise self._exception
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\asgiref\sync.py", line 372, in main_wrap
+    result = await awaitable
+  File "C:\laragon\bin\python\python-3.10\lib\unittest\mock.py", line 2206, in _execute_mock_call
+    raise effect
+RuntimeError: LLM connection reset
+[2026-11-18 14:59:15,050] ERROR django.request: Internal Server Error: /api/v1/campaigns/fe1c2b5b-bfd5-4f51-abcb-05856bb8277c/ads-strategy/
+..[2026-11-18 14:59:16,602] ERROR campaign.services.ads_strategy: Campaign ads strategy failed for campaign=9dceb534-4e7b-491a-9632-4a1c9281e9f0 platform=google
+Traceback (most recent call last):
+  File "C:\laragon\www\ad_creator\django-backend\campaign\services\ads_strategy.py", line 78, in run
+    raise ValueError(result.get("error") or "Ads strategy failed")
+ValueError: Failed to parse response
+[2026-11-18 14:59:16,604] WARNING django.request: Bad Request: /api/v1/campaigns/9dceb534-4e7b-491a-9632-4a1c9281e9f0/ads-strategy/
+.......[2026-11-18 14:59:22,129] WARNING django.request: Bad Request: /api/v1/campaigns/
+[2026-11-18 14:59:22,131] WARNING django.request: Bad Request: /api/v1/campaigns/
+[2026-11-18 14:59:22,133] WARNING django.request: Bad Request: /api/v1/campaigns/
+[2026-11-18 14:59:22,136] WARNING django.request: Bad Request: /api/v1/campaigns/
+.[2026-11-18 14:59:22,884] WARNING django.request: Bad Request: /api/v1/campaigns/
+...[2026-11-18 14:59:25,161] WARNING django.request: Bad Request: /api/v1/campaigns/
+[2026-11-18 14:59:25,165] WARNING django.request: Bad Request: /api/v1/campaigns/
+[2026-11-18 14:59:25,167] WARNING django.request: Bad Request: /api/v1/campaigns/
+..[2026-11-18 14:59:26,783] WARNING django.request: Bad Request: /api/v1/campaigns/e0455af1-9b1a-4445-9f3b-5e8082d9229d/complete/
+..[2026-11-18 14:59:28,325] WARNING django.request: Bad Request: /api/v1/campaigns/a3693178-169a-47fe-8f57-76cc3d268009/complete/
+.[2026-11-18 14:59:29,077] WARNING django.request: Bad Request: /api/v1/campaigns/01a8286b-f89b-4d64-a09c-f39d44080197/complete/
+.[2026-11-18 14:59:29,803] WARNING django.request: Bad Request: /api/v1/campaigns/d47057c2-84bb-4961-a543-564a9225a87e/complete/
+.[2026-11-18 14:59:30,559] WARNING django.request: Bad Request: /api/v1/campaigns/ddcf75e7-ae32-4094-b166-80122ce8afd5/complete/
+.[2026-11-18 14:59:31,316] WARNING django.request: Bad Request: /api/v1/campaigns/f562c726-b059-48cd-a333-b029e071e97a/complete/
+.[2026-11-18 14:59:32,076] WARNING django.request: Bad Request: /api/v1/campaigns/02a50100-ce5f-4a20-bcb3-2a69cc5d0ebd/complete/
+..[2026-11-18 14:59:33,627] WARNING django.request: Bad Request: /api/v1/campaigns/52215705-2da7-4034-aa68-1ba079a1ae4d/complete/
+.....[2026-11-18 14:59:37,827] WARNING campaign.persona_utils: selected_personas ['nonexistent persona'] match none of the segmentation personas; falling back to all personas.
+.[2026-11-18 14:59:39,399] WARNING django.request: Not Found: /api/v1/campaigns/e9d65211-0df9-4edb-95a1-0f36a269560f/
+.......[2026-11-18 14:59:44,682] WARNING campaign.persona_utils: selected_personas ['nonexistent persona'] match none of the segmentation personas; falling back to all personas.
+.......[2026-11-18 14:59:50,115] WARNING django.request: Bad Request: /api/v1/campaigns/
+[2026-11-18 14:59:50,115] WARNING django.request: Bad Request: /api/v1/campaigns/
+[2026-11-18 14:59:50,131] WARNING django.request: Bad Request: /api/v1/campaigns/
+..[2026-11-18 14:59:51,610] WARNING django.request: Bad Request: /api/v1/campaigns/f3472af9-0029-4bae-acdc-dfa4c6ac4369/
+........[2026-11-18 14:59:58,723] INFO campaign.engines.platform_recommendation_engine: Recommending platforms (budget=800.0, currency=USD, target_market=Dubai, UAE)
+[2026-11-18 14:59:58,723] ERROR campaign.engines.platform_recommendation_engine: Failed to parse platform recommendation response
+[2026-11-18 14:59:58,725] WARNING django.request: Bad Request: /api/v1/campaigns/672fd93d-0976-4371-97bb-f72a3460ff7e/recommend-platforms/
+.[2026-11-18 15:00:00,213] INFO campaign.engines.platform_recommendation_engine: Recommending platforms (budget=800.0, currency=USD, target_market=Dubai, UAE)
+[2026-11-18 15:00:00,214] INFO campaign.engines.platform_recommendation_engine: Platform recommendation completed (3 platforms)
+[2026-11-18 15:00:00,217] INFO campaign.services.platform_recommendation: Persisted platform recommendations for campaign=0b8797ef-69fa-4830-92c1-f4beab09cc1a
+.[2026-11-18 15:00:01,708] INFO campaign.engines.platform_recommendation_engine: Recommending platforms (budget=800.0, currency=USD, target_market=Dubai, UAE)
+[2026-11-18 15:00:01,708] WARNING campaign.engines.platform_recommendation_engine: Dropping platform recommendation with unknown platform: 'tiktok'
+[2026-11-18 15:00:01,708] WARNING campaign.engines.platform_recommendation_engine: Dropping duplicate platform recommendation for: meta
+[2026-11-18 15:00:01,708] WARNING campaign.engines.platform_recommendation_engine: Dropping channel strategy role with unknown platform: 'pinterest'
+[2026-11-18 15:00:01,708] INFO campaign.engines.platform_recommendation_engine: Platform recommendation completed (3 platforms)
+[2026-11-18 15:00:01,711] INFO campaign.services.platform_recommendation: Persisted platform recommendations for campaign=20127a5b-e21e-4697-af3c-d943bc38d727
+.[2026-11-18 15:00:03,203] INFO campaign.engines.platform_recommendation_engine: Recommending platforms (budget=1500.0, currency=AED, target_market=Dubai, UAE)
+[2026-11-18 15:00:03,203] INFO campaign.engines.platform_recommendation_engine: Platform recommendation completed (3 platforms)
+[2026-11-18 15:00:03,206] INFO campaign.services.platform_recommendation: Persisted platform recommendations for campaign=3a3a8492-4eb6-4d65-bb33-51a9d0d83568
+.[2026-11-18 15:00:04,706] WARNING django.request: Not Found: /api/v1/campaigns/a959f72a-6722-4605-ab4d-0e27a7831b19/recommend-platforms/
+.[2026-11-18 15:00:06,224] INFO campaign.engines.platform_recommendation_engine: Recommending platforms (budget=800.0, currency=USD, target_market=Dubai, UAE)
+[2026-11-18 15:00:06,224] INFO campaign.engines.platform_recommendation_engine: Platform recommendation completed (3 platforms)
+[2026-11-18 15:00:06,227] INFO campaign.services.platform_recommendation: Persisted platform recommendations for campaign=e3f87a65-3aa6-4907-a149-7ea26824a841
+.[2026-11-18 15:00:07,721] INFO campaign.engines.platform_recommendation_engine: Recommending platforms (budget=800.0, currency=USD, target_market=Dubai, UAE)
+[2026-11-18 15:00:07,721] INFO campaign.engines.platform_recommendation_engine: Platform recommendation completed (3 platforms)
+[2026-11-18 15:00:07,734] INFO campaign.services.platform_recommendation: Persisted platform recommendations for campaign=ed858513-8eaf-4a6b-8385-bfe401875059
+.......[2026-11-18 15:00:13,593] WARNING django.request: Bad Request: /api/v1/campaigns/c7caef3f-4e03-4379-83c0-1e160a97f8c7/segmentation/
+.[2026-11-18 15:00:14,489] WARNING django.request: Bad Request: /api/v1/campaigns/10f5d6f0-51d4-457c-93cc-c4ef7f180c43/segmentation/
+.[2026-11-18 15:00:15,286] WARNING django.request: Bad Request: /api/v1/campaigns/2c763572-e9b8-4584-8654-9a194e63e2fc/segmentation/
+...........[2026-11-18 15:00:24,000] WARNING django.request: Bad Request: /api/v1/campaigns/2693d27f-a5dd-44f9-be5b-27313a475a3f/steps/segmentation/approve/
+.[2026-11-18 15:00:24,753] WARNING django.request: Bad Request: /api/v1/campaigns/d7df2c4c-d767-4d83-b244-eeb2073e9562/steps/funnel/approve/
+.[2026-11-18 15:00:25,496] WARNING django.request: Bad Request: /api/v1/campaigns/0b832327-df31-4b5c-a82c-06c6e97bdf46/steps/not_a_step/approve/
+..[2026-11-18 15:00:27,753] WARNING django.request: Not Found: /api/v1/campaigns/9375ec01-9084-4909-89dc-c3bd6c1a1f5c/steps/segmentation/approve/
+..[2026-11-18 15:00:29,386] WARNING django.request: Bad Request: /api/v1/campaigns/702f93d7-edf5-4845-889a-4609620a2625/steps/segmentation/review/
+.[2026-11-18 15:00:30,898] WARNING django.request: Not Found: /api/v1/campaigns/79b09d48-97b9-40c0-aa82-68fd06f016ef/steps/segmentation/review/
+...[2026-11-18 15:00:33,737] WARNING django.request: Bad Request: /api/v1/campaigns/9963ff66-3978-4bdd-8d1d-f12c773d7a37/steps/segmentation/review/
+[2026-11-18 15:00:33,753] WARNING django.request: Bad Request: /api/v1/campaigns/9963ff66-3978-4bdd-8d1d-f12c773d7a37/steps/segmentation/review/
+.[2026-11-18 15:00:34,500] WARNING django.request: Bad Request: /api/v1/campaigns/48a54432-dcef-4e2d-9d80-a312d628d1d9/steps/segmentation/review/
+.[2026-11-18 15:00:35,349] WARNING django.request: Bad Request: /api/v1/campaigns/488869b1-b8d3-474f-bc63-f834ee35a227/steps/not_a_step/review/
+....[2026-11-18 15:00:39,331] WARNING django.request: Not Found: /api/v1/campaigns/bd3d1676-0117-4cbd-b58f-a2cd01ff54c0/visuals/
+........[2026-11-18 15:00:51,346] WARNING django.request: Not Found: /api/v1/campaigns/full-funnel/cf3d2d3b-eca7-4351-9825-9bc09e607e82/generate-visuals/
+....[2026-11-18 15:00:56,680] WARNING django.request: Not Found: /api/v1/campaigns/d80d7496-d105-4c19-9ae4-295d5e391b38/scenario-variants-matrix/da33afb3-9eed-4b31-9689-4f2f346d6e56/generate-visuals/
+.[2026-11-18 15:00:58,146] WARNING django.request: Not Found: /api/v1/campaigns/9a9b8f16-e6ac-4927-82aa-bc530f0ebeba/scenario-variants-matrix/14303282-9a49-449b-9f87-958747715996/generate-visuals/
+...[2026-11-18 15:01:02,531] WARNING django.request: Not Found: /api/v1/campaigns/scenario-variants/86c4fcbc-a727-499f-ab54-d5af7f965466/generate-visuals/
+....[2026-11-18 15:01:09,031] WARNING django.request: Not Found: /api/v1/campaigns/scenario-variants/8e4494bd-08b4-45bf-b553-74ff04bb5fbc/
+.............................[2026-11-18 15:01:34,348] WARNING django.request: Unauthorized: /api/v1/credits/summary/
+.....C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\asgiref\sync.py:620: UserWarning: async_to_sync was passed a non-async-marked callable
+  return AsyncToSync(
+...C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\jwt\api_jwt.py:149: InsecureKeyLengthWarning: The HMAC key is 1 bytes long, which is below the minimum recommended length of 32 bytes for SHA256. See RFC 7518 Section 3.2.
+  return self._jws.encode(
+C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\jwt\api_jwt.py:370: InsecureKeyLengthWarning: The HMAC key is 1 bytes long, which is below the minimum recommended length of 32 bytes for SHA256. See RFC 7518 Section 3.2.
+  decoded = self.decode_complete(
+......[2026-11-18 15:01:44,032] ERROR market.views: Content intelligence generation failed.
+Traceback (most recent call last):
+  File "C:\laragon\www\ad_creator\django-backend\market\views.py", line 97, in post
+    result = async_to_sync(get_full_content_intelligence)(
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\asgiref\sync.py", line 332, in __call__
+    return call_result.result()
+  File "C:\laragon\bin\python\python-3.10\lib\concurrent\futures\_base.py", line 451, in result
+    return self.__get_result()
+  File "C:\laragon\bin\python\python-3.10\lib\concurrent\futures\_base.py", line 403, in __get_result
+    raise self._exception
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\asgiref\sync.py", line 372, in main_wrap
+    result = await awaitable
+  File "C:\laragon\bin\python\python-3.10\lib\unittest\mock.py", line 2206, in _execute_mock_call
+    raise effect
+Exception: SECRET internal traceback leak
+......[2026-11-18 15:01:45,547] WARNING brand.engines.auto_scan_engine: Auto scan scrape failed for https://scan-brand.com: RuntimeError: network down
+.[2026-11-18 15:01:45,547] WARNING brand.engines.auto_scan_engine: Auto scan scrape failed for https://scan-brand.com: HTTP 404
+.[2026-11-18 15:01:45,547] WARNING brand.engines.auto_scan_engine: Auto scan timed out for https://scan-brand.com after 60 seconds
+..........[2026-11-18 15:01:45,596] INFO brand.analyzers.competitor_analyzer: 🌍 Location: Dubai, UAE → geo: ae
+[2026-11-18 15:01:45,596] INFO brand.analyzers.competitor_analyzer: 🔍 Searching: best Wellness & Spa in Dubai, UAE
+[2026-11-18 15:01:45,596] WARNING brand.analyzers.competitor_analyzer: Serper returned empty or invalid payload for query: best Wellness & Spa in Dubai, UAE
+[2026-11-18 15:01:45,596] INFO brand.analyzers.competitor_analyzer: 🔍 Searching: top Wellness & Spa companies Dubai
+[2026-11-18 15:01:45,596] WARNING brand.analyzers.competitor_analyzer: Serper returned empty or invalid payload for query: top Wellness & Spa companies Dubai
+[2026-11-18 15:01:45,596] INFO brand.analyzers.competitor_analyzer: ✅ Found 0 potential competitors via web search
+[2026-11-18 15:01:45,596] INFO brand.analyzers.competitor_analyzer: 🔍 LLM Response type: <class 'dict'>
+[2026-11-18 15:01:45,596] INFO brand.analyzers.competitor_analyzer: 🔍 Content length: 308 chars
+[2026-11-18 15:01:45,596] INFO brand.analyzers.competitor_analyzer: 🔍 Content preview: {"direct_competitors": [{"name": "Yellow Pages UAE", "website": "https://yellowpages.ae", "verified_from_search": true}, {"name": "Serenity Spa Dubai", "website": "https://serenityspa.ae", "verified_f...
+[2026-11-18 15:01:45,596] INFO brand.analyzers.competitor_analyzer: 🔍 Validating competitor URLs...
+[2026-11-18 15:01:45,596] INFO brand.analyzers.competitor_analyzer: Dropped 1 directory/marketplace/listing result(s) from direct competitors
+[2026-11-18 15:01:45,596] INFO brand.analyzers.competitor_analyzer: Dropped 1 directory/marketplace/listing result(s) from indirect competitors
+[2026-11-18 15:01:45,596] INFO brand.analyzers.competitor_analyzer: ✅ Identified 1 direct and 0 indirect competitors (verified)
+..[2026-11-18 15:01:45,646] INFO brand.analyzers.competitor_analyzer: Dropped 4 directory/marketplace/listing result(s) from direct competitors
+.............[2026-11-18 15:01:45,690] INFO core.utils.scraper: 📄 FullTextExtractor: 240 chars from 8 elements
+[2026-11-18 15:01:45,698] INFO core.utils.scraper: 🛠️ Extracted 2 services
+.[2026-11-18 15:01:45,706] INFO core.utils.scraper: 📄 FullTextExtractor: 240 chars from 8 elements
+[2026-11-18 15:01:45,706] INFO core.utils.scraper: 🛠️ Extracted 2 services
+.[2026-11-18 15:01:45,734] INFO core.utils.scraper: 📄 FullTextExtractor: 240 chars from 8 elements
+[2026-11-18 15:01:45,736] INFO core.utils.scraper: 🛠️ Extracted 2 services
+...............[2026-11-18 15:01:45,752] INFO core.utils.scraper: 🛠️ Extracted 2 services
+.[2026-11-18 15:01:45,752] INFO core.utils.scraper: 🛠️ Extracted 1 services
+.....[2026-11-18 15:01:45,752] WARNING brand.engines.auto_scan_engine: Auto scan scrape failed for https://qa5.example.com: Playwright error: Page.goto: net::ERR_INTERNET_DISCONNECTED
+[2026-11-18 15:01:45,768] WARNING brand.engines.auto_scan_engine: Auto scan scrape failed for https://qa5.example.com: Playwright error: Page.goto: net::ERR_CONNECTION_REFUSED
+.[2026-11-18 15:01:45,770] WARNING brand.engines.auto_scan_engine: Auto scan scrape failed for https://qa5.example.com: Playwright error: Page.goto: net::ERR_NAME_NOT_RESOLVED at https://x/
+.[2026-11-18 15:01:45,772] WARNING brand.engines.auto_scan_engine: Auto scan scrape failed for https://qa5.example.com: Failed to resolve DNS for host
+..[2026-11-18 15:01:45,774] WARNING brand.engines.auto_scan_engine: Auto scan scrape failed for https://qa5.example.com: Playwright error: Page.goto: net::ERR_ABORTED at https://x/. Call log: navigating to https://x/
+.[2026-11-18 15:01:45,774] WARNING brand.engines.auto_scan_engine: Auto scan scrape failed for https://qa5.example.com: HTTP 404
+.[2026-11-18 15:01:45,774] WARNING brand.engines.auto_scan_engine: Auto scan scrape failed for https://qa5.example.com: Playwright error: Page.goto: net::ERR_TIMED_OUT at https://x/
+.[2026-11-18 15:01:45,780] WARNING brand.engines.auto_scan_engine: Auto scan scrape failed for https://qa5.example.com: RuntimeError: Page.goto: net::ERR_NAME_NOT_RESOLVED at https://x/
+.[2026-11-18 15:01:45,782] WARNING brand.engines.auto_scan_engine: Auto scan scrape failed for https://qa5.example.com: TimeoutError: Timeout 30000ms exceeded while waiting for the event
+..[2026-11-18 15:01:45,784] WARNING brand.engines.auto_scan_engine: Auto scan scrape failed for https://qa5.example.com: Playwright error: Page.goto: Timeout 30000ms exceeded.
+.[2026-11-18 15:01:45,784] WARNING brand.engines.auto_scan_engine: Auto scan scrape failed for https://qa5.example.com: Playwright error: Page.goto: net::ERR_NAME_NOT_RESOLVED at https://edi-uae.com/. Call log: navigating to https://edi-uae.com/, waiting until domcontentloaded
+.....[2026-11-18 15:01:45,784] INFO core.utils.scraper: 🛠️ Extracted 1 services
+.[2026-11-18 15:01:45,804] INFO core.utils.scraper: 🛠️ Extracted 3 services
+........................................[2026-11-18 15:01:45,855] INFO campaign.engines.ad_generation_engine: Generating 1 ad(s) for Startup Founder | TOFU | meta
+[2026-11-18 15:01:45,857] INFO campaign.engines.ad_generation_engine: Generating 1 ad(s) for Startup Founder | MOFU | meta
+[2026-11-18 15:01:45,857] INFO campaign.engines.ad_generation_engine: Generating 1 ad(s) for Startup Founder | BOFU | meta
+..[2026-11-18 15:01:45,887] INFO campaign.engines.ads_strategy_engine: Generating Meta Ads strategy
+.[2026-11-18 15:01:45,904] INFO campaign.engines.ads_strategy_engine: Generating LinkedIn Ads strategy
+.[2026-11-18 15:01:45,920] INFO campaign.engines.ads_strategy_engine: Generating Google Ads strategy
+.[2026-11-18 15:01:45,926] INFO campaign.engines.ads_strategy_engine: Generating Google Ads strategy
+.[2026-11-18 15:01:45,943] INFO campaign.engines.ads_strategy_engine: Generating Meta Ads strategy
+.[2026-11-18 15:01:45,971] INFO campaign.engines.ads_strategy_engine: Generating Google Ads strategy
+.[2026-11-18 15:01:45,987] INFO campaign.engines.ads_strategy_engine: Generating Meta Ads strategy
+.[2026-11-18 15:01:46,004] INFO campaign.engines.ads_strategy_engine: Generating LinkedIn Ads strategy
+.[2026-11-18 15:01:46,008] INFO campaign.engines.ads_strategy_engine: Generating Meta Ads strategy
+...[2026-11-18 15:01:46,056] INFO campaign.engines.ads_strategy_engine: Generating Google Ads strategy
+.[2026-11-18 15:01:46,080] INFO campaign.engines.ads_strategy_engine: Generating Meta Ads strategy
+[2026-11-18 15:01:46,087] INFO campaign.engines.ads_strategy_engine: Generating Meta Ads strategy
+[2026-11-18 15:01:46,105] INFO campaign.engines.ads_strategy_engine: Generating Meta Ads strategy
+.[2026-11-18 15:01:46,119] INFO campaign.engines.ads_strategy_engine: Generating Meta Ads strategy
+.[2026-11-18 15:01:46,135] INFO campaign.engines.ads_strategy_engine: Generating Meta Ads strategy
+.[2026-11-18 15:01:46,151] INFO campaign.engines.ads_strategy_engine: Generating Google Ads strategy
+[2026-11-18 15:01:46,166] INFO campaign.engines.ads_strategy_engine: Generating Meta Ads strategy
+.[2026-11-18 15:01:46,182] INFO campaign.engines.ads_strategy_engine: Generating Meta Ads strategy
+.[2026-11-18 15:01:46,198] INFO campaign.engines.ads_strategy_engine: Generating LinkedIn Ads strategy
+.[2026-11-18 15:01:46,213] INFO campaign.engines.ads_strategy_engine: Generating Google Ads strategy
+.[2026-11-18 15:01:46,229] INFO campaign.engines.ads_strategy_engine: Generating LinkedIn Ads strategy
+.[2026-11-18 15:01:46,245] INFO campaign.engines.ads_strategy_engine: Generating Google Ads strategy
+[2026-11-18 15:01:46,260] INFO campaign.engines.ads_strategy_engine: Generating Meta Ads strategy
+[2026-11-18 15:01:46,260] INFO campaign.engines.ads_strategy_engine: Generating LinkedIn Ads strategy
+.....................[2026-11-18 15:01:46,292] INFO campaign.engines.ad_generation_engine: Generating 1 ad(s) for Startup Founder | TOFU | meta
+.[2026-11-18 15:01:46,308] INFO campaign.engines.ad_generation_engine: Generating 1 ad(s) for Startup Founder | BOFU | google
+[2026-11-18 15:01:46,308] INFO campaign.engines.ad_generation_engine: Generating 1 ad(s) for Startup Founder | BOFU | google
+.[2026-11-18 15:01:46,324] INFO campaign.engines.full_funnel_launcher: Creating full funnel campaign for Acme Studio
+.[2026-11-18 15:01:46,339] INFO campaign.engines.full_funnel_launcher: Creating full funnel campaign for Acme Studio
+.[2026-11-18 15:01:46,377] INFO campaign.engines.segmentation_engine: Starting segmentation for business_type=Photography location=Dubai
+[2026-11-18 15:01:46,377] INFO campaign.engines.segmentation_engine: Running Serper competitor audience research
+[2026-11-18 15:01:46,377] INFO campaign.engines.segmentation_engine: Generated 1 customer segments
+.[2026-11-18 15:01:46,409] INFO campaign.engines.segmentation_engine: Starting segmentation for business_type=Photography location=Dubai
+[2026-11-18 15:01:46,409] INFO campaign.engines.segmentation_engine: Running Serper competitor audience research
+[2026-11-18 15:01:46,409] INFO campaign.engines.segmentation_engine: Generated 1 customer segments
+[2026-11-18 15:01:46,432] INFO campaign.engines.segmentation_engine: Starting segmentation for business_type=Photography location=Dubai
+[2026-11-18 15:01:46,432] INFO campaign.engines.segmentation_engine: Running Serper competitor audience research
+[2026-11-18 15:01:46,434] INFO campaign.engines.segmentation_engine: Generated 1 customer segments
+......................[2026-11-18 15:01:46,652] WARNING campaign.engines.ppc_viability_engine: PPC viability result has a missing or non-dict 'summary'; falling back to the default platform budget split.
+.[2026-11-18 15:01:46,668] INFO campaign.engines.platform_recommendation_engine: Recommending platforms (budget=None, currency=None, target_market=None)
+[2026-11-18 15:01:46,668] INFO campaign.engines.platform_recommendation_engine: Platform recommendation completed (2 platforms)
+.[2026-11-18 15:01:46,686] INFO campaign.engines.platform_recommendation_engine: Recommending platforms (budget=None, currency=None, target_market=None)
+[2026-11-18 15:01:46,686] INFO campaign.engines.platform_recommendation_engine: Platform recommendation completed (1 platforms)
+.[2026-11-18 15:01:46,706] INFO campaign.engines.platform_recommendation_engine: Recommending platforms (budget=None, currency=None, target_market=None)
+[2026-11-18 15:01:46,706] INFO campaign.engines.platform_recommendation_engine: Platform recommendation completed (3 platforms)
+.[2026-11-18 15:01:46,716] INFO campaign.engines.platform_recommendation_engine: Recommending platforms (budget=10000.0, currency=AED, target_market=None)
+[2026-11-18 15:01:46,716] INFO campaign.engines.platform_recommendation_engine: Platform recommendation completed (3 platforms)
+.[2026-11-18 15:01:46,732] INFO campaign.engines.platform_recommendation_engine: Recommending platforms (budget=None, currency=None, target_market=None)
+[2026-11-18 15:01:46,732] INFO campaign.engines.platform_recommendation_engine: Platform recommendation completed (3 platforms)
+.[2026-11-18 15:01:46,748] INFO campaign.engines.platform_recommendation_engine: Recommending platforms (budget=None, currency=None, target_market=None)
+[2026-11-18 15:01:46,748] INFO campaign.engines.platform_recommendation_engine: Platform recommendation completed (2 platforms)
+.[2026-11-18 15:01:46,778] INFO campaign.engines.platform_recommendation_engine: Recommending platforms (budget=None, currency=None, target_market=None)
+[2026-11-18 15:01:46,778] INFO campaign.engines.platform_recommendation_engine: Platform recommendation completed (2 platforms)
+.[2026-11-18 15:01:46,794] INFO campaign.engines.platform_recommendation_engine: Recommending platforms (budget=None, currency=None, target_market=None)
+[2026-11-18 15:01:46,794] INFO campaign.engines.platform_recommendation_engine: Platform recommendation completed (3 platforms)
+.[2026-11-18 15:01:46,810] INFO campaign.engines.platform_recommendation_engine: Recommending platforms (budget=None, currency=None, target_market=None)
+[2026-11-18 15:01:46,810] INFO campaign.engines.platform_recommendation_engine: Platform recommendation completed (1 platforms)
+.[2026-11-18 15:01:46,811] INFO campaign.engines.platform_recommendation_engine: Recommending platforms (budget=None, currency=None, target_market=None)
+[2026-11-18 15:01:46,811] WARNING campaign.engines.platform_recommendation_engine: Dropping platform recommendation with unknown platform: 'tiktok'
+[2026-11-18 15:01:46,811] WARNING campaign.engines.platform_recommendation_engine: Dropping duplicate platform recommendation for: meta
+[2026-11-18 15:01:46,811] WARNING campaign.engines.platform_recommendation_engine: Dropping channel strategy role with unknown platform: 'pinterest'
+[2026-11-18 15:01:46,811] INFO campaign.engines.platform_recommendation_engine: Platform recommendation completed (3 platforms)
+.[2026-11-18 15:01:46,843] INFO campaign.engines.platform_recommendation_engine: Recommending platforms (budget=None, currency=None, target_market=None)
+[2026-11-18 15:01:46,843] INFO campaign.engines.platform_recommendation_engine: Platform recommendation completed (0 platforms)
+.[2026-11-18 15:01:46,859] INFO campaign.engines.platform_recommendation_engine: Recommending platforms (budget=None, currency=None, target_market=None)
+[2026-11-18 15:01:46,859] INFO campaign.engines.platform_recommendation_engine: Platform recommendation completed (3 platforms)
+.[2026-11-18 15:01:46,877] INFO campaign.engines.platform_recommendation_engine: Recommending platforms (budget=500.0, currency=usd, target_market=Dubai, UAE)
+[2026-11-18 15:01:46,877] INFO campaign.engines.platform_recommendation_engine: Platform recommendation completed (3 platforms)
+.[2026-11-18 15:01:46,890] INFO campaign.engines.platform_recommendation_engine: Recommending platforms (budget=None, currency=None, target_market=None)
+[2026-11-18 15:01:46,890] ERROR campaign.engines.platform_recommendation_engine: JSON parse error: Expecting value: line 1 column 1 (char 0)
+Traceback (most recent call last):
+  File "C:\laragon\www\ad_creator\django-backend\campaign\engines\platform_recommendation_engine.py", line 584, in _parse_response
+    return json.loads(response)
+  File "C:\laragon\bin\python\python-3.10\lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+  File "C:\laragon\bin\python\python-3.10\lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+  File "C:\laragon\bin\python\python-3.10\lib\json\decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+[2026-11-18 15:01:46,890] ERROR campaign.engines.platform_recommendation_engine: Failed to parse platform recommendation response
+.[2026-11-18 15:01:46,906] INFO campaign.engines.platform_recommendation_engine: Recommending platforms (budget=None, currency=None, target_market=None)
+[2026-11-18 15:01:46,906] INFO campaign.engines.platform_recommendation_engine: Platform recommendation completed (0 platforms)
+.[2026-11-18 15:01:46,922] INFO campaign.engines.platform_recommendation_engine: Recommending platforms (budget=None, currency=None, target_market=None)
+[2026-11-18 15:01:46,922] INFO campaign.engines.platform_recommendation_engine: Platform recommendation completed (0 platforms)
+.[2026-11-18 15:01:46,953] INFO campaign.engines.segmentation_engine: Starting segmentation for business_type=SaaS location=Berlin
+[2026-11-18 15:01:46,953] INFO campaign.engines.segmentation_engine: Running Serper competitor audience research
+[2026-11-18 15:01:46,953] INFO campaign.engines.segmentation_engine: Generated 1 customer segments
+[2026-11-18 15:01:46,969] INFO campaign.engines.segmentation_engine: Starting segmentation for business_type=SaaS location=Berlin
+[2026-11-18 15:01:46,969] INFO campaign.engines.segmentation_engine: Running Serper competitor audience research
+[2026-11-18 15:01:46,982] INFO campaign.engines.segmentation_engine: Generated 1 customer segments
+.[2026-11-18 15:01:47,011] INFO campaign.engines.segmentation_engine: Starting segmentation for business_type=SaaS location=Berlin
+[2026-11-18 15:01:47,011] INFO campaign.engines.segmentation_engine: Running Serper competitor audience research
+[2026-11-18 15:01:47,012] INFO campaign.engines.segmentation_engine: Generated 1 customer segments
+...[2026-11-18 15:01:48,144] INFO httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+[2026-11-18 15:01:48,145] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier unavailable for persona index 0 (The Budget Optimizer); using deterministic templates: Error code: 401 - {'error': {'message': 'Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+[2026-11-18 15:01:48,360] INFO httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+[2026-11-18 15:01:48,361] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier unavailable for persona index 1 (The Growth Lead); using deterministic templates: Error code: 401 - {'error': {'message': 'Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+[2026-11-18 15:01:48,593] INFO httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+[2026-11-18 15:01:48,594] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier unavailable for persona index 2 (The Hands-Off Owner); using deterministic templates: Error code: 401 - {'error': {'message': 'Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+.[2026-11-18 15:01:48,872] INFO httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+[2026-11-18 15:01:48,872] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier unavailable for persona index 0 (The Budget Optimizer); using deterministic templates: Error code: 401 - {'error': {'message': 'Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+.[2026-11-18 15:01:48,888] ERROR asyncio: Task exception was never retrieved
+future: <Task finished name='Task-834' coro=<AsyncClient.aclose() done, defined at C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpx\_client.py:1978> exception=RuntimeError('Event loop is closed')>
+Traceback (most recent call last):
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpx\_client.py", line 1985, in aclose
+    await self._transport.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpx\_transports\default.py", line 406, in aclose
+    await self._pool.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\connection_pool.py", line 353, in aclose
+    await self._close_connections(closing_connections)
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\connection_pool.py", line 345, in _close_connections
+    await connection.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\connection.py", line 173, in aclose
+    await self._connection.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\http11.py", line 258, in aclose
+    await self._network_stream.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_backends\anyio.py", line 53, in aclose
+    await self._stream.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\anyio\streams\tls.py", line 248, in aclose
+    await self.transport_stream.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\anyio\_backends\_asyncio.py", line 1467, in aclose
+    self._transport.close()
+  File "C:\laragon\bin\python\python-3.10\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "C:\laragon\bin\python\python-3.10\lib\asyncio\base_events.py", line 750, in call_soon
+    self._check_closed()
+  File "C:\laragon\bin\python\python-3.10\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+[2026-11-18 15:01:49,445] INFO httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+[2026-11-18 15:01:49,446] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier unavailable for persona index 0 (The Budget Optimizer); using deterministic templates: Error code: 401 - {'error': {'message': 'Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+[2026-11-18 15:01:49,653] INFO httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+[2026-11-18 15:01:49,653] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier unavailable for persona index 1 (The Growth Lead); using deterministic templates: Error code: 401 - {'error': {'message': 'Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+[2026-11-18 15:01:49,873] INFO httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+[2026-11-18 15:01:49,873] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier unavailable for persona index 2 (The Hands-Off Owner); using deterministic templates: Error code: 401 - {'error': {'message': 'Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+.[2026-11-18 15:01:50,145] INFO httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+[2026-11-18 15:01:50,145] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier unavailable for persona index 0 (The Budget Optimizer); using deterministic templates: Error code: 401 - {'error': {'message': 'Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+[2026-11-18 15:01:50,358] INFO httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+[2026-11-18 15:01:50,358] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier unavailable for persona index 1 (The Budget Optimizer); using deterministic templates: Error code: 401 - {'error': {'message': 'Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+.[2026-11-18 15:01:50,693] INFO httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+[2026-11-18 15:01:50,693] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier unavailable for persona index 0 (The Budget Optimizer); using deterministic templates: Error code: 401 - {'error': {'message': 'Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+[2026-11-18 15:01:50,908] INFO httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+[2026-11-18 15:01:50,908] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier unavailable for persona index 1 (The Growth Lead); using deterministic templates: Error code: 401 - {'error': {'message': 'Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+[2026-11-18 15:01:51,129] INFO httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+[2026-11-18 15:01:51,129] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier unavailable for persona index 2 (The Hands-Off Owner); using deterministic templates: Error code: 401 - {'error': {'message': 'Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+.[2026-11-18 15:01:51,441] INFO httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+[2026-11-18 15:01:51,441] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier unavailable for persona index 0 (The Budget Optimizer); using deterministic templates: Error code: 401 - {'error': {'message': 'Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+[2026-11-18 15:01:51,684] INFO httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+[2026-11-18 15:01:51,684] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier unavailable for persona index 1 (The Growth Lead); using deterministic templates: Error code: 401 - {'error': {'message': 'Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+[2026-11-18 15:01:51,926] INFO httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+[2026-11-18 15:01:51,926] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier unavailable for persona index 2 (The Hands-Off Owner); using deterministic templates: Error code: 401 - {'error': {'message': 'Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+.[2026-11-18 15:01:52,227] INFO httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+[2026-11-18 15:01:52,236] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier unavailable for persona index 0 (The Budget Optimizer); using deterministic templates: Error code: 401 - {'error': {'message': 'Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+[2026-11-18 15:01:52,444] INFO httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+[2026-11-18 15:01:52,444] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier unavailable for persona index 1 (The Growth Lead); using deterministic templates: Error code: 401 - {'error': {'message': 'Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+[2026-11-18 15:01:52,669] INFO httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+[2026-11-18 15:01:52,669] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier unavailable for persona index 2 (The Hands-Off Owner); using deterministic templates: Error code: 401 - {'error': {'message': 'Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+.[2026-11-18 15:01:52,993] INFO httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+[2026-11-18 15:01:52,993] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier unavailable for persona index 0 (The Budget Optimizer); using deterministic templates: Error code: 401 - {'error': {'message': 'Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+[2026-11-18 15:01:53,237] INFO httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+[2026-11-18 15:01:53,237] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier unavailable for persona index 1 (The Growth Lead); using deterministic templates: Error code: 401 - {'error': {'message': 'Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+[2026-11-18 15:01:53,496] INFO httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+[2026-11-18 15:01:53,496] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier unavailable for persona index 2 (The Hands-Off Owner); using deterministic templates: Error code: 401 - {'error': {'message': 'Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+..[2026-11-18 15:01:53,788] INFO httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+[2026-11-18 15:01:53,788] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier unavailable for persona index 0 (Founder); using deterministic templates: Error code: 401 - {'error': {'message': 'Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+..........[2026-11-18 15:01:54,211] INFO httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+[2026-11-18 15:01:54,211] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier unavailable for persona index 0 (Startup Founder); using deterministic templates: Error code: 401 - {'error': {'message': 'Incorrect API key provided: test-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+........................[2026-11-18 15:01:54,384] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier returned unusable JSON for persona index 0 (Solo Stella); using deterministic templates.
+[2026-11-18 15:01:54,397] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier returned unusable JSON for persona index 0 (Solo Stella); using deterministic templates.
+.[2026-11-18 15:01:54,413] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier unavailable for persona index 0 (Solo Stella); using deterministic templates: LLM provider down
+.[2026-11-18 15:01:54,430] ERROR asyncio: Task exception was never retrieved
+future: <Task finished name='Task-890' coro=<AsyncClient.aclose() done, defined at C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpx\_client.py:1978> exception=RuntimeError('Event loop is closed')>
+Traceback (most recent call last):
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpx\_client.py", line 1985, in aclose
+    await self._transport.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpx\_transports\default.py", line 406, in aclose
+    await self._pool.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\connection_pool.py", line 353, in aclose
+    await self._close_connections(closing_connections)
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\connection_pool.py", line 345, in _close_connections
+    await connection.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\connection.py", line 173, in aclose
+    await self._connection.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\http11.py", line 258, in aclose
+    await self._network_stream.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_backends\anyio.py", line 53, in aclose
+    await self._stream.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\anyio\streams\tls.py", line 248, in aclose
+    await self.transport_stream.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\anyio\_backends\_asyncio.py", line 1467, in aclose
+    self._transport.close()
+  File "C:\laragon\bin\python\python-3.10\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "C:\laragon\bin\python\python-3.10\lib\asyncio\base_events.py", line 750, in call_soon
+    self._check_closed()
+  File "C:\laragon\bin\python\python-3.10\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+[2026-11-18 15:01:54,433] ERROR asyncio: Task exception was never retrieved
+future: <Task finished name='Task-891' coro=<AsyncClient.aclose() done, defined at C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpx\_client.py:1978> exception=RuntimeError('Event loop is closed')>
+Traceback (most recent call last):
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpx\_client.py", line 1985, in aclose
+    await self._transport.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpx\_transports\default.py", line 406, in aclose
+    await self._pool.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\connection_pool.py", line 353, in aclose
+    await self._close_connections(closing_connections)
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\connection_pool.py", line 345, in _close_connections
+    await connection.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\connection.py", line 173, in aclose
+    await self._connection.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\http11.py", line 258, in aclose
+    await self._network_stream.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_backends\anyio.py", line 53, in aclose
+    await self._stream.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\anyio\streams\tls.py", line 248, in aclose
+    await self.transport_stream.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\anyio\_backends\_asyncio.py", line 1467, in aclose
+    self._transport.close()
+  File "C:\laragon\bin\python\python-3.10\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "C:\laragon\bin\python\python-3.10\lib\asyncio\base_events.py", line 750, in call_soon
+    self._check_closed()
+  File "C:\laragon\bin\python\python-3.10\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+[2026-11-18 15:01:54,434] ERROR asyncio: Task exception was never retrieved
+future: <Task finished name='Task-892' coro=<AsyncClient.aclose() done, defined at C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpx\_client.py:1978> exception=RuntimeError('Event loop is closed')>
+Traceback (most recent call last):
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpx\_client.py", line 1985, in aclose
+    await self._transport.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpx\_transports\default.py", line 406, in aclose
+    await self._pool.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\connection_pool.py", line 353, in aclose
+    await self._close_connections(closing_connections)
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\connection_pool.py", line 345, in _close_connections
+    await connection.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\connection.py", line 173, in aclose
+    await self._connection.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\http11.py", line 258, in aclose
+    await self._network_stream.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_backends\anyio.py", line 53, in aclose
+    await self._stream.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\anyio\streams\tls.py", line 248, in aclose
+    await self.transport_stream.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\anyio\_backends\_asyncio.py", line 1467, in aclose
+    self._transport.close()
+  File "C:\laragon\bin\python\python-3.10\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "C:\laragon\bin\python\python-3.10\lib\asyncio\base_events.py", line 750, in call_soon
+    self._check_closed()
+  File "C:\laragon\bin\python\python-3.10\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+[2026-11-18 15:01:54,436] ERROR asyncio: Task exception was never retrieved
+future: <Task finished name='Task-893' coro=<AsyncClient.aclose() done, defined at C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpx\_client.py:1978> exception=RuntimeError('Event loop is closed')>
+Traceback (most recent call last):
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpx\_client.py", line 1985, in aclose
+    await self._transport.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpx\_transports\default.py", line 406, in aclose
+    await self._pool.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\connection_pool.py", line 353, in aclose
+    await self._close_connections(closing_connections)
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\connection_pool.py", line 345, in _close_connections
+    await connection.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\connection.py", line 173, in aclose
+    await self._connection.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\http11.py", line 258, in aclose
+    await self._network_stream.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_backends\anyio.py", line 53, in aclose
+    await self._stream.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\anyio\streams\tls.py", line 248, in aclose
+    await self.transport_stream.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\anyio\_backends\_asyncio.py", line 1467, in aclose
+    self._transport.close()
+  File "C:\laragon\bin\python\python-3.10\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "C:\laragon\bin\python\python-3.10\lib\asyncio\base_events.py", line 750, in call_soon
+    self._check_closed()
+  File "C:\laragon\bin\python\python-3.10\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+[2026-11-18 15:01:54,437] ERROR asyncio: Task exception was never retrieved
+future: <Task finished name='Task-894' coro=<AsyncClient.aclose() done, defined at C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpx\_client.py:1978> exception=RuntimeError('Event loop is closed')>
+Traceback (most recent call last):
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpx\_client.py", line 1985, in aclose
+    await self._transport.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpx\_transports\default.py", line 406, in aclose
+    await self._pool.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\connection_pool.py", line 353, in aclose
+    await self._close_connections(closing_connections)
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\connection_pool.py", line 345, in _close_connections
+    await connection.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\connection.py", line 173, in aclose
+    await self._connection.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\http11.py", line 258, in aclose
+    await self._network_stream.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_backends\anyio.py", line 53, in aclose
+    await self._stream.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\anyio\streams\tls.py", line 248, in aclose
+    await self.transport_stream.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\anyio\_backends\_asyncio.py", line 1467, in aclose
+    self._transport.close()
+  File "C:\laragon\bin\python\python-3.10\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "C:\laragon\bin\python\python-3.10\lib\asyncio\base_events.py", line 750, in call_soon
+    self._check_closed()
+  File "C:\laragon\bin\python\python-3.10\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+[2026-11-18 15:01:54,439] ERROR asyncio: Task exception was never retrieved
+future: <Task finished name='Task-895' coro=<AsyncClient.aclose() done, defined at C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpx\_client.py:1978> exception=RuntimeError('Event loop is closed')>
+Traceback (most recent call last):
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpx\_client.py", line 1985, in aclose
+    await self._transport.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpx\_transports\default.py", line 406, in aclose
+    await self._pool.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\connection_pool.py", line 353, in aclose
+    await self._close_connections(closing_connections)
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\connection_pool.py", line 345, in _close_connections
+    await connection.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\connection.py", line 173, in aclose
+    await self._connection.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_async\http11.py", line 258, in aclose
+    await self._network_stream.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\httpcore\_backends\anyio.py", line 53, in aclose
+    await self._stream.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\anyio\streams\tls.py", line 248, in aclose
+    await self.transport_stream.aclose()
+  File "C:\laragon\www\ad_creator\django-backend\.venv\lib\site-packages\anyio\_backends\_asyncio.py", line 1467, in aclose
+    self._transport.close()
+  File "C:\laragon\bin\python\python-3.10\lib\asyncio\proactor_events.py", line 108, in close
+    self._loop.call_soon(self._call_connection_lost, None)
+  File "C:\laragon\bin\python\python-3.10\lib\asyncio\base_events.py", line 750, in call_soon
+    self._check_closed()
+  File "C:\laragon\bin\python\python-3.10\lib\asyncio\base_events.py", line 515, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+.[2026-11-18 15:01:54,456] INFO campaign.engines.smart_funnel_engine: Funnel AI text tier returned unusable JSON for persona index 0 (Solo Stella); using deterministic templates.
+...........[2026-11-18 15:01:54,610] INFO campaign.engines.segmentation_engine: Starting segmentation for business_type=Driving School location=Dubai, UAE
+[2026-11-18 15:01:54,610] INFO campaign.engines.segmentation_engine: Running Serper competitor audience research
+[2026-11-18 15:01:54,610] ERROR campaign.engines.segmentation_engine: JSON parse error: Expecting value: line 1 column 1 (char 0)
+Traceback (most recent call last):
+  File "C:\laragon\www\ad_creator\django-backend\campaign\engines\segmentation_engine.py", line 302, in _parse_response
+    return json.loads(response)
+  File "C:\laragon\bin\python\python-3.10\lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+  File "C:\laragon\bin\python\python-3.10\lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+  File "C:\laragon\bin\python\python-3.10\lib\json\decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+[2026-11-18 15:01:54,610] WARNING campaign.engines.segmentation_engine: Segmentation response was unparseable; retrying the LLM call once
+[2026-11-18 15:01:54,610] INFO campaign.engines.segmentation_engine: Generated 1 customer segments
+.[2026-11-18 15:01:54,636] INFO campaign.engines.segmentation_engine: Starting segmentation for business_type=Driving School location=Dubai, UAE
+[2026-11-18 15:01:54,636] INFO campaign.engines.segmentation_engine: Running Serper competitor audience research
+[2026-11-18 15:01:54,636] ERROR campaign.engines.segmentation_engine: JSON parse error: Expecting value: line 1 column 1 (char 0)
+Traceback (most recent call last):
+  File "C:\laragon\www\ad_creator\django-backend\campaign\engines\segmentation_engine.py", line 302, in _parse_response
+    return json.loads(response)
+  File "C:\laragon\bin\python\python-3.10\lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+  File "C:\laragon\bin\python\python-3.10\lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+  File "C:\laragon\bin\python\python-3.10\lib\json\decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+[2026-11-18 15:01:54,636] WARNING campaign.engines.segmentation_engine: Segmentation response was unparseable; retrying the LLM call once
+[2026-11-18 15:01:54,636] ERROR campaign.engines.segmentation_engine: JSON parse error: Expecting value: line 1 column 1 (char 0)
+Traceback (most recent call last):
+  File "C:\laragon\www\ad_creator\django-backend\campaign\engines\segmentation_engine.py", line 302, in _parse_response
+    return json.loads(response)
+  File "C:\laragon\bin\python\python-3.10\lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+  File "C:\laragon\bin\python\python-3.10\lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+  File "C:\laragon\bin\python\python-3.10\lib\json\decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+[2026-11-18 15:01:54,636] ERROR campaign.engines.segmentation_engine: Failed to parse segmentation response
+.[2026-11-18 15:01:54,657] INFO campaign.engines.segmentation_engine: Starting segmentation for business_type=Driving School location=Dubai, UAE
+[2026-11-18 15:01:54,657] INFO campaign.engines.segmentation_engine: Running Serper competitor audience research
+[2026-11-18 15:01:54,657] INFO campaign.engines.segmentation_engine: Generated 1 customer segments
+.....[2026-11-18 15:01:54,673] INFO campaign.engines.ppc_viability_engine: Analyzing PPC viability for 2 services
+[2026-11-18 15:01:54,673] INFO campaign.engines.ppc_viability_engine: Running Serper competitor ad intelligence
+[2026-11-18 15:01:54,673] INFO campaign.engines.ppc_viability_engine: PPC viability post-filter dropped 15 LLM-invented service entries; 2 requested services kept
+[2026-11-18 15:01:54,673] INFO campaign.engines.ppc_viability_engine: PPC viability analysis completed
+.[2026-11-18 15:01:54,689] INFO campaign.engines.ppc_viability_engine: Analyzing PPC viability for 2 services
+[2026-11-18 15:01:54,689] INFO campaign.engines.ppc_viability_engine: Running Serper competitor ad intelligence
+[2026-11-18 15:01:54,689] INFO campaign.engines.ppc_viability_engine: PPC viability post-filter dropped 15 LLM-invented service entries; 2 requested services kept
+[2026-11-18 15:01:54,689] INFO campaign.engines.ppc_viability_engine: PPC viability analysis completed
+.[2026-11-18 15:01:54,705] INFO campaign.engines.ppc_viability_engine: Analyzing PPC viability for 2 services
+[2026-11-18 15:01:54,705] INFO campaign.engines.ppc_viability_engine: Running Serper competitor ad intelligence
+[2026-11-18 15:01:54,705] INFO campaign.engines.ppc_viability_engine: PPC viability post-filter dropped 15 LLM-invented service entries; 2 requested services kept
+[2026-11-18 15:01:54,705] INFO campaign.engines.ppc_viability_engine: PPC viability analysis completed
+.[2026-11-18 15:01:54,731] INFO campaign.engines.ppc_viability_engine: Analyzing PPC viability for 2 services
+[2026-11-18 15:01:54,731] INFO campaign.engines.ppc_viability_engine: Running Serper competitor ad intelligence
+[2026-11-18 15:01:54,731] INFO campaign.engines.ppc_viability_engine: PPC viability post-filter dropped 15 LLM-invented service entries; 2 requested services kept
+[2026-11-18 15:01:54,731] INFO campaign.engines.ppc_viability_engine: PPC viability analysis completed
+.[2026-11-18 15:01:54,738] INFO campaign.engines.ppc_viability_engine: PPC viability post-filter dropped 2 LLM-invented service entries; 0 requested services kept
+.[2026-11-18 15:01:54,753] INFO campaign.engines.ppc_viability_engine: Analyzing PPC viability for 1 services
+[2026-11-18 15:01:54,753] INFO campaign.engines.ppc_viability_engine: Running Serper competitor ad intelligence
+[2026-11-18 15:01:54,753] INFO campaign.engines.ppc_viability_engine: PPC viability post-filter dropped 9 LLM-invented service entries; 0 requested services kept
+[2026-11-18 15:01:54,753] INFO campaign.engines.ppc_viability_engine: PPC viability analysis completed
+.[2026-11-18 15:01:54,769] INFO campaign.engines.ppc_viability_engine: PPC viability post-filter dropped 3 LLM-invented service entries; 1 requested services kept
+.[2026-11-18 15:01:54,769] INFO campaign.engines.ppc_viability_engine: PPC viability post-filter dropped 1 LLM-invented service entries; 2 requested services kept
+..[2026-11-18 15:01:54,800] INFO campaign.engines.ppc_viability_engine: PPC viability post-filter dropped 1 LLM-invented service entries; 2 requested services kept
+.......[2026-11-18 15:01:54,879] INFO brand.analyzers.brand_core_analyzer: 🎯 Using industry: technology for all downstream analysis
+...................
+----------------------------------------------------------------------
+Ran 650 tests in 353.940s
+
+OK
+Destroying test database for alias 'default'...
+Found 650 test(s).
+System check identified no issues (0 silenced).
