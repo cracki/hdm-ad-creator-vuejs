@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>گزارش رفع ایرادهای تست دوم و سوم — Ad Creator</title>
+<style>
+  @font-face {
+    font-family: 'Vazirmatn';
+    src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-Regular.woff2') format('woff2');
+    font-weight: 400; font-display: swap;
+  }
+  @font-face {
+    font-family: 'Vazirmatn';
+    src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-Medium.woff2') format('woff2');
+    font-weight: 500; font-display: swap;
+  }
+  @font-face {
+    font-family: 'Vazirmatn';
+    src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-SemiBold.woff2') format('woff2');
+    font-weight: 600; font-display: swap;
+  }
+  @font-face {
+    font-family: 'Vazirmatn';
+    src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-Bold.woff2') format('woff2');
+    font-weight: 700; font-display: swap;
+  }
+  :root {
+    --ink: #1e2430; --ink-soft: #3c4557; --muted: #6b7385; --line: #dde2ea;
+    --surface: #ffffff; --bg: #f4f6f9; --accent: #0f5f8a; --accent-soft: #eaf3f8;
+    --ok: #1c7a4c; --ok-soft: #e9f5ef; --code-bg: #f0f2f5;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { font-size: 15px; }
+  body {
+    font-family: 'Vazirmatn', Tahoma, sans-serif;
+    direction: rtl; text-align: right; color: var(--ink);
+    background: var(--bg); line-height: 1.9; padding: 2.5rem 1rem;
+  }
+  .page {
+    max-width: 880px; margin: 0 auto; background: var(--surface);
+    border: 1px solid var(--line); border-radius: 8px; padding: 3rem 3.2rem;
+  }
+  header.doc-head {
+    border-bottom: 2px solid var(--accent); padding-bottom: 1.4rem; margin-bottom: 2rem;
+  }
+  header.doc-head .kicker {
+    font-size: .78rem; letter-spacing: .04em; color: var(--accent);
+    font-weight: 600; margin-bottom: .4rem;
+  }
+  header.doc-head h1 { font-size: 1.4rem; font-weight: 700; line-height: 1.6; margin-bottom: .8rem; }
+  .meta-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: .6rem 1.5rem; font-size: .84rem; color: var(--ink-soft);
+  }
+  .meta-grid b { color: var(--muted); font-weight: 500; }
+  h2 {
+    font-size: 1.05rem; font-weight: 700; color: var(--accent);
+    margin: 2.2rem 0 .9rem; padding-bottom: .35rem; border-bottom: 1px solid var(--line);
+  }
+  p { font-size: .9rem; color: var(--ink-soft); margin-bottom: .7rem; }
+  ul.plain { list-style: none; margin-bottom: .8rem; }
+  ul.plain li {
+    font-size: .88rem; color: var(--ink-soft);
+    padding-inline-start: 1.1rem; position: relative; margin-bottom: .3rem;
+  }
+  ul.plain li::before {
+    content: ''; position: absolute; inset-inline-start: 0; top: .75em;
+    width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+  }
+  code, .en {
+    font-family: Consolas, 'Courier New', monospace; direction: ltr; unicode-bidi: embed;
+  }
+  code {
+    background: var(--code-bg); border: 1px solid var(--line); border-radius: 4px;
+    padding: .05em .4em; font-size: .8rem; color: var(--ink); white-space: nowrap;
+  }
+  .en { font-size: .86em; }
+  .item {
+    border: 1px solid var(--line); border-radius: 6px; padding: .9rem 1.2rem;
+    margin-bottom: .8rem; background: #fcfdfe;
+  }
+  .item-head { display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap; margin-bottom: .35rem; }
+  .item-head .tag {
+    font-family: Consolas, monospace; font-size: .72rem; font-weight: 700;
+    color: var(--surface); background: var(--accent); border-radius: 4px;
+    padding: .1em .55em; direction: ltr; flex-shrink: 0;
+  }
+  .item-head .tag.bug { background: #a33d2f; }
+  .item-head .tag.new { background: #1c7a4c; }
+  .item-head h3 { margin: 0; font-size: .92rem; }
+  .item p { font-size: .85rem; margin-bottom: .3rem; }
+  .item p .was { color: #a33d2f; font-weight: 500; }
+  .ref { font-size: .74rem; color: var(--muted); margin-top: .4rem; }
+  .ref code { font-size: .72rem; }
+  table { width: 100%; border-collapse: collapse; font-size: .84rem; margin: .8rem 0 1.2rem; }
+  th, td { border: 1px solid var(--line); padding: .45rem .7rem; text-align: right; vertical-align: top; }
+  th { background: var(--accent-soft); font-weight: 600; font-size: .8rem; color: var(--accent); white-space: nowrap; }
+  .badges { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0 1.5rem; }
+  .badge {
+    font-size: .78rem; font-weight: 600; border-radius: 5px;
+    padding: .25rem .8rem; border: 1px solid var(--line);
+  }
+  .badge.ok { background: var(--ok-soft); color: var(--ok); border-color: #cfe8da; }
+  .badge.num { background: var(--accent-soft); color: var(--accent); border-color: #cfe2ee; }
+  .status-cell { font-weight: 600; color: var(--ok); white-space: nowrap; }
+  footer {
+    margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--line);
+    font-size: .76rem; color: var(--muted);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: .5rem;
+  }
+  @media print {
+    body { background: #fff; padding: 0; }
+    .page { border: none; border-radius: 0; padding: 1.5rem; }
+    .item { break-inside: avoid; }
+    h2 { break-after: avoid; }
+  }
+  @media (max-width: 640px) { .page { padding: 1.6rem 1.2rem; } html { font-size: 14px; } }
+</style>
+</head>
+<body>
+<div class="page">
+
+<h2>۱. برند و Brand Analysis</h2>
+
+<div class="item">
+  <div class="item-head"><span class="tag">عکس ۲</span><span class="tag">عکس ۸</span><span class="tag">عکس ۳۱</span><h3>متن خطا، اسم مشتری‌ها و اسم آهنگ‌ها به‌عنوان «سرویس» ذخیره می‌شد</h3></div>
+  <p><span class="was">مشکل:</span> اسکن هر متنی از صفحه را سرویس حساب می‌کرد — اسم مشتری‌ها در نظرات، اسم آهنگ‌های نمونه، «Developed by Adsan Media India» و تکه‌جمله‌هایی مثل «and joy».</p>
+  <p><span class="was">اصلاح:</span> اصلاح در سه لایه: (۱) اسکرپر بخش‌های نظرات/تستیمونیل، فوتر و خطوط اعتبار سایت را قبل از استخراج حذف می‌کند؛ (۲) دستور صریح به هوش مصنوعی که سرویس باید «محصول قابل‌خرید یا رزرو واقعی» باشد و اسم افراد، عنوان رسانه‌ها و اعتبار سایت هرگز سرویس نیست — در صورت تردید، لیست خالی برگردد؛ (۳) فیلتر نهایی الگویی که اسم شخص (۲ تا ۴ کلمهٔ Big Case)، عنوان رسانه و تکه‌جمله را حذف می‌کند اما سرویس‌های واقعی (مثل «Personalized Anniversary Song» یا «Home Massage Dubai») را نگه می‌دارد. همین اصلاح، پیشنهادهای اشتباه فرم کمپین (عکس ۸) و prefill اشتباه Content Intelligence (مشکل جدید ۶) را نیز ریشه‌ای رفع می‌کند.</p>
+  <div class="ref">MOM §5.2/§5.3 و باگ ۱۱ · BE-002/003 · مراجع: <code>core/utils/scraper.py</code> · <code>brand/text_utils.py</code> · <code>brand_core_analyzer.py</code> — ۱۳ تست با دقیقاً مثال‌های گزارش شما</div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag">عکس ۳</span><h3>نمایش اسم فیلدهای داخلی («Personality Wheel Available: No»، «trust_and_results»)</h3></div>
+  <p><span class="was">مشکل:</span> برچسب‌های داخلی و مقادیر snake_case خام نمایش داده می‌شدند.</p>
+  <p><span class="was">اصلاح:</span> لایهٔ انسانی‌سازی گسترش یافت: کلید داخلی <code>personality_wheel_available</code> کلاً مخفی می‌شود، مقادیر snake_case به‌صورت خوانا (Title Case) نمایش داده می‌شوند و ورودی‌های خالی/پر از Placeholder حذف می‌شوند. پروفایل احساسیِ قالبیِ نامتناسب با نوع برند نیز دیگر نمایش داده نمی‌شود.</p>
+  <div class="ref">باگ ۷ (MOM) · BE-030 · مراجع: <code>payloadDisplay.ts</code> · <code>AnalysisPayloadRenderer.vue</code></div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag fixed">عکس ۵</span><h3>صفحهٔ برند سرویس و لوکیشن ندارد</h3></div>
+  <p>در تست سوم تأیید شد که برطرف شده: صفحهٔ برند اکنون کارت سرویس‌ها و ردیف لوکیشن را نشان می‌دهد (در صورت وجود داده). بخش مدیریت کامل (افزودن/حذف سرویس از صفحهٔ Edit) نیز اضافه شد — توضیح در بخش ۲.</p>
+  <div class="ref">BE-004 · مراجع: <code>BrandDetailView.vue</code></div>
+</div>
+
+<h2>۲. ساخت کمپین و مراحل ۱ تا ۴</h2>
+
+<div class="item">
+  <div class="item-head"><span class="tag">عکس ۶</span><h3>صفحهٔ Edit برند جای مدیریت سرویس‌ها ندارد</h3></div>
+  <p><span class="was">مشکل:</span> صفحهٔ Edit همان فرم Create بود و کاربر راهی برای اصلاح سرویس‌های اشتباه اسکن نداشت.</p>
+  <p><span class="was">اصلاح:</span> مدیریت کامل سرویس‌ها پیاده شد: مدل <code>BrandService</code> با منبع (دستی/اسکن/کمپین)، Endpointهای CRUD مخصوص برند (با مالکیت و جلوگیری از تکرار)، سرویس‌های دستی کاربر <b>اولویت اول</b> را در همهٔ مراحل دارند (اسکن اشتباه دیگر اثرگذار نیست)، و سرویس‌هایی که در کمپین انتخاب می‌شوند خودکار روی برند ذخیره می‌شوند. صفحهٔ Edit اکنون دو بخش دارد: «سرویس‌های شما» (قابل افزودن/حذف) و «شناسایی‌شده توسط اسکن/تحلیل» (فقط نمایش). عنوان صفحه هم به «Edit Brand» اصلاح شد. ایراد «لیست تا رفرش آپدیت نمی‌شد» نیز رفع شد.</p>
+  <div class="ref">MOM §9.3 · BE-004 · مراجع: Migration <code>brand/0014</code> · <code>BrandServicesManager.vue</code> — ۱۸ تست</div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag">عکس ۹</span><h3>هشدار برای سرویس نامرتبط نمی‌آمد</h3></div>
+  <p><span class="was">مشکل:</span> «Car Engine Repair» برای برند کوچینگ بدون هیچ هشداری پذیرفته می‌شد — Endpoint ساخته شده بود ولی فرانت به آن وصل نبود.</p>
+  <p><span class="was">اصلاح:</span> اتصال کامل انجام شد: هنگام افزودن سرویس جدید، فرانت ابتدا <code>/services/check/</code> را صدا می‌زند؛ در صورت نامرتبط بودن، هشدار کهربایی با دلیل نمایش داده می‌شود و کاربر با کلیک دوم (تأیید آگاهانه) می‌تواند آن را اضافه کند. سرویس‌های مرتبط بدون وقفه اضافه می‌شوند و خطای Endpoint هرگز جلوی افزودن را نمی‌گیرد.</p>
+  <div class="ref">MOM §9.3 · باگ ۱۲ (MOM) · مراجع: <code>ServiceSelector.vue</code> · <code>brand/views.py (services/check)</code> — ۴ تست</div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag">عکس ۱۰</span><h3>مرحلهٔ ۱ دوباره اطلاعات برند را می‌پرسید (باگ ۱۰)</h3></div>
+  <p>اصلاح شد: Business Type از صنعت برند و Product Description از سرویس‌های تحلیل برند به‌صورت خودکار پیش‌پر می‌شوند (فقط فیلدهای خالی و دست‌نخورده) با برچسب «از تحلیل برند»؛ کاربر فقط تأیید یا ویرایش می‌کند.</p>
+  <div class="ref">MOM §7.1/§10.1 · مراجع: <code>SegmentationView.vue</code> · <code>Step2AudienceStrategy.vue</code></div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag">عکس ۱۱</span><h3>قاطی‌شدن کلمات «استفاده کن» و «استفاده نکن»</h3></div>
+  <p>اصلاح شد: الگوهای زبانی حالا از کلیدهای ساختاریافتهٔ بکند (<code>words_they_use</code> / <code>phrases_to_avoid</code>) در دو گروه مجزا با رنگ سبز/قرمز و برچسب سه‌زبانه نمایش داده می‌شوند؛ اگر داده ساختار نداشت، یک گروه واحد با برچسب عمومی نمایش داده می‌شود.</p>
+  <div class="ref">MOM §4.4 · مراجع: <code>SegmentDeepResearchRenderer.vue</code></div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag bug">عکس ۱۲</span><h3>PPC سرویس‌های انتخابی کمپین را نادیده می‌گرفت</h3></div>
+  <p><span class="was">مشکل:</span> سربرگ «18 services analyzed» بود و همهٔ سرویس‌های برند (حتی زباله‌ها) به‌صورت کارت خالی لیست می‌شدند؛ در تست سوم هم فقط سرویس دستی تحلیل شد.</p>
+  <p><span class="was">اصلاح (دو سویه):</span> <b>بک‌اند:</b> تحلیل PPC اکنون دقیقاً روی سرویس‌های انتخابی کاربر انجام می‌شود و هر سرویس فیلد سهم بودجه (<code>budget_share</code> — جمع دقیقاً ۱۰۰) می‌گیرد. <b>فرانت:</b> فقط سرویس‌های انتخابی به‌عنوان کارت اصلی نمایش داده می‌شوند و بقیه در بخش جمع‌شوندهٔ «سایر سرویس‌های برند» هستند؛ سربرگ تعداد را از ردیف‌های واقعی تحلیل می‌شمارد.</p>
+  <div class="ref">MOM §9.3/§11 · باگ ۱۰ · BE-010/017 · مراجع: <code>ppc_viability.py</code> · <code>ppc_viability_engine.py</code> · <code>PPCViabilityView.vue</code></div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag">عکس ۱۴</span><h3>کارت‌های PPC بودجه ندارند</h3></div>
+  <p>همان فیلد <code>budget_share</code> سرویس‌ها اکنون روی هر کارت به‌صورت Badge درصدی نمایش داده می‌شود (همراه اولویت، پلتفرم، هدف، ارزش پیشنهادی و ریسک که در دور قبل اضافه شده بود).</p>
+  <div class="ref">مرجع: <code>PPCViabilityView.vue</code></div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag bug">عکس ۱۵/۱۶</span><h3>Funnel: متن یکسان Personaها، نبود CTA/KPI/بودجه، Persona حذف‌شده</h3></div>
+  <p><span class="was">مشکل:</span> هر سه Persona یک جملهٔ ثابت با الگوی واحد داشتند، CTA و KPI و بودجه وجود نداشت و Persona حذف‌شده برمی‌گشت.</p>
+  <p><span class="was">اصلاح ریشه‌ای:</span> (۱) پیام هر مرحله اکنون از دردها/انگیزه‌های خود Persona ساخته می‌شود با چرخش قطعی زاویهٔ بیان — دو Persona هرگز متن یکسان نمی‌گیرند؛ (۲) فیلدهای <code>cta</code>، <code>kpi</code> و <code>budget_share</code> (سهم بودجهٔ مرحله بین Personaها، جمع دقیقاً ۱۰۰) برای هر مرحله×Persona اضافه و در فرانت به‌صورت کارت‌های بازشونده با Badge نمایش داده می‌شوند؛ (۳) حذف Persona اکنون <b>بلافاصله</b> در کمپین ذخیره می‌شود (PATCH خودکار) و در Funnel، Content Matrix، پیشنهاد پلتفرم و کمپین‌های تبلیغاتی اعمال می‌شود — پیش از این، حذف فقط با اجرای مجدد مرحلهٔ ۱ ذخیره می‌شد و همین علت برگشت Persona بود.</p>
+  <div class="ref">MOM §10.3/§13.1-2 · باگ ۲ (فوری) · مراجع: <code>smart_funnel_engine.py</code> · <code>persona_utils.py</code> · <code>FunnelPersonaStages.vue</code> — ۱۲ تست</div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag">عکس ۱۶</span><h3>شمارندهٔ اشتباه Content Matrix</h3></div>
+  <p>شمارنده حالا از تعداد واقعی آیتم‌های محتوا محاسبه می‌شود (عدد ادعایی LLM بازنویسی می‌شود) و در سربرگ هر دو نمای Content نمایش داده می‌شود.</p>
+  <div class="ref">مراجع: <code>content_strategy.py</code> · <code>ContentStrategyView.vue</code></div>
+</div>
+
+<h2>۳. پلتفرم، Ads Strategy و بودجه</h2>
+
+<div class="item">
+  <div class="item-head"><span class="tag">عکس ۱۷</span><h3>پرش مرحلهٔ ۴ به ۶ (جاافتادن Platform Selection)</h3></div>
+  <p><span class="was">مشکل:</span> ناوبری «مرحلهٔ بعد» در نماهای مستقل، مسیر قدیمی هاردکد داشت و از Platform Selection رد می‌شد.</p>
+  <p><span class="was">اصلاح:</span> مسیر ادامهٔ همهٔ نماهای مستقل با ترتیب استاندارد ویزارد یکسان شد (Content ← Platform ← Ads Strategy ← …) و برای هر پنج نما تست ناوبری اضافه شد.</p>
+  <div class="ref">MOM §16.3 · BE-017/019 · مراجع: <code>ContentStrategyView.vue</code> · <code>stepNextRoutes.test.ts</code></div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag">عکس ۱۸</span><h3>تگ‌های خام و بازه‌های ۱۱۰٪ در پیشنهاد پلتفرم</h3></div>
+  <p>دو اصلاح: (۱) متن خروجی موتور از تگ‌های داخلی (<span class="en">[google]</span>) و نام فیلدهای خام پاک‌سازی می‌شود؛ (۲) بازه‌های درصدی دیگر از LLM نمی‌آیند — سهم هر پلتفرم از بودجه به‌صورت <b>قطعی</b> از امتیاز پیشنهاد محاسبه و نرمال می‌شود (جمع دقیقاً ۱۰۰) و متن راهنما با همان اعداد قطعی ساخته می‌شود. استناد به Persona حذف‌شده نیز با اتصال فیلتر Persona به این موتور رفع شد.</p>
+  <div class="ref">باگ ۹ (MOM) · BE-015/016 · مراجع: <code>campaign/text_utils.py</code> · <code>platform_recommendation_engine.py</code></div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag bug">عکس ۲۰/۲۱</span><h3>بودجه‌های Ads Strategy اشتباه (ارز غلط، مبالغ ۴.۵ برابر کل، هر دو پلتفرم ۸ تا ۱۰ هزار)</h3></div>
+  <p><span class="was">مشکل:</span> ریشه پیدا شد — بازنویسی قبلی، سهم هر پلتفرم را از درصدهای <b>درون همان پلتفرم</b> می‌گرفت (که برای نمای کلی ۱۰۰٪ است)، نه سهم پلتفرم از کل بودجهٔ کمپین.</p>
+  <p><span class="was">اصلاح:</span> سهم هر پلتفرم اکنون از پیشنهاد پلتفرم (فیلد <code>budget_share</code> — در نبود آن، تقسیم مساوی بین پلتفرم‌های انتخابی) محاسبه و همهٔ مبالغ مطلق به‌صورت قطعی بازنویسی می‌شوند: سهم پلتفرم × بودجهٔ کل با ارز کمپین (مثال شما: سهم ۶۰٪ از ۱۰,۰۰۰ درهم ← «<span class="en">AED 4,800 – AED 6,000</span>»). جمع سقف پلتفرم‌ها هرگز از بودجهٔ کل نمی‌گذرد (تست دارد). <b>Targeting خالی</b> نیز رفع شد: ساختار Targeting به Schema هر سه پلتفرم اضافه شد و در نبود دادهٔ LLM، از مخاطب/لوکیشن/بازار هدف به‌صورت قطعی پر می‌شود (خالیِ کامل دیگر به فرانت نمی‌رسد).</p>
+  <div class="ref">باگ ۱ (فوری) · BE-013/018 · مراجع: <code>ads_strategy_engine.py (_rewrite_absolute_budgets)</code> · <code>(_ensure_targeting)</code> — ۱۷ تست جدید</div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag">عکس ۲۲/۲۳</span><h3>وضعیت Pending می‌ماند و نتیجه ذخیره نمی‌شود</h3></div>
+  <p>سه ریشهٔ «۲۰۰ گرفتن ولی ذخیره نشدن» بسته شد: فلگ تکمیل پلتفرم حالا بدون‌قیدوشرط ثبت می‌شود و خطای جزئی نمی‌تواند آن را برگرداند؛ خطاهای موتور با ثبت کامل Log و پیام واقعی برمی‌گردند (به‌جای 503 بی‌صدا)؛ و فرانت پس از هر اجرا داده‌ها را بلافاصله به‌روز می‌کند — وضعیت Pending به Completed تبدیل و دکمهٔ ادامه فعال می‌شود بدون رفرش.</p>
+  <div class="ref">BE-019 · مراجع: <code>campaign/services/ads_strategy.py</code> · <code>AdsStrategyView.vue</code></div>
+</div>
+
+<h2>۴. آگهی، تصویر و مرور نهایی</h2>
+
+<div class="item">
+  <div class="item-head"><span class="tag">عکس ۲۴</span><h3>باز شدن کمپین در مرحلهٔ اشتباه</h3></div>
+  <p>ریدایرکت خودکار حالا مرحلهٔ واقعی را نشان می‌دهد: ورود به مراحل تصویر/آگهی منوط به وجود حداقل یک آگهیِ واقعاً ذخیره‌شده است (فلگ‌های قابل‌اتکا + گیت داده).</p>
+  <div class="ref">BE-019 · مراجع: <code>CampaignDetailView.vue</code> — ۳ تست</div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag">عکس ۲۷</span><h3>ناهم‌خوانی تقسیم بودجهٔ Review با Strategyها</h3></div>
+  <p>صفحهٔ Review اکنون بودجه را از <b>استراتژی‌های واقعی</b> محاسبه و در دو نما نشان می‌دهد: «بر اساس پلتفرم» (وزن‌دهی با سهم پیشنهادی هر پلتفرم) و «بر اساس مرحلهٔ Funnel» (تجمیع درصدهای Strategyها) — با مبلغ محاسبه‌شده از بودجهٔ کل. در نبود Strategy، تقسیم مرحلهٔ Funnel به‌عنوان جایگزین می‌ماند.</p>
+  <div class="ref">MOM §12.4 · BE-013/018 · مراجع: <code>getStrategyBudgetSplit</code> · <code>CampaignReviewView.vue</code> — ۳ تست</div>
+</div>
+
+<h2>۵. موارد کلی</h2>
+
+<div class="item">
+  <div class="item-head"><span class="tag">عکس ۳۰</span><h3>Product Tour: هایلایت اشتباه و باز شدن مکرر</h3></div>
+  <p>بستن تور اکنون ذخیره می‌شود و تور دیگر در صفحات بعد از اول باز نمی‌شود؛ اگر عنصر هدف در صفحه نباشد، حلقهٔ هایلایت حذف و توضیح بالا-وسط نمایش داده می‌شود (هایلایت اشتباه ناممکن است)؛ سلکتورهای اشتباه (مثل «Select Brand» در Market) اصلاح شدند و اسکرول صفحه حین تور قفل می‌شود.</p>
+  <div class="ref">MOM §4.5 · مراجع: <code>useProductTour.ts</code> · <code>ProductTourOverlay.vue</code> · <code>market/tours.ts</code> — ۹ تست</div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag fixed">N1</span><h3>اسکن بدون دلیل خطا</h3></div>
+  <p>پیام خطای اسکن علت واقعی را می‌گوید: Timeout (با مدت)، پاسخ HTTP سایت (با کد)، محتوای غیرقابل‌خواندن (سایت‌های جاوااسکریپتی)، یا نوع خطا — و فرانت همین متن را (به‌جای پیام عمومی قبلی) نمایش می‌دهد.</p>
+  <div class="ref">باگ ۱۱ (MOM) · مراجع: <code>auto_scan_engine.py (_scrape)</code> · <code>BrandCreateView.vue</code></div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag new">جدید ۱</span><h3>وضعیت «Not analyzed» بعد از تحلیل کامل</h3></div>
+  <p>لیست برندها اکنون وضعیت واقعی آخرین تحلیل را از سرور می‌گیرد (<code>analysis_status</code>: در حال اجرا / تکمیل / ناموفق) — بدون شمارش اضافه و بدون تأخیر. کارت برند پس از تحلیل، «تحلیل‌شده» نشان می‌دهد.</p>
+  <div class="ref">BE-006 · مراجع: <code>brand/serializers.py</code> — ۴ تست</div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag new">جدید ۲</span><h3>نادیده گرفتن نام واردشدهٔ کاربر</h3></div>
+  <p>نام شرکتِ واردشده توسط کاربر در تمام خروجی‌ها (Brand Profile و تحلیل‌ها) اولویت دارد و نام استخراج‌شده از سایت فقط در نبود نام کاربر استفاده می‌شود.</p>
+  <div class="ref">MOM §4.1 · مراجع: <code>brand/services/builder.py</code> — ۳ تست</div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag new">جدید ۵</span><h3>وضعیت «Completed» برای کمپین نیمه‌کاره</h3></div>
+  <p>طبق تأیید شما، تکمیل خودکار وضعیت حذف شد: اجرای همهٔ استراتژی‌ها فقط فلگ‌ها را پر می‌کند و وضعیت کمپین تا فشردن دکمهٔ صریح «Complete» (که گیت اعتبارسنجی دارد) «In Progress» می‌ماند. کارت کمپین هم دیگر در میانهٔ کار «Completed» و «۱۰۰٪» نشان نمی‌دهد.</p>
+  <div class="ref">MOM §16.3 و باگ ۶ · مراجع: <code>campaign/services/ads_strategy.py</code> · <code>CampaignListView.vue</code></div>
+</div>
+
+<h2>۶. مواردی که در تست سوم «درست شد» — به‌عنوان مرجع</h2>
+<ul class="plain">
+  <li>نمایش کامل تصویر با بزرگ‌نمایی (Lightbox) و حذف نقل‌قول ساختگی — عکس ۲۶</li>
+  <li>نمایش تصویر کنار آگهی در Review — عکس ۲۸</li>
+  <li>نمایش پلتفرم‌های واقعی روی کارت کمپین — عکس ۲۹ (بخش اول)</li>
+  <li>شروع تحلیل با یک کلیک از فرم ساخت برند — مورد بدون عکس ۲</li>
+  <li>متن زمان تحلیل («تا چند دقیقه») — مورد بدون عکس ۳</li>
+  <li>Positioning Idea به انگلیسی یکدست — مشکل جدید ۷ (نویز تصادفی LLM بود و تکرار نشد)</li>
+</ul>
+
+<h2>۷. وضعیت نهایی ۱۴ باگ صورت‌جلسه</h2>
+<table>
+  <thead><tr><th>باگ MOM</th><th>عنوان</th><th>وضعیت نهایی</th></tr></thead>
+  <tbody>
+    <tr><td>۱</td><td>بودجهٔ PPC بیش از ۱۰۰٪</td><td class="status-cell">حل — درصد + مبلغ + ارز، همگی قطعی و مقید به بودجهٔ کل</td></tr>
+    <tr><td>۲</td><td>Funnel تکراری</td><td class="status-cell">حل — پیام اختصاصی هر Persona + CTA/KPI/بودجهٔ هر مرحله</td></tr>
+    <tr><td>۳</td><td>دکمهٔ Approve</td><td class="status-cell">حل — تایید با پیشروی درست + رد/اصلاح با دلیل</td></tr>
+    <tr><td>۴</td><td>عدم نمایش Creative</td><td class="status-cell">حل — تصویر ماندگار در هر سه جریان + Lightbox + نمایش در Review</td></tr>
+    <tr><td>۵</td><td>Intelligence بدون تفکیک</td><td class="status-cell">حل — تب‌های جدا + اکشن‌ها</td></tr>
+    <tr><td>۶</td><td>Incomplete گمراه‌کننده</td><td class="status-cell">حل — گیت مبتنی بر انتخاب کاربر + کارت صادق + بدون تکمیل خودکار</td></tr>
+    <tr><td>۷</td><td>نمایش دادهٔ بک‌اند</td><td class="status-cell">حل — حذف فیلدهای داخلی + برچسب‌های انسانی + پاک‌سازی متن</td></tr>
+    <tr><td>۸</td><td>Terminology</td><td class="status-cell">حل در موارد گزارش‌شده (برچسب‌های داخلی، گروه‌بندی زبان) — Glossary کامل، تصمیم محصولی</td></tr>
+    <tr><td>۹</td><td>Platform ثابت</td><td class="status-cell">حل — پیشنهاد هوشمند متصل به UI</td></tr>
+    <tr><td>۱۰</td><td>Regeneration</td><td class="status-cell">حل — Prefill از تحلیل برند + رعایت انتخاب‌ها در همهٔ مراحل</td></tr>
+    <tr><td>۱۱</td><td>خطای بی‌پیام</td><td class="status-cell">حل — علت دقیق اسکن + پیام واقعی موتورها + نمایش در فرانت</td></tr>
+    <tr><td>۱۲</td><td>سرویس نامرتبط</td><td class="status-cell">حل — هشدار قطعی در فرم کمپین</td></tr>
+    <tr><td>۱۳</td><td>تکرار انتخاب Brand</td><td class="status-cell">حل (در تست دوم شما هم تأیید شد)</td></tr>
+    <tr><td>۱۴</td><td>نمایش هم‌زمان محتوا</td><td class="status-cell">بهبود یافته — تب‌بندی و گروه‌بندی انجام شد؛ فشرده‌سازی نهایی صفحهٔ Deep Research به طرح نهایی Flow وابسته است</td></tr>
+  </tbody>
+</table>
+
+</div>
+</body>
+</html>

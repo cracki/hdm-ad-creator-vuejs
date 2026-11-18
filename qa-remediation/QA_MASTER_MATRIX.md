@@ -1,0 +1,74 @@
+# QA MASTER MATRIX — HDM Ad Creator
+
+Generated from `issues.json` (canonical, machine-readable). Statuses updated as remediation progresses.
+Baseline: FE `ad-creator-vue@main b3a190e` · BE `ad_creator/django-backend@main ed49cb0` (deployed: FE app.178.105.224.88.sslip.io, BE api.178.105.224.88.sslip.io = qa4/0fe3a63).
+
+| ID | Severity | Area | Title | Source refs | Primary files | Status |
+|---|---|---|---|---|---|---|
+| FA-01 | P1 | BE | Company name = full SEO page title (incl. Persian '؛' ':' separators) | QA1 img10-area; QA4-t4-3; QA7#7; FA consolidated 1; SCRUM-657 | `brand/engines/auto_scan_engine.py::_clean_title` | OPEN |
+| FA-02 | P1 | BE | Industry not detected for Persian/English pages; English-only keyword heuristics | QA4-t4-3; QA7#7; FA 2; SCRUM-658 | `core/utils/scraper.py::INDUSTRY_KEYWORDS`, `brand/engines/auto_scan_engine.py` | OPEN |
+| FA-03 | P1 | BE+FE | Missing B2B industries (construction/manufacturing, IT/network, CCTV/security) and no Other/custom | FA 3; SCRUM-604; QA4 kerkerreh | `brand (industry seed)`, `frontend industry list` | OPEN |
+| FA-04 | P1 | BE | Empty industry triggers misleading duplicate-brand error | FA 4; SCRUM-592 | `brand/serializers.py create`, `brand/models.py selected_industry` | OPEN |
+| FA-05 | P2 | BE | Logo/colors/social extraction weak; near-white colors labeled high confidence | QA7#7; FA 5; SCRUM-659 | `brand/engines/auto_scan_engine.py::_detect_logo`, `brand/analyzers/image_analyzer.py` | OPEN |
+| FA-06 | P0 | BE | Junk services in scan+analysis (EN+FA): durations, section headings, counts, benefits, FAQs, discounts, slogans | QA1 img2/img8; QA4 img2/img8; QA5 img2; QA6 img2; QA7#1; FA 6; SCRUM-575; SCRUM-604 | `core/utils/text_patterns.py`, `brand/text_utils.py`, `core/utils/scraper.py::_extract_services_enhanced`, `brand/services/brand_services.py` | OPEN |
+| FA-07 | P1 | BE+FE | Country/location canonicalization (Iran, codes, multi-city, Persian commas) | FA 7; SCRUM-576/597; QA7#2 | `campaign/services/segmentation.py::_split_location_parts`, `src/features/campaigns/types.ts::resolveTargetMarket` | OPEN |
+| FA-08 | P2 | FE | Brand form localization + URL rendering broken in RTL ('/https://...') | FA 8; SCRUM-660; panel-FA 1/8 | `src/features/brands (BrandCreate form)` | OPEN |
+| FA-09 | P2 | BE+FE | Slow scan/stuck progress bar on 'Website scan'; no stage timings | QA3 new1; QA7#4; FA 9; SCRUM-661 | `brand/services/full_analysis.py`, `core/utils/scraper.py`, `BrandAnalysisView.vue` | OPEN |
+| FA-10 | P0 | BE | Brand analysis output language not enforced across all analyzers (EN output for fa brands) | QA5 taze2; FA 10; SCRUM-662 | `brand/analyzers/brand_core_analyzer.py`, `brand/analyzers/audience_analyzer.py`, `brand/analyzers/social_media_analyzer.py` | OPEN |
+| FA-11 | P2 | BE+FE | Target audience inconsistent Overview vs Audience tab; invented 'global'/percentages | FA 11; SCRUM-663 | `brand analyzers`, `overview mapping` | OPEN |
+| FA-12 | P1 | BE | Competitor search for Iran (gl=us, hl=en, English query, self not excluded by domain) | QA3 new2; QA7#6; FA 12; SCRUM-664 | `brand/analyzers/competitor_analyzer.py`, `core/services/serper_search_service.py` | OPEN |
+| FA-13 | P1 | BE+FE | Competitors UI: add-competitor 500, silent Auto-Discover, pending analyses, count mismatches | FA 13; SCRUM-590/605/606; Payamgostar 54 | `brand/views.py competitor endpoints`, `frontend competitors views` | OPEN |
+| FA-14 | P2 | BE | Variable names/snake_case/raw JSON leak into user-facing analysis text | QA1 img3/img19; FA 14; SCRUM-665; Payamgostar 54 | `brand analyzers prompts/postprocessing`, `insights generators` | OPEN |
+| FA-15 | P1 | FE+BE | Campaign language/currency not defaulted from brand locale (English+USD for fa/Tehran brands) | FA 15; SCRUM-666 | `src/features/campaigns/views/CampaignCreateView.vue`, `fullFunnel/scenarioVariants forms` | OPEN |
+| FA-16 | P1 | FE+BE | Currency/budget-type gaps: IRT labeled rial, TRY missing, no daily budget/duration, no thousand separators | FA 16; SCRUM-586/594/608 | `CampaignCreateView.vue currency list`, `ads strategy money formatting` | OPEN |
+| FA-17 | P0 | FE | Campaign service chips: not pre-selected despite helper text, first click inverts, ' and ' join in fa, English description prefill | FA 17; SCRUM-574/578; QA3 img8/9 | `src/features/campaigns/views/CampaignCreateView.vue` | OPEN |
+| FA-18 | P2 | FE | Create Campaign silently disabled without reason; hidden brand picker | FA 18; SCRUM-593 | `CampaignCreateView.vue` | OPEN |
+| FA-19 | P1 | BE+FE | Segmentation Country/City parsing: Persian comma, country lists, multi-city, prefill visibility | QA6 taze4; QA7#2; FA 19; SCRUM-667 | `campaign/services/segmentation.py`, `src/features/campaigns/views/SegmentationView.vue`, `types.ts` | OPEN |
+| FA-20 | P2 | BE+FE | Segmentation timeout raw error, no auto-retry | FA 20; SCRUM-577 | `SegmentationView.vue`, `segmentation engine parse guard` | OPEN |
+| FA-21 | P1 | FE | Unselected personas shown in Ad Generation drawer | QA7#5; FA 21; SCRUM-668 | `src/features/campaigns/views/AdGenerationView.vue::personaObjects` | OPEN |
+| FA-22 | P1 | BE+product | Platform suitability for Iran (Google/LinkedIn recommended despite sanctions; no local platforms) | FA 22; SCRUM-669; marketing 5/42/52 | `campaign/engines/platform_recommendation_engine.py`, `campaign/models.py platform choices` | OPEN |
+| FA-23 | P0 | BE+FE | Budget split inconsistent across pages; unselected platform holds share; sums exceed total; funnel 102% | QA1 img18/20/21/27; FA 23; SCRUM-670 | `campaign/services/ads_strategy.py::_resolve_platform_budget_share`, `platform_recommendation persistence`, `funnel share normalization`, `review split` | OPEN |
+| FA-24 | P0 | BE+FE | PPC analyzes non-selected services; ghost cards; '4 of 2' counter; missing per-service amounts | QA1 img12; QA6 img14; FA 24; SCRUM-573 | `campaign/services/ppc_viability.py::_resolve_runtime_context`, `PPCViabilityView.vue counters` | OPEN |
+| FA-25 | P1 | BE+FE | Ads Strategy: no refine, second platform run silently queued, tCPA/tROAS for new accounts | FA 25; SCRUM-581/607; marketing 7/8/60 | `campaign/services/ads_strategy.py`, `AdsStrategyView.vue` | OPEN |
+| FA-26 | P1 | FE+BE | Ad Generation defaults hard-coded TOFU+Meta+persona1 regardless of strategy | FA 26; SCRUM-671; marketing 16/83 | `AdGenerationView.vue defaults`, `ad_generation service context` | OPEN |
+| FA-27 | P0 | BE+FE | CTAs English-only in Persian ads (stuck to text tail) | FA 27; SCRUM-672 | `campaign/engines/ad_generation_engine.py cta_matrix`, `ad edit CTA list` | OPEN |
+| FA-28 | P0 | BE | English contamination + duplication in Persian ad copy (lead word, English opener sentence, repeated headline/CTA) | FA 28; SCRUM-571/579; marketing 22 | `campaign/engines/ad_generation_engine.py prompt+postprocess` | OPEN |
+| FA-29 | P1 | BE | Brand name misspelled/transliterated in copy and refine does not fix it reliably | FA 29; SCRUM-580; marketing 19/41 | `ad_generation_engine.py`, `ad_refine.py` | OPEN |
+| FA-30 | P0 | BE | Fabricated claims (webinars, uptime %, prices, discounts, fake testimonials) in copy and on images | FA 30; SCRUM-572; marketing 23/24; Persian QA 10 | `ad_generation_engine.py`, `visual_generation_engine.py prompt` | OPEN |
+| FA-31 | P1 | BE+FE | Platform character limits violated at generation and approval; Google RSA needs 3+ headlines/2 descriptions | FA 31; SCRUM-603; marketing 12/34/84/85 | `ad_generation_engine.py constraints`, `review/approval validation`, `ad edit panel` | OPEN |
+| FA-32 | P1 | BE+FE | Visual/ad association, fake logos, aspect ratios (1.91:1, 9:16) missing, cropped preview, image not beside ad in review | QA1 img26/28; FA 32; SCRUM-673 | `visual_generation.py`, `VisualGenerationView.vue`, `CampaignReviewView.vue` | OPEN |
+| FA-33 | P1 | FE | Persian text left-aligned/scrambled (missing dir=auto) in AI-output cards | Persian QA 7; FA 33; SCRUM-674; panel-FA 1 | `SegmentationView.vue`, `PlatformSelectionView.vue`, `AdGenerationView.vue`, `channel strategy cards` | OPEN |
+| FA-34 | P2 | FE | Panel locale: fa choice at login not carried; untranslated labels; Latin digits; mixed numerals | FA 34; SCRUM-675; panel-FA 4-19/24-27 | `auth login locale`, `i18n catalogs`, `number formatting` | OPEN |
+| FA-35 | P2 | FE+BE | AI Credits frozen during session; '• used' missing number in fa; no cap shown | FA 35; SCRUM-676 | `src/shared/api/credits.ts`, `usage events`, `sidebar widget` | OPEN |
+| FA-36 | P1 | FE+BE | Step counts inconsistent (9/9 vs 8/8 vs 10; review 100% pre-complete; raw gate keys as chips) | QA5 taze5; QA6 taze5; FA 36; SCRUM-582 | `progress utilities FE`, `campaign completion.py`, `review gate` | OPEN |
+| FA-37 | P2 | FE | Dashboard: hard-coded 'Ada' welcome, wrong charts/cards, broken labels | FA 37; SCRUM-582 | `dashboard view/composables` | OPEN |
+| FA-38 | P1 | FE | Logout after refresh (regression watch) + FA-53 second tab login redirect | FA 38/53; SCRUM-677/684; QA4 critical | `auth client.ts refresh flow`, `token storage` | OPEN |
+| FA-39 | P2 | FE+BE | Completed campaign opens at wrong step; Complete button still present; card truncation/date format | FA 39; SCRUM-602 | `CampaignDetailView resume logic`, `campaign card` | OPEN |
+| FA-40 | P1 | FE+BE | Content Intelligence prefill: manual-only when brand has manual services (late merge skipped); industry/location now ok; relevance for Iran | QA7#3; FA 40; SCRUM-583 | `src/features/market/views/MarketIntelligenceView.vue watcher`, `market intelligence engine query gl/hl` | OPEN |
+| FA-41 | P2 | BE | Content Gaps/Matrix/Brief/Add-to-Campaign quality: 0 gaps for fa, '(+ proven framework)', 2-line briefs, phantom saved insights | FA 41; SCRUM-584/585/600/601; marketing 30/33 | `market intelligence engines` | OPEN |
+| FA-42 | P2 | FE+BE | Full Funnel: personas not auto-loaded, launch disabled without reason, ad counts mismatch, schedule TOFU-only, IRT missing, 9:16 missing | FA 42; SCRUM-586/598 | `fullFunnel views`, `full_funnel_launcher.py` | OPEN |
+| FA-43 | P2 | FE+BE | Scenario Variants: static generic audiences instead of brand personas; stale 'Loading options…'; validation message sticks | FA 43; SCRUM-587/599 | `scenarioVariants view`, `scenario engine` | OPEN |
+| FA-44 | P2 | FE+BE | AI Hooks: type labels English, all platforms tagged, brand/industry not prefilled, absolute claims | FA 44; SCRUM-588; marketing 51 | `hooks view`, `hooks engine` | OPEN |
+| FA-45 | P2 | FE+BE | Ad Library shows static framework catalog as if user's ads; labels English | FA 45; SCRUM-589 | `adLibrary view`, `ad_library_generator.py` | OPEN |
+| FA-46 | P2 | BE+FE | Settings lacks profile/password/credits; no forgot-password; admin impersonation request | FA 46; SCRUM-591/595/596 | `authentication`, `settings view` | OPEN |
+| FA-47 | P1 | BE+FE | Scheme-less brand URL rejected at analysis step with field-less English error | Payamgostar 47; SCRUM-678 | `brand/serializers.py URLField`, `brand create flow` | OPEN |
+| FA-48 | P2 | BE+FE | Social profile URLs not validated by platform (instagram link in facebook field accepted) | Payamgostar 48; SCRUM-679 | `brand form socials`, `serializers` | OPEN |
+| FA-49 | P2 | FE+BE | Raw booleans/JSON arrays exposed in analysis UI (Has Strategy: , Media consumption [".."]) | Payamgostar 49; SCRUM-680 | `brand analysis views`, `segmentation deep research renderer` | OPEN |
+| FA-50 | P1 | FE+BE | Product description contains only half of selected services | Payamgostar 50; SCRUM-681 | `SegmentationView prefill`, `campaign context` | OPEN |
+| FA-51 | P0 | BE+FE | PPC falls back from zero selection to ALL brand services; chips look selected but are not | Payamgostar 51; Moble note; FA 51; SCRUM-682 | `campaign/services/ppc_viability.py:122`, `CampaignCreateView chips` | OPEN |
+| FA-52 | P1 | FE+BE | Rejected ads still offered in Visual Generation without status label | Payamgostar 52; SCRUM-683 | `VisualGenerationView ad list filter` | OPEN |
+| FA-53 | P1 | FE | Second browser tab redirects to login (sessionStorage token) | Payamgostar 53; SCRUM-684 | `auth token storage` | OPEN |
+| FA-54 | P1 | BE+FE | Adding competitor with scheme-less URL: URL dropped, empty analysis labeled 'analyzed' | Payamgostar 54; SCRUM-685 | `competitor serializer/analyze service` | OPEN |
+| FA-55 | P1 | BE | User-selected industry silently overwritten by analysis (Retail -> ecommerce) | Moble 55; SCRUM-686 | `brand analysis persistence`, `brand_profile_mapper.py` | OPEN |
+| FA-56 | P2 | FE+BE | Social Presence tab duplicates every section 3-4x; raw keys visible | Moble 56; SCRUM-687 | `social presence tab mapping` | OPEN |
+| FA-57 | P1 | BE | Funnel Refine ignores explicit user instruction (installment offer) | Moble 57; SCRUM-688 | `campaign/services/funnel.py refine path`, `smart_funnel_engine.py` | OPEN |
+| QA7-4 | P2 | BE | Analysis progress stuck on Website scan (timing evidence needed) | QA7#4 | `brand/services/full_analysis.py` | OPEN |
+| PANEL-01 | P2 | FE | RTL rendering of generated Persian content in EN panel; dashboard chart label overlap; mixed +/- and 'used' fragments | panel-FA 1-3 | `dashboard chart`, `credits widget`, `generated-content containers` | OPEN |
+| PANEL-02 | P2 | FE | Untranslated label inventory across settings/brand/campaign/segmentation/ppc/funnel/platform/ads/library/intelligence/scenario | panel-FA 4-19 | `i18n catalogs` | OPEN |
+| PANEL-03 | P2 | FE | Inappropriate tone ('خوش آمدی آدا'), inconsistent terminology (آگهی/تبلیغ, قیف/Funnel), mixed formality | panel-FA 20-23 | `fa catalog` | OPEN |
+| PANEL-04 | P2 | FE | Dates not Jalali; numerals mixed; panel language not synced across tabs; panel locale does not change generated content language | panel-FA 24-27 | `date/number utils`, `locale store` | OPEN |
+| MKT-01 | P1 | BE | Marketing validity: budget on branded keywords, negative keywords missing, PPC lacks volumes/CPC, funnel CTA/KPI templates mismatched to business model (Buy Now/ROAS for B2B lead-gen) | marketing 6/9/11/15/16/43/44 | `ads_strategy_engine.py`, `smart_funnel_engine.py`, `ppc engine` | OPEN |
+| MKT-02 | P2 | FE | Login page fake stats (2,140 brands, 1.2M ads) | marketing 14 | `login view` | OPEN |
+| MKT-03 | P2 | BE | Instagram/social strategy for Iranian audience fully English incl. hashtags; health claims for furniture; FOMO vs cautious audience | marketing 54; Moble | `social_media_analyzer.py` | OPEN |
+| MKT-04 | P2 | BE | Google ad groups contain bare generic keywords ('راحتی','اقساط') causing wasted spend | marketing 57; Moble | `ads_strategy_engine.py keyword shaping` | OPEN |
+| HIST-01 | P1 | FE+BE | Historical regressions to re-verify: step4->platform (img17), resume step (img24), approve persistence, ads strategy save (img23), review images (img28), tour highlight/dismiss (img30/7), platform labels leak (img18/19), campaign card (img29) | QA1-7 passim | `various` | OPEN |

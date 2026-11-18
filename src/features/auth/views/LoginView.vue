@@ -178,17 +178,21 @@ async function handleGoogleLogin() {
           </div>
         </div>
 
+        <!-- MKT-02 (marketing review 14): the previous hard-coded counts
+             ("2,140 active brands", "1.2M ads", "91 avg score") were
+             invented numbers — a trust risk for evaluation. Replaced with
+             honest capability statements, no fabricated metrics. -->
         <div class="flex gap-6 text-xs text-muted-foreground">
           <div>
-            <div class="text-base font-semibold text-foreground">2,140</div>
+            <div class="text-base font-semibold text-foreground">{{ t('auth.statBrands') }}</div>
             <div>{{ t('auth.activeBrands') }}</div>
           </div>
           <div>
-            <div class="text-base font-semibold text-foreground">1.2M</div>
+            <div class="text-base font-semibold text-foreground">{{ t('auth.statAds') }}</div>
             <div>{{ t('auth.adsGen') }}</div>
           </div>
           <div>
-            <div class="text-base font-semibold text-foreground">91</div>
+            <div class="text-base font-semibold text-foreground">{{ t('auth.statLangs') }}</div>
             <div>{{ t('auth.avgScore') }}</div>
           </div>
         </div>

@@ -131,7 +131,7 @@ describe('FunnelView — per-persona CTA / KPI / budget_share (QA round 3)', () 
 
     expect(wrapper.findAll('[data-testid="funnel-persona-cta"]').length).toBe(2)
     expect(wrapper.findAll('[data-testid="funnel-persona-kpi"]').length).toBe(2)
-    expect(wrapper.findAll('[data-testid="funnel-persona-budget"]').map((b) => b.text())).toEqual(['30%', '45%'])
+    expect(wrapper.findAll('[data-testid="funnel-persona-budget"]').map((b) => b.text())).toEqual(['30% · of stage budget', '45% · of stage budget'])
   })
 
   it('hides the additive chips when the persisted run predates the new fields', async () => {

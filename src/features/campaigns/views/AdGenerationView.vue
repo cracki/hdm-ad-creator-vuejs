@@ -17,7 +17,7 @@ import { campaignsApi } from '../api'
 import { useAsyncOperation } from '@/shared/composables/useAsyncOperation'
 import { operationManager } from '@/infrastructure/operations/operationManager'
 import { exportAds } from '@/shared/utils/exportStep'
-import { getAdCopy } from '../types'
+import { getAdCopy, getPlatformRecommendations } from '../types'
 import type { CampaignAd, CampaignAdPlatform, FunnelStage } from '../types'
 
 const route = useRoute()
@@ -55,17 +55,41 @@ const isPrereqMet = computed(() => {
   })
 })
 
+// FA-21 (QA7#5): Ad Generation must offer ONLY the personas the user
+// selected in Segmentation. The selection is persisted by SegmentationView
+// as context_payload.selected_personas (display names); empty array or a
+// missing key means "all personas" (deselect-all clears downstream too).
+const selectedPersonaNames = computed<string[]>(() => {
+  const ctx = campaign.value?.context_payload as any
+  const stored = ctx?.selected_personas
+  if (!Array.isArray(stored)) return []
+  return stored.filter((n: unknown): n is string => typeof n === 'string' && !!n.trim()).map((n) => n.trim())
+})
+
 const personaObjects = computed(() => {
   const ctx = campaign.value?.context_payload as any
   const fromCtx = ctx?.segmentation_data?.segments ?? ctx?.personas
-  if (Array.isArray(fromCtx) && fromCtx.length) return fromCtx
-  const segStep = (campaign.value as any)?.latest_steps?.segmentation
-  if (segStep?.response_payload) {
-    const payload = segStep.response_payload
-    const fromStep = payload.segments ?? payload.personas ?? payload.data?.segments
-    if (Array.isArray(fromStep) && fromStep.length) return fromStep
+  let resolved: any[] = []
+  if (Array.isArray(fromCtx) && fromCtx.length) {
+    resolved = fromCtx
+  } else {
+    const segStep = (campaign.value as any)?.latest_steps?.segmentation
+    if (segStep?.response_payload) {
+      const payload = segStep.response_payload
+      const fromStep = payload.segments ?? payload.personas ?? payload.data?.segments
+      if (Array.isArray(fromStep) && fromStep.length) resolved = fromStep
+    }
   }
-  return []
+  const wanted = selectedPersonaNames.value
+  if (!wanted.length || !resolved.length) return resolved
+  const wantedKey = new Set(wanted.map((n) => n.toLowerCase()))
+  const filtered = resolved.filter((s: any) => {
+    const name = String(s?.persona_name ?? s?.name ?? '').trim()
+    return name && wantedKey.has(name.toLowerCase())
+  })
+  // Name-shape mismatch (older campaigns) falls back to the full list
+  // rather than showing an empty picker.
+  return filtered.length ? filtered : resolved
 })
 
 const adsList = computed(() => localAds.value)
@@ -74,15 +98,78 @@ const personaLabels = computed(() => {
   const names = personaObjects.value.map((s: any) => s.persona_name || s.name).filter(Boolean)
   if (names.length) return names
   if (!adsList.value.length) return []
-  return [...new Set(adsList.value.map((ad: any) => ad.persona).filter(Boolean))]
+  const fromAds = [...new Set(adsList.value.map((ad: any) => ad.persona).filter(Boolean))]
+  // FA-21: ads generated before a persona was deselected must not
+  // resurrect it in the picker.
+  const wanted = selectedPersonaNames.value
+  if (!wanted.length) return fromAds
+  const wantedKey = new Set(wanted.map((n) => n.toLowerCase()))
+  const filtered = fromAds.filter((n) => wantedKey.has(n.toLowerCase()))
+  return filtered.length ? filtered : fromAds
 })
 
 const funnelStages: FunnelStage[] = ['TOFU', 'MOFU', 'BOFU']
 
+// FA-26 (SCRUM-671): the generator used to always open on TOFU + meta +
+// persona #1 even when the approved strategies put 50-60% of the budget in
+// BOFU and Google was the leading platform — which is why every team
+// campaign ended up TOFU/Meta. Defaults now derive from the campaign's own
+// strategy state: the platform with the largest persisted recommendation
+// share, and the funnel stage the strategies weight most.
+const defaultPlatform = computed<CampaignAdPlatform>(() => {
+  const platforms = selectedPlatforms.value
+  if (!platforms.length) return 'meta'
+  if (platforms.length === 1) return platforms[0]
+  const recs = getPlatformRecommendations(campaign.value)
+  const shareByPlatform = new Map<string, number>()
+  for (const rec of recs?.recommendations ?? []) {
+    const raw = rec as unknown as Record<string, any>
+    const key = String(raw.platform ?? '').toLowerCase()
+    const share = Number(raw.budget_share ?? raw.budget_share_percent)
+    if (key && Number.isFinite(share)) shareByPlatform.set(key, share)
+  }
+  const ranked = [...platforms].sort(
+    (a, b) => (shareByPlatform.get(b) ?? 0) - (shareByPlatform.get(a) ?? 0),
+  )
+  const top = ranked[0]
+  // Only platforms the campaign actually selected are valid defaults.
+  return platforms.includes(top) ? top : platforms[0]
+})
+
+const defaultFunnelStage = computed<FunnelStage>(() => {
+  const stages: FunnelStage[] = ['TOFU', 'MOFU', 'BOFU']
+  const weights: Record<FunnelStage, number> = { TOFU: 0, MOFU: 0, BOFU: 0 }
+  const strategies = (campaign.value as any)?.context_payload?.ads_strategy
+  const list = Array.isArray(strategies) ? strategies : strategies ? [strategies] : []
+  for (const entry of list) {
+    const camps = (entry as any)?.strategy?.funnel_campaigns ?? (entry as any)?.funnel_campaigns ?? []
+    if (!Array.isArray(camps)) continue
+    for (const camp of camps) {
+      const stage = String((camp as any).funnel_stage ?? '').toUpperCase()
+      const percent = Number((camp as any).budget_percent ?? (camp as any).budget_share)
+      if ((stage === 'TOFU' || stage === 'MOFU' || stage === 'BOFU') && Number.isFinite(percent)) {
+        weights[stage as FunnelStage] += percent
+      }
+    }
+  }
+  return stages.reduce((best, stage) => (weights[stage] > weights[best] ? stage : best), 'TOFU')
+})
+
 const selectedPersona = ref('')
-const selectedFunnel = ref<FunnelStage>('TOFU')
-const selectedPlatform = ref<CampaignAdPlatform>('meta')
+const selectedFunnel = ref<FunnelStage>(defaultFunnelStage.value)
+const selectedPlatform = ref<CampaignAdPlatform>(defaultPlatform.value)
 const quantity = ref(3)
+watch(defaultFunnelStage, (stage) => {
+  // Keep the default fresh until the user picks a stage themselves.
+  if (!funnelTouched.value) selectedFunnel.value = stage
+})
+watch(defaultPlatform, (platform) => {
+  if (!platformTouched.value) selectedPlatform.value = platform
+})
+const funnelTouched = ref(false)
+const platformTouched = ref(false)
+watch(selectedFunnel, () => { funnelTouched.value = true })
+watch(selectedPlatform, () => { platformTouched.value = true })
 
 watch(personaLabels, (labels) => {
   if (labels.length && !selectedPersona.value) {
@@ -373,12 +460,12 @@ async function handleAdExport(format: 'csv' | 'pdf' | 'pptx') {
                 </div>
 
                 <!-- Ad preview card -->
-                <div class="rounded-lg border border-border/50 bg-overlay-subtle p-3 space-y-2 mb-3 text-start">
-                  <div v-if="ad.persona" class="text-[11px] text-muted-foreground">{{ ad.persona }}</div>
-                  <div v-if="getAdData(ad).headline" class="text-sm font-semibold">{{ getAdData(ad).headline }}</div>
-                  <div v-if="getAdData(ad).body" class="text-xs leading-relaxed">{{ getAdData(ad).body }}</div>
+                <div class="rounded-lg border border-border/50 bg-overlay-subtle p-3 space-y-2 mb-3 text-start" dir="auto">
+                  <div v-if="ad.persona" class="text-[11px] text-muted-foreground" dir="auto">{{ ad.persona }}</div>
+                  <div v-if="getAdData(ad).headline" class="text-sm font-semibold" dir="auto">{{ getAdData(ad).headline }}</div>
+                  <div v-if="getAdData(ad).body" class="text-xs leading-relaxed" dir="auto">{{ getAdData(ad).body }}</div>
                   <div v-if="getAdData(ad).cta" class="flex items-center justify-end pt-1">
-                    <span class="h-7 px-2.5 rounded-md bg-overlay-medium text-[11px] font-medium">{{ getAdData(ad).cta }}</span>
+                    <span class="h-7 px-2.5 rounded-md bg-overlay-medium text-[11px] font-medium" dir="auto">{{ getAdData(ad).cta }}</span>
                   </div>
                 </div>
 

@@ -98,7 +98,7 @@ describe('Step4FunnelDashboard — per-persona CTA / KPI / budget_share (QA roun
 
     expect(wrapper.find('[data-testid="funnel-persona-cta"]').text()).toContain('Download the guide')
     expect(wrapper.find('[data-testid="funnel-persona-kpi"]').text()).toContain('CTR >= 2%')
-    expect(wrapper.find('[data-testid="funnel-persona-budget"]').text()).toBe('30%')
+    expect(wrapper.find('[data-testid="funnel-persona-budget"]').text()).toBe('30% · of stage budget')
   })
 
   it('hides the additive chips for runs without them', async () => {

@@ -1,0 +1,820 @@
+
+> frontend-vue@1.0.0 test:run
+> vitest run
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90mC:/laragon/www/ad-creator-vue[39m
+
+ [32m✓[39m src/shared/utils/translations.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 492[2mms[22m[39m
+ [32m✓[39m src/features/campaigns/components/AdReviewCard.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 718[2mms[22m[39m
+ [32m✓[39m src/features/campaigns/views/PlatformSelectionView.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 679[2mms[22m[39m
+ [32m✓[39m src/shared/composables/useProductTour.test.ts [2m([22m[2m19 tests[22m[2m)[22m[33m 1861[2mms[22m[39m
+     [33m[2m✓[22m[39m auto-start is suppressed for tours the user dismissed [33m 1406[2mms[22m[39m
+[90mstderr[2m | src/features/campaigns/views/CampaignReviewView.test.ts[2m > [22m[2mCampaignReviewView — generated ads with review actions (F13)[2m > [22m[2mrenders the ads section with review state restored from GET /ads/
+[22m[39m[Vue warn]: Invalid prop: type check failed for prop "campaignUuid". Expected String with value "undefined", got Undefined  
+  at <AdReviewCard key="ad-1" ad= {
+  campaign_ad_uuid: [32m'ad-1'[39m,
+  campaign: [32m'c1'[39m,
+  platform: [32m'meta'[39m,
+  funnel_stage: [32m'TOFU'[39m,
+  persona: [32m'Anna'[39m,
+  funnel_context: {},
+  data: { headline: [32m'H'[39m, body: [32m'B'[39m, cta: [32m'Shop Now'[39m },
+  review_status: [32m'approved'[39m,
+  reject_reason: [1mnull[22m,
+  reviewed_at: [1mnull[22m,
+  created_at: [32m''[39m,
+  updated_at: [32m''[39m
+} campaign-uuid=undefined > 
+  at <CampaignReviewView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+[Vue warn]: Invalid prop: type check failed for prop "campaignUuid". Expected String with value "undefined", got Undefined  
+  at <AdReviewCard key="ad-2" ad= {
+  campaign_ad_uuid: [32m'ad-2'[39m,
+  campaign: [32m'c1'[39m,
+  platform: [32m'meta'[39m,
+  funnel_stage: [32m'TOFU'[39m,
+  persona: [32m'Anna'[39m,
+  funnel_context: {},
+  data: { headline: [32m'H'[39m, body: [32m'B'[39m, cta: [32m'Shop Now'[39m },
+  review_status: [32m'rejected'[39m,
+  reject_reason: [32m'Wrong tone'[39m,
+  reviewed_at: [1mnull[22m,
+  created_at: [32m''[39m,
+  updated_at: [32m''[39m
+} campaign-uuid=undefined > 
+  at <CampaignReviewView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+ [32m✓[39m src/features/campaigns/views/CampaignCreateView.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 1814[2mms[22m[39m
+     [33m[2m✓[22m[39m persists selected services in context_payload.selected_services on create [33m 400[2mms[22m[39m
+ [32m✓[39m src/features/campaigns/views/CampaignReviewView.test.ts [2m([22m[2m22 tests[22m[2m)[22m[33m 2412[2mms[22m[39m
+     [33m[2m✓[22m[39m shows the total budget with currency [33m 410[2mms[22m[39m
+ [32m✓[39m src/features/brands/views/BrandCreateView.test.ts [2m([22m[2m21 tests[22m[2m)[22m[33m 3467[2mms[22m[39m
+     [33m[2m✓[22m[39m calls the scan API with the entered URL, prefills fields, and renders confidence badges [33m 630[2mms[22m[39m
+ [32m✓[39m src/layout/Sidebar.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 703[2mms[22m[39m
+     [33m[2m✓[22m[39m renders "1,234 / 25,000 used" from the credits summary API [33m 446[2mms[22m[39m
+[90mstderr[2m | src/features/wizard/views/Step2AudienceStrategy.test.ts[2m > [22m[2mStep2AudienceStrategy — persona targeting (MOM)[2m > [22m[2mrenders persona chips from the segmentation results
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mt-4" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <Step2AudienceStrategy campaign= {
+  campaign_uuid: [32m'c1'[39m,
+  brand: {
+    brand_uuid: [32m'b1'[39m,
+    company_name: [32m'Lumen'[39m,
+    website_url: [32m'https://lumen.test'[39m,
+    location: [1mnull[22m,
+    selected_industry: [1mnull[22m
+  },
+  name: [32m'Summer Launch'[39m,
+  status: [32m'in_progress'[39m,
+  current_step: [32m'segmentation'[39m,
+  language: [32m'en'[39m,
+  total_budget: [1mnull[22m,
+  currency: [32m'USD'[39m,
+  segmentation_completed: [33mfalse[39m,
+  ppc_viability_completed: [33mfalse[39m,
+  funnel_completed: [33mfalse[39m,
+  content_strategy_completed: [33mfalse[39m,
+  meta_ads_completed: [33mfalse[39m,
+  google_ads_completed: [33mfalse[39m,
+  linkedin_ads_completed: [33mfalse[39m,
+  context_payload: {},
+  summary: {},
+  steps_count: [33m0[39m,
+  created_at: [32m''[39m,
+  updated_at: [32m''[39m
+} campaignUuid="c1" ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/wizard/views/Step2AudienceStrategy.test.ts[2m > [22m[2mStep2AudienceStrategy — persona targeting (MOM)[2m > [22m[2mincludes the selected personas in the run payload (empty selection = all)
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mt-4" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <Step2AudienceStrategy campaign= {
+  campaign_uuid: [32m'c1'[39m,
+  brand: {
+    brand_uuid: [32m'b1'[39m,
+    company_name: [32m'Lumen'[39m,
+    website_url: [32m'https://lumen.test'[39m,
+    location: [1mnull[22m,
+    selected_industry: [1mnull[22m
+  },
+  name: [32m'Summer Launch'[39m,
+  status: [32m'in_progress'[39m,
+  current_step: [32m'segmentation'[39m,
+  language: [32m'en'[39m,
+  total_budget: [1mnull[22m,
+  currency: [32m'USD'[39m,
+  segmentation_completed: [33mfalse[39m,
+  ppc_viability_completed: [33mfalse[39m,
+  funnel_completed: [33mfalse[39m,
+  content_strategy_completed: [33mfalse[39m,
+  meta_ads_completed: [33mfalse[39m,
+  google_ads_completed: [33mfalse[39m,
+  linkedin_ads_completed: [33mfalse[39m,
+  context_payload: {},
+  summary: {},
+  steps_count: [33m0[39m,
+  created_at: [32m''[39m,
+  updated_at: [32m''[39m
+} campaignUuid="c1" ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/wizard/views/Step2AudienceStrategy.test.ts[2m > [22m[2mStep2AudienceStrategy — persona targeting (MOM)[2m > [22m[2mincludes the selected personas in the run payload (empty selection = all)
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mt-4" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <Step2AudienceStrategy campaign= {
+  campaign_uuid: [32m'c1'[39m,
+  brand: {
+    brand_uuid: [32m'b1'[39m,
+    company_name: [32m'Lumen'[39m,
+    website_url: [32m'https://lumen.test'[39m,
+    location: [1mnull[22m,
+    selected_industry: [1mnull[22m
+  },
+  name: [32m'Summer Launch'[39m,
+  status: [32m'in_progress'[39m,
+  current_step: [32m'segmentation'[39m,
+  language: [32m'en'[39m,
+  total_budget: [1mnull[22m,
+  currency: [32m'USD'[39m,
+  segmentation_completed: [33mfalse[39m,
+  ppc_viability_completed: [33mfalse[39m,
+  funnel_completed: [33mfalse[39m,
+  content_strategy_completed: [33mfalse[39m,
+  meta_ads_completed: [33mfalse[39m,
+  google_ads_completed: [33mfalse[39m,
+  linkedin_ads_completed: [33mfalse[39m,
+  context_payload: {},
+  summary: {},
+  steps_count: [33m0[39m,
+  created_at: [32m''[39m,
+  updated_at: [32m''[39m
+} campaignUuid="c1" ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/wizard/views/Step2AudienceStrategy.test.ts[2m > [22m[2mStep2AudienceStrategy — persona targeting (MOM)[2m > [22m[2mprefills the selection from context_payload.selected_personas
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mt-4" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <Step2AudienceStrategy campaign= {
+  campaign_uuid: [32m'c1'[39m,
+  brand: {
+    brand_uuid: [32m'b1'[39m,
+    company_name: [32m'Lumen'[39m,
+    website_url: [32m'https://lumen.test'[39m,
+    location: [1mnull[22m,
+    selected_industry: [1mnull[22m
+  },
+  name: [32m'Summer Launch'[39m,
+  status: [32m'in_progress'[39m,
+  current_step: [32m'segmentation'[39m,
+  language: [32m'en'[39m,
+  total_budget: [1mnull[22m,
+  currency: [32m'USD'[39m,
+  segmentation_completed: [33mfalse[39m,
+  ppc_viability_completed: [33mfalse[39m,
+  funnel_completed: [33mfalse[39m,
+  content_strategy_completed: [33mfalse[39m,
+  meta_ads_completed: [33mfalse[39m,
+  google_ads_completed: [33mfalse[39m,
+  linkedin_ads_completed: [33mfalse[39m,
+  context_payload: { selected_personas: [ [32m'Premium Seeker'[39m ] },
+  summary: {},
+  steps_count: [33m0[39m,
+  created_at: [32m''[39m,
+  updated_at: [32m''[39m
+} campaignUuid="c1" ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/wizard/views/Step2AudienceStrategy.test.ts[2m > [22m[2mStep2AudienceStrategy — persona targeting (MOM)[2m > [22m[2msends an explicit empty personas list when the user clears a persisted selection
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mt-4" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <Step2AudienceStrategy campaign= {
+  campaign_uuid: [32m'c1'[39m,
+  brand: {
+    brand_uuid: [32m'b1'[39m,
+    company_name: [32m'Lumen'[39m,
+    website_url: [32m'https://lumen.test'[39m,
+    location: [1mnull[22m,
+    selected_industry: [1mnull[22m
+  },
+  name: [32m'Summer Launch'[39m,
+  status: [32m'in_progress'[39m,
+  current_step: [32m'segmentation'[39m,
+  language: [32m'en'[39m,
+  total_budget: [1mnull[22m,
+  currency: [32m'USD'[39m,
+  segmentation_completed: [33mfalse[39m,
+  ppc_viability_completed: [33mfalse[39m,
+  funnel_completed: [33mfalse[39m,
+  content_strategy_completed: [33mfalse[39m,
+  meta_ads_completed: [33mfalse[39m,
+  google_ads_completed: [33mfalse[39m,
+  linkedin_ads_completed: [33mfalse[39m,
+  context_payload: { selected_personas: [ [32m'Premium Seeker'[39m ] },
+  summary: {},
+  steps_count: [33m0[39m,
+  created_at: [32m''[39m,
+  updated_at: [32m''[39m
+} campaignUuid="c1" ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/wizard/views/Step2AudienceStrategy.test.ts[2m > [22m[2mStep2AudienceStrategy — persona targeting (MOM)[2m > [22m[2msends an explicit empty personas list when the user clears a persisted selection
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mt-4" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <Step2AudienceStrategy campaign= {
+  campaign_uuid: [32m'c1'[39m,
+  brand: {
+    brand_uuid: [32m'b1'[39m,
+    company_name: [32m'Lumen'[39m,
+    website_url: [32m'https://lumen.test'[39m,
+    location: [1mnull[22m,
+    selected_industry: [1mnull[22m
+  },
+  name: [32m'Summer Launch'[39m,
+  status: [32m'in_progress'[39m,
+  current_step: [32m'segmentation'[39m,
+  language: [32m'en'[39m,
+  total_budget: [1mnull[22m,
+  currency: [32m'USD'[39m,
+  segmentation_completed: [33mfalse[39m,
+  ppc_viability_completed: [33mfalse[39m,
+  funnel_completed: [33mfalse[39m,
+  content_strategy_completed: [33mfalse[39m,
+  meta_ads_completed: [33mfalse[39m,
+  google_ads_completed: [33mfalse[39m,
+  linkedin_ads_completed: [33mfalse[39m,
+  context_payload: { selected_personas: [ [32m'Premium Seeker'[39m ] },
+  summary: {},
+  steps_count: [33m0[39m,
+  created_at: [32m''[39m,
+  updated_at: [32m''[39m
+} campaignUuid="c1" ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/wizard/views/Step2AudienceStrategy.test.ts[2m > [22m[2mStep2AudienceStrategy — immediate persona persistence (QA round 3)[2m > [22m[2mPATCHes context_payload with the merged selection as soon as a persona is toggled
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mt-4" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <Step2AudienceStrategy campaign= {
+  campaign_uuid: [32m'c1'[39m,
+  brand: {
+    brand_uuid: [32m'b1'[39m,
+    company_name: [32m'Lumen'[39m,
+    website_url: [32m'https://lumen.test'[39m,
+    location: [1mnull[22m,
+    selected_industry: [1mnull[22m
+  },
+  name: [32m'Summer Launch'[39m,
+  status: [32m'in_progress'[39m,
+  current_step: [32m'segmentation'[39m,
+  language: [32m'en'[39m,
+  total_budget: [1mnull[22m,
+  currency: [32m'USD'[39m,
+  segmentation_completed: [33mfalse[39m,
+  ppc_viability_completed: [33mfalse[39m,
+  funnel_completed: [33mfalse[39m,
+  content_strategy_completed: [33mfalse[39m,
+  meta_ads_completed: [33mfalse[39m,
+  google_ads_completed: [33mfalse[39m,
+  linkedin_ads_completed: [33mfalse[39m,
+  context_payload: { target_market: { country: [32m'Oman'[39m, city: [32m'Muscat'[39m } },
+  summary: {},
+  steps_count: [33m0[39m,
+  created_at: [32m''[39m,
+  updated_at: [32m''[39m
+} campaignUuid="c1" ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/wizard/views/Step2AudienceStrategy.test.ts[2m > [22m[2mStep2AudienceStrategy — immediate persona persistence (QA round 3)[2m > [22m[2mcoalesces rapid toggles into a single debounced PATCH with the final selection
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mt-4" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <Step2AudienceStrategy campaign= {
+  campaign_uuid: [32m'c1'[39m,
+  brand: {
+    brand_uuid: [32m'b1'[39m,
+    company_name: [32m'Lumen'[39m,
+    website_url: [32m'https://lumen.test'[39m,
+    location: [1mnull[22m,
+    selected_industry: [1mnull[22m
+  },
+  name: [32m'Summer Launch'[39m,
+  status: [32m'in_progress'[39m,
+  current_step: [32m'segmentation'[39m,
+  language: [32m'en'[39m,
+  total_budget: [1mnull[22m,
+  currency: [32m'USD'[39m,
+  segmentation_completed: [33mfalse[39m,
+  ppc_viability_completed: [33mfalse[39m,
+  funnel_completed: [33mfalse[39m,
+  content_strategy_completed: [33mfalse[39m,
+  meta_ads_completed: [33mfalse[39m,
+  google_ads_completed: [33mfalse[39m,
+  linkedin_ads_completed: [33mfalse[39m,
+  context_payload: {},
+  summary: {},
+  steps_count: [33m0[39m,
+  created_at: [32m''[39m,
+  updated_at: [32m''[39m
+} campaignUuid="c1" ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+ [32m✓[39m src/features/wizard/views/Step2AudienceStrategy.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 774[2mms[22m[39m
+     [33m[2m✓[22m[39m renders persona chips from the segmentation results [33m 341[2mms[22m[39m
+ [32m✓[39m src/features/campaigns/views/CampaignDetailView.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 654[2mms[22m[39m
+     [33m[2m✓[22m[39m ad flags true but no ads → opens at the ads step [33m 331[2mms[22m[39m
+ [32m✓[39m src/features/campaigns/views/VisualGenerationView.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 979[2mms[22m[39m
+     [33m[2m✓[22m[39m renders the grid from the persisted GET /visuals/ read-back on a cold load [33m 360[2mms[22m[39m
+ [32m✓[39m src/features/fullFunnel/components/FullFunnelCampaignDisplay.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 762[2mms[22m[39m
+     [33m[2m✓[22m[39m calls generate-visuals on "Generate images" and renders the enriched concepts [33m 602[2mms[22m[39m
+ [32m✓[39m src/features/scenarioVariants/views/ScenarioMatrixView.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 770[2mms[22m[39m
+     [33m[2m✓[22m[39m renders images persisted on the variant data (data.image_url restore) [33m 461[2mms[22m[39m
+[90mstderr[2m | src/features/campaigns/views/SegmentationView.test.ts[2m > [22m[2mSegmentationView — structured target market (F19)[2m > [22m[2msends structured country/city plus the composed legacy location
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <SegmentationView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/SegmentationView.test.ts[2m > [22m[2mSegmentationView — persona targeting (MOM)[2m > [22m[2mrenders a persona chip per segmentation result once results exist
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <SegmentationView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/SegmentationView.test.ts[2m > [22m[2mSegmentationView — persona targeting (MOM)[2m > [22m[2msends the selected persona names in the segmentation run payload
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <SegmentationView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/SegmentationView.test.ts[2m > [22m[2mSegmentationView — persona targeting (MOM)[2m > [22m[2msends the selected persona names in the segmentation run payload
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <SegmentationView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/SegmentationView.test.ts[2m > [22m[2mSegmentationView — persona targeting (MOM)[2m > [22m[2mrestores the selection from context_payload.selected_personas on load
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <SegmentationView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/SegmentationView.test.ts[2m > [22m[2mSegmentationView — persona targeting (MOM)[2m > [22m[2msends an explicit empty personas list when the user clears a persisted selection
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <SegmentationView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/SegmentationView.test.ts[2m > [22m[2mSegmentationView — persona targeting (MOM)[2m > [22m[2msends an explicit empty personas list when the user clears a persisted selection
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <SegmentationView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/SegmentationView.test.ts[2m > [22m[2mSegmentationView — persona targeting (MOM)[2m > [22m[2msends an explicit empty personas list when the user clears a persisted selection
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <SegmentationView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/SegmentationView.test.ts[2m > [22m[2mSegmentationView — immediate persona persistence[2m > [22m[2mPATCHes the LATEST campaign context with merged selected_personas on toggle
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <SegmentationView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/SegmentationView.test.ts[2m > [22m[2mSegmentationView — immediate persona persistence[2m > [22m[2mcoalesces rapid toggles into a single debounced PATCH with the final selection
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <SegmentationView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/SegmentationView.test.ts[2m > [22m[2mSegmentationView — step review actions[2m > [22m[2mrestores review state from latest_steps and rejects with a required reason
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <SegmentationView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/SegmentationView.test.ts[2m > [22m[2mSegmentationView — step review actions[2m > [22m[2mrestores review state from latest_steps and rejects with a required reason
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <SegmentationView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/SegmentationView.test.ts[2m > [22m[2mSegmentationView — step review actions[2m > [22m[2mrestores review state from latest_steps and rejects with a required reason
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <SegmentationView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/SegmentationView.test.ts[2m > [22m[2mSegmentationView — step review actions[2m > [22m[2mrestores review state from latest_steps and rejects with a required reason
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <SegmentationView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/SegmentationView.test.ts[2m > [22m[2mSegmentationView — step review actions[2m > [22m[2mrestores review state from latest_steps and rejects with a required reason
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <SegmentationView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/SegmentationView.test.ts[2m > [22m[2mSegmentationView — step review actions[2m > [22m[2mrestores review state from latest_steps and rejects with a required reason
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <SegmentationView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/SegmentationView.test.ts[2m > [22m[2mSegmentationView — step review actions[2m > [22m[2mrestores review state from latest_steps and rejects with a required reason
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <SegmentationView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/SegmentationView.test.ts[2m > [22m[2mSegmentationView — step review actions[2m > [22m[2mrefine re-POSTs segmentation with refinement_feedback plus the form values
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <SegmentationView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/SegmentationView.test.ts[2m > [22m[2mSegmentationView — step review actions[2m > [22m[2mrefine re-POSTs segmentation with refinement_feedback plus the form values
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <SegmentationView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/SegmentationView.test.ts[2m > [22m[2mSegmentationView — step review actions[2m > [22m[2mrefine re-POSTs segmentation with refinement_feedback plus the form values
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <SegmentationView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/SegmentationView.test.ts[2m > [22m[2mSegmentationView — step review actions[2m > [22m[2mrefine re-POSTs segmentation with refinement_feedback plus the form values
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <SegmentationView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/SegmentationView.test.ts[2m > [22m[2mSegmentationView — step review actions[2m > [22m[2man approved step shows the approved badge
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="segmentation"  ... > 
+  at <SegmentationView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+ [32m✓[39m src/features/campaigns/views/SegmentationView.test.ts [2m([22m[2m20 tests[22m[2m)[22m[33m 1583[2mms[22m[39m
+ [32m✓[39m src/features/brands/components/BrandServicesManager.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 580[2mms[22m[39m
+ [32m✓[39m src/features/campaigns/components/StepReviewActions.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 650[2mms[22m[39m
+     [33m[2m✓[22m[39m calls the advancing approve endpoint and emits approved [33m 323[2mms[22m[39m
+ [32m✓[39m src/features/wizard/views/WizardView.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 595[2mms[22m[39m
+     [33m[2m✓[22m[39m approves the current step type and still navigates [33m 382[2mms[22m[39m
+ [32m✓[39m src/shared/components/ServiceSelector.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 827[2mms[22m[39m
+     [33m[2m✓[22m[39m renders a chip per service and shows score badges only when scored [33m 356[2mms[22m[39m
+[90mstderr[2m | src/features/campaigns/views/PPCViabilityView.test.ts[2m > [22m[2mPPCViabilityView — live update after run/refine (MOM)[2m > [22m[2mrenders results from latest_steps and replaces them with the refine response without a reload
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="ppc_viability"  ... > 
+  at <PPCViabilityView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/PPCViabilityView.test.ts[2m > [22m[2mPPCViabilityView — live update after run/refine (MOM)[2m > [22m[2mrenders results from latest_steps and replaces them with the refine response without a reload
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="ppc_viability"  ... > 
+  at <PPCViabilityView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/PPCViabilityView.test.ts[2m > [22m[2mPPCViabilityView — live update after run/refine (MOM)[2m > [22m[2mrenders results from latest_steps and replaces them with the refine response without a reload
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="ppc_viability"  ... > 
+  at <PPCViabilityView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/PPCViabilityView.test.ts[2m > [22m[2mPPCViabilityView — live update after run/refine (MOM)[2m > [22m[2mrenders results from latest_steps and replaces them with the refine response without a reload
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="ppc_viability"  ... > 
+  at <PPCViabilityView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/PPCViabilityView.test.ts[2m > [22m[2mPPCViabilityView — expandable service cards[2m > [22m[2mis collapsed by default and expands on click, revealing the payload details
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="ppc_viability"  ... > 
+  at <PPCViabilityView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/PPCViabilityView.test.ts[2m > [22m[2mPPCViabilityView — selected-only primary cards (QA r3 fix 4)[2m > [22m[2mshows ONLY the selected service as the primary card; others stay collapsed
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="ppc_viability"  ... > 
+  at <PPCViabilityView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/PPCViabilityView.test.ts[2m > [22m[2mPPCViabilityView — selected-only primary cards (QA r3 fix 4)[2m > [22m[2mcounts the analyzed rows, not the brand total service count
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="ppc_viability"  ... > 
+  at <PPCViabilityView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+ [32m✓[39m src/shared/components/renderers/ContentOpportunitiesRenderer.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 533[2mms[22m[39m
+ [32m✓[39m src/features/campaigns/views/PPCViabilityView.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 652[2mms[22m[39m
+     [33m[2m✓[22m[39m renders results from latest_steps and replaces them with the refine response without a reload [33m 384[2mms[22m[39m
+ [32m✓[39m src/features/market/views/MarketIntelligenceView.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 632[2mms[22m[39m
+[90mstderr[2m | src/features/campaigns/views/AdGenerationView.test.ts[2m > [22m[2mAdGenerationView — ads + review state from GET /ads/ (F13)[2m > [22m[2mrenders ads restored from the API (no sessionStorage handoff)
+[22m[39m[Vue warn]: Invalid prop: type check failed for prop "campaignUuid". Expected String with value "undefined", got Undefined  
+  at <AdReviewCard key="ad-1" ad= {
+  campaign_ad_uuid: [32m'ad-1'[39m,
+  campaign: [32m'c1'[39m,
+  platform: [32m'meta'[39m,
+  funnel_stage: [32m'TOFU'[39m,
+  persona: [32m'Anna'[39m,
+  funnel_context: {},
+  data: { headline: [32m'Glow up'[39m, body: [32m'Shine bright'[39m, cta: [32m'Shop Now'[39m },
+  review_status: [1mnull[22m,
+  reject_reason: [1mnull[22m,
+  reviewed_at: [1mnull[22m,
+  created_at: [32m''[39m,
+  updated_at: [32m''[39m
+} campaign-uuid=undefined  ... > 
+  at <AdGenerationView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/AdGenerationView.test.ts[2m > [22m[2mAdGenerationView — ads + review state from GET /ads/ (F13)[2m > [22m[2mrestores review badges from the GET ads payload
+[22m[39m[Vue warn]: Invalid prop: type check failed for prop "campaignUuid". Expected String with value "undefined", got Undefined  
+  at <AdReviewCard key="ad-1" ad= {
+  campaign_ad_uuid: [32m'ad-1'[39m,
+  campaign: [32m'c1'[39m,
+  platform: [32m'meta'[39m,
+  funnel_stage: [32m'TOFU'[39m,
+  persona: [32m'Anna'[39m,
+  funnel_context: {},
+  data: { headline: [32m'Glow up'[39m, body: [32m'Shine bright'[39m, cta: [32m'Shop Now'[39m },
+  review_status: [32m'approved'[39m,
+  reject_reason: [1mnull[22m,
+  reviewed_at: [1mnull[22m,
+  created_at: [32m''[39m,
+  updated_at: [32m''[39m
+} campaign-uuid=undefined  ... > 
+  at <AdGenerationView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+[Vue warn]: Invalid prop: type check failed for prop "campaignUuid". Expected String with value "undefined", got Undefined  
+  at <AdReviewCard key="ad-2" ad= {
+  campaign_ad_uuid: [32m'ad-2'[39m,
+  campaign: [32m'c1'[39m,
+  platform: [32m'meta'[39m,
+  funnel_stage: [32m'TOFU'[39m,
+  persona: [32m'Anna'[39m,
+  funnel_context: {},
+  data: { headline: [32m'Glow up'[39m, body: [32m'Shine bright'[39m, cta: [32m'Shop Now'[39m },
+  review_status: [32m'rejected'[39m,
+  reject_reason: [32m'Wrong market'[39m,
+  reviewed_at: [1mnull[22m,
+  created_at: [32m''[39m,
+  updated_at: [32m''[39m
+} campaign-uuid=undefined  ... > 
+  at <AdGenerationView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/AdGenerationView.test.ts[2m > [22m[2mAdGenerationView — ads + review state from GET /ads/ (F13)[2m > [22m[2mwraps every ad card in the review action bar
+[22m[39m[Vue warn]: Invalid prop: type check failed for prop "campaignUuid". Expected String with value "undefined", got Undefined  
+  at <AdReviewCard key="ad-1" ad= {
+  campaign_ad_uuid: [32m'ad-1'[39m,
+  campaign: [32m'c1'[39m,
+  platform: [32m'meta'[39m,
+  funnel_stage: [32m'TOFU'[39m,
+  persona: [32m'Anna'[39m,
+  funnel_context: {},
+  data: { headline: [32m'Glow up'[39m, body: [32m'Shine bright'[39m, cta: [32m'Shop Now'[39m },
+  review_status: [1mnull[22m,
+  reject_reason: [1mnull[22m,
+  reviewed_at: [1mnull[22m,
+  created_at: [32m''[39m,
+  updated_at: [32m''[39m
+} campaign-uuid=undefined  ... > 
+  at <AdGenerationView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+ [32m✓[39m src/features/campaigns/views/AdGenerationView.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 629[2mms[22m[39m
+ [32m✓[39m src/features/wizard/views/Step10Export.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 366[2mms[22m[39m
+     [33m[2m✓[22m[39m renders the missing slugs as localized chips under the error banner [33m 314[2mms[22m[39m
+ [32m✓[39m src/features/campaigns/views/stepNextRoutes.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 446[2mms[22m[39m
+[90mstderr[2m | src/features/campaigns/views/ContentStrategyView.test.ts[2m > [22m[2mContentStrategyView — header item count (QA round 3)[2m > [22m[2mcounts rendered CONTENT ITEMS, not persona rows
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="content_strategy"  ... > 
+  at <ContentStrategyView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+ [32m✓[39m src/shared/components/renderers/ContentGapsRenderer.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 367[2mms[22m[39m
+[90mstderr[2m | src/features/campaigns/views/ContentStrategyView.test.ts[2m > [22m[2mContentStrategyView — header item count (QA round 3)[2m > [22m[2mprefers the backend-computed content_pieces_count when present
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="content_strategy"  ... > 
+  at <ContentStrategyView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+ [32m✓[39m src/features/campaigns/views/ContentStrategyView.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 487[2mms[22m[39m
+     [33m[2m✓[22m[39m counts rendered CONTENT ITEMS, not persona rows [33m 373[2mms[22m[39m
+ [32m✓[39m src/shared/components/renderers/AdsStrategyRenderer.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 422[2mms[22m[39m
+ [32m✓[39m src/features/market/components/InsightItemActions.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 336[2mms[22m[39m
+[90mstderr[2m | src/features/brands/views/BrandDetailView.test.ts[2m > [22m[2mBrandDetailView — services & location (QA photo 5)[2m > [22m[2mrenders the merged services list as chips
+[22m[39m[Vue Router warn]: No match found for location with path "/brands/undefined/competitors"
+
+[90mstderr[2m | src/features/brands/views/BrandDetailView.test.ts[2m > [22m[2mBrandDetailView — services & location (QA photo 5)[2m > [22m[2mrenders the location row when the brand has one
+[22m[39m[Vue Router warn]: No match found for location with path "/brands/undefined/competitors"
+
+[90mstderr[2m | src/features/brands/views/BrandDetailView.test.ts[2m > [22m[2mBrandDetailView — services & location (QA photo 5)[2m > [22m[2mrenders the location row when the brand has one
+[22m[39m[Vue Router warn]: No match found for location with path "/brands/undefined/competitors"
+
+[90mstderr[2m | src/features/brands/views/BrandDetailView.test.ts[2m > [22m[2mBrandDetailView — services & location (QA photo 5)[2m > [22m[2mhides the services card and location row when absent
+[22m[39m[Vue Router warn]: No match found for location with path "/brands/undefined/competitors"
+
+[90mstderr[2m | src/features/brands/views/BrandDetailView.test.ts[2m > [22m[2mBrandDetailView — services & location (QA photo 5)[2m > [22m[2mhides the services card and location row when absent
+[22m[39m[Vue Router warn]: No match found for location with path "/brands/undefined/competitors"
+
+[90mstderr[2m | src/features/brands/views/BrandDetailView.test.ts
+[22m[39m[Vue Router warn]: No match found for location with path "/brands/undefined/competitors"
+
+ [32m✓[39m src/features/brands/views/BrandDetailView.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 431[2mms[22m[39m
+     [33m[2m✓[22m[39m renders the merged services list as chips [33m 349[2mms[22m[39m
+ [32m✓[39m src/features/wizard/views/Step6PlatformSelection.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 530[2mms[22m[39m
+     [33m[2m✓[22m[39m fetches a recommendation on click and merges it into the cards [33m 401[2mms[22m[39m
+ [32m✓[39m src/shared/components/renderers/TopPerformingContentRenderer.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 396[2mms[22m[39m
+ [32m✓[39m src/shared/components/renderers/AnalysisPayloadRenderer.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 298[2mms[22m[39m
+ [32m✓[39m src/features/brands/views/BrandAnalysisView.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 395[2mms[22m[39m
+ [32m✓[39m src/features/campaigns/views/CampaignListView.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 505[2mms[22m[39m
+ [32m✓[39m src/features/campaigns/views/AdsStrategyView.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 333[2mms[22m[39m
+     [33m[2m✓[22m[39m flips the platform badge to Completed and enables continue without a refresh [33m 326[2mms[22m[39m
+ [32m✓[39m src/features/wizard/views/Step1BrandIntelligence.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 200[2mms[22m[39m
+ [32m✓[39m src/features/campaigns/components/PlatformRecommendationSummary.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 220[2mms[22m[39m
+[90mstderr[2m | src/features/wizard/views/Step5ContentMatrix.test.ts[2m > [22m[2mStep5ContentMatrix — header item count (QA round 3)[2m > [22m[2mcounts rendered content items from the run payload
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mt-4" campaign-uuid="c1" step-type="content_strategy"  ... > 
+  at <Step5ContentMatrix campaign= {
+  campaign_uuid: [32m'c1'[39m,
+  brand: {
+    brand_uuid: [32m'b1'[39m,
+    company_name: [32m'Lumen'[39m,
+    website_url: [32m'https://lumen.test'[39m,
+    location: [1mnull[22m,
+    selected_industry: [1mnull[22m
+  },
+  name: [32m'Summer Launch'[39m,
+  status: [32m'in_progress'[39m,
+  current_step: [32m'content_strategy'[39m,
+  language: [32m'en'[39m,
+  total_budget: [1mnull[22m,
+  currency: [32m'USD'[39m,
+  segmentation_completed: [33mtrue[39m,
+  ppc_viability_completed: [33mfalse[39m,
+  funnel_completed: [33mfalse[39m,
+  content_strategy_completed: [33mfalse[39m,
+  meta_ads_completed: [33mfalse[39m,
+  google_ads_completed: [33mfalse[39m,
+  linkedin_ads_completed: [33mfalse[39m,
+  context_payload: {},
+  summary: {},
+  steps_count: [33m0[39m,
+  created_at: [32m''[39m,
+  updated_at: [32m''[39m
+} campaignUuid="c1" ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/wizard/views/Step5ContentMatrix.test.ts[2m > [22m[2mStep5ContentMatrix — header item count (QA round 3)[2m > [22m[2mprefers the backend-computed content_pieces_count when present
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mt-4" campaign-uuid="c1" step-type="content_strategy"  ... > 
+  at <Step5ContentMatrix campaign= {
+  campaign_uuid: [32m'c1'[39m,
+  brand: {
+    brand_uuid: [32m'b1'[39m,
+    company_name: [32m'Lumen'[39m,
+    website_url: [32m'https://lumen.test'[39m,
+    location: [1mnull[22m,
+    selected_industry: [1mnull[22m
+  },
+  name: [32m'Summer Launch'[39m,
+  status: [32m'in_progress'[39m,
+  current_step: [32m'content_strategy'[39m,
+  language: [32m'en'[39m,
+  total_budget: [1mnull[22m,
+  currency: [32m'USD'[39m,
+  segmentation_completed: [33mtrue[39m,
+  ppc_viability_completed: [33mfalse[39m,
+  funnel_completed: [33mfalse[39m,
+  content_strategy_completed: [33mfalse[39m,
+  meta_ads_completed: [33mfalse[39m,
+  google_ads_completed: [33mfalse[39m,
+  linkedin_ads_completed: [33mfalse[39m,
+  context_payload: {},
+  summary: {},
+  steps_count: [33m0[39m,
+  created_at: [32m''[39m,
+  updated_at: [32m''[39m
+} campaignUuid="c1" ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+ [32m✓[39m src/features/wizard/views/Step5ContentMatrix.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 291[2mms[22m[39m
+ [32m✓[39m src/shared/components/renderers/SegmentDeepResearchRenderer.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 317[2mms[22m[39m
+ [32m✓[39m src/shared/components/renderers/ContentMatrixRenderer.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 370[2mms[22m[39m
+ [32m✓[39m src/features/brands/components/PersonalityCards.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 301[2mms[22m[39m
+ [32m✓[39m src/features/campaigns/components/PpcServiceCard.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 214[2mms[22m[39m
+ [32m✓[39m src/shared/components/OutputBlock.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 260[2mms[22m[39m
+ [32m✓[39m src/shared/components/ErrorState.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 222[2mms[22m[39m
+[90mstderr[2m | src/features/wizard/views/Step4FunnelDashboard.test.ts[2m > [22m[2mStep4FunnelDashboard — per-persona CTA / KPI / budget_share (QA round 3)[2m > [22m[2mrenders expandable persona cards with the additive chips after a run
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mt-4" campaign-uuid="c1" step-type="funnel"  ... > 
+  at <Step4FunnelDashboard campaign= {
+  campaign_uuid: [32m'c1'[39m,
+  brand: {
+    brand_uuid: [32m'b1'[39m,
+    company_name: [32m'Lumen'[39m,
+    website_url: [32m'https://lumen.test'[39m,
+    location: [1mnull[22m,
+    selected_industry: [1mnull[22m
+  },
+  name: [32m'Summer Launch'[39m,
+  status: [32m'in_progress'[39m,
+  current_step: [32m'funnel'[39m,
+  language: [32m'en'[39m,
+  total_budget: [1mnull[22m,
+  currency: [32m'USD'[39m,
+  segmentation_completed: [33mtrue[39m,
+  ppc_viability_completed: [33mtrue[39m,
+  funnel_completed: [33mfalse[39m,
+  content_strategy_completed: [33mfalse[39m,
+  meta_ads_completed: [33mfalse[39m,
+  google_ads_completed: [33mfalse[39m,
+  linkedin_ads_completed: [33mfalse[39m,
+  context_payload: {},
+  summary: {},
+  steps_count: [33m0[39m,
+  created_at: [32m''[39m,
+  updated_at: [32m''[39m
+} campaignUuid="c1" ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/wizard/views/Step4FunnelDashboard.test.ts[2m > [22m[2mStep4FunnelDashboard — per-persona CTA / KPI / budget_share (QA round 3)[2m > [22m[2mhides the additive chips for runs without them
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mt-4" campaign-uuid="c1" step-type="funnel"  ... > 
+  at <Step4FunnelDashboard campaign= {
+  campaign_uuid: [32m'c1'[39m,
+  brand: {
+    brand_uuid: [32m'b1'[39m,
+    company_name: [32m'Lumen'[39m,
+    website_url: [32m'https://lumen.test'[39m,
+    location: [1mnull[22m,
+    selected_industry: [1mnull[22m
+  },
+  name: [32m'Summer Launch'[39m,
+  status: [32m'in_progress'[39m,
+  current_step: [32m'funnel'[39m,
+  language: [32m'en'[39m,
+  total_budget: [1mnull[22m,
+  currency: [32m'USD'[39m,
+  segmentation_completed: [33mtrue[39m,
+  ppc_viability_completed: [33mtrue[39m,
+  funnel_completed: [33mfalse[39m,
+  content_strategy_completed: [33mfalse[39m,
+  meta_ads_completed: [33mfalse[39m,
+  google_ads_completed: [33mfalse[39m,
+  linkedin_ads_completed: [33mfalse[39m,
+  context_payload: {},
+  summary: {},
+  steps_count: [33m0[39m,
+  created_at: [32m''[39m,
+  updated_at: [32m''[39m
+} campaignUuid="c1" ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+ [32m✓[39m src/features/wizard/views/Step4FunnelDashboard.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 385[2mms[22m[39m
+ [32m✓[39m src/shared/components/ProgressIndicator.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 250[2mms[22m[39m
+[90mstderr[2m | src/features/campaigns/views/FunnelView.test.ts[2m > [22m[2mFunnelView — per-persona CTA / KPI / budget_share (QA round 3)[2m > [22m[2mrenders expandable persona cards with the additive chips from the run payload
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="funnel"  ... > 
+  at <FunnelView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+[90mstderr[2m | src/features/campaigns/views/FunnelView.test.ts[2m > [22m[2mFunnelView — per-persona CTA / KPI / budget_share (QA round 3)[2m > [22m[2mhides the additive chips when the persisted run predates the new fields
+[22m[39m[Vue warn]: Extraneous non-props attributes (class) were passed to component but could not be automatically inherited because component renders fragment or text or teleport root nodes. 
+  at <StepReviewActions class="mb-6" campaign-uuid="c1" step-type="funnel"  ... > 
+  at <FunnelView ref="VTU_COMPONENT" > 
+  at <VTUROOT>
+
+ [32m✓[39m src/features/campaigns/views/FunnelView.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 395[2mms[22m[39m
+     [33m[2m✓[22m[39m renders expandable persona cards with the additive chips from the run payload [33m 310[2mms[22m[39m
+ [32m✓[39m src/shared/components/CountryCitySelect.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 183[2mms[22m[39m
+ [32m✓[39m src/features/campaigns/components/FunnelPersonaStages.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 455[2mms[22m[39m
+ [32m✓[39m src/shared/components/InfoTooltip.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 186[2mms[22m[39m
+ [32m✓[39m src/shared/components/BrandContextPanel.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 151[2mms[22m[39m
+ [32m✓[39m src/features/campaigns/types.test.ts [2m([22m[2m57 tests[22m[2m)[22m[32m 250[2mms[22m[39m
+ [32m✓[39m src/shared/composables/useJobTracker.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 151[2mms[22m[39m
+ [32m✓[39m src/features/auth/store.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 43[2mms[22m[39m
+ [32m✓[39m src/shared/utils/buildInfo.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 123[2mms[22m[39m
+ [32m✓[39m src/shared/utils/exportCampaign.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 67[2mms[22m[39m
+ [32m✓[39m src/shared/api/client.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 67[2mms[22m[39m
+ [32m✓[39m src/features/brands/components/personality.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 38[2mms[22m[39m
+ [32m✓[39m src/features/brands/sectionProgress.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 76[2mms[22m[39m
+ [32m✓[39m src/shared/utils/payloadDisplay.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 56[2mms[22m[39m
+ [32m✓[39m src/shared/utils/dynamicImportRecovery.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+ [32m✓[39m src/features/brands/api.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+ [32m✓[39m src/features/brands/serviceSuggestions.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 41[2mms[22m[39m
+ [32m✓[39m src/shared/composables/useNormalizeResponse.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+ [32m✓[39m src/shared/api/credits.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m65 passed[39m[22m[90m (65)[39m
+[2m      Tests [22m [1m[32m471 passed[39m[22m[90m (471)[39m
+[2m   Start at [22m 14:41:46
+[2m   Duration [22m 94.43s[2m (transform 29.06s, setup 0ms, import 135.29s, tests 33.50s, environment 417.05s)[22m
+

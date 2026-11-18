@@ -69,7 +69,7 @@ describe('FunnelPersonaStages', () => {
     ])
 
     const budgets = wrapper.findAll('[data-testid="funnel-persona-budget"]')
-    expect(budgets.map((b) => b.text())).toEqual(['30%', '45%'])
+    expect(budgets.map((b) => b.text())).toEqual(['30% · of stage budget', '45% · of stage budget'])
   })
 
   it('does not sum budget_share on the collapsed header (it is per-stage)', async () => {

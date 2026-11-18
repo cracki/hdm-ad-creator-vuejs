@@ -169,7 +169,7 @@ describe('SegmentationView — structured target market (F19)', () => {
     const wrapper = await mountView()
 
     expect((wrapper.find('[data-testid="country-input"]').element as HTMLInputElement).value).toBe(
-      'United Arab Emirates',
+      'UAE',
     )
     expect((wrapper.find('[data-testid="city-input"]').element as HTMLInputElement).value).toBe('Dubai')
   })

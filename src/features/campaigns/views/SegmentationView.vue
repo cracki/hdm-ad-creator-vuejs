@@ -50,10 +50,14 @@ const productDescFromAnalysis = ref(false)
 
 // Natural-language join for the selected-services description (QA6-taza4):
 // ["A", "B"] → "A and B"; ["A", "B", "C"] → "A, B and C".
-function naturalServiceJoin(names: string[]): string {
+// FA-17/FA-50: the conjunction follows the CAMPAIGN language ("و" for
+// fa/ar — «هاست وردپرس و ثبت دامنه», not "… and …"), and ALL selected
+// services are joined (Payamgostar 50: half the selection went missing).
+function naturalServiceJoin(names: string[], lang?: string): string {
   if (names.length <= 1) return names[0] ?? ''
-  if (names.length === 2) return `${names[0]} and ${names[1]}`
-  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+  const conjunction = lang === 'fa' || lang === 'ar' ? 'و' : 'and'
+  if (names.length === 2) return `${names[0]} ${conjunction} ${names[1]}`
+  return `${names.slice(0, -1).join('، ')} ${conjunction} ${names[names.length - 1]}`
 }
 
 watch(
@@ -73,7 +77,7 @@ watch(
     const services = c.brand_context?.available ? (c.brand_context.services ?? []) : []
     if (!productDescTouched.value && !productDescription.value.trim()) {
       if (selected.length) {
-        productDescription.value = naturalServiceJoin(selected)
+        productDescription.value = naturalServiceJoin(selected, c.language)
       } else if (services.length) {
         productDescription.value = services.slice(0, 3).join(', ')
         productDescFromAnalysis.value = true
@@ -420,26 +424,27 @@ async function handleExport(format: 'csv' | 'pdf' | 'pptx') {
               v-for="(seg, idx) in segments"
               :key="idx"
               class="surface-card p-5 space-y-3 overflow-hidden min-w-0"
+              dir="auto"
             >
               <div class="flex items-center gap-3">
                 <div class="h-9 w-9 rounded-lg bg-[image:var(--gradient-brand)] grid place-items-center text-primary-foreground text-xs font-bold shrink-0">
                   {{ idx + 1 }}
                 </div>
                 <div class="min-w-0">
-                  <div class="text-sm font-semibold truncate">{{ seg.name || seg.persona_name || `${t('seg.persona')} ${idx + 1}` }}</div>
-                  <div v-if="seg.demographic_profile?.key_identifiers?.age_range || seg.age_range" class="text-[11px] text-muted-foreground truncate">
+                  <div class="text-sm font-semibold truncate" dir="auto">{{ seg.name || seg.persona_name || `${t('seg.persona')} ${idx + 1}` }}</div>
+                  <div v-if="seg.demographic_profile?.key_identifiers?.age_range || seg.age_range" class="text-[11px] text-muted-foreground truncate" dir="auto">
                     {{ seg.demographic_profile?.key_identifiers?.age_range || seg.age_range }}
                   </div>
                 </div>
               </div>
 
-              <p v-if="seg.goals_motivations?.primary_goal" class="text-xs text-muted-foreground leading-relaxed line-clamp-3">
+              <p v-if="seg.goals_motivations?.primary_goal" class="text-xs text-muted-foreground leading-relaxed line-clamp-3" dir="auto">
                 {{ seg.goals_motivations.primary_goal }}
               </p>
-              <p v-else-if="seg.strategic_approach?.value_proposition" class="text-xs text-muted-foreground leading-relaxed line-clamp-3">
+              <p v-else-if="seg.strategic_approach?.value_proposition" class="text-xs text-muted-foreground leading-relaxed line-clamp-3" dir="auto">
                 {{ seg.strategic_approach.value_proposition }}
               </p>
-              <p v-else-if="seg.messaging_approach || seg.description" class="text-xs text-muted-foreground leading-relaxed line-clamp-3">
+              <p v-else-if="seg.messaging_approach || seg.description" class="text-xs text-muted-foreground leading-relaxed line-clamp-3" dir="auto">
                 {{ seg.messaging_approach || seg.description }}
               </p>
 

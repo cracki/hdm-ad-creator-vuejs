@@ -90,14 +90,14 @@ describe('CampaignCreateView — service selection (F14)', () => {
     await wrapper.findAll('[data-loc="campaigns.create.brand-select"]')[0].trigger('click')
     await flushPromises()
 
-    // Trusted suggestions render as selectable chips (scraped rows are
-    // filtered — only the brand_analysis row survives); select it
+    // FA-17: trusted suggestion chips now render PRE-SELECTED (the helper
+    // copy says "deselect what you don't want") — scraped rows stay
+    // filtered out, only the brand_analysis row survives.
     const chips = wrapper.findAll('[data-testid="service-chip"]')
     expect(chips.length).toBe(1)
     expect(chips[0].text()).toContain('SEO')
-    await chips[0].trigger('click')
 
-    // Add a custom service too
+    // Add a custom service too; it joins the preselected one.
     await wrapper.find('[data-testid="service-add-input"]').setValue('Branding')
     await wrapper.find('[data-testid="service-add-btn"]').trigger('click')
     await flushPromises()
@@ -134,11 +134,20 @@ describe('CampaignCreateView — service selection (F14)', () => {
     expect(chips.some((c) => c.text().includes('Branding'))).toBe(false)
   })
 
-  it('omits context_payload when no services are selected', async () => {
+  it('persists an explicit empty selection after the user deselects the preselected chip', async () => {
     const wrapper = await mountView()
 
     await wrapper.findAll('[data-loc="campaigns.create.brand-select"]')[0].trigger('click')
     await flushPromises()
+
+    // FA-17/FA-51: chips start selected; deselecting everything is a
+    // deliberate act and MUST be persisted as an explicit empty list
+    // (never omitted), so downstream PPC fails loudly instead of
+    // silently analyzing the whole brand catalog.
+    const chips = wrapper.findAll('[data-testid="service-chip"]')
+    expect(chips.length).toBe(1)
+    await chips[0].trigger('click')
+
     await wrapper.find('[data-loc="campaigns.create.create-btn"]').trigger('click')
     await flushPromises()
 
@@ -146,6 +155,7 @@ describe('CampaignCreateView — service selection (F14)', () => {
       brand_uuid: 'b1',
       name: undefined,
       language: 'en',
+      context_payload: { selected_services: [] },
     })
   })
 })
@@ -192,6 +202,8 @@ describe('CampaignCreateView — total budget + currency (F16)', () => {
       language: 'en',
       total_budget: 5000,
       currency: 'AED',
+      // FA-17: the preselected suggestion rides along in the payload.
+      context_payload: { selected_services: ['SEO'] },
     })
   })
 
@@ -441,5 +453,58 @@ describe('CampaignCreateView — QA6-jadid6 service suggestions', () => {
     await wrapper.find('[data-testid="services-show-more"]').trigger('click')
     await flushPromises()
     expect(wrapper.findAll('[data-testid="service-chip"]').length).toBe(15)
+  })
+})
+
+describe('CampaignCreateView — FA-15 brand-derived defaults', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: CampaignCreateView },
+        { path: '/brands/new', component: { template: '<div />' } },
+        { path: '/campaigns/:campaignUuid', component: { template: '<div />' } },
+      ],
+    })
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    })
+    vi.mocked(brandsApi.listServices).mockResolvedValue({
+      data: { success: true, services: [] },
+    })
+    vi.mocked(campaignsApi.create).mockResolvedValue({
+      data: { campaign_uuid: 'c1' } as never,
+    })
+  })
+
+  it('defaults language and currency from the selected Persian/Iranian brand', async () => {
+    vi.mocked(brandsApi.list).mockResolvedValue({
+      data: [
+        {
+          ...brands[0],
+          detected_language: 'fa',
+          detected_country: 'Iran',
+        },
+      ] as never,
+    })
+    const wrapper = await mountView()
+
+    // Single brand -> auto-selected; defaults follow the brand, not 'en'/USD.
+    await flushPromises()
+    const langSelect = wrapper.find('[data-testid="campaign-language-select"]')
+    expect((langSelect.element as HTMLSelectElement).value).toBe('fa')
+    const currencySelect = wrapper.find('[data-testid="currency-select"]')
+    expect((currencySelect.element as HTMLSelectElement).value).toBe('IRT')
+  })
+
+  it('keeps English/USD when the brand exposes no detection fields', async () => {
+    vi.mocked(brandsApi.list).mockResolvedValue({ data: brands as never })
+    const wrapper = await mountView()
+    await flushPromises()
+    const langSelect = wrapper.find('[data-testid="campaign-language-select"]')
+    expect((langSelect.element as HTMLSelectElement).value).toBe('en')
+    const currencySelect = wrapper.find('[data-testid="currency-select"]')
+    expect((currencySelect.element as HTMLSelectElement).value).toBe('USD')
   })
 })

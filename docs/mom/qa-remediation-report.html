@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>گزارش رفع ایرادهای QA — Ad Creator</title>
+<style>
+  @font-face {
+    font-family: 'Vazirmatn';
+    src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-Regular.woff2') format('woff2');
+    font-weight: 400; font-display: swap;
+  }
+  @font-face {
+    font-family: 'Vazirmatn';
+    src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-Medium.woff2') format('woff2');
+    font-weight: 500; font-display: swap;
+  }
+  @font-face {
+    font-family: 'Vazirmatn';
+    src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-SemiBold.woff2') format('woff2');
+    font-weight: 600; font-display: swap;
+  }
+  @font-face {
+    font-family: 'Vazirmatn';
+    src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-Bold.woff2') format('woff2');
+    font-weight: 700; font-display: swap;
+  }
+  :root {
+    --ink: #1e2430; --ink-soft: #3c4557; --muted: #6b7385; --line: #dde2ea;
+    --surface: #ffffff; --bg: #f4f6f9; --accent: #0f5f8a; --accent-soft: #eaf3f8;
+    --ok: #1c7a4c; --ok-soft: #e9f5ef; --code-bg: #f0f2f5;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { font-size: 15px; }
+  body {
+    font-family: 'Vazirmatn', Tahoma, sans-serif;
+    direction: rtl; text-align: right; color: var(--ink);
+    background: var(--bg); line-height: 1.9; padding: 2.5rem 1rem;
+  }
+  .page {
+    max-width: 880px; margin: 0 auto; background: var(--surface);
+    border: 1px solid var(--line); border-radius: 8px; padding: 3rem 3.2rem;
+  }
+  header.doc-head {
+    border-bottom: 2px solid var(--accent); padding-bottom: 1.4rem; margin-bottom: 2rem;
+  }
+  header.doc-head .kicker {
+    font-size: .78rem; letter-spacing: .04em; color: var(--accent);
+    font-weight: 600; margin-bottom: .4rem;
+  }
+  header.doc-head h1 { font-size: 1.45rem; font-weight: 700; line-height: 1.6; margin-bottom: .8rem; }
+  .meta-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: .6rem 1.5rem; font-size: .84rem; color: var(--ink-soft);
+  }
+  .meta-grid b { color: var(--muted); font-weight: 500; }
+  h2 {
+    font-size: 1.08rem; font-weight: 700; color: var(--accent);
+    margin: 2.4rem 0 .9rem; padding-bottom: .35rem; border-bottom: 1px solid var(--line);
+  }
+  h3 { font-size: .96rem; font-weight: 600; margin: 1.5rem 0 .5rem; }
+  p { font-size: .9rem; color: var(--ink-soft); margin-bottom: .7rem; }
+  ul.plain { list-style: none; margin-bottom: .8rem; }
+  ul.plain li {
+    font-size: .88rem; color: var(--ink-soft);
+    padding-inline-start: 1.1rem; position: relative; margin-bottom: .3rem;
+  }
+  ul.plain li::before {
+    content: ''; position: absolute; inset-inline-start: 0; top: .75em;
+    width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+  }
+  code, .en { font-family: Consolas, 'Courier New', monospace; direction: ltr; unicode-bidi: embed; }
+  code {
+    background: var(--code-bg); border: 1px solid var(--line); border-radius: 4px;
+    padding: .05em .4em; font-size: .8rem; color: var(--ink); white-space: nowrap;
+  }
+  .en { font-size: .86em; }
+  .item {
+    border: 1px solid var(--line); border-radius: 6px; padding: 1rem 1.2rem;
+    margin-bottom: .9rem; background: #fcfdfe;
+  }
+  .item-head { display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap; margin-bottom: .4rem; }
+  .item-head .tag {
+    font-family: Consolas, monospace; font-size: .72rem; font-weight: 700;
+    color: var(--surface); background: var(--accent); border-radius: 4px;
+    padding: .1em .55em; direction: ltr; flex-shrink: 0;
+  }
+  .item-head .tag.fixed { background: var(--ok); }
+  .item-head .tag.deploy { background: #8a6d0f; }
+  .item-head h3 { margin: 0; font-size: .93rem; }
+  .item p { font-size: .86rem; margin-bottom: .35rem; }
+  .ref { font-size: .74rem; color: var(--muted); margin-top: .45rem; }
+  .ref code { font-size: .72rem; }
+  table { width: 100%; border-collapse: collapse; font-size: .84rem; margin: .8rem 0 1.2rem; }
+  th, td { border: 1px solid var(--line); padding: .45rem .7rem; text-align: right; vertical-align: top; }
+  th { background: var(--accent-soft); font-weight: 600; font-size: .8rem; color: var(--accent); white-space: nowrap; }
+  td code { white-space: normal; }
+  .badges { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0 1.5rem; }
+  .badge {
+    font-size: .78rem; font-weight: 600; border-radius: 5px;
+    padding: .25rem .8rem; border: 1px solid var(--line);
+  }
+  .badge.ok { background: var(--ok-soft); color: var(--ok); border-color: #cfe8da; }
+  .badge.num { background: var(--accent-soft); color: var(--accent); border-color: #cfe2ee; }
+  footer {
+    margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--line);
+    font-size: .76rem; color: var(--muted);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: .5rem;
+  }
+  @media print {
+    body { background: #fff; padding: 0; }
+    .page { border: none; border-radius: 0; padding: 1.5rem; }
+    .item { break-inside: avoid; }
+    h2 { break-after: avoid; }
+  }
+  @media (max-width: 640px) { .page { padding: 1.6rem 1.2rem; } html { font-size: 14px; } }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="doc-head">
+  <div class="kicker">HDM AI Marketing Assistant — Ad Creator</div>
+  <h1>گزارش رفع ایرادهای گزارش تست کارفرما (QA Report — ۵ مهر ۱۴۰۵)</h1>
+  <div class="meta-grid">
+    <div><b>مرجع:</b> Ad-Creator-QA-Report.rtf (تست کامل برند Zen Touch تا Complete Campaign)</div>
+    <div><b>وضعیت:</b> تمام یافته‌های قابل‌رفع کد، برطرف و تست‌شده — Push شده</div>
+    <div><b>روش:</b> ۷ لِین موازی + بازبینی مستقل + تست خودکار</div>
+  </div>
+</header>
+
+<section>
+  <p>هر یافتهٔ گزارش تست با کد فعلی راستی‌آزمایی شد؛ سه دسته شد: (۱) باگ‌های واقعی که همین‌جا رفع شدند، (۲) مواردی که ریشهٔ مشترک داشتند و در بکند قطعی رفع شدند، و (۳) تعداد کمی مورد که در کد فعلی از قبل درست‌اند و صرفاً نسخهٔ مستقر روی سرور تست قدیمی است (نیازمند Deploy، نه کد). خروجی: <b>۳۵۷ تست بکند</b> (با و بدون کلید OpenAI) و <b>۲۶۱ تست فرانت + Build</b> سبز.</p>
+  <div class="badges">
+    <span class="badge num">بکند: ۳۵۷ تست سبز (قبل از این دور: ۲۷۶)</span>
+    <span class="badge num">فرانت: ۲۶۱ تست + Build سبز (قبل: ۱۸۶)</span>
+    <span class="badge num">۱ Migration جدید (BrandService)</span>
+    <span class="badge ok">+۸۱ تست جدید در این دور</span>
+    <span class="badge ok">هر اصلاح با بازبینی مستقل Spec + Quality</span>
+  </div>
+</section>
+
+<h2>۱. ایرادهای متوقف‌کننده — رفع‌شده</h2>
+
+<div class="item">
+  <div class="item-head"><span class="tag fixed">عکس ۱۲</span><h3>PPC Viability سرویس‌های انتخابی کمپین را نادیده می‌گرفت</h3></div>
+  <p>ریشه‌یابی شد: سرویس PPC فقط از سرویس‌های برند می‌خواند. اکنون انتخاب کاربر (<code>context_payload.selected_services</code>) اولویت اول است؛ لیست غیرخالی جایگزین ادغام برند می‌شود (همان اولویت Persona/لوکیشن). همان اصلاح روی <b>Ads Strategy</b> نیز اعمال شد که در بازبینی، همین الگوی باگ در آن هم دیده شد.</p>
+  <div class="ref">مراجع: <code>campaign/services/ppc_viability.py</code> · <code>ads_strategy.py</code> — تست‌های <code>CampaignPPCViabilitySelectedServicesTests</code> · <code>CampaignAdsStrategySelectionTests</code></div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag fixed">عکس ۲۰/۲۱</span><h3>بودجه‌های Ads Strategy با بودجه و ارز کمپین نمی‌خواند ($ اشتباه، مبالغ ۴.۵ برابر کل)</h3></div>
+  <p>مبالغ مطلق خروجی LLM دیگر اعتبار ندارند: سهم هر پلتفرم از درصدهای نرمال‌شده (جمع ۱۰۰) محاسبه و <b>به‌صورت قطعی</b> بر مبنای <code>total_budget</code> و ارز کمپین بازنویسی می‌شود — بازهٔ ۸۰٪ تا ۱۰۰٪ سهم، با فرمت ارز کمپین (مثلاً <span class="en">AED 3,200 – AED 4,000</span>). بدون بودجه، فیلدهای مطلق حذف و درصدها مبنا می‌مانند. پرامپت نیز قید «سهم مطلق در محدودهٔ سهم پلتفرم با ارز کمپین» گرفت.</p>
+  <div class="ref">مراجع: <code>campaign/services/ads_strategy.py</code> · <code>ads_strategy_engine.py (_rewrite_absolute_budgets)</code> — ۷ تست با مبالغ خراب → بازنویسی/clamp</div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag fixed">عکس ۲۲/۲۳</span><h3>وضعیت استراتژی روی Pending می‌ماند؛ نتیجه بعد از رفرش پاک می‌شد؛ خطای ۵۰۳</h3></div>
+  <p>سه ریشه اصلاح شد: (۱) فلگ تکمیل پلتفرم حالا <b>بی‌قید و شرط</b> ثبت می‌شود و خطای جزئی در ساخت خلاصه نمی‌تواند آن را برگرداند (باعث «200 ولی Pending» می‌شد)؛ (۲) خطاهای موتور با ثبت Log کامل و پیام واقعی برمی‌گردند (به‌جای 503 خاموش)؛ (۳) فرانت پس از هر اجرا کوئری‌ها را Invalidate می‌کند و وضعیت را از فلگ‌های زندهٔ کمپین می‌خواند — بدون رفرش دستی.</p>
+  <div class="ref">مراجع: <code>campaign/services/ads_strategy.py (_persist_success)</code> · <code>views.py</code> · <code>AdsStrategyView.vue</code> — تست: اجرا → فلگ + GET مرحلهٔ COMPLETED</div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag fixed">عکس ۱۵</span><h3>Funnel: متن همهٔ Personaها یکی بود؛ CTA/KPI/بودجه نبود؛ Persona حذف‌شده می‌آمد</h3></div>
+  <p>پیام هر مرحله حالا از پروفایل خود Persona (درد/انگیزه/ترس) ساخته و به‌صورت قطعی بین Personaها چرخش می‌کند — دو Persona هرگز متن یکسان نمی‌گیرند حتی با پروفایل یکسان. برای هر مرحله×Persona سه فیلد صریح اضافه شد: <code>cta</code> (چرخشی از استخر CTA مرحله)، <code>kpi</code>، و <code>budget_share</code> (سهم بودجهٔ مرحله بین Personaها، جمع دقیقاً ۱۰۰). فیلتر Personaهای انتخابی تقویت و به Content Strategy هم متصل شد (Persona حذف‌شده در هیچ‌کدام نمی‌آید).</p>
+  <div class="ref">مراجع: <code>campaign/engines/smart_funnel_engine.py</code> · <code>campaign/persona_utils.py</code> (اشتراکی) — ۸ تست تمایز + جمع بودجه</div>
+</div>
+
+<h2>۲. ایرادهای مهم — رفع‌شده</h2>
+
+<div class="item">
+  <div class="item-head"><span class="tag fixed">عکس ۲/۸</span><h3>جملهٔ خطای AI به‌عنوان «سرویس» و «USP» ذخیره و پیشنهاد می‌شد</h3></div>
+  <p>دو لایه دفاعی: (۱) گارد الگوی Placeholder — عباراتی مثل «Limited website content», «unable to extract», «unknown», «N/A» دیگر هرگز در فیلدهای Services/USP/Keywords/Tone/Persona ذخیره نمی‌شوند (در هر دو مسیر ذخیره‌سازی و ساخت brand_profile)؛ (۲) درِ ورودی — اگر اسکرپ محتوای معتبر نداشته باشد، تحلیل <b>اجرا نمی‌شود</b> و Run با پیام روشن شکست می‌خورد: «محتوای وب‌سایت قابل استخراج نبود؛ اطلاعات را دستی وارد کنید». همین یعنی جریان عکس ۸ (سرویس پیشنهادی = جملهٔ خطا) نیز قطع شده است.</p>
+  <div class="ref">مراجع: <code>brand/text_utils.py</code> · <code>full_analysis.py</code> · <code>builder.py</code> — ۲۳ تست شامل دقیقاً جملهٔ گزارش شما</div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag fixed">—</span><h3>اسکن اول با پیام کلی شکست خورد («Check the URL») بدون دلیل</h3></div>
+  <p>پیام‌های خطای اسکن علت واقعی را باز می‌گویند: Timeout (با مدت)، کد HTTP سایت، محتوای غیرقابل‌خواندن (سایت JS-rendered)، یا نوع خطا — تا کاربر بداند مشکل از URL نیست و چه کند (باگ ۱۱).</p>
+  <div class="ref">مراجع: <code>brand/engines/auto_scan_engine.py (_scrape)</code> — ۵ تست پیام‌های متمایز</div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag fixed">عکس ۱</span><h3>رقبای نامرتبط (دایرکتوری یلوپیجز و فروشگاه آنلاین)</h3></div>
+  <p>پرامپت شناسایی رقیب سخت‌گیرانه شد: رقیب باید <b>همان سرویس را در همان بازار (شهر+کشور)</b> بفروشد؛ دایرکتوری/مارکت‌پلیس/فروشگاه عمومی حذف (مگر همان سرویس را بدهد) + قید «در شک، حذف کن». به‌علاوه فیلتر کدی پس از اعتبارسنجی، سایت‌های الگوی دایرکتوری/لیستینگ را حذف می‌کند. عبارت هاردکد «agencies» از جستجوها حذف شد که برای برندهای غیرآژانسی نتیجهٔ مز اشخاص می‌آورد.</p>
+  <div class="ref">مراجع: <code>brand/analyzers/competitor_analyzer.py</code> — تست‌های فیلتر + پرامپت</div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag fixed">عکس ۶/۵</span><h3>مدیریت سرویس‌های برند نبود (BE-004 کامل شد)</h3></div>
+  <p>مدل <code>BrandService</code> + Migration + CRUD کامل (<code>/brands/{id}/services/manage/</code> با مالکیت)؛ سرویس‌های دستی کاربر <b>اولویت اول</b> در ادغام دارند (اسکن اشتباه را کاربر اصلاح می‌کند و همهٔ مراحل می‌بینند)؛ سرویس‌هایی که در کمپین دستی اضافه می‌شوند خودکار روی برند ذخیره می‌شوند؛ صفحهٔ Detail برند سرویس‌ها و لوکیشن را نشان می‌دهد؛ صفحهٔ Edit عنوان درست («Edit Brand») و بخش مدیریت سرویس‌ها (افزودن/حذف با Badge منبع) گرفت.</p>
+  <div class="ref">مراجع: Migration <code>brand/0014</code> · <code>brand/views.py</code> · <code>BrandServicesManager.vue</code> — ۱۸ تست CRUD/مالکیت/همگام‌سازی</div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag fixed">عکس ۹</span><h3>هشدار سرویس نامرتبط نمی‌آمد (باگ ۱۲)</h3></div>
+  <p>Endpoint <code>POST /brands/{id}/services/check/</code> با هوریستیک قطعی (بدون LLM، بدون هزینه): تطبیق دقیق/جزئی/فازی با سرویس‌های شناخته‌شدهٔ برند و صنعت — «Car Engine Repair» برای برند ماساژ حالا <code>related: false</code> با دلیل بازمی‌گردد.</p>
+  <div class="ref">مراجع: <code>brand/services/brand_services.py (check_service_relatedness)</code> — ۷ تست</div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag fixed">عکس ۱۰</span><h3>مرحلهٔ ۱ دوباره اطلاعات برند را می‌پرسید (باگ ۱۰)</h3></div>
+  <p>Business Type از صنعت برند و Product Description از سرویس‌های تحلیل برند پیش‌پر می‌شود (فقط وقتی فیلد خالی و دست‌نخورده است) با برچسب «از تحلیل برند» — کاربر فقط تأیید/ویرایش می‌کند.</p>
+  <div class="ref">مراجع: <code>SegmentationView.vue</code> · <code>Step2AudienceStrategy.vue</code> — تست عدم‌بازنویسی ورودی کاربر</div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag fixed">عکس ۱۳/۱۴</span><h3>Reject چیزی بازتولید نمی‌کرد؛ Refine تا رفرش دیده نمی‌شد</h3></div>
+  <p>طبق مصوبهٔ §۱۶.۲: بعد از Reject موفق، فرم Refine <b>خودکار با دلیل رد پیش‌پر</b> باز می‌شود (کاربر ویرایش و اجرا می‌کند). تمام نماهای مرحله‌ای پس از اجرا/Refine بدون رفرش دستی به‌روز می‌شوند (Invalidate کوئری‌ها + بازخوانی از پاسخ). کارت‌های PPC نیز بازشدنی شدند با جزئیات کامل (پلتفرم، بودجه، دلیل، ریسک، مزایا/معایب).</p>
+  <div class="ref">مراجع: <code>StepReviewActions.vue</code> · <code>AdReviewCard.vue</code> · <code>PPCViabilityView.vue</code> — تست DOM بدون Reload</div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag fixed">عکس ۳/۱۹</span><h3>نام فیلدهای دیتابیس جلوی کاربر (باگ ۷)</h3></div>
+  <p>در رندرکنندهٔ عمومی Payload: نقشهٔ برچسب انسانی برای ~۴۵ کلید شناخته‌شده، مخفی‌سازی کلیدهای داخلی و مقادیر خالی/Placeholder، و پاک‌سازی متن از تگ‌های خام (<span class="en">[linkedin]</span>) و نام‌فیلدها («opportunity_score 94») در خروجی موتورهای پیشنهاد پلتفرم و Ads Strategy + قید صریح پرامپت.</p>
+  <div class="ref">مراجع: <code>payloadDisplay.ts</code> · <code>AnalysisPayloadRenderer.vue</code> · <code>campaign/text_utils.py</code></div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag fixed">عکس ۲۹</span><h3>کارت کمپین «Current: Linkedin Ads» و «۷ مراحل» نشان می‌داد (باگ ۶)</h3></div>
+  <p>کارت تکمیل‌شده حالا «Completed» + چیپ پلتفرم‌های واقعاً انتخاب‌شده + پیشرفت «تکمیل/کل» را نشان می‌دهد، نه نام فیلد خام و شمارندهٔ گمراه‌کننده.</p>
+  <div class="ref">مراجع: <code>CampaignListView.vue</code> · <code>getCampaignStepCounts</code></div>
+</div>
+
+<h2>۳. ایرادهای متوسط و جزئی — رفع‌شده</h2>
+<ul class="plain">
+  <li><b>عکس ۴ (نمودار ۲۰٪ پیش‌فرض):</b> Brand Wheel فقط با دادهٔ عددی واقعی رندر می‌شود؛ فلگ <code>personality_wheel_available</code> از بکند + حذف fallback مساوی — با پیام صادقانه «دادهٔ کافی نیست».</li>
+  <li><b>عکس ۷/۳۰ (تور):</b> بستن تور ذخیره می‌شود (دیگر هر صفحه از اول نمی‌آید و دکمه‌ها را نمی‌پوشاند)؛ هدف‌های اشتباه اصلاح شدند (Select Brand → خود سلکت برند؛ عنصر غایب → بدون هایلایت غلط) و کلیک backdrop هم تور را می‌بندد.</li>
+  <li><b>عکس ۱۱ (کلمات قاطی):</b> Language patterns به دو گروه مجدک «استفاده کن» (سبز) / «پرهیز کن» (قرمز) از کلیدهای ساختاریافتهٔ واقعی بکند تقسیم شد — بدون حدس‌زدن دسته‌بندی.</li>
+  <li><b>عکس ۱۶ (شمارندهٔ ۳ به‌جای ۱۷):</b> تعداد محتوا از خود لیست محاسبه و عدد LLM بازنویسی می‌شود؛ Persona حذف‌شده در Content هم نمی‌آید.</li>
+  <li><b>عکس ۲۶ (تصویر بریده + نقل‌قول ساختگی):</b> تصویر کامل نمایش داده می‌شود (object-contain) + پیش‌نمایش تمام‌صفحه (Lightbox با ESC)؛ کارت‌های انتخاب آگهی عنوان آگهی را نشان می‌دهند.</li>
+  <li><b>عکس ۲۸ (تصویر در Review نبود):</b> صفحهٔ Review تصویر تولیدی هر آگهی را کنار متنش نشان می‌دهد (از دادهٔ ماندگار سرور، با Lightbox).</li>
+  <li><b>عکس ۳۱ (تب Opportunities تکراری):</b> حالت خالی صادقانه به‌جای نمایش محتوای بی‌ربط؛ اکشن‌های Add to Campaign / Generate Brief در نسخهٔ فعلی موجودند.</li>
+  <li><b>سه دکمهٔ شروع تحلیل:</b> ساخت برند حالا یک‌کلیکه است — Create ← شروع خودکار تحلیل ← هدایت به صفحهٔ پیشرفت (با Fallback در خطا).</li>
+  <li><b>زمان غیرواقعی ۶۰-۹۰ ثانیه:</b> متن‌ها به «تا چند دقیقه» اصلاح شد (سه زبان).</li>
+  <li><b>عکس ۱۸ (بازه‌های ۱۱۰٪):</b> غیر از بازنویسی مبالغ، رشته‌های درصدی ساختاریافته هم مشمول اعتبارسنجی/نرمال‌سازی‌اند؛ بازه‌های داخل متن دلخواه LLM با قید پرامپت مهار شدند.</li>
+  <li><b>بازبینی مستقل بعد از Merge:</b> دو یافتهٔ ادغام (عدم‌تطابق شکل پاسخ manage-services و کارت‌های PPC در مسیر endpoint) نیز در همان دور اصلاح و تست شدند؛ Ads Strategy هم Persona/سرویس انتخابی را رعایت می‌کند و سرویس‌های مدیریت‌شده در همهٔ fallbackها دیده می‌شوند.</li>
+</ul>
+
+<h2>۴. موارد موجود در کد فعلی — نیازمند Deploy سرور تست</h2>
+<ul class="plain">
+  <li><b>عکس ۱۷ (پرش مرحله ۴ به ۶):</b> ترتیب ویزارد در کد فعلی صحیح است (۵=Platform، ۶=Ads Strategy) — نسخهٔ مستخر قدیمی است.</li>
+  <li><b>عکس ۲۵ (Badge تایید روی کارت آگهی):</b> در کامپوننت فعلی موجود است (Approved/Rejected روی کارت + صفحهٔ Review).</li>
+  <li><b>عکس ۳۱ (نبود اکشن‌ها):</b> اکشن‌های بینش (Add to Campaign/Brief) در برنچ فعلی پیاده شده‌اند.</li>
+  <li><b>لیست کشور جست‌وجوپذیر:</b> در کد فعلی موجود است.</li>
+  <li>پس از Deploy نسخهٔ جدید، این موارد بدون هیچ تغییری فعال می‌شوند.</li>
+</ul>
+
+<h2>۵. موارد خارج از دست کد این دور</h2>
+<ul class="plain">
+  <li><b>AI Credits (عکس ۵):</b> سیستم Credit طبق مصوبات قبلی فاز آینده است (مانیتورینگ هزینه/تومان) — نمایش سرویس‌ها و لوکیشن برند که بخش قابل‌کدِ همان آیتم بود، انجام شد.</li>
+  <li><b>هشدار متن تصویر (نقل‌قول ساختگی داخل عکس):</b> طبق یادداشت خودتان در حال بررسی سمت کارفرماست؛ در صورت ارسال پرامپت درست، اعمال می‌شود. قید «بدون نقل‌قول/اسم ساختگی» به مسیر تصویر در همین دور اضافه شد.</li>
+  <li><b>شهر به‌صورت جست‌وجوپذیر:</b> شهر متن آزاد ماند (فهرست جهانی شهرها سنگین است)؛ با انتخاب فهرست شهرهای هدف محصول در داتای بعدی تکمیل می‌شود.</li>
+</ul>
+
+<h2>۶. وضعیت ۱۴ باگ MOM بعد از این دور</h2>
+<table>
+  <thead><tr><th>باگ</th><th>وضعیت گزارش</th><th>وضعیت پس از اصلاحات</th></tr></thead>
+  <tbody>
+    <tr><td>۱ — بودجه &gt;۱۰۰٪</td><td>باز (مبلغ/ارز/بازه)</td><td><b>حل</b> — درصدها + مبالغ قطعی از بودجه/ارز کمپین، clamp کامل</td></tr>
+    <tr><td>۲ — Funnel تکراری</td><td>باز</td><td><b>حل</b> — تمایز Per-Persona + CTA/KPI/بودجه</td></tr>
+    <tr><td>۳ — دکمهٔ Approve</td><td>نیمه</td><td><b>حل در کد</b> — ترتیب درست در برنچ؛ وضعیت زنده بدون رفرش (Deploy)</td></tr>
+    <tr><td>۴ — نمایش Creative</td><td>نیمه</td><td><b>حل</b> — تصویر در Review کنار آگهی + Lightbox</td></tr>
+    <tr><td>۵ — تفکیک Intelligence</td><td>حل</td><td>حل + اکشن‌ها + empty-state صادقانه</td></tr>
+    <tr><td>۶ — وضعیت گمراه‌کننده</td><td>نیمه</td><td><b>حل</b> — کارت صادق + پلتفرم‌های واقعی + فلگ‌های زنده</td></tr>
+    <tr><td>۷ — دادهٔ بک‌اند به کاربر</td><td>باز</td><td><b>حل</b> — Humanizer + مخفی‌سازی + پاک‌سازی متن LLM</td></tr>
+    <tr><td>۸ — Terminology</td><td>نیمه</td><td><b>بهبود یافته</b> — برچسب‌ها انسانی؛ Glossary کامل همچنان تصمیم محصول</td></tr>
+    <tr><td>۹ — Platform ثابت</td><td>حل</td><td>حل + رفع دو ایراد جزئی گزارش (تگ خام، بازه‌ها)</td></tr>
+    <tr><td>۱۰ — Regeneration</td><td>نیمه</td><td><b>حل</b> — Prefill مرحلهٔ ۱ + رعایت انتخاب‌ها در PPC/Funnel/Content/Ads</td></tr>
+    <tr><td>۱۱ — پیام خطا</td><td>باز</td><td><b>حل</b> — علت دقیق اسکن + گات دادهٔ خالی + پیام‌های واقعی موتور</td></tr>
+    <tr><td>۱۲ — سرویس نامرتبط</td><td>نیمه</td><td><b>حل</b> — endpoint هشدار + مدیریت سرویس برند</td></tr>
+    <tr><td>۱۳ — تکرار انتخاب Brand</td><td>حل</td><td>حل + یک‌کلیکه‌شدن ساخت←تحلیل</td></tr>
+    <tr><td>۱۴ — نمایش هم‌زمان</td><td>نیمه</td><td><b>بهبود</b> — Deep Research با گروه‌بندی؛ فشرده‌سازی بیشتر صفحهٔ بلند از طرح‌ریزی Flow зависит</td></tr>
+  </tbody>
+</table>
+
+<h2>۷. تحویل</h2>
+<ul class="plain">
+  <li><b>بکند:</b> برنچ <span class="en">feat/mom-execution</span> (تا کامیت <span class="en">8ff62a5</span>) Push شده؛ PR #2 به‌روز. Migration جدید: <code>brand/0014_brandservice</code>. ‏OpenAPI بدون خطا؛ تست کامل با و بدون کلید OpenAI سبز.</li>
+  <li><b>فرانت:</b> برنچ <span class="en">feat/brand-analysis-social-presence-tab</span> (تا <span class="en">394f676</span>) Push شده؛ ۲۶۱ تست + Build سبز؛ تمام رشته‌های جدید سه‌زبانه (fa/en/ar) با تست نگهبان؛ RTL با CSS منطقی.</li>
+  <li><b>فرایند:</b> هر اصلاح با پیاده‌سازی اتمیک در Worktree ایزوله → تست → بازبینی مستقل (دو مرحله‌ای) → Merge با تست کامل → اصلاح یافته‌های بازبینی → تایید نهایی.</li>
+  <li><b>اقدام پیشنهادی بعدی:</b> Deploy نسخهٔ جدید بر روی سرور تست و اجرای دوبارهٔ همان سناریوی Zen Touch — موارد بخش ۴ نیز فعال خواهند شد.</li>
+</ul>
+
+<footer>
+  <span>گزارش رفع ایرادهای QA — محرمانه؛ استفادهٔ داخلی</span>
+  <span class="en">Ad Creator · Django 5.2 / Vue 3 · 2026-09-27</span>
+</footer>
+
+</div>
+</body>
+</html>

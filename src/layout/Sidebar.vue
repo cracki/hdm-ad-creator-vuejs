@@ -26,23 +26,31 @@ const buildLabel = getBuildLabel()
 
 // QA4-img5: real AI-credits usage from /credits/summary/. Falls back to the
 // static display while loading or when the fetch fails.
+// FA-35: 30s polling keeps the counter live DURING a session (QA saw it
+// frozen until a manual reload), and the no-quota branch is translated
+// (Persian panel showed a literal English "• used" fragment).
 const creditsQuery = useQuery({
   queryKey: ['credits', 'summary'],
   queryFn: getCreditsSummary,
-  staleTime: 60_000,
+  staleTime: 30_000,
+  refetchInterval: 30_000,
+  refetchOnWindowFocus: true,
   retry: 1,
 })
 
 function formatNumber(value: number): string {
+  if (!Number.isFinite(value)) return '0'
   return new Intl.NumberFormat(lang.value || 'en').format(value)
 }
 
 const creditsDisplay = computed<string>(() => {
   const summary = creditsQuery.data.value
   if (!summary) return t('sidebar.creditsUsed')
-  const used = formatNumber(summary.used_month)
-  if (summary.quota_month == null) return `${used} used`
-  return t('sidebar.creditsUsage', { used, quota: formatNumber(summary.quota_month) })
+  const used = formatNumber(Number(summary.used_month ?? 0))
+  if (summary.quota_month == null) {
+    return t('sidebar.creditsUsedNoQuota', { used })
+  }
+  return t('sidebar.creditsUsage', { used, quota: formatNumber(Number(summary.quota_month)) })
 })
 
 const creditsBarWidth = computed<string>(() => {

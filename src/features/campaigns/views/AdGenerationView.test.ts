@@ -167,3 +167,115 @@ describe('AdGenerationView — ads + review state from GET /ads/ (F13)', () => {
     expect(wrapper.find('[data-testid="output-refine"]').exists()).toBe(true)
   })
 })
+
+describe('AdGenerationView — FA-21/FA-26 selection contracts', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: AdGenerationView },
+        { path: '/campaigns/:campaignUuid/generate-ads', component: AdGenerationView },
+      ],
+    })
+    router.push('/campaigns/c1/generate-ads')
+    vi.mocked(useReviewAd).mockReturnValue(fakeMutation())
+    vi.mocked(usePatchAd).mockReturnValue(fakeMutation())
+    vi.mocked(useRefineAd).mockReturnValue(fakeMutation())
+    vi.mocked(useCampaignAds).mockReturnValue({
+      data: ref({ success: true, ads: [] }),
+    } as never)
+  })
+
+  function campaignWith(overrides: Record<string, unknown> = {}): Campaign {
+    const base = buildCampaign()
+    return {
+      ...base,
+      context_payload: {
+        ...(base.context_payload as Record<string, unknown>),
+        ...overrides,
+      },
+    } as Campaign
+  }
+
+  it('FA-21: offers only the personas persisted in selected_personas', async () => {
+    vi.mocked(useCampaign).mockReturnValue({
+      data: ref(
+        campaignWith({
+          selected_personas: ['Anna'],
+          segmentation_data: {
+            segments: [{ persona_name: 'Anna' }, { persona_name: 'Bela' }, { persona_name: 'Cleo' }],
+          },
+        }),
+      ),
+      isLoading: ref(false),
+    } as never)
+
+    const wrapper = await mountView()
+    const select = wrapper.find('[data-loc="campaigns.adgen.filter-persona"]')
+    expect(select.exists()).toBe(true)
+    const options = (select.element as HTMLSelectElement).querySelectorAll('option')
+    const labels = [...options].map((o) => o.textContent?.trim())
+    expect(labels).toEqual(['Anna'])
+  })
+
+  it('FA-21: missing selected_personas keeps every persona (legacy campaigns)', async () => {
+    vi.mocked(useCampaign).mockReturnValue({
+      data: ref(
+        campaignWith({
+          segmentation_data: {
+            segments: [{ persona_name: 'Anna' }, { persona_name: 'Bela' }],
+          },
+        }),
+      ),
+      isLoading: ref(false),
+    } as never)
+
+    const wrapper = await mountView()
+    const select = wrapper.find('[data-loc="campaigns.adgen.filter-persona"]')
+    const options = (select.element as HTMLSelectElement).querySelectorAll('option')
+    expect([...options].map((o) => o.textContent?.trim())).toEqual(['Anna', 'Bela'])
+  })
+
+  it('FA-26: defaults to the highest-share platform and heaviest funnel stage from the strategy', async () => {
+    const base = buildCampaign()
+    const campaign: Campaign = {
+      ...base,
+      // Both platform strategies completed so the generator form renders.
+      google_ads_completed: true,
+      meta_ads_completed: true,
+      context_payload: {
+        ...(base.context_payload as Record<string, unknown>),
+        selected_platforms: ['google', 'meta'],
+        platform_recommendations: {
+          recommendations: [
+            { platform: 'google', budget_share: 55 },
+            { platform: 'meta', budget_share: 45 },
+          ],
+        },
+        ads_strategy: [
+          {
+            strategy: {
+              funnel_campaigns: [
+                { funnel_stage: 'BoFu', budget_percent: 60 },
+                { funnel_stage: 'ToFu', budget_percent: 10 },
+                { funnel_stage: 'MoFu', budget_percent: 30 },
+              ],
+            },
+          },
+        ],
+      },
+    } as Campaign
+    vi.mocked(useCampaign).mockReturnValue({
+      data: ref(campaign),
+      isLoading: ref(false),
+    } as never)
+
+    const wrapper = await mountView()
+    await flushPromises()
+    // Google holds the larger share; BOFU dominates the strategy split.
+    const values = wrapper.findAll('select').map((s) => (s.element as HTMLSelectElement).value)
+    expect(values).toContain('google')
+    expect(values).toContain('BOFU')
+  })
+})

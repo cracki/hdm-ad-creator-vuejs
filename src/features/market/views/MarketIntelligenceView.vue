@@ -31,6 +31,11 @@ useAutoSelectBrand(selectedBrandUuid)
 const industry = ref('')
 const location = ref('')
 const brandServices = ref('')
+// QA7#3: the prefill must only stop once the USER edits the field — the
+// old "field already non-empty" guard made the early managed-only fill
+// (brand has one manual service) permanently block the later, fuller
+// manual+analysis list arriving from GET /brands/{uuid}/services/.
+const brandServicesTouched = ref(false)
 const contentGoal = ref<'engagement' | 'leads' | 'awareness' | 'sales' | 'education'>('engagement')
 
 // Prefill the manual services input (F14). QA5-taza5: the merged services
@@ -64,6 +69,7 @@ function trustedServiceNames(rows: unknown): string[] {
 // order and the reset must win).
 watch(selectedBrandUuid, () => {
   brandServices.value = ''
+  brandServicesTouched.value = false
   industry.value = ''
   location.value = ''
 })
@@ -85,12 +91,13 @@ watch(selectedBrand, (brand) => {
 // brand.services (BrandSerializer) is managed-only, so the QA6 card only saw
 // the manually-added service and the analysis courses never appeared. The
 // managed-only list stays as the fallback when the endpoint fails/returns
-// nothing.
+// nothing. QA7#3: the guard is now "user edited", not "field non-empty",
+// so the early managed-only fill is REPLACED by the fuller async list.
 watch([selectedBrand, detectedServices], ([brand, detected]) => {
-  if (brandServices.value.trim()) return
+  if (brandServicesTouched.value) return
   let names = trustedServiceNames(detected)
   if (!names.length) names = trustedServiceNames(brand?.services)
-  if (names.length) {
+  if (names.length && brandServices.value !== names.join(', ')) {
     brandServices.value = names.join(', ')
   }
 }, { immediate: true }) // immediate: cached (synchronous) data must still prefill
@@ -236,7 +243,7 @@ function backToForm() {
         </div>
         <div>
           <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.brandServices') }}</label>
-          <input v-model="brandServices" data-loc="market.intel.brand-services-input" :placeholder="t('market.brandServicesHint')" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60" />
+          <input v-model="brandServices" data-loc="market.intel.brand-services-input" :placeholder="t('market.brandServicesHint')" class="w-full h-10 px-3 rounded-lg bg-overlay-subtle border border-border/60 text-sm outline-none placeholder:text-muted-foreground/60" @input="brandServicesTouched = true" />
         </div>
         <div>
           <label class="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5 block">{{ t('market.contentGoal') }}</label>

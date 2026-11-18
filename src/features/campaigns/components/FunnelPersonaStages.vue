@@ -104,8 +104,9 @@ function stageClass(stage: string): string {
             <span
               v-if="row.budgetShare != null"
               class="text-[11px] px-2 py-0.5 rounded bg-primary/10 text-primary font-medium"
+              :title="t('funnel.personaBudgetHint')"
               data-testid="funnel-persona-budget"
-            >{{ row.budgetShare }}%</span>
+            >{{ row.budgetShare }}% · {{ t('funnel.ofStage') }}</span>
           </div>
           <p v-if="row.title || row.description" class="text-xs text-muted-foreground leading-relaxed">
             <span v-if="row.title" class="font-medium text-foreground">{{ row.title }}</span>

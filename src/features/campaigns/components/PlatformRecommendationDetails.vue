@@ -43,7 +43,7 @@ const scoreClasses = computed(() => {
       </span>
     </div>
 
-    <p v-if="rec.rationale" :class="rationaleClasses" :data-testid="`rec-rationale-${rec.platform}`">
+    <p v-if="rec.rationale" :class="rationaleClasses" dir="auto" :data-testid="`rec-rationale-${rec.platform}`">
       {{ rec.rationale }}
     </p>
     <button

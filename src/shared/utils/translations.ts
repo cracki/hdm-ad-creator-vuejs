@@ -151,6 +151,7 @@ export const translations = {
 
   // QA4 shared keys
   'sidebar.creditsUsage': { en: '{used} / {quota} used', ar: 'تم استخدام {used} / {quota}', fa: '{used} / {quota} استفاده‌شده' },
+  'sidebar.creditsUsedNoQuota': { en: '{used} used', ar: 'تم استخدام {used}', fa: '{used} استفاده‌شده' },
   'review.budgetByPlatform': { en: 'Budget by platform', ar: 'الميزانية حسب المنصة', fa: 'بودجه بر اساس پلتفرم' },
   'review.budgetByStage': { en: 'Budget by funnel stage', ar: 'الميزانية حسب مرحلة القمع', fa: 'بودجه بر اساس مرحله‌ی قیف' },
   'ppc.budgetShareBadge': { en: 'Budget share {share}%', ar: 'حصة الميزانية {share}%', fa: 'سهم بودجه {share}٪' },
@@ -199,9 +200,12 @@ export const translations = {
     ar: '«تعِبت من تخمين ما يريده جمهورك؟ توقف عن إطلاق الإعلانات في الظلام. ذكاؤنا يرسم كل شخصية — ويكتب النصوص.»',
     fa: '«از حدس زدن خواسته مخاطبت خسته شدی؟ دیگر در تاریکی آگهی نده. هوش ما هر پرسونا را تحلیل می‌کند — و متن را می‌نویسد.»',
   },
-  'auth.activeBrands': { en: 'Active brands', ar: 'علامات نشطة', fa: 'برندهای فعال' },
-  'auth.adsGen': { en: 'Ads generated', ar: 'إعلانات تم إنشاؤها', fa: 'آگهی‌های تولیدشده' },
-  'auth.avgScore': { en: 'Avg. score', ar: 'متوسط الدرجة', fa: 'میانگین امتیاز' },
+  'auth.activeBrands': { en: 'brand workspace', ar: 'مساحة عمل العلامات', fa: 'فضای کاری برندها' },
+  'auth.statBrands': { en: 'Multi-brand', ar: 'علامات متعددة', fa: 'چند برند' },
+  'auth.statAds': { en: 'Ad-ready', ar: 'جاهز للإعلانات', fa: 'آمادهٔ آگهی' },
+  'auth.statLangs': { en: 'EN · FA · AR', ar: 'EN · FA · AR', fa: 'EN · FA · AR' },
+  'auth.adsGen': { en: 'campaign output', ar: 'مخرجات الحملات', fa: 'خروجی کمپین' },
+  'auth.avgScore': { en: 'campaign languages', ar: 'لغات الحملات', fa: 'زبان‌های کمپین' },
   'auth.regTitle': { en: 'Create your account', ar: 'أنشئ حسابك', fa: 'حسابت را بساز' },
   'auth.regSub': { en: 'Start generating campaigns in minutes.', ar: 'ابدأ بتوليد الحملات خلال دقائق.', fa: 'تولید کمپین را در چند دقیقه آغاز کن.' },
   'auth.firstName': { en: 'First name', ar: 'الاسم الأول', fa: 'نام' },
@@ -223,9 +227,9 @@ export const translations = {
   // Dashboard
   'dashboard.title': { en: 'Dashboard', ar: 'اللوحة', fa: 'داشبورد' },
   'dashboard.subtitle': {
-    en: 'Welcome back, Ada. Here\'s what your AI has been up to.',
-    ar: 'مرحباً بعودتك يا آدا. إليك ما كان يفعله الذكاء الاصطناعي.',
-    fa: 'خوش آمدی آدا. ببین هوش مصنوعی‌ات چه کرده.',
+    en: 'Here is a summary of your recent activity.',
+    ar: 'ملخص لأنشطتك الأخيرة.',
+    fa: 'خلاصه‌ای از فعالیت‌های اخیر شما.',
   },
 
   // Campaigns
@@ -248,6 +252,7 @@ export const translations = {
   'camp.createSubtitle': { en: 'Select a brand and name your campaign', ar: 'اختر علامة وسمّ حملتك', fa: 'یک برند انتخاب کن و اسم کمپین را بگذار' },
   'camp.selectBrand': { en: 'Select a brand', ar: 'اختر علامة', fa: 'انتخاب برند' },
   'camp.noBrands': { en: 'No brands found. Create one first.', ar: 'لا توجد علامات. أنشئ واحدة أولاً.', fa: 'برندی یافت نشد. اول یکی بساز.' },
+  'camp.needBrandHint': { en: 'Choose one of your brands above to enable Create Campaign.', ar: 'اختر أحد علاماتك أعلاه لتفعيل إنشاء الحملة.', fa: 'برای فعال شدن دکمهٔ ساخت کمپین، یکی از برندهای بالا را انتخاب کنید.' },
   'camp.createBrand': { en: 'Create Brand', ar: 'إنشاء علامة', fa: 'ساخت برند' },
   'camp.campaignName': { en: 'Campaign name', ar: 'اسم الحملة', fa: 'نام کمپین' },
   'camp.namePlaceholder': { en: 'e.g. Summer Glow Launch', ar: 'مثال: إطلاق Summer Glow', fa: 'مثال: راه‌اندازی Summer Glow' },
@@ -266,6 +271,7 @@ export const translations = {
   'camp.currency.GBP': { en: 'GBP — British Pound', ar: 'GBP — جنيه إسترليني', fa: 'GBP — پوند انگلیس' },
   'camp.currency.IRT': { en: 'IRT — Iranian Toman', ar: 'IRT — تومان إيراني', fa: 'IRT — تومان ایران' },
   'camp.currency.SAR': { en: 'SAR — Saudi Riyal', ar: 'SAR — ريال سعودي', fa: 'SAR — ریال سعودی' },
+  'camp.currency.TRY': { en: 'TRY — Turkish Lira', ar: 'TRY — ليرة تركية', fa: 'TRY — لیر ترکیه' },
   'camp.totalBudget': { en: 'Total budget', ar: 'الميزانية الإجمالية', fa: 'بودجه کل' },
 
   // Smart campaign steps
@@ -364,6 +370,8 @@ export const translations = {
   'funnel.alreadyCompletedDesc': { en: 'Funnel analysis was completed previously. Re-run to update.', ar: 'تم تحليل القمع مسبقاً. أعد التشغيل للتحديث.', fa: 'تحلیل قیف قبلاً تکمیل شده. برای به‌روزرسانی مجدد اجرا کن.' },
   'funnel.personaBreakdown': { en: 'Persona breakdown', ar: 'تفصيل الشخصيات', fa: 'تفکیک پرسوناها' },
   'funnel.cta': { en: 'CTA', ar: 'دعوة للتفاعل', fa: 'دعوت به اقدام' },
+  'funnel.ofStage': { en: 'of stage budget', ar: 'من ميزان المرحلة', fa: 'از بودجهٔ این مرحله' },
+  'funnel.personaBudgetHint': { en: 'This persona share of that stage budget (shares sum to 100% within each stage, not across stages).', ar: 'حصة هذا الطابع من ميزان هذه المرحلة (تجمع إلى ١٠٠٪ داخل كل مرحلة، لا عبر المراحل).', fa: 'سهم این پرسونا از بودجهٔ همین مرحله (جمع سهم‌ها در هر مرحله ۱۰۰٪ است، نه بین مراحل).' },
   'funnel.kpi': { en: 'KPI', ar: 'مؤشر الأداء', fa: 'شاخص کلیدی عملکرد' },
   'funnel.budgetShare': { en: 'Budget share', ar: 'حصة الميزانية', fa: 'سهم بودجه' },
   'funnel.expand': { en: 'Show persona details', ar: 'إظهار تفاصيل الشخصية', fa: 'نمایش جزئیات پرسونا' },

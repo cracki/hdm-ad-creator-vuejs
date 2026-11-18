@@ -978,8 +978,9 @@ export interface TargetMarket {
  * target_market persisted by a previous run; otherwise split the brand's
  * free-text location ("City, Country" — QA6-taza4: the backend already
  * pre-fills it from the brand location, e.g. "Dubai, UAE", so the form must
- * show BOTH parts). Last comma-separated token = country, the remainder =
- * city; a single token seeds the city only and leaves the country empty.
+ * show BOTH parts). FA-07/FA-19: splitting is country-aware (alias table,
+ * Persian comma supported) — the country is the last token that IS a known
+ * country; a city never lands in the country field.
  */
 export function resolveTargetMarket(campaign: Pick<Campaign, 'context_payload' | 'brand'> | null | undefined): TargetMarket {
   const tm = (campaign?.context_payload as { target_market?: { country?: unknown; city?: unknown } } | undefined)?.target_market
@@ -991,14 +992,53 @@ export function resolveTargetMarket(campaign: Pick<Campaign, 'context_payload' |
   }
   const brandLocation = campaign?.brand?.location?.trim()
   if (brandLocation) {
-    const tokens = brandLocation.split(',').map((s) => s.trim()).filter(Boolean)
-    if (tokens.length >= 2) {
-      const country = tokens[tokens.length - 1]
-      return { country, city: tokens.slice(0, -1).join(', ') }
-    }
-    return { country: '', city: tokens[0] ?? '' }
+    return splitLocationParts(brandLocation)
   }
   return { country: '', city: '' }
+}
+
+// ── Country-aware location splitting (FA-07/FA-19, mirrors core/utils/geo.py) ──
+
+const COUNTRY_ALIASES: Record<string, string> = {
+  uae: 'UAE', 'u.a.e': 'UAE', 'united arab emirates': 'UAE', 'امارات': 'UAE', 'امارات متحده عربی': 'UAE', 'امارات عربی': 'UAE',
+  iran: 'Iran', ir: 'Iran', 'islamic republic of iran': 'Iran', 'ایران': 'Iran', 'جمهوری اسلامی ایران': 'Iran',
+  'saudi arabia': 'Saudi Arabia', ksa: 'Saudi Arabia', sa: 'Saudi Arabia', 'عربستان': 'Saudi Arabia', 'عربستان سعودی': 'Saudi Arabia',
+  qatar: 'Qatar', 'قطر': 'Qatar', kuwait: 'Kuwait', 'کویت': 'Kuwait', bahrain: 'Bahrain', 'بحرین': 'Bahrain',
+  oman: 'Oman', 'عمان': 'Oman', turkey: 'Turkey', 'türkiye': 'Turkey', tr: 'Turkey', 'ترکیه': 'Turkey',
+  usa: 'USA', us: 'USA', 'united states': 'USA', america: 'USA', uk: 'UK', 'united kingdom': 'UK', england: 'UK',
+  canada: 'Canada', australia: 'Australia', germany: 'Germany', france: 'France', netherlands: 'Netherlands',
+  india: 'India', pakistan: 'Pakistan', 'پاکستان': 'Pakistan',
+}
+
+/** Canonical country name for a token, or null (GCC/MENA/Dubai are NOT countries). */
+function normalizeCountryToken(token: string): string | null {
+  const cleaned = token.replace(/\s+/g, ' ').trim().replace(/\.+$/, '')
+  if (!cleaned) return null
+  return COUNTRY_ALIASES[cleaned.toLowerCase()] ?? null
+}
+
+/**
+ * Split a free-text brand location into (city, country) using a country
+ * alias table — never "last comma token is the country" (QA7#2:
+ * "Dubai, Abu Dhabi" made Abu Dhabi the country; the Persian comma
+ * "تهران، ایران" was not a separator at all). When no token is a known
+ * country, the country stays empty instead of receiving a city name.
+ */
+export function splitLocationParts(raw: string): TargetMarket {
+  const tokens = raw.split(/[,،]/).map((s) => s.trim()).filter(Boolean)
+  if (!tokens.length) return { country: '', city: '' }
+  let countryIndex = -1
+  let country = ''
+  for (let i = tokens.length - 1; i >= 0; i--) {
+    const canonical = normalizeCountryToken(tokens[i])
+    if (canonical) {
+      country = canonical
+      countryIndex = i
+      break
+    }
+  }
+  const city = tokens.find((token, index) => index !== countryIndex) ?? ''
+  return { country, city }
 }
 
 /** Compose the legacy free-text location ("City, Country") kept for display. */

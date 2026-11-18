@@ -12,6 +12,7 @@ import {
   ppcServiceList,
   ppcServiceDetailRows,
   resolveTargetMarket,
+  splitLocationParts,
   composeLocation,
   getPpcReadyCounts,
   type Campaign,
@@ -227,7 +228,7 @@ describe('resolveTargetMarket (F19)', () => {
           brand: { brand_uuid: 'b1', company_name: 'L', website_url: '', location: 'Dubai, United Arab Emirates', selected_industry: null },
         }),
       ),
-    ).toEqual({ country: 'United Arab Emirates', city: 'Dubai' })
+    ).toEqual({ country: 'UAE', city: 'Dubai' })
   })
 
   it('seeds only the city for a single-token brand location (QA6-taza4)', () => {
@@ -739,5 +740,25 @@ describe('normalizeStrategyRuns (QA5-img27)', () => {
       { platform: 'meta', share: 45 },
       { platform: 'google', share: 55 },
     ])
+  })
+})
+
+describe('splitLocationParts — FA-07/FA-19 country-aware splitting', () => {
+  it('never turns a city into the country (QA7#2: Dubai Driving Center)', () => {
+    expect(splitLocationParts('Dubai, Abu Dhabi')).toEqual({ country: '', city: 'Dubai' })
+  })
+
+  it('drops non-country market labels (GCC) and finds the real country', () => {
+    expect(splitLocationParts('Dubai, Uae, Abu Dhabi, Gcc')).toEqual({ country: 'UAE', city: 'Dubai' })
+    expect(splitLocationParts('Dubai, GCC')).toEqual({ country: '', city: 'Dubai' })
+  })
+
+  it('supports the Persian comma and Persian country name', () => {
+    expect(splitLocationParts('تهران، ایران')).toEqual({ country: 'Iran', city: 'تهران' })
+  })
+
+  it('canonicalizes common aliases', () => {
+    expect(splitLocationParts('Dubai, United Arab Emirates')).toEqual({ country: 'UAE', city: 'Dubai' })
+    expect(splitLocationParts('Tehran, IR')).toEqual({ country: 'Iran', city: 'Tehran' })
   })
 })

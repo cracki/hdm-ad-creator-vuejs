@@ -24,6 +24,13 @@ export interface Brand {
   has_completed_analysis?: boolean
   /** Managed service rows exposed by BrandSerializer (QA round 3 fix 2). */
   services?: Array<{ name: string; source?: string }> | string[]
+  /**
+   * FA-15: scan-detected site language ('en' | 'fa' | …) and canonical
+   * country parsed from the brand location. Campaign forms default
+   * language/currency from these instead of hard-coding English/USD.
+   */
+  detected_language?: string | null
+  detected_country?: string | null
   created_at: string
   updated_at: string
 }

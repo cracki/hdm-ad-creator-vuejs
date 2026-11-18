@@ -40,7 +40,7 @@ function platformWarningLabel(slug: string | null | undefined): string {
         <Target class="h-4 w-4 text-primary shrink-0" />
         <div class="text-sm font-semibold">{{ t('platform.recStrategy') }}</div>
       </div>
-      <p class="text-xs text-muted-foreground leading-relaxed" data-testid="rec-strategy-summary">
+      <p class="text-xs text-muted-foreground leading-relaxed" dir="auto" data-testid="rec-strategy-summary">
         {{ result.channel_strategy.summary }}
       </p>
       <div v-if="roles.length" class="mt-3 space-y-2">
@@ -83,10 +83,10 @@ function platformWarningLabel(slug: string | null | undefined): string {
           {{ t('platform.recSuggestedChannels', { count: budgetFit.suggested_channel_count }) }}
         </span>
       </div>
-      <p v-if="budgetFit.assessment" class="text-xs font-medium" data-testid="rec-budget-assessment">
+      <p v-if="budgetFit.assessment" class="text-xs font-medium" dir="auto" data-testid="rec-budget-assessment">
         {{ budgetFit.assessment }}
       </p>
-      <p v-if="budgetFit.notes" class="text-xs text-muted-foreground leading-relaxed mt-1">
+      <p v-if="budgetFit.notes" class="text-xs text-muted-foreground leading-relaxed mt-1" dir="auto">
         {{ budgetFit.notes }}
       </p>
     </div>
@@ -109,7 +109,7 @@ function platformWarningLabel(slug: string | null | undefined): string {
           :data-testid="`rec-warning-${i}`"
         >
           <span class="text-accent-amber shrink-0">•</span>
-          <span>
+          <span dir="auto">
             <span
               v-if="w.platform"
               class="text-[11px] px-2 py-0.5 rounded-full bg-overlay-light text-muted-foreground font-medium me-1.5"

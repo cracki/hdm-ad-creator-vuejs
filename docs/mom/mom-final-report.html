@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>گزارش جامع نهایی اجرای مصوبات MOM — Ad Creator</title>
+<style>
+  @font-face {
+    font-family: 'Vazirmatn';
+    src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Vazirmatn';
+    src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Vazirmatn';
+    src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-SemiBold.woff2') format('woff2');
+    font-weight: 600;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Vazirmatn';
+    src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-display: swap;
+  }
+
+  :root {
+    --ink: #1e2430;
+    --ink-soft: #3c4557;
+    --muted: #6b7385;
+    --line: #dde2ea;
+    --surface: #ffffff;
+    --bg: #f4f6f9;
+    --accent: #0f5f8a;
+    --accent-soft: #eaf3f8;
+    --ok: #1c7a4c;
+    --ok-soft: #e9f5ef;
+    --code-bg: #f0f2f5;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { font-size: 15px; }
+
+  body {
+    font-family: 'Vazirmatn', Tahoma, sans-serif;
+    direction: rtl;
+    text-align: right;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.9;
+    padding: 2.5rem 1rem;
+  }
+
+  .page {
+    max-width: 880px;
+    margin: 0 auto;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 3rem 3.2rem;
+  }
+
+  header.doc-head {
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 1.4rem;
+    margin-bottom: 2rem;
+  }
+  header.doc-head .kicker {
+    font-size: .78rem;
+    letter-spacing: .04em;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: .4rem;
+  }
+  header.doc-head h1 {
+    font-size: 1.45rem;
+    font-weight: 700;
+    line-height: 1.6;
+    margin-bottom: .8rem;
+  }
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: .6rem 1.5rem;
+    font-size: .84rem;
+    color: var(--ink-soft);
+  }
+  .meta-grid b { color: var(--muted); font-weight: 500; }
+
+  h2 {
+    font-size: 1.08rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 2.4rem 0 .9rem;
+    padding-bottom: .35rem;
+    border-bottom: 1px solid var(--line);
+  }
+  h3 {
+    font-size: .96rem;
+    font-weight: 600;
+    margin: 1.5rem 0 .5rem;
+    color: var(--ink);
+  }
+  p { font-size: .9rem; color: var(--ink-soft); margin-bottom: .7rem; }
+  ul.plain { list-style: none; margin-bottom: .8rem; }
+  ul.plain li {
+    font-size: .88rem;
+    color: var(--ink-soft);
+    padding-inline-start: 1.1rem;
+    position: relative;
+    margin-bottom: .3rem;
+  }
+  ul.plain li::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: 0;
+    top: .75em;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  code, .en {
+    font-family: Consolas, 'Courier New', monospace;
+    direction: ltr;
+    unicode-bidi: embed;
+  }
+  code {
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: .05em .4em;
+    font-size: .8rem;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .en { font-size: .86em; }
+
+  .item {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 1rem 1.2rem;
+    margin-bottom: .9rem;
+    background: #fcfdfe;
+  }
+  .item-head {
+    display: flex;
+    align-items: baseline;
+    gap: .6rem;
+    flex-wrap: wrap;
+    margin-bottom: .4rem;
+  }
+  .item-head .tag {
+    font-family: Consolas, monospace;
+    font-size: .72rem;
+    font-weight: 700;
+    color: var(--surface);
+    background: var(--accent);
+    border-radius: 4px;
+    padding: .1em .55em;
+    direction: ltr;
+    flex-shrink: 0;
+  }
+  .item-head .tag.alt { background: #1c7a4c; }
+  .item-head h3 { margin: 0; font-size: .93rem; }
+  .item p { font-size: .86rem; margin-bottom: .35rem; }
+  .item ul.plain li { font-size: .85rem; }
+  .ref {
+    font-size: .74rem;
+    color: var(--muted);
+    margin-top: .45rem;
+  }
+  .ref code { font-size: .72rem; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .84rem;
+    margin: .8rem 0 1.2rem;
+  }
+  th, td {
+    border: 1px solid var(--line);
+    padding: .45rem .7rem;
+    text-align: right;
+    vertical-align: top;
+  }
+  th {
+    background: var(--accent-soft);
+    font-weight: 600;
+    font-size: .8rem;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  td code { white-space: normal; }
+
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin: 1rem 0 1.5rem;
+  }
+  .badge {
+    font-size: .78rem;
+    font-weight: 600;
+    border-radius: 5px;
+    padding: .25rem .8rem;
+    border: 1px solid var(--line);
+  }
+  .badge.ok { background: var(--ok-soft); color: var(--ok); border-color: #cfe8da; }
+  .badge.num { background: var(--accent-soft); color: var(--accent); border-color: #cfe2ee; }
+
+  .round-note {
+    font-size: .78rem;
+    color: var(--muted);
+    background: var(--accent-soft);
+    border-radius: 5px;
+    padding: .35rem .8rem;
+    display: inline-block;
+    margin-bottom: .6rem;
+  }
+
+  footer {
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--line);
+    font-size: .76rem;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: .5rem;
+  }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .page { border: none; border-radius: 0; padding: 1.5rem; }
+    .item { break-inside: avoid; }
+    h2 { break-after: avoid; }
+  }
+  @media (max-width: 640px) {
+    .page { padding: 1.6rem 1.2rem; }
+    html { font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="doc-head">
+  <div class="kicker">HDM AI Marketing Assistant — Ad Creator</div>
+  <h1>گزارش جامع نهایی اجرای مصوبات صورت‌جلسهٔ بازبینی محصول (MOM ۵)</h1>
+  <div class="meta-grid">
+    <div><b>تهیه‌شده برای:</b> دینا رسولی — مدیر محصول</div>
+    <div><b>دامنه:</b> بکند Django و فرانت Vue — دو دور اجرا (اجرا + ممیزی و تکمیل)</div>
+    <div><b>وضعیت:</b> نهایی — Push شده و آمادهٔ Merge</div>
+    <div><b>مرجع:</b> MOM-AD-CREATOR.rtf + گزارش UI adcreator new task + ممیزی ۲۳ بندی</div>
+  </div>
+</header>
+
+<section>
+  <p>این گزارش، سند جامع و نهایی تمام اقدامات اجراشده بر پایهٔ مصوبات MOM و موارد معلق فرانت است. کار در دو دور انجام شد: <b>دور نخست</b>، اجرای کامل باگ‌های فوری و قابلیت‌های منتظرِ فرانت؛ <b>دور دوم</b>، ممیزی مستقل ۲۳ بندیِ کل محصول (بازبینی کدِ واقعی علیه هر ادعا) و تکمیل هر سه اولویتِ شناسایی‌شده. تمام آیتم‌ها با تست خودکار و دو مرحله بازبینی مستقل (تطابق مشخصات + کیفیت کد) تحویل شده‌اند.</p>
+  <div class="badges">
+    <span class="badge num">بکند: ۲۷۶ تست سبز (پیش از شروع: ۱۶)</span>
+    <span class="badge num">فرانت: ۱۸۶ تست Vitest + Build سبز (پیش از شروع: ۳۵)</span>
+    <span class="badge num">۱۱ Migration جدید (شامل Backfill داده)</span>
+    <span class="badge ok">ممیزی مستقل ۲۳ بندی: تکمیل هر سه اولویت</span>
+    <span class="badge num">Schema بدون خطا · مستندات به‌روز</span>
+  </div>
+</section>
+
+<h2>۱. باگ‌های مشاهده‌شده در Live Review (فوری)</h2>
+
+<div class="item">
+  <div class="item-head"><span class="tag">باگ ۱</span><h3>عبور مجموع درصدهای بودجه از ۱۰۰٪</h3></div>
+  <p>ماژول خالص <code>budget_utils</code> پیاده شد که هر تخصیص درصدی خروجی LLM را به‌صورت قطعی به مجموع دقیقاً ۱۰۰ نرمال می‌کند (تبدیل رشته‌های عددی، حذف مقادیر نامعتبر، جایگزینی پیش‌فرض، جذب باقیماندهٔ گردکردن). نرمال‌ساز در هر سه موتور تولید (PPC Viability، Full-Funnel، Ads Strategy) به‌صورت Post-Process اعمال شد، Schema پرامپت‌ها به دیکشنری ساختاریافته تغییر کرد و سناریوی «بخشی عدد / بخشی متن» طوری پوشش داده شد که کل پاسخ LLM دور ریخته نشود. بعدها در ممیزی، همان نرمال‌ساز به موتور چهارم (Ads Strategy درصد هر پلتفرم) نیز متصل شد.</p>
+  <div class="ref">MOM: اصلاح PPC Budget (فوری) · مراجع: <code>campaign/budget_utils.py</code> + سه موتور تولید</div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag">باگ ۲</span><h3>مشابهت بیش از حد خروجی TOFU/MOFU/BOFU</h3></div>
+  <p>۲۱ تست رگرسیون اضافه شد که تمایز پنج‌بعدی مراحل (Objective/Audience/Message/Content-Type/KPI)، انحصار CTAهای تبدیل‌محور به BOFU و تمایز پرامپت‌ها را pairwise صورت‌بندی می‌کنند؛ صحت تست‌ها با Mutation Testing راستی‌آزمایی شد.</p>
+  <div class="ref">MOM: اصلاح Funnel (فوری) · مرجع: <code>campaign/tests.py</code></div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag">باگ ۳</span><h3>عملکرد نادرست دکمهٔ Approve</h3></div>
+  <p>Endpoint ‏<code>POST /campaigns/{id}/steps/{step_type}/approve/</code> اضافه شد: ذخیرهٔ وضعیت تایید (<code>is_approved</code>/<code>approved_at</code>)، پیشروی <code>current_step</code> بر اساس ترتیب canonical ویزارد، Idempotent بودن و عدم امکان عقب‌گرد. در دور ممیزی، تکمیل شد: endpoint مجزای Review برای ثبت رد با دلیل، و قابلیت Refine مراحل (توضیح در بخش ۳).</p>
+  <div class="ref">MOM: اصلاح منطق Backend دکمهٔ Approve (فوری) · مراجع: <code>campaign/services/approval.py</code> · Migration <code>0006</code></div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag">باگ ۴</span><h3>عدم نمایش Visual نهایی (فقط Image Prompt)</h3></div>
+  <p>زنجیرهٔ Visual کامل اصلاح و گسترش یافت: آدرس تصویر مطلق در پاسخ API، ماندگاری خطاها و وضعیت هر تصویر (<code>visual_status</code>) روی رکورد، Endpoint خواندن <code>GET /campaigns/{id}/visuals/</code> برای بازسازی شبکهٔ تصاویر پس از Reload، و تولید تصویر نهایی برای دو جریان دیگر (Full-Funnel و Scenario-Variants) که پیش‌تر فقط متن Concept داشتند — با Subset، Aspect Ratio/Quality و Retry تک‌موردی. در فرانت، همهٔ سه جریان به دادهٔ ماندگار سرور متصل شدند و وابستگی شکنندهٔ <code>sessionStorage</code> حذف شد.</p>
+  <div class="ref">MOM: اصلاح API مربوط به Visual Generation (فوری) + F2 · مراجع: <code>campaign/services/visual_generation.py</code> · سه Endpoint generate-visuals</div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag">باگ ۶</span><h3>نمایش نادرست Campaign به‌صورت Incomplete</h3></div>
+  <p>تکمیل کمپین بر مبنای مسیر انتخابی کاربر بازنویسی شد: چهار مرحلهٔ پایه + مراحلِ فقط پلتفرم‌های انتخاب‌شده (از <code>context_payload.selected_platforms</code>). خطاها با ساختار <code>{"detail", "missing"}</code> برمی‌گردند (فرانت هر دو را نمایش می‌دهد)، مسیر Auto-Complete داخلی به همان گیت متصل شد، انتخاب صریحِ خالی معتبر رد می‌شود و حالت Legacy پشتیبانی می‌شود.</p>
+  <div class="ref">MOM: اصلاح Campaign Completion logic (فوری) + F17 · مراجع: <code>campaign/services/completion.py</code> · <code>CampaignReviewView.vue</code></div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag">باگ ۷</span><h3>نمایش دادهٔ داخلی و Backend در UI</h3></div>
+  <p>بیش از دوازده فیلد خام/داخلی از سریالایزرهای عمومی حذف شد (متن کامل اسکرپ، متادیتای Og/Twitter/Schema، <code>task_id</code>/<code>full_payload</code>، Payloadهای ورودی/اسنپ‌شات مراحل، پرامپت خام تصاویر و در دور ممیزی نیز <code>analysis_payload</code> تحلیل رقیب). حذف هر فیلد با جست‌وجوی مستقیم در کد فرانت راستی‌آزمایی و فیلدهای مصرفی فرانت حفظ شد؛ دادهٔ خام همچنان از Django Admin در دسترس است.</p>
+  <div class="ref">MOM: حذف Internal Data و Raw Data از API (فوری) + F3 · مراجع: <code>brand/serializers.py</code> · <code>campaign/serializers.py</code></div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag">امنیت</span><h3>نشت داده بین کاربران (Data Isolation)</h3></div>
+  <p>مدل <code>AdLibraryRun</code> فیلد مالکیت نداشت و همهٔ کاربران Runهای یکدیگر را می‌دیدند؛ علاوه بر آن، مسیر Generate با ارسال شناسهٔ برند دیگری، خروجی تحلیل AI آن برند را افشا می‌کرد. هر دو بسته شد: فیلد <code>created_by</code> + Migration Backfill داده، فیلتر کامل QuerySet در همهٔ Endpointها، و اعتبارسنجی مالکیت برند (403) پیش از هر پردازشی.</p>
+  <div class="ref">MOM: بررسی Data Isolation · مراجع: <code>ad_library/</code> · Migrations <code>0002</code>/<code>0003</code></div>
+</div>
+
+<h2>۲. قابلیت‌های جدید — رفع موارد منتظرِ فرانت</h2>
+
+<div class="item">
+  <div class="item-head"><span class="tag">F18</span><h3>Auto Scan — اسکن خودکار وب‌سایت</h3></div>
+  <p>مطابق جریان مصوب (URL ← اسکن ← بازبینی ← تایید): ‏<code>POST /brands/scan/</code> بدون نوشتن در دیتابیس و بدون فراخوانی LLM، نام شرکت، Industry (کاندیداها)، رنگ‌های برند، لوگو، سرویس‌ها، پروفایل‌های اجتماعی، زبان و لوکیشن را با سطح اطمینان (High/Medium/Low) و منبع استخراج برمی‌گرداند. در فرانت: دکمهٔ Scan با پیش‌پر کردن فرم (بدون بازنویسی ورودی دستی کاربر)، Badge اطمینان، چیپ‌های Industry و نمایش هشدارها؛ باگ مخفی‌ماندن فیلدهای Location و Brand Color نیز رفع شد.</p>
+  <div class="ref">MOM: پیاده‌سازی Auto Scan + F18 · مراجع: <code>brand/engines/auto_scan_engine.py</code> · <code>BrandCreateView.vue</code></div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag">F14</span><h3>Service Selector و تزریق سرویس‌ها</h3></div>
+  <p><code>GET /brands/{id}/services/</code> سرویس‌های سه منبع (اسکرپ، تحلیل برند، امتیازدهی PPC) را ادغام و رتبه‌بندی می‌کند؛ سرویس‌ها به PPC، Content Strategy و زمینهٔ کمپین تزریق می‌شوند (در دور ممیزی پوشش Content Strategy نیز کامل شد). در فرانت، کامپوننت ServiceSelector در ساخت کمپین، نمای PPC و Market Intelligence یکپارچه شد و انتخاب کاربر ماندگار است.</p>
+  <div class="ref">MOM: Auto-inject Business Type/Services + F14 · مراجع: <code>brand/services/brand_services.py</code> · <code>ServiceSelector.vue</code></div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag">F15</span><h3>Platform Recommendation + Channel Strategy</h3></div>
+  <p>موتور پیشنهاد پلتفرم (<code>POST /campaigns/{id}/recommend-platforms/</code>) بر اساس برند، Segmentation، PPC، هدف، بودجه و بازار هدف، امتیاز تناسب، Reasoning، نقاط قوت، ریسک‌ها و پیش‌نیازهای هر پلتفرم را همراه «Channel Strategy» (نقش هر پلتفرم در Funnel و روابط متقابل)، «تطابق بودجه» و «هشدار ناسازگاری سرویس/کانال» تولید و ماندگار می‌کند. در دور ممیزی، اتصال فرانت این موتور — که در دور نخست جا مانده بود — کامل شد: Badge امتیاز رنگی، Reasoning بازشونده، بخش Channel Strategy، Warnings و دکمهٔ «پیشنهاد هوشمند» در هر دو نمای انتخاب پلتفرم (Standalone و Wizard) با Fallback به حالت استاتیک.</p>
+  <div class="ref">MOM: Platform Recommendation + Channel Strategy + Warning (بالا) + F15 · مراجع: <code>campaign/engines/platform_recommendation_engine.py</code> · <code>PlatformRecommendationDetails.vue</code></div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag">F16</span><h3>ساختار بودجهٔ یکپارچه</h3></div>
+  <p><code>total_budget</code> و <code>currency</code> روی کمپین (با اعتبارسنجی مثبت و نرمال‌سازی ارز) + نمایش مبلغ کل و تفکیک مرحله‌ای (درصد + مبلغ محاسبه‌شده) در Review/Detail/Export و رفع رندر نادرست تخصیص‌های ساختاریافته در خروجی‌های PDF/PPTX/CSV.</p>
+  <div class="ref">MOM: Unified Budget Structure (بالا) + F16 · مراجع: Migration <code>0007</code> · <code>CampaignCreateView.vue</code> · <code>exportCampaign.ts</code></div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag">F13</span><h3>Approve / Reject / Refine / Edit — برای آگهی‌ها و مرحله‌ها</h3></div>
+  <p>چرخهٔ کامل تصمیم‌گیری پیاده شد: <b>آگهی‌ها</b> — تایید/رد با دلیل اجباری، ویرایش دستی ماندگار (AdCopyEditor → PATCH)، و Refine (بازتولید فقط همان آگهی با محتوای قبلی + Feedback؛ آرشیو ۵ نسخهٔ اخیر). <b>خروجی مرحله‌ها</b> (Segmentation/PPC/Funnel/Content) — در دور ممیزی Reject با دلیل (Migration <code>0010</code>) و Refine (پارامتر <code>refinement_feedback</code> روی هر چهار Endpoint که مرحلهٔ جدیدی به‌عنوان نسخهٔ بهبودیافته می‌سازد و <code>refined_from</code> ثبت می‌شود) اضافه شد. در فرانت، کامپوننت‌های OutputBlock و StepReviewActions در هر هشت نما (چهار مرحلهٔ ویزارد + چهار نمای Standalone + نمای آگهی‌ها + Review) یکپارچه شدند: مودال رد با چهار دستهٔ مصوب MOM، فرم Feedback با حالت Loading و Badge وضعیت ماندگار.</p>
+  <div class="ref">MOM: پیاده‌سازی Approve/Reject/Refine (بالا) + F13 · مراجع: <code>campaign/services/ad_review.py</code> · <code>ad_refine.py</code> · <code>refinement_utils.py</code> · <code>AdReviewCard.vue</code> · <code>StepReviewActions.vue</code></div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag">F22</span><h3>Multi-language — زبان خروجی کمپین</h3></div>
+  <p>فیلد <code>language</code> (انگلیسی/فارسی/عربی) روی کمپین و Full-Funnel Run با انتخابگر در سه نقطهٔ ورودی فرانت. دستورالعمل زبان به‌صورت مشروط به پرامپت تمام موتورهای تولید (۱۱ نقطه شامل تولید تصویر، Refine و پیشنهاد پلتفرم) اضافه می‌شود؛ خروجی انگلیسی بایت‌به‌بایت بدون تغییر می‌ماند (رگرسیون‌تست دارد). تحلیل برند عمداً انگلیسی باقی مانده است.</p>
+  <div class="ref">MOM: پیاده‌سازی Multi-language Data Structure + F22 · مراجع: <code>campaign/language_utils.py</code> · Migrations <code>0008</code>/<code>0009</code></div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag">F19</span><h3>Target Market در تحلیل رقبا</h3></div>
+  <p>فیلدهای ساختاریافتهٔ کشور/شهر در Segmentation (ماندگار در <code>context_payload.target_market</code>) و حل‌شدن لوکیشن در Endpointهای رقبا (ورودی صریح ← لوکیشن برند ← پیش‌فرض) تا لایهٔ پرامپت. کامپوننت جست‌وجوپذیر CountryCitySelect جایگزین متن آزاد شد و انتخاب پس از Reload بازیابی می‌شود.</p>
+  <div class="ref">MOM: افزودن Target Market به Competitor Analysis (بالا) + F19 · مراجع: <code>campaign/services/segmentation.py</code> · <code>CountryCitySelect.vue</code></div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag">F18+</span><h3>Domain Fingerprint و جلوگیری از تکرار</h3></div>
+  <p>در دور ممیزی، نرمال‌سازی دامنهٔ رقبا بر الگوی مرجع <code>BrandIdentity.normalize_website_url</code> یکسان شد و ایجاد رقیب تکراری (دامنهٔ یکسان با شکل‌های متفاوت www/https) در هر دو مسیر شناسایی مسدود شد — رقیب موجود به‌روزرسانی می‌شود، نه تکرار.</p>
+  <div class="ref">MOM: اتصال Domain اصلی + جلوگیری از ساخت تکراری · مراجع: <code>brand/analyzers/competitor_analyzer.py</code></div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag">M-H8</span><h3>Data Reuse — نمایش دادهٔ تحلیل برند در کمپین</h3></div>
+  <p>فیلد <code>brand_context</code> در جزئیات کمپین، مخاطب/Persona/سرویس‌های تحلیل برند را برمی‌گرداند و در فرانت، بخش «بازیافته از تحلیل برند» در Wizard و Detail کمپین نمایش داده می‌شود تا کاربر ببیند داده‌ها بازتولید نمی‌شوند.</p>
+  <div class="ref">MOM: Reuse Data — جلوگیری از Generate مجدد (بالا) · مراجع: <code>brand/services/brand_services.py</code> · <code>BrandContextPanel.vue</code></div>
+</div>
+
+<h2>۳. دور ممیزی — ارتقای کیفیت و تجربه</h2>
+
+<p>ممیزی مستقل ۲۳ بندی (بازبینی کد علیه هر ادعا، بدون اتکا به گزارش‌ها) سه اولویت کاری شناسایی کرد که هر سه به‌طور کامل اجرا شد:</p>
+
+<div class="item">
+  <div class="item-head"><span class="tag alt">ممیزی</span><h3>شخصی‌سازی Persona و funnel هدفمند</h3></div>
+  <p>انتخابگر Persona (چیپ چندانتخابی، سقف ۱۰) در مرحلهٔ Audience ویزارد و نمای Segmentation اضافه شد؛ انتخاب کاربر ماندگار می‌شود (حذف کامل انتخاب نیز به‌درستی لیست قدیمی را پاک می‌کند) و تولید Funnel تنها از Personaهای انتخابی استفاده می‌کند — پیش‌تر همیشه همهٔ Personaها وارد خروجی می‌شدند.</p>
+  <div class="ref">MOM §10.3: کاربر باید کدام Persona هدف قرار می‌گیرد را مشخص کند · مراجع: <code>PersonaSelector.vue</code> · <code>campaign/services/funnel.py</code></div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag alt">ممیزی</span><h3>Re-analyze واقعی و پیشرفت زندهٔ تحلیل</h3></div>
+  <p>دو اصلاح بنیادی: (۱) پارامتر <code>force_refresh</code> به شروع تحلیل اضافه شد — پیش از این، دکمهٔ Re-analyze دادهٔ قدیمی را در قالب Run جدید برمی‌گرداند؛ اکنون اسکرپ و تحلیل واقعاً از نو انجام و رکوردهای موجود در‌جا به‌روز می‌شوند. (۲) فیلد <code>sections_status</code> پیشرفت واقعی هر بخش تحلیل (۷ مرحله: خواندن سایت، تحلیل اصلی، اعتبارسنجی، مخاطب، شبکه‌های اجتماعی، رقبا، توصیه‌ها) را با وضعیت running/completed/failed و خطای هر بخش ثبت می‌کند و نمای فرانت را از حالت نمایش ساختگی (مبتنی بر تعداد Poll) به دادهٔ واقعی سرور منتقل کرد.</p>
+  <div class="ref">MOM §7.3/§19: Cache/Refresh و Progress Indicator · مراجع: <code>brand/services/full_analysis.py</code> · Migration <code>0013</code> · <code>BrandAnalysisView.vue</code></div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag alt">ممیزی</span><h3>بصری‌سازی Brand Analysis و پاک‌سازی Dashboard</h3></div>
+  <p>مطابق مصوبهٔ «خروجی‌ها Visualتر شوند»: کارت‌های Personality (آرکی‌تایپ/لحن/سبک)، نمودار راداری ابعاد شخصیت (ECharts، فقط با دادهٔ واقعی)، Brand Wheel (سهم ویژگی‌ها با درصد) و کارت‌های خلاصهٔ قابل Copy به نمای تحلیل برند اضافه شد — هر بخش بدون داده به‌صورت خودکار مخفی می‌شود. همچنین سه نمودار Mock/ساختگی داشبورد (نقشهٔ رقابتی، توزیع پلتفرم، رادار سلامت برند با امتیازهای ساختگی) حذف و جایگزین‌های صادقانه قرار گرفت.</p>
+  <div class="ref">MOM §4.3: Visual Representation + §3: Dashboard · مراجع: <code>PersonalityCards.vue</code> · <code>BrandRadarChart.vue</code> · <code>BrandWheel.vue</code> · <code>dashboard/</code></div>
+</div>
+
+<div class="item">
+  <div class="item-head"><span class="tag alt">ممیزی</span><h3>اکشن‌های Content Intelligence</h3></div>
+  <p>علاوه بر تفکیک پنج بخش Content (که از قبل برقرار بود)، اکشن‌های مصوب به هر آیتم بینش اضافه شد: «افزودن به کمپین» (انتخاب کمپین ← ذخیرهٔ ارجاع بینش در <code>context_payload.content_insights</code> با ادغام بدون تخریب و سقف ۲۰ آیتم) و «تولید Brief» (سند خلاصه با Copy و دانلود Markdown).</p>
+  <div class="ref">MOM §14.4: تبدیل Insight به Action · مراجع: <code>InsightItemActions.vue</code> · <code>market/insights.ts</code></div>
+</div>
+
+<h2>۴. یکپارچه‌سازی فرانت — جمع‌بندی</h2>
+<ul class="plain">
+  <li><b>جریان برند:</b> اسکن خودکار با بازبینی و تایید، فیلدهای لوکیشن/رنگ برند، تحلیل چندبخشی با پیشرفت زنده و نمایانسازی بصری.</li>
+  <li><b>جریان کمپین (ویزارد ۱۰ مرحله‌ای + نماهای Standalone):</b> انتخاب سرویس و Persona، پیشنهاد هوشمند پلتفرم، بودجه، خطای گیت تکمیل با فهرست موارد ناقص، تایید/رد/Refine/ویرایش روی تمام خروجی‌ها، تصاویر نهایی در هر سه جریان و انتخاب زبان خروجی.</li>
+  <li><b>جریان Market:</b> اکشن‌های Add to Campaign و Generate Brief روی بینش‌ها.</li>
+  <li><b>چندزبانگی/RTL/موبایل:</b> تمام رشته‌ها سه‌زبانه (فارسی/انگلیسی/عربی) با تست نگهبان کامل‌بودن؛ CSS کاملاً منطقی برای RTL خودکار؛ الگوهای موبایل (Bottom-Sheet، دکمه‌های تمام‌عرض) در همهٔ قابلیت‌های جدید.</li>
+</ul>
+
+<h2>۵. پوشش تست و کیفیت</h2>
+
+<table>
+  <thead><tr><th>لایه</th><th>نوع تست</th><th>پوشش</th></tr></thead>
+  <tbody>
+    <tr><td>بکند — Pure Logic</td><td>SimpleTestCase</td><td>نرمال‌ساز بودجه، تمایز مراحل Funnel، دستورالعمل زبان، Refinement Directive</td></tr>
+    <tr><td>بکند — API</td><td>APITestCase + JWT</td><td>همهٔ Endpointهای جدید + جداسازی مستأجری (404) + اعتبارسنجی (400)</td></tr>
+    <tr><td>بکند — موتورها</td><td>Mock در مرز <code>LLMHandler</code></td><td>خروجی خراب LLM، ماندگاری نتایج، هم‌جمعی درصدها، زبان و Feedback در پرامپت</td></tr>
+    <tr><td>بکند — ایزوله‌سازی</td><td>اجرای دوباره بدون Key</td><td>کل Suite بدون <code>OPENAI_API_KEY</code> سبز است</td></tr>
+    <tr><td>فرانت</td><td>Vitest + Vue Test Utils</td><td>۳۱ فایل تست: رندر، فراخوانی API، Payload، Retry، بازیابی وضعیت، کامل‌بودن ترجمه</td></tr>
+    <tr><td>ممیزی نهایی</td><td>بازبینی مستقل ۲۳ بندی</td><td>تطبیق هر ادعا با کد واقعی (file:line) + اجرای مستقل Suiteها در دو حالت</td></tr>
+  </tbody>
+</table>
+
+<p>مستندات فنی پروژه (<code>docs/</code>: API Reference، Models، Services/Engines و وضعیت Planning) با تمام تغییرات هر دو دور به‌روزرسانی و همراه برنچ کامیت شده است.</p>
+
+<h2>۶. وضعیت تحویل</h2>
+<ul class="plain">
+  <li><b>بکند:</b> برنچ <span class="en">feat/mom-execution</span> (بیش از ۴۵ کامیت اتمیک) Push شده و درخواست Merge به <span class="en">feat/django-backend</span> ثبت است (PR شمارهٔ ۲).</li>
+  <li><b>فرانت:</b> تمام کامیت‌ها روی برنچ <span class="en">feat/brand-analysis-social-presence-tab</span> Push شده است.</li>
+  <li><b>Migrations:</b> کمپین (تایید/رد مراحل، بودجه، زبان، زبان Full-Funnel، وضعیت Review)، برند (لوکیشن/رنگ، پیشرفت تحلیل)، Ad Library (مالکیت + Backfill).</li>
+  <li><b>Schema:</b> خروجی OpenAPI بدون خطا؛ Swagger به‌روز.</li>
+  <li><b>فرایند تضمین کیفیت:</b> هر قابلیت با پیاده‌سازی اتمیک، دو مرحله بازبینی مستقل و حل کامل یافته‌ها تحویل شد؛ در پایان، ممیزی ۲۳ بندی تأیید کرد موارد تحویل‌شده با کد واقعی منطبق‌اند.</li>
+</ul>
+
+<footer>
+  <span>گزارش جامع فنی — محرمانه؛ جهت استفادهٔ داخلی تیم محصول</span>
+  <span class="en">Ad Creator · Django 5.2 / Vue 3 · 2026-09-21</span>
+</footer>
+
+</div>
+</body>
+</html>

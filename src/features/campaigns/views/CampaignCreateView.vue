@@ -21,13 +21,24 @@ useAutoSelectBrand(selectedBrandUuid)
 const campaignName = ref('')
 const creating = ref(false)
 
-// Campaign language (F22): one output language for ALL generated content;
-// defaults to English like the backend's Campaign.language.
+// Campaign language (F22): one output language for ALL generated content.
+// FA-15: defaults FROM THE BRAND (scan-detected site language) instead of
+// hard-coded English; the user can still override before creating.
 const language = ref<Lang>('en')
+const languageTouched = ref(false)
 
 // Total budget + currency (F16): optional — omitted from the payload when the
 // amount is empty/invalid, matching the backend's nullable total_budget.
-const CURRENCIES = ['USD', 'EUR', 'AED', 'GBP', 'IRT', 'SAR'] as const
+// FA-16: TRY added (team request); FA-15 default comes from the brand's
+// country (Iran → IRT, UAE → AED, KSA → SAR, Turkey → TRY) instead of USD.
+const CURRENCIES = ['USD', 'EUR', 'AED', 'GBP', 'IRT', 'SAR', 'TRY'] as const
+const COUNTRY_CURRENCY: Record<string, string> = {
+  Iran: 'IRT',
+  UAE: 'AED',
+  'Saudi Arabia': 'SAR',
+  Turkey: 'TRY',
+}
+const currencyTouched = ref(false)
 const budgetAmount = ref('')
 const budgetCurrency = ref<string>('USD')
 
@@ -95,7 +106,50 @@ const serviceSuggestions = computed(() => {
 watch(selectedBrandUuid, () => {
   selectedServices.value = []
   showAllServices.value = false
+  servicesPreselected.value = false
 })
+
+// FA-17: the helper copy says "deselect what you don't want" — so the chips
+// must START SELECTED. Once the suggestion list for the current brand
+// arrives, all suggested (managed + trusted analysis) services are checked;
+// from that point every v-model change is the user's own. Persisting the
+// full selection also guarantees downstream stages (PPC/FA-51) see a
+// non-empty selected_services list.
+const servicesPreselected = ref(false)
+watch(
+  () => serviceSuggestions.value.options,
+  (options) => {
+    if (servicesPreselected.value || !options.length) return
+    servicesPreselected.value = true
+    if (!selectedServices.value.length) {
+      selectedServices.value = options.map((o) => o.name)
+    }
+  },
+  { immediate: true },
+)
+
+// FA-15: default language + currency from the selected brand (once per
+// brand switch; user overrides win for the rest of the session).
+watch(
+  selectedBrand,
+  (brand) => {
+    if (!brand) return
+    if (!languageTouched.value) {
+      const detected = (brand.detected_language || '').trim().toLowerCase()
+      const match = LANGS.find((l) => l.code === detected)
+      if (match) language.value = match.code
+    }
+    if (!currencyTouched.value) {
+      const country = (brand.detected_country || '').trim()
+      const currency = country ? COUNTRY_CURRENCY[country] : undefined
+      if (currency && (CURRENCIES as readonly string[]).includes(currency)) {
+        budgetCurrency.value = currency
+      }
+    }
+  },
+)
+watch(language, () => { languageTouched.value = true })
+watch(budgetCurrency, () => { currencyTouched.value = true })
 
 async function handleCreate() {
   if (!selectedBrandUuid.value) return
@@ -106,7 +160,12 @@ async function handleCreate() {
       name: campaignName.value || undefined,
       language: language.value,
       ...budgetPayload(),
-      ...(selectedServices.value.length
+      // FA-17/FA-51: once suggestions exist the selection is ALWAYS
+      // persisted — chips start fully selected, so an empty list means
+      // the user deliberately deselected everything, and the backend
+      // must reject that at PPC time instead of silently widening to
+      // the whole brand catalog.
+      ...(serviceSuggestions.value.options.length
         ? { context_payload: { selected_services: selectedServices.value } }
         : {}),
     })
@@ -122,7 +181,18 @@ async function handleCreate() {
   <main class="flex-1 p-4 sm:p-6">
     <div class="max-w-xl mx-auto space-y-6">
       <!-- Brand selection -->
-      <div v-if="brands && brands.length > 1">
+      <div v-if="brands && !brands.length" data-testid="no-brands-card">
+        <div class="surface-card p-6 text-center">
+          <p class="text-sm text-muted-foreground">{{ t('camp.noBrands') }}</p>
+          <button
+            class="mt-3 h-8 px-3 rounded-lg border border-border/60 text-xs"
+            @click="router.push('/brands/new')"
+          >
+            {{ t('camp.createBrand') }}
+          </button>
+        </div>
+      </div>
+      <div v-else-if="brands && brands.length > 1">
         <label class="text-xs font-medium mb-2 block">{{ t('camp.selectBrand') }}</label>
         <div class="grid gap-2">
           <button
@@ -145,15 +215,15 @@ async function handleCreate() {
               </div>
             </div>
           </button>
-          <div v-if="!brands?.length" class="surface-card p-6 text-center">
-            <p class="text-sm text-muted-foreground">{{ t('camp.noBrands') }}</p>
-            <button
-              class="mt-3 h-8 px-3 rounded-lg border border-border/60 text-xs"
-              @click="router.push('/brands/new')"
-            >
-              {{ t('camp.createBrand') }}
-            </button>
-          </div>
+          <!-- FA-18: explain why Create Campaign stays disabled while brands
+               exist but none is picked (previously silently disabled). -->
+          <p
+            v-if="!selectedBrandUuid"
+            class="text-[11px] text-amber-500 dark:text-amber-400"
+            data-testid="create-needs-brand-hint"
+          >
+            {{ t('camp.needBrandHint') }}
+          </p>
         </div>
       </div>
 
